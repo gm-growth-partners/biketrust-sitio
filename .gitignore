@@ -1,0 +1,15 @@
+# Dependencias
+node_modules/
+
+# Salida del build (la regenera Cloudflare en cada deploy)
+dist/
+
+# Secretos / entorno — el token de Airtable NUNCA se commitea
+.env
+.env.*
+.dev.vars
+
+# Sistema operativo / editor
+.DS_Store
+Thumbs.db
+*.log

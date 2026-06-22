@@ -56,6 +56,23 @@ function mapBike(f){
   };
 }
 
+// fetch con reintentos: tolera blips de red / 429 / 5xx sin tumbar el build.
+async function fetchJSON(u){
+  const max=3;
+  for(let intento=1; ; intento++){
+    let r;
+    try{ r=await fetch(u,{headers:{Authorization:`Bearer ${TOKEN}`}}); }
+    catch(e){ if(intento>=max) throw e; }
+    if(r){
+      if(r.ok) return r.json();
+      // 4xx (salvo 429) son errores de config: fallar de inmediato, reintentar no ayuda.
+      if(r.status<500 && r.status!==429) throw new Error(`Airtable ${r.status}: ${await r.text()}`);
+      if(intento>=max) throw new Error(`Airtable ${r.status}: ${await r.text()}`);
+    }
+    await new Promise(res=>setTimeout(res, 500*intento));
+  }
+}
+
 async function fetchBikes(){
   if(!TOKEN){ console.warn('⚠  Sin AIRTABLE_TOKEN — usando datos de ejemplo (mock).'); return MOCK.map(mapBike); }
   let out=[], offset;
@@ -63,9 +80,7 @@ async function fetchBikes(){
     const u=new URL(`https://api.airtable.com/v0/${BASE}/${encodeURIComponent(TABLE)}`);
     u.searchParams.set('view', VIEW);
     if(offset) u.searchParams.set('offset', offset);
-    const r=await fetch(u,{headers:{Authorization:`Bearer ${TOKEN}`}});
-    if(!r.ok) throw new Error(`Airtable ${r.status}: ${await r.text()}`);
-    const j=await r.json();
+    const j=await fetchJSON(u);
     out=out.concat(j.records.map(rec=>mapBike(rec.fields)));
     offset=j.offset;
   } while(offset);
@@ -162,7 +177,6 @@ const FOOT = `<div class="foot"><a class="lock" href="/"><svg class="shield"><us
 
 /* ---------- ficha ---------- */
 function fichaHTML(b){
-  const url = `/bici/${slug(b.modelo+'-'+b.talla)}.html`;
   const anchor = b.precioNuevo ? `Valor nueva: <s>${clp(b.precioNuevo)}</s>`
                                : `Valor nueva: <s>$ — · — · —</s><span class="pend">por confirmar</span>`;
   const puntaje = (b.puntaje!=null?b.puntaje:'—')+`<span style="font-size:.9rem;color:var(--gris)">/100</span>`;
@@ -212,7 +226,7 @@ function fichaHTML(b){
 
 /* ---------- catálogo ---------- */
 function cardHTML(b){
-  const url=`/bici/${slug(b.modelo+'-'+b.talla)}.html`;
+  const url=`/bici/${b.slug}.html`;
   const img = b.fotos[0] ? `<img src="${esc(b.fotos[0])}" alt="${esc(b.modelo)}">` : `<div class="ph">Foto pendiente</div>`;
   return `<a class="card" href="${url}"><div class="img">${img}</div><div class="body">
     <div class="disc">${esc(b.disciplina)}${b.talla?' · Talla '+esc(b.talla):''}</div>
@@ -234,14 +248,28 @@ function catalogHTML(bikes){
 }
 
 /* ---------- build ---------- */
+// Asigna un slug único a cada bici. Sin colisión, la URL queda estable
+// (modelo-talla); si dos comparten modelo+talla, se desambigua con -2, -3, …
+function assignSlugs(bikes){
+  const usados=new Map();
+  for(const b of bikes){
+    let base=slug(`${b.modelo}-${b.talla}`) || 'bici';
+    let s=base, n=1;
+    while(usados.has(s)){ s=`${base}-${++n}`; }
+    usados.set(s,true);
+    b.slug=s;
+  }
+}
+
 async function main(){
   const bikes = await fetchBikes();
+  assignSlugs(bikes);
   await rm(OUT,{recursive:true,force:true});
   await mkdir(`${OUT}/bici`,{recursive:true});
   await writeFile(`${OUT}/styles.css`, CSS);
   await writeFile(`${OUT}/index.html`, catalogHTML(bikes));
   for(const b of bikes){
-    await writeFile(`${OUT}/bici/${slug(b.modelo+'-'+b.talla)}.html`, fichaHTML(b));
+    await writeFile(`${OUT}/bici/${b.slug}.html`, fichaHTML(b));
   }
   console.log(`✓ ${bikes.length} bici(s) · sitio generado en /${OUT}`);
 }
