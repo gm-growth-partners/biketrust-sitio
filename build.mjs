@@ -135,7 +135,7 @@ a{color:inherit;text-decoration:none}
 .price .cert{display:flex;align-items:center;gap:9px;background:var(--hueso);border:1px solid var(--linea);border-radius:3px;padding:11px 15px}
 .price .cert .s{font-family:var(--serif);font-weight:600;font-size:1.5rem;color:var(--bronce)}
 .price .cert .l{font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gris);line-height:1.3}
-.cta{display:block;text-align:center;background:var(--carbon);color:#fff;font-weight:500;letter-spacing:.18em;text-transform:uppercase;font-size:.78rem;padding:17px;margin:0 46px}.cta:hover{background:var(--bronce-deep)}
+.cta{display:block;width:auto;text-align:center;background:var(--carbon);color:#fff;border:0;cursor:pointer;font-family:var(--sans);font-weight:500;letter-spacing:.18em;text-transform:uppercase;font-size:.78rem;padding:17px;margin:0 46px}.cta:hover{background:var(--bronce-deep)}
 .ribbon{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);margin-top:30px}
 .ribbon div{padding:16px 10px;text-align:center;border-left:1px solid var(--linea)}.ribbon div:first-child{border-left:0}
 .ribbon .k{font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gris)}.ribbon .v{font-family:var(--serif);font-weight:600;font-size:1.1rem;margin-top:4px}
@@ -163,7 +163,54 @@ a{color:inherit;text-decoration:none}
 .foot .c{font-size:.72rem;color:var(--gris);text-align:right;line-height:1.6}
 .hidden{display:none}
 @media (max-width:620px){.specs,.certblk .checks{grid-template-columns:1fr}.price .now{font-size:2.6rem}}
-@media print{body{background:#fff}.ficha{box-shadow:none}}
+@media print{body{background:#fff}.ficha{box-shadow:none}.rsv-ov,.rsv-open{display:none!important}}
+/* ---------- reserva (modal de agendamiento) ---------- */
+.rsv-open{display:inline-block;margin-top:28px;background:var(--carbon);color:#fff;border:0;cursor:pointer;font-family:var(--sans);font-weight:500;letter-spacing:.18em;text-transform:uppercase;font-size:.74rem;padding:15px 32px;transition:background .2s}
+.rsv-open:hover{background:var(--bronce-deep)}
+.rsv-ov{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:20px}
+.rsv-ov.open{display:flex}
+.rsv-ov-bg{position:absolute;inset:0;background:rgba(15,15,15,.55)}
+.rsv{position:relative;background:var(--blanco);width:100%;max-width:520px;max-height:92vh;overflow:auto;box-shadow:0 30px 90px rgba(15,15,15,.32);display:flex;flex-direction:column}
+.rsv-hd{display:flex;align-items:center;justify-content:space-between;padding:20px 26px;border-bottom:1px solid var(--linea);position:sticky;top:0;background:var(--blanco);z-index:2}
+.rsv-ttl{display:flex;align-items:center;gap:10px;font-family:var(--serif);font-weight:600;font-size:1.3rem}
+.rsv-x{background:none;border:0;font-size:1.7rem;line-height:1;color:var(--gris);cursor:pointer;padding:0 4px}
+.rsv-x:hover{color:var(--carbon)}
+.rsv-stepn{padding:15px 26px 0;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--bronce)}
+.rsv-bd{padding:16px 26px 8px}
+.rsv-step{display:none}
+.rsv-step.on{display:block}
+.rsv-intro{font-size:.9rem;color:var(--gris);margin-bottom:18px;line-height:1.5}
+.rsv-field{margin-bottom:16px}
+.rsv-lbl{display:block;font-size:.64rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gris);margin-bottom:7px}
+.rsv-field input,.rsv-field select{width:100%;border:1px solid var(--linea);background:var(--hueso);padding:12px 13px;font-family:var(--sans);font-size:.95rem;color:var(--carbon);border-radius:2px}
+.rsv-field input:focus,.rsv-field select:focus{outline:none;border-color:var(--bronce)}
+.rsv-grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.rsv-count{color:var(--bronce);font-weight:500;letter-spacing:0}
+.rsv-note{font-size:.78rem;color:var(--gris);font-style:italic;margin:2px 0 14px}
+.rsv-models{max-height:228px;overflow:auto;border:1px solid var(--linea);border-radius:2px;margin-bottom:18px}
+.rsv-model{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--linea);cursor:pointer}
+.rsv-model:last-child{border-bottom:0}
+.rsv-model input{position:absolute;opacity:0;width:0;height:0}
+.rsv-check{width:18px;height:18px;flex:none;border:1.5px solid var(--linea);border-radius:3px;position:relative}
+.rsv-model.sel{background:var(--hueso)}
+.rsv-model.sel .rsv-check{border-color:var(--bronce);background:var(--bronce)}
+.rsv-model.sel .rsv-check::after{content:"";position:absolute;left:5px;top:1px;width:5px;height:10px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.rsv-model.dis{opacity:.4;cursor:not-allowed}
+.rsv-mtxt{display:flex;flex-direction:column;gap:1px}
+.rsv-mname{font-size:.92rem}
+.rsv-mmeta{font-size:.7rem;color:var(--gris)}
+.rsv-err{color:#9a3b2f;font-size:.8rem;margin:-4px 0 12px}
+.rsv-ft{display:flex;gap:10px;justify-content:flex-end;padding:16px 26px;border-top:1px solid var(--linea);position:sticky;bottom:0;background:var(--blanco)}
+.rsv-btn{background:var(--carbon);color:#fff;border:0;cursor:pointer;font-family:var(--sans);font-weight:500;letter-spacing:.16em;text-transform:uppercase;font-size:.72rem;padding:13px 22px;transition:background .2s}
+.rsv-btn:hover{background:var(--bronce-deep)}
+.rsv-btn:disabled{opacity:.6;cursor:default}
+.rsv-btn.ghost{background:none;color:var(--gris);border:1px solid var(--linea)}
+.rsv-btn.ghost:hover{background:var(--hueso);color:var(--carbon)}
+.rsv-ok{text-align:center;padding:22px 6px 12px}
+.rsv-ok h3{font-family:var(--serif);font-weight:600;font-size:1.7rem;margin-bottom:10px}
+.rsv-okmsg{color:var(--gris);font-size:.95rem;line-height:1.55}
+.rsv-wa{display:inline-block;margin-top:18px;background:#25D366;color:#fff;padding:12px 22px;border-radius:3px;font-size:.82rem;letter-spacing:.03em}
+@media (max-width:480px){.rsv-grid2{grid-template-columns:1fr}}
 `;
 
 const HEAD = t => `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
@@ -174,9 +221,144 @@ const HEAD = t => `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="sh" viewBox="0 0 32 36"><path d="M4 6 Q4 3 7 3 H25 Q28 3 28 6 V20 Q28 23.5 25.4 25.2 L16 32 L6.6 25.2 Q4 23.5 4 20 Z"/></symbol></svg>`;
 const TOPBAR = `<div class="topbar"><div class="in"><a class="lock" href="/"><svg class="shield"><use href="#sh"/></svg><span><b>BIKE</b> TRUST</span></a><div class="nav">Specialized certificadas</div></div></div>`;
 const FOOT = `<div class="foot"><a class="lock" href="/"><svg class="shield"><use href="#sh"/></svg><span><b>BIKE</b> TRUST</span></a><div class="c">Av. Las Condes 12461, Las Condes · Santiago<br>+56 9 8523 2895 · biketrust.cl</div></div></body></html>`;
+const FOOT_OPEN = FOOT.replace('</body></html>','');
+
+/* ---------- reserva (modal de agendamiento) ---------- */
+const WA_NUM = '56985232895';                  // WhatsApp tienda (fallback de contacto)
+// Horarios de visita ofrecidos (10:00–18:30 cada 30 min). Ajustable.
+function timeSlots(){
+  const out=[];
+  for(let h=10;h<=18;h++) for(const m of ['00','30']) out.push(h+':'+m);
+  return out;
+}
+// JS del modal. String.raw evita que build.mjs "coma" los backslashes de los regex.
+const RESERVA_JS = String.raw`(function(){
+  var ov=document.getElementById('rsv'); if(!ov) return;
+  var dlg=ov.querySelector('.rsv'), form=ov.querySelector('.rsv-form');
+  var stepn=ov.querySelector('.rsv-stepn'), cbs=ov.querySelectorAll('.rsv-cb'), count=ov.querySelector('.rsv-count');
+  var bBack=ov.querySelector('.rsv-back'), bNext=ov.querySelector('.rsv-next'), bSubmit=ov.querySelector('.rsv-submit'), bDone=ov.querySelector('.rsv-done');
+  var MAX=3, busy=false;
+  function q(s){ return ov.querySelector(s); }
+  function show(el,on){ el.classList[on?'remove':'add']('hidden'); }
+  function setStep(n){
+    [].forEach.call(ov.querySelectorAll('.rsv-step'),function(s){ s.classList.toggle('on', s.getAttribute('data-step')===String(n)); });
+    var num = (n===1||n===2);
+    if(num) stepn.textContent='Paso '+n+' de 2';
+    show(stepn,num); show(bBack,n===2); show(bNext,n===1); show(bSubmit,n===2); show(bDone,n==='ok');
+    dlg.scrollTop=0;
+  }
+  function syncModels(){
+    var sel=[].filter.call(cbs,function(c){return c.checked;});
+    count.textContent=sel.length+'/'+MAX;
+    [].forEach.call(cbs,function(c){
+      c.disabled = !c.checked && sel.length>=MAX;
+      var row=c.closest('.rsv-model');
+      row.classList.toggle('sel',c.checked); row.classList.toggle('dis',c.disabled);
+    });
+  }
+  [].forEach.call(cbs,function(c){ c.addEventListener('change',syncModels); });
+  function err(sel,msg){ var e=q(sel); e.textContent=msg; e.classList.remove('hidden'); }
+  function openModal(slug){
+    form.reset();
+    [].forEach.call(cbs,function(c){ c.checked=false; });
+    if(slug){ var cb=ov.querySelector('.rsv-cb[value="'+slug+'"]'); if(cb) cb.checked=true; }
+    syncModels();
+    q('.rsv-err1').classList.add('hidden'); q('.rsv-err2').classList.add('hidden');
+    q('.rsv-date').min=new Date().toISOString().slice(0,10);
+    ov.classList.add('open'); document.body.style.overflow='hidden';
+    setStep(1);
+  }
+  function closeModal(){ ov.classList.remove('open'); document.body.style.overflow=''; }
+  bNext.addEventListener('click',function(){
+    if(!q('.rsv-date').value) return err('.rsv-err1','Elige una fecha.');
+    if(!q('.rsv-time').value) return err('.rsv-err1','Elige una hora.');
+    q('.rsv-err1').classList.add('hidden'); setStep(2);
+  });
+  bBack.addEventListener('click',function(){ setStep(1); });
+  bDone.addEventListener('click',closeModal);
+  form.addEventListener('submit',function(e){
+    e.preventDefault(); if(busy) return;
+    var sel=[].filter.call(cbs,function(c){return c.checked;});
+    if(!sel.length) return err('.rsv-err2','Elige al menos un modelo.');
+    var nombre=q('.rsv-name').value.trim(), email=q('.rsv-email').value.trim(), tel=q('.rsv-phone').value.trim();
+    if(!nombre) return err('.rsv-err2','Escribe tu nombre.');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return err('.rsv-err2','Escribe un correo válido.');
+    if(tel.replace(/\D/g,'').length<8) return err('.rsv-err2','Escribe un teléfono válido.');
+    q('.rsv-err2').classList.add('hidden');
+    var modelos=sel.map(function(c){return c.getAttribute('data-label');});
+    var payload={ fecha:q('.rsv-date').value, hora:q('.rsv-time').value, modelos:modelos,
+      modelosSlug:sel.map(function(c){return c.value;}), nombre:nombre, email:email, telefono:tel };
+    busy=true; bSubmit.textContent='Enviando…'; bSubmit.disabled=true;
+    fetch('/api/reservar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+      .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+      .then(function(){ done(payload,false); })
+      .catch(function(){ done(payload,true); })
+      .then(function(){ busy=false; bSubmit.textContent='Confirmar reserva'; bSubmit.disabled=false; });
+  });
+  function done(p,fb){
+    if(fb){
+      var t='Hola! Quiero agendar una visita.%0aModelos: '+encodeURIComponent(p.modelos.join(', '))+'%0aDia: '+p.fecha+' '+p.hora+'%0aNombre: '+encodeURIComponent(p.nombre);
+      q('.rsv-ok h3').textContent='Último paso';
+      q('.rsv-okmsg').innerHTML='Confirma tu visita por WhatsApp y te dejamos los modelos preparados.<br><a class="rsv-wa" href="https://wa.me/'+WA_NUM+'?text='+t+'" target="_blank" rel="noopener">Confirmar por WhatsApp</a>';
+    } else {
+      q('.rsv-ok h3').textContent='¡Reserva enviada!';
+      q('.rsv-okmsg').textContent='Te contactaremos para confirmar tu visita el '+p.fecha+' a las '+p.hora+'. ¡Te esperamos!';
+    }
+    setStep('ok');
+  }
+  [].forEach.call(document.querySelectorAll('.js-agendar'),function(b){
+    b.addEventListener('click',function(e){ e.preventDefault(); openModal(b.getAttribute('data-slug')); });
+  });
+  ov.querySelector('.rsv-x').addEventListener('click',closeModal);
+  ov.querySelector('.rsv-ov-bg').addEventListener('click',closeModal);
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape' && ov.classList.contains('open')) closeModal(); });
+  var WA_NUM='` + WA_NUM + `';
+})();`;
+function reservaModal(bikes){
+  const slots = timeSlots().map(t=>`<option value="${t}">${t}</option>`).join('');
+  const models = bikes.map(b=>{
+    const meta=[b.disciplina, b.talla&&'Talla '+b.talla].filter(Boolean).join(' · ');
+    const label=esc(b.modelo + (b.talla?' · Talla '+b.talla:''));
+    return `<label class="rsv-model"><input type="checkbox" class="rsv-cb" value="${esc(b.slug)}" data-label="${label}"><span class="rsv-check"></span><span class="rsv-mtxt"><span class="rsv-mname">${esc(b.modelo)}</span><span class="rsv-mmeta">${esc(meta)}</span></span></label>`;
+  }).join('');
+  return `<div class="rsv-ov" id="rsv" aria-hidden="true"><div class="rsv-ov-bg"></div>
+  <div class="rsv" role="dialog" aria-modal="true" aria-label="Agenda tu visita">
+    <div class="rsv-hd"><div class="rsv-ttl"><svg class="shield"><use href="#sh"/></svg>Agenda tu visita</div><button type="button" class="rsv-x" aria-label="Cerrar">×</button></div>
+    <div class="rsv-stepn">Paso 1 de 2</div>
+    <form class="rsv-form" novalidate>
+      <div class="rsv-bd">
+        <div class="rsv-step on" data-step="1">
+          <p class="rsv-intro">Elige el día y la hora que prefieres para visitarnos en tienda. Te contactamos para confirmar.</p>
+          <div class="rsv-field"><label class="rsv-lbl">Fecha</label><input type="date" class="rsv-date" required></div>
+          <div class="rsv-field"><label class="rsv-lbl">Hora</label><select class="rsv-time" required><option value="">Elige una hora</option>${slots}</select></div>
+          <div class="rsv-err rsv-err1 hidden"></div>
+        </div>
+        <div class="rsv-step" data-step="2">
+          <label class="rsv-lbl">¿Qué modelo(s) quieres ver? <span class="rsv-count">0/3</span></label>
+          <p class="rsv-note">Si te interesa ver más modelos, avísanos para tenértelos preparados.</p>
+          <div class="rsv-models">${models}</div>
+          <div class="rsv-grid2">
+            <div class="rsv-field"><label class="rsv-lbl">Nombre</label><input type="text" class="rsv-name" autocomplete="name" required></div>
+            <div class="rsv-field"><label class="rsv-lbl">Teléfono</label><input type="tel" class="rsv-phone" autocomplete="tel" required></div>
+          </div>
+          <div class="rsv-field"><label class="rsv-lbl">Correo</label><input type="email" class="rsv-email" autocomplete="email" required></div>
+          <div class="rsv-err rsv-err2 hidden"></div>
+        </div>
+        <div class="rsv-step rsv-ok" data-step="ok"><svg class="shield" style="width:34px;height:39px;margin:0 auto 8px;display:block"><use href="#sh"/></svg><h3>¡Reserva enviada!</h3><p class="rsv-okmsg"></p></div>
+      </div>
+      <div class="rsv-ft">
+        <button type="button" class="rsv-btn ghost rsv-back hidden">Atrás</button>
+        <button type="button" class="rsv-btn rsv-next">Continuar</button>
+        <button type="submit" class="rsv-btn rsv-submit hidden">Confirmar reserva</button>
+        <button type="button" class="rsv-btn rsv-done hidden">Listo</button>
+      </div>
+    </form>
+  </div></div>
+<script>${RESERVA_JS}</script>`;
+}
 
 /* ---------- ficha ---------- */
-function fichaHTML(b){
+function fichaHTML(b, bikes){
   const anchor = b.precioNuevo ? `Valor nueva: <s>${clp(b.precioNuevo)}</s>`
                                : `Valor nueva: <s>$ — · — · —</s><span class="pend">por confirmar</span>`;
   const puntaje = (b.puntaje!=null?b.puntaje:'—')+`<span style="font-size:.9rem;color:var(--gris)">/100</span>`;
@@ -215,7 +397,7 @@ function fichaHTML(b){
   <div class="gallery">${gallery}</div>
   <div class="price"><div><div class="anchor">${anchor}</div><div class="now">${b.precio!=null?clp(b.precio):'Consultar'}</div></div>
     <div class="cert"><div class="s">${puntaje}</div><div class="l">Puntaje<br>certificación${puntajePend}</div></div></div>
-  <a class="cta" href="#">Agenda tu visita</a>
+  <button type="button" class="cta js-agendar" data-slug="${esc(b.slug)}">Agenda tu visita</button>
   <div class="ribbon">${ribbon}</div>
   <div class="why"><div class="src">Por qué amarla</div><p>${whyP}</p></div>
   ${diag}
@@ -225,8 +407,8 @@ function fichaHTML(b){
     <div class="sub">Inspeccionada · Probada · Confiable</div>
     <div class="checks"><div>Integridad del cuadro verificada</div><div>Componentes inspeccionados</div><div>Transmisión limpiada y afinada</div><div>Suspensión revisada</div><div>Ruedas centradas</div>${checkDiag}</div>
     <p class="promise">Nos especializamos en Specialized usadas. Cada bici pasa por el taller de mecánicos expertos y se entrega con respaldo. <span style="color:var(--bronce)">[ Términos de garantía — por confirmar ]</span></p></div>
-  ${FOOT.replace('</body></html>','')}
-</article></body></html>`;
+  ${FOOT_OPEN}
+</article>${reservaModal(bikes)}</body></html>`;
 }
 
 /* ---------- catálogo ---------- */
@@ -248,8 +430,9 @@ function catalogHTML(bikes){
   return HEAD('Bike Trust · Specialized certificadas') + TOPBAR + `
   <div class="hero"><div class="eyebrow">Specialized usadas · certificadas</div>
     <h1>Confianza sobre dos ruedas</h1>
-    <p>Cada bici, inspeccionada por mecánicos expertos y entregada con respaldo. Diagnóstico real, estado honesto, sin sorpresas.</p></div>
-  <div class="wrap">${grid}</div>` + FOOT;
+    <p>Cada bici, inspeccionada por mecánicos expertos y entregada con respaldo. Diagnóstico real, estado honesto, sin sorpresas.</p>
+    <button type="button" class="rsv-open js-agendar">Agendar una visita</button></div>
+  <div class="wrap">${grid}</div>` + FOOT_OPEN + reservaModal(bikes) + '</body></html>';
 }
 
 /* ---------- build ---------- */
@@ -274,7 +457,7 @@ async function main(){
   await writeFile(`${OUT}/styles.css`, CSS);
   await writeFile(`${OUT}/index.html`, catalogHTML(bikes));
   for(const b of bikes){
-    await writeFile(`${OUT}/bici/${b.slug}.html`, fichaHTML(b));
+    await writeFile(`${OUT}/bici/${b.slug}.html`, fichaHTML(b, bikes));
   }
   console.log(`✓ ${bikes.length} bici(s) · sitio generado en /${OUT}`);
 }

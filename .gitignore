@@ -9,6 +9,9 @@ dist/
 .env.*
 .dev.vars
 
+# Config de desarrollo local (preview server, etc.)
+.claude/
+
 # Sistema operativo / editor
 .DS_Store
 Thumbs.db
