@@ -37,16 +37,17 @@ Deploy. Listo: el sitio queda online.
 
 **4. Republicar tras cambiar datos (manual)**
 Cada deployment **relee Airtable en vivo**, así que para reflejar cualquier cambio basta con lanzar uno nuevo:
-- Cloudflare Pages → tu proyecto → *Deployments* → **Create deployment** → branch `main` → **Create deployment**.
+- Cloudflare Pages → tu proyecto → *Deployments* → en la última fila, menú **⋯** → **Retry deployment**.
 - En ~1–2 min el sitio queda actualizado con el inventario actual.
+- (Un *push* al repo también republica solo: el auto-deploy está activo.)
 
 > Mejora futura (opcional): automatizar con un *deploy hook* de Cloudflare llamado desde una automatización de Airtable (acción *Run a script* que hace `fetch(URL, {method:'POST'})`). Así se reconstruye solo al cambiar un registro. No está activado hoy.
 
 ---
 
 ## Día a día
-- **Publicar una bici:** agrégala en Inventario con `Estado = Disponible`, luego lanza un deployment (paso 4). Aparece en el sitio.
-- **Dar de baja:** cambia `Estado` a `Vendida` (o cualquier cosa ≠ Disponible). Sale de la vista *Disponibles*; lanza un deployment y desaparece del sitio.
+- **Publicar una bici:** agrégala en Inventario con `Estado = Disponible`, luego republica (paso 4). Aparece en el sitio.
+- **Dar de baja:** cambia `Estado` a `Vendida` (o cualquier cosa ≠ Disponible). Sale de la vista *Disponibles*; republica (paso 4) y desaparece del sitio.
 
 ---
 
