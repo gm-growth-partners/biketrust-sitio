@@ -193,6 +193,11 @@ function fichaHTML(b){
     .map(t=>`<li>${esc(t)}</li>`).join('');
   const estadoNote = b.estado.length ? '' : `<p class="note">Pendiente: el taller completa con los defectos reales de esta unidad.</p>`;
   const specs = b.specs.map(g=>`<div class="blk"><h3>${esc(g.grupo)}</h3>${g.filas.map(f=>`<div class="row"><span>${esc(f[0])}</span><span>${esc(f[1])}</span></div>`).join('')}</div>`).join('');
+  // Placeholders para campos editoriales aún vacíos (mismo lenguaje que Estado honesto).
+  const whyP = b.porQue ? esc(b.porQue)
+    : `<span style="color:var(--gris)">[ Una frase que enamore — por completar ]</span>`;
+  const specsBlock = b.specs.length ? `<div class="specs">${specs}</div>`
+    : `<p style="font-size:.74rem;color:var(--gris);font-style:italic">Pendiente: completar el campo «Specs clave» en Airtable.</p>`;
   const hero = b.fotos[0] ? `<div class="hero-ph"><img src="${esc(b.fotos[0])}" alt="${esc(b.modelo)}"></div>`
                           : `<div class="hero-ph ph-box"><div class="pl">Foto héroe</div><div class="pd">Bici completa · lado motriz · fondo limpio</div></div>`;
   const galLabels=[['Detalle','Motor / componentes'],['Detalle','Suspensión / cockpit'],['Desgaste','Honesto · primer plano']];
@@ -212,10 +217,10 @@ function fichaHTML(b){
     <div class="cert"><div class="s">${puntaje}</div><div class="l">Puntaje<br>certificación${puntajePend}</div></div></div>
   <a class="cta" href="#">Agenda tu visita</a>
   <div class="ribbon">${ribbon}</div>
-  <div class="why"><div class="src">Por qué amarla</div><p>${esc(b.porQue)}</p></div>
+  <div class="why"><div class="src">Por qué amarla</div><p>${whyP}</p></div>
   ${diag}
   <div class="sec"><div class="lead">Estado honesto · notas del mecánico</div><div class="honest"><ul>${estadoLis}</ul>${estadoNote}</div></div>
-  <div class="sec" style="padding-top:8px"><div class="lead">Especificaciones</div><div class="specs">${specs}</div></div>
+  <div class="sec" style="padding-top:8px"><div class="lead">Especificaciones</div>${specsBlock}</div>
   <div class="certblk"><div class="head"><svg class="shield" style="width:26px;height:30px"><use href="#sh"/></svg><h2>Certificada por Bike Trust</h2></div>
     <div class="sub">Inspeccionada · Probada · Confiable</div>
     <div class="checks"><div>Integridad del cuadro verificada</div><div>Componentes inspeccionados</div><div>Transmisión limpiada y afinada</div><div>Suspensión revisada</div><div>Ruedas centradas</div>${checkDiag}</div>
