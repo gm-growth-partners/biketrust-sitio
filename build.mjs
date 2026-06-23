@@ -63,7 +63,9 @@ function mapBike(f){
     estado:String(f['Estado honesto']||'').split('\n').map(s=>s.trim()).filter(Boolean),
     specs:parseSpecs(f['Specs clave']),
     referencia:f['Referencia']||'',
-    fotos:String(f['Fotos URLs']||'').split(/[\n,]/).map(s=>s.trim()).filter(Boolean)
+    fotos:String(f['Fotos URLs']||'').split(/[\n,]/).map(s=>s.trim()).filter(Boolean),
+    pdf:String(f['Ficha técnica PDF']||f['PDF · URL Cloudflare']||'').trim(),
+    material:f['Material cuadro']||f['Material']||''
   };
 }
 
@@ -434,6 +436,77 @@ a{color:inherit;text-decoration:none}
 .hslide .himg,.tile,.promo .pimg,.guide .gimg{background-size:cover;background-position:center;background-repeat:no-repeat}
 .tile.has-img .ph{display:none}
 .tile.has-img .ov{background:linear-gradient(to top,rgba(15,15,15,.82),rgba(15,15,15,.05))}
+/* ===== ficha de producto (estilo TPC) ===== */
+.product{max-width:1180px;margin:26px auto 0;padding:0 28px;display:grid;grid-template-columns:1.12fr .88fr;gap:42px;align-items:start}
+@media(max-width:860px){.product{grid-template-columns:1fr;gap:24px}}
+.back2{display:inline-block;max-width:1180px;margin:18px auto 0;padding:0 28px;width:100%;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gris)}
+.pgal-main{position:relative;background:var(--hueso);border:1px solid var(--linea);aspect-ratio:4/3;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.pgal-main.has-img{cursor:zoom-in}
+.pgal-main img{width:100%;height:100%;object-fit:cover}
+.pgal-thumbs{display:flex;gap:8px;margin-top:10px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+.pgal-thumbs::-webkit-scrollbar{display:none}
+.pgal-thumb{flex:none;width:76px;height:76px;border:1px solid var(--linea);background:var(--hueso);padding:0;cursor:pointer;overflow:hidden;position:relative}
+.pgal-thumb img{width:100%;height:100%;object-fit:cover}
+.pgal-thumb.on{border-color:var(--bronce)}
+.pgal-thumb.ph{display:flex;align-items:center;justify-content:center;cursor:default}
+.pgal-thumb.ph svg{width:36px;height:auto}.pgal-thumb.ph svg circle,.pgal-thumb.ph svg path{stroke:var(--bronce);stroke-width:2.4;fill:none;opacity:.45}
+.lightbox{position:fixed;inset:0;z-index:1100;background:rgba(5,5,5,.93);display:none;align-items:center;justify-content:center;padding:30px;cursor:zoom-out}
+.lightbox.open{display:flex}
+.lightbox img{max-width:100%;max-height:100%;object-fit:contain}
+.buybox{position:sticky;top:84px}
+@media(max-width:860px){.buybox{position:static}}
+.bb-brand{font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bronce);font-weight:600}
+.bb-title{font-family:var(--serif);font-weight:500;font-size:clamp(1.9rem,3.6vw,2.7rem);line-height:1.04;margin:8px 0 10px}
+.bb-item{font-size:.74rem;color:var(--gris);margin-bottom:16px}
+.bb-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:11px 0;border-top:1px solid var(--linea);font-size:.92rem}
+.bb-badge{display:inline-flex;align-items:center;gap:7px;font-weight:500}
+.bb-badge svg{width:15px;height:17px}.bb-badge svg path{fill:none;stroke:var(--bronce);stroke-width:1.7}
+.bb-link{font-size:.76rem;color:var(--gris);text-decoration:underline;text-underline-offset:2px}
+.bb-link:hover{color:var(--carbon)}
+.bb-price{padding:16px 0 4px;border-top:1px solid var(--linea);margin-top:6px}
+.bb-was{font-size:.95rem;color:var(--gris);text-decoration:line-through;text-decoration-color:var(--bronce);margin-right:9px}
+.bb-info{cursor:help;color:var(--gris);font-size:.8rem;border:1px solid var(--linea);border-radius:50%;width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
+.bb-now{font-family:var(--serif);font-weight:600;font-size:2.7rem;line-height:1;margin-top:4px}
+.bb-benefit{display:flex;gap:11px;align-items:flex-start;background:var(--hueso);border:1px solid var(--linea);border-radius:3px;padding:14px 16px;margin:18px 0;font-size:.85rem;line-height:1.45;color:var(--carbon)}
+.bb-benefit svg{width:18px;height:20px;flex:none;margin-top:1px}.bb-benefit svg path{fill:none;stroke:var(--bronce);stroke-width:1.7}
+.bb-cta{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.bb-cta>*{width:100%;text-align:center}
+.bb-resv{display:flex;gap:10px;align-items:flex-start;margin:14px 0 0;padding:12px 14px;background:var(--hueso);border-left:3px solid var(--bronce);font-size:.82rem;line-height:1.4}
+.bb-resv .d{flex:none;width:8px;height:8px;border-radius:50%;background:var(--bronce);margin-top:5px;animation:resvPulse 1.6s ease-in-out infinite}
+/* secciones inferiores */
+.psecs{max-width:1080px;margin:18px auto 0;padding:0 28px}
+.psec{padding:34px 0;border-top:1px solid var(--linea)}
+.psec>h2{font-family:var(--serif);font-weight:600;font-size:1.5rem;margin-bottom:16px}
+.psec .lead2{font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--bronce);margin-bottom:14px}
+.inspbar{background:var(--hueso);border:1px solid var(--linea);border-radius:3px;padding:24px 26px;margin-top:8px}
+.inspbar h3{font-family:var(--serif);font-weight:600;font-size:1.25rem;margin-bottom:16px}
+.inspbar .checks{display:grid;grid-template-columns:1fr 1fr;gap:10px 26px}
+.inspbar .checks div{display:flex;gap:10px;align-items:center;font-size:.9rem}
+.inspbar .checks div::before{content:"";width:16px;height:16px;flex:none;border:1.5px solid var(--bronce);border-radius:50%;background:radial-gradient(circle at 50% 55%,var(--bronce) 0 2px,transparent 2px)}
+@media(max-width:560px){.inspbar .checks{grid-template-columns:1fr}}
+.acc{border-top:1px solid var(--linea)}.acc:last-of-type{border-bottom:1px solid var(--linea)}
+.acc-h{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:17px 2px;cursor:pointer;font-weight:500;font-size:.95rem}
+.acc-h::after{content:"+";color:var(--bronce);font-size:1.3rem;line-height:1}
+.acc.open .acc-h::after{content:"\\2013"}
+.acc-b{max-height:0;overflow:hidden;transition:max-height .25s ease}
+.acc.open .acc-b{max-height:520px}
+.acc-b .inner{padding:0 2px 18px;color:var(--gris);font-size:.9rem;line-height:1.6}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--linea);margin-bottom:18px;flex-wrap:wrap}
+.tabbtn{background:none;border:0;border-bottom:2px solid transparent;padding:12px 18px;cursor:pointer;font-family:var(--sans);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gris);margin-bottom:-1px}
+.tabbtn.on{color:var(--carbon);border-bottom-color:var(--bronce)}
+.tabpanel{display:none}.tabpanel.on{display:block}
+.kvtable .row{display:flex;justify-content:space-between;gap:14px;padding:10px 0;font-size:.9rem;border-bottom:1px solid var(--linea)}
+.kvtable .row span:first-child{color:var(--gris)}
+.pdfbox{border:1px solid var(--linea);background:var(--hueso);overflow:hidden}
+.pdfbox iframe{width:100%;height:580px;border:0;display:block;background:#fff}
+.pdf-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px}
+.support{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--linea);background:var(--hueso);margin-top:18px}
+.support .simg{position:relative;min-height:200px;background-size:cover;background-position:center;border-right:1px solid var(--linea)}
+.support .stxt{padding:30px 32px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center}
+.support h3{font-family:var(--serif);font-weight:600;font-size:1.4rem;margin-bottom:8px}
+.support p{font-size:.9rem;color:var(--gris);line-height:1.55;margin-bottom:18px}
+.support .sactions{display:flex;gap:12px;flex-wrap:wrap}
+@media(max-width:680px){.support{grid-template-columns:1fr}.support .simg{border-right:0;border-bottom:1px solid var(--linea);min-height:150px}}
 `;
 
 const HEAD = t => `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
@@ -603,13 +676,47 @@ function reservaModal(bikes){
 }
 
 /* ---------- ficha ---------- */
+// JS de la ficha de producto: galería (thumbs + lightbox), acordeones, tabs
+const FICHA_JS = String.raw`(function(){
+  var main=document.querySelector('.pgal-main img'), thumbs=document.querySelectorAll('.pgal-thumb');
+  [].forEach.call(thumbs,function(t){ t.addEventListener('click',function(){
+    var src=t.getAttribute('data-src'); if(!src||!main) return;
+    main.src=src; [].forEach.call(thumbs,function(x){x.classList.remove('on');}); t.classList.add('on');
+  });});
+  var lb=document.querySelector('.lightbox'), box=document.querySelector('.pgal-main.has-img');
+  if(lb&&box&&main){
+    box.addEventListener('click',function(){ lb.querySelector('img').src=main.src; lb.classList.add('open'); document.body.style.overflow='hidden'; });
+    lb.addEventListener('click',function(){ lb.classList.remove('open'); document.body.style.overflow=''; });
+  }
+  [].forEach.call(document.querySelectorAll('.acc-h'),function(h){ h.addEventListener('click',function(){ h.parentElement.classList.toggle('open'); }); });
+  [].forEach.call(document.querySelectorAll('.tabbtn'),function(b){ b.addEventListener('click',function(){
+    var panel=document.getElementById(b.getAttribute('data-tab'));
+    [].forEach.call(b.parentElement.querySelectorAll('.tabbtn'),function(x){x.classList.remove('on');}); b.classList.add('on');
+    [].forEach.call(document.querySelectorAll('.tabpanel'),function(p){p.classList.remove('on');});
+    if(panel) panel.classList.add('on');
+  });});
+})();`;
+
 function fichaHTML(b, bikes){
-  const anchor = b.precioNuevo ? `Valor nueva: <s>${clp(b.precioNuevo)}</s>`
-                               : `Valor nueva: <s>$ — · — · —</s><span class="pend">por confirmar</span>`;
-  const puntaje = (b.puntaje!=null?b.puntaje:'—')+`<span style="font-size:.9rem;color:var(--gris)">/100</span>`;
-  const puntajePend = b.puntaje!=null ? '' : '<br><span style="color:var(--bronce)">por confirmar</span>';
-  const ribbon = [['Talla',b.talla],['Estatura',b.rangoAltura||'—'],['Disciplina',b.disciplina],['Año',b.anio||'—']]
-    .map(r=>`<div><div class="k">${esc(r[0])}</div><div class="v">${esc(r[1])}</div></div>`).join('');
+  const fotos = b.fotos;
+  const galMain = fotos.length
+    ? `<div class="pgal-main has-img"><img src="${esc(fotos[0])}" alt="${esc(b.marca+' '+b.modelo)}"></div>`
+    : `<div class="pgal-main">${imgPH('Foto pendiente')}</div>`;
+  const galThumbs = fotos.length
+    ? fotos.map((f,i)=>`<button type="button" class="pgal-thumb${i===0?' on':''}" data-src="${esc(f)}"><img src="${esc(f)}" alt=""></button>`).join('')
+    : [0,1,2,3].map(()=>`<button type="button" class="pgal-thumb ph">${BIKEICON}</button>`).join('');
+  const lightbox = fotos.length ? `<div class="lightbox"><img src="" alt=""></div>` : '';
+
+  const wasHtml = b.precioNuevo&&b.precioNuevo>b.precio
+    ? `<span class="bb-was">${clp(b.precioNuevo)}</span><span class="bb-info" title="Valor de referencia de la bici nueva">i</span>` : '';
+  const nowHtml = b.precio!=null ? clp(b.precio) : 'Consultar';
+  const subline = [b.anio, b.talla&&'Talla '+b.talla, b.disciplina, b.referencia&&'Ref '+b.referencia].filter(Boolean).join(' · ');
+  const fitRow = b.rangoAltura
+    ? `<div class="bb-row"><b>Calza:</b> ${esc(b.rangoAltura)}<a class="bb-link" href="/visitanos.html">Te asesoramos en tu visita</a></div>` : '';
+  const reservaBB = b.reservada
+    ? `<div class="bb-resv"><span class="d"></span><div><b>Alguien agendó una visita para verla.</b> Sigue disponible — agéndala tú también.</div></div>` : '';
+  const waMsg = encodeURIComponent(`Hola! Me interesa la ${b.marca} ${b.modelo}${b.talla?' (talla '+b.talla+')':''}. ¿Sigue disponible?`);
+
   const diag = b.electrica ? `<div class="diag"><div class="head"><svg class="shield"><use href="#sh"/></svg><span>Diagnóstico digital · escaneo en tienda</span></div>
     <div class="g">
       <div><div class="n">${b.diagKm!=null?Number(b.diagKm).toLocaleString('es-CL'):'—'}</div><div class="u">km</div><div class="l">Motor</div></div>
@@ -620,44 +727,74 @@ function fichaHTML(b, bikes){
     .map(t=>`<li>${esc(t)}</li>`).join('');
   const estadoNote = b.estado.length ? '' : `<p class="note">Pendiente: el taller completa con los defectos reales de esta unidad.</p>`;
   const specs = b.specs.map(g=>`<div class="blk"><h3>${esc(g.grupo)}</h3>${g.filas.map(f=>`<div class="row"><span>${esc(f[0])}</span><span>${esc(f[1])}</span></div>`).join('')}</div>`).join('');
-  // Placeholders para campos editoriales aún vacíos (mismo lenguaje que Estado honesto).
-  const whyP = b.porQue ? esc(b.porQue)
-    : `<span style="color:var(--gris)">[ Una frase que enamore — por completar ]</span>`;
+  const whyP = b.porQue ? esc(b.porQue) : `<span style="color:var(--gris)">[ Una frase que enamore — por completar ]</span>`;
   const specsBlock = b.specs.length ? `<div class="specs">${specs}</div>`
-    : `<p style="font-size:.74rem;color:var(--gris);font-style:italic">Pendiente: completar el campo «Specs clave» en Airtable.</p>`;
-  const hero = b.fotos[0] ? `<div class="hero-ph"><img src="${esc(b.fotos[0])}" alt="${esc(b.modelo)}"></div>`
-                          : `<div class="hero-ph ph-box"><div class="pl">Foto héroe</div><div class="pd">Bici completa · lado motriz · fondo limpio</div></div>`;
-  const galLabels=[['Detalle','Motor / componentes'],['Detalle','Suspensión / cockpit'],['Desgaste','Honesto · primer plano']];
-  const gallery = galLabels.map((l,i)=> b.fotos[i+1]
-      ? `<img src="${esc(b.fotos[i+1])}" alt="">`
-      : `<div class="ph-box"><div class="pl">${l[0]}</div><div class="pd">${l[1]}</div></div>`).join('');
-  const checkDiag = b.electrica ? '<div>Diagnóstico digital de motor y batería</div>' : '';
-  const resvNote = b.reservada
-    ? `<div class="resv-note"><span class="d"></span><div><b>Alguien agendó una visita para verla.</b> Sigue disponible — agenda la tuya y no te quedes fuera.</div></div>`
-    : '';
+    : `<p style="font-size:.86rem;color:var(--gris);font-style:italic">Pendiente: completar el campo «Specs clave» en Airtable.</p>`;
+  const det = [
+    ['Valor nueva', b.precioNuevo?clp(b.precioNuevo):'por confirmar'],
+    ['Año', b.anio||'—'], ['Marca', b.marca], ['Modelo', b.modelo],
+    ['Talla', b.talla||'—'], ['Disciplina', b.disciplina||'—'],
+    ['Motorización', b.electrica?'Eléctrica':'Muscular'],
+    ['Material del cuadro', b.material||'por confirmar'],
+    ['Puntaje certificación', b.puntaje!=null?b.puntaje+'/100':'por confirmar'],
+    b.referencia?['Referencia', b.referencia]:null
+  ].filter(Boolean);
+  const detailsRows = det.map(r=>`<div class="row"><span>${esc(r[0])}</span><span>${esc(r[1])}</span></div>`).join('');
+  const pdfSection = b.pdf
+    ? `<div class="pdfbox"><iframe src="${esc(b.pdf)}#view=FitH" title="Ficha técnica completa"></iframe></div>
+       <div class="pdf-actions"><a class="btn-primary" href="${esc(b.pdf)}" target="_blank" rel="noopener">Abrir / descargar PDF</a></div>`
+    : `<div class="pdfbox" style="display:flex;align-items:center;justify-content:center;min-height:220px;text-align:center;padding:34px">
+         <div style="color:var(--gris);font-size:.9rem;line-height:1.5"><div style="color:var(--bronce);font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;margin-bottom:8px">Ficha técnica completa</div>Aquí se inserta el PDF con la ficha técnica detallada de esta unidad.<br><span style="color:var(--bronce)">[ por adjuntar ]</span></div>
+       </div>`;
+  const certblk = `<div class="certblk"><div class="head"><svg class="shield" style="width:26px;height:30px"><use href="#sh"/></svg><h2>Certificada por Bike Trust</h2></div>
+    <div class="sub">Inspeccionada · Probada · Confiable</div>
+    <div class="checks"><div>Integridad del cuadro verificada</div><div>Componentes inspeccionados</div><div>Transmisión limpiada y afinada</div><div>Suspensión revisada</div><div>Ruedas centradas</div>${b.electrica?'<div>Diagnóstico digital de motor y batería</div>':''}</div>
+    <p class="promise">Nos especializamos en Specialized usadas. Cada bici pasa por el taller de mecánicos expertos y se entrega con respaldo. <span style="color:var(--bronce)">[ Términos de garantía — por confirmar ]</span></p></div>`;
 
   return HEAD(`${b.marca} ${b.modelo} · Bike Trust`) + TOPBAR + `
-<article class="ficha">
-  <a class="back" href="/">← Volver al catálogo</a>
-  <div class="title"><div class="kicker">${esc([b.disciplina,b.anio,b.referencia&&'Ref '+b.referencia].filter(Boolean).join(' · '))}</div>
-    <h1><span class="brandname">${esc(b.marca)}</span>${esc(b.modelo)}</h1></div>
-  ${hero}
-  <div class="gallery">${gallery}</div>
-  <div class="price"><div><div class="anchor">${anchor}</div><div class="now">${b.precio!=null?clp(b.precio):'Consultar'}</div></div>
-    <div class="cert"><div class="s">${puntaje}</div><div class="l">Puntaje<br>certificación${puntajePend}</div></div></div>
-  ${resvNote}
-  <button type="button" class="cta js-agendar" data-slug="${esc(b.slug)}">Agenda tu visita</button>
-  <div class="ribbon">${ribbon}</div>
-  <div class="why"><div class="src">Por qué amarla</div><p>${whyP}</p></div>
-  ${diag}
-  <div class="sec"><div class="lead">Estado honesto · notas del mecánico</div><div class="honest"><ul>${estadoLis}</ul>${estadoNote}</div></div>
-  <div class="sec" style="padding-top:8px"><div class="lead">Especificaciones</div>${specsBlock}</div>
-  <div class="certblk"><div class="head"><svg class="shield" style="width:26px;height:30px"><use href="#sh"/></svg><h2>Certificada por Bike Trust</h2></div>
-    <div class="sub">Inspeccionada · Probada · Confiable</div>
-    <div class="checks"><div>Integridad del cuadro verificada</div><div>Componentes inspeccionados</div><div>Transmisión limpiada y afinada</div><div>Suspensión revisada</div><div>Ruedas centradas</div>${checkDiag}</div>
-    <p class="promise">Nos especializamos en Specialized usadas. Cada bici pasa por el taller de mecánicos expertos y se entrega con respaldo. <span style="color:var(--bronce)">[ Términos de garantía — por confirmar ]</span></p></div>
-</article>
-${FOOT_OPEN}${reservaModal(bikes)}</body></html>`;
+  <a class="back2" href="/catalogo.html">← Volver al catálogo</a>
+  <div class="product">
+    <div class="pgal">${galMain}<div class="pgal-thumbs">${galThumbs}</div></div>
+    <div class="buybox">
+      <div class="bb-brand">${esc(b.marca)}</div>
+      <h1 class="bb-title">${esc(b.modelo)}</h1>
+      ${subline?`<div class="bb-item">${esc(subline)}</div>`:''}
+      <div class="bb-row"><span class="bb-badge"><svg class="shield" style="width:15px;height:17px"><use href="#sh"/></svg>Certificada por Bike Trust</span><a class="bb-link" href="/como-certificamos.html">¿Qué significa?</a></div>
+      ${fitRow}
+      <div class="bb-price">${wasHtml}<div class="bb-now">${nowHtml}</div></div>
+      <div class="bb-benefit"><svg class="shield" style="width:18px;height:20px"><use href="#sh"/></svg><div>Incluye la <b>certificación Bike Trust</b> y el respaldo del taller. Agéndala y pruébala antes de decidir.</div></div>
+      ${reservaBB}
+      <div class="bb-cta">
+        <button type="button" class="btn-primary js-agendar" data-slug="${esc(b.slug)}">Agenda tu visita</button>
+        <a class="btn-ghost" href="https://wa.me/56985232895?text=${waMsg}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
+      </div>
+    </div>
+  </div>
+  <div class="psecs">
+    <div class="psec" style="border-top:0">
+      <div class="inspbar"><h3>Cada bici pasa una inspección multipunto</h3>
+        <div class="checks"><div>Integridad del cuadro verificada</div><div>Componentes inspeccionados</div><div>Transmisión limpiada y afinada</div><div>Suspensión revisada</div><div>Ruedas centradas</div>${b.electrica?'<div>Diagnóstico digital de motor y batería</div>':''}</div>
+      </div>
+    </div>
+    <div class="psec">
+      <div class="acc"><div class="acc-h">Cómo es la compra y la entrega</div><div class="acc-b"><div class="inner">Agendas tu visita, ves y pruebas la bici en nuestra tienda de Las Condes, y si te convence la pagas y te la llevas lista para rodar. Sin envíos ni intermediarios.</div></div></div>
+      <div class="acc"><div class="acc-h">Garantía y respaldo</div><div class="acc-b"><div class="inner">Cada bici se entrega afinada y con el respaldo de Bike Trust. <span style="color:var(--bronce)">[ Términos de garantía — por confirmar ]</span></div></div></div>
+    </div>
+    <div class="psec"><div class="lead2">Por qué amarla</div><p style="font-family:var(--serif);font-style:italic;font-size:clamp(1.3rem,2.6vw,1.6rem);line-height:1.4">${whyP}</p></div>
+    ${diag?`<div class="psec">${diag}</div>`:''}
+    <div class="psec"><h2>Notas del mecánico · estado honesto</h2><div class="honest"><ul>${estadoLis}</ul>${estadoNote}</div></div>
+    <div class="psec"><h2>Especificaciones</h2>
+      <div class="tabs"><button type="button" class="tabbtn on" data-tab="tab-det">Detalles</button><button type="button" class="tabbtn" data-tab="tab-build">Componentes</button><button type="button" class="tabbtn" data-tab="tab-geo">Geometría</button></div>
+      <div id="tab-det" class="tabpanel on"><div class="kvtable">${detailsRows}</div></div>
+      <div id="tab-build" class="tabpanel">${specsBlock}</div>
+      <div id="tab-geo" class="tabpanel"><p style="color:var(--gris);font-style:italic;font-size:.9rem">Tabla de geometría — <span style="color:var(--bronce)">por completar</span>.</p></div>
+    </div>
+    <div class="psec"><h2>Ficha técnica completa</h2>${pdfSection}</div>
+    <div class="psec">${certblk}</div>
+    <div class="psec"><div class="support"><div class="simg" style="background-image:url('/assets/img/workshop.jpg')"></div><div class="stxt"><h3>¿Dudas sobre esta bici?</h3><p>Escríbenos y te contamos todo lo que necesites saber, o agenda una visita para verla en persona.</p><div class="sactions"><button type="button" class="btn-primary js-agendar" data-slug="${esc(b.slug)}">Agenda tu visita</button><a class="btn-ghost" href="https://wa.me/56985232895?text=${waMsg}" target="_blank" rel="noopener">WhatsApp</a></div></div></div></div>
+  </div>
+  ${lightbox}
+${FOOT_OPEN}${reservaModal(bikes)}<script>${FICHA_JS}</script></body></html>`;
 }
 
 /* ---------- catálogo ---------- */
