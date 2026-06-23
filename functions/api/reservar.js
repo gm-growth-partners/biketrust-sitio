@@ -22,25 +22,37 @@ export async function onRequestPost({ request, env }) {
   const TABLE = env.AIRTABLE_RESERVAS_TABLE || 'Reservas';
   if (!TOKEN) return reply({ error: 'not_configured' }, 503);
 
-  const fields = {
+  // Campos base (deben existir en la tabla) + opcionales (si faltan, no rompen).
+  const base = {
     'Nombre':   String(nombre).slice(0, 200),
     'Email':    String(email).slice(0, 200),
     'Teléfono': String(telefono).slice(0, 60),
     'Fecha':    String(fecha).slice(0, 10),                // YYYY-MM-DD (campo Date)
     'Hora':     String(hora).slice(0, 10),                 // texto "10:30"
     'Modelos':  modelos.join(', ').slice(0, 2000),         // texto legible
-    'Modelos slug': (Array.isArray(data.modelosSlug) ? data.modelosSlug : []).join(', ').slice(0, 500),
     'Origen':   'Web',
     'Estado':   'Nueva'
   };
+  const optional = {
+    'Modelos slug': (Array.isArray(data.modelosSlug) ? data.modelosSlug : []).join(', ').slice(0, 500)
+  };
+
+  const url = `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(TABLE)}`;
+  const post = (fields) => fetch(url, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields, typecast: true })       // typecast: crea opciones de select si faltan
+  });
 
   let r;
   try {
-    r = await fetch(`https://api.airtable.com/v0/${BASE}/${encodeURIComponent(TABLE)}`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fields, typecast: true })    // typecast: crea opciones de select si faltan
-    });
+    r = await post({ ...base, ...optional });
+    if (r.status === 422) {
+      const txt = await r.text();
+      // Algún campo opcional no existe en la tabla → reintenta sólo con los base.
+      if (txt.includes('UNKNOWN_FIELD_NAME')) r = await post(base);
+      else return reply({ error: 'airtable', status: 422, detail: txt }, 502);
+    }
   } catch {
     return reply({ error: 'network' }, 502);
   }
