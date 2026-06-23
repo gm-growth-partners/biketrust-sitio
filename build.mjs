@@ -62,6 +62,7 @@ function mapBike(f){
     rangoAltura:f['Rango altura']||'', porQue:f['Por qué amarla']||'',
     estado:String(f['Estado honesto']||'').split('\n').map(s=>s.trim()).filter(Boolean),
     specs:parseSpecs(f['Specs clave']),
+    geometria:parseSpecs(f['Geometría']),
     referencia:f['Referencia']||'',
     // Fotos en orden: campos «Foto 1»…«Foto 13» (preferente); si no hay, el campo «Fotos URLs».
     fotos:(()=>{
@@ -792,7 +793,7 @@ function fichaHTML(b, bikes){
       <div class="tabs"><button type="button" class="tabbtn on" data-tab="tab-det">Detalles</button><button type="button" class="tabbtn" data-tab="tab-build">Componentes</button><button type="button" class="tabbtn" data-tab="tab-geo">Geometría</button></div>
       <div id="tab-det" class="tabpanel on"><div class="kvtable">${detailsRows}</div></div>
       <div id="tab-build" class="tabpanel">${specsBlock}</div>
-      <div id="tab-geo" class="tabpanel"><p style="color:var(--gris);font-style:italic;font-size:.9rem">Tabla de geometría — <span style="color:var(--bronce)">por completar</span>.</p></div>
+      <div id="tab-geo" class="tabpanel">${b.geometria.length?`<div class="specs">${b.geometria.map(g=>`<div class="blk"><h3>${esc(g.grupo)}</h3>${g.filas.map(f=>`<div class="row"><span>${esc(f[0])}</span><span>${esc(f[1])}</span></div>`).join('')}</div>`).join('')}</div>`:`<p style="color:var(--gris);font-style:italic;font-size:.9rem">Tabla de geometría — <span style="color:var(--bronce)">por completar (campo «Geometría» en Airtable)</span>.</p>`}</div>
     </div>
     <div class="psec"><h2>Ficha técnica completa</h2>${pdfSection}</div>
     <div class="psec">${certblk}</div>
