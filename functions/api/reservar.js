@@ -34,7 +34,7 @@ export async function onRequestPost({ request, env }) {
     'Estado':   'Nueva'
   };
   const optional = {
-    'Modelos slug': (Array.isArray(data.modelosSlug) ? data.modelosSlug : []).join(', ').slice(0, 500)
+    'Modelos Slug': (Array.isArray(data.modelosSlug) ? data.modelosSlug : []).join(', ').slice(0, 500)
   };
 
   const url = `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(TABLE)}`;

@@ -113,7 +113,7 @@ async function fetchReservedSlugs(){
     let offset;
     do{
       const u=new URL(`https://api.airtable.com/v0/${BASE}/${encodeURIComponent(TABLE_R)}`);
-      ['Modelos slug','Fecha','Estado'].forEach(f=>u.searchParams.append('fields[]', f));
+      ['Modelos Slug','Fecha','Estado'].forEach(f=>u.searchParams.append('fields[]', f));
       if(offset) u.searchParams.set('offset', offset);
       const r=await fetch(u,{headers:{Authorization:`Bearer ${TOKEN}`}});
       if(!r.ok){
@@ -125,7 +125,7 @@ async function fetchReservedSlugs(){
         const f=rec.fields;
         if(terminal.has(String(f['Estado']||'').toLowerCase().trim())) continue;
         if(f['Fecha'] && String(f['Fecha']).slice(0,10) < hoy) continue;   // visita ya pasó
-        String(f['Modelos slug']||'').split(/[\n,]/).map(s=>s.trim()).filter(Boolean).forEach(s=>set.add(s));
+        String(f['Modelos Slug']||'').split(/[\n,]/).map(s=>s.trim()).filter(Boolean).forEach(s=>set.add(s));
       }
       offset=j.offset;
     } while(offset);
