@@ -63,7 +63,12 @@ function mapBike(f){
     estado:String(f['Estado honesto']||'').split('\n').map(s=>s.trim()).filter(Boolean),
     specs:parseSpecs(f['Specs clave']),
     referencia:f['Referencia']||'',
-    fotos:String(f['Fotos URLs']||'').split(/[\n,]/).map(s=>s.trim()).filter(Boolean),
+    // Fotos en orden: campos «Foto 1»…«Foto 13» (preferente); si no hay, el campo «Fotos URLs».
+    fotos:(()=>{
+      const ord=[];
+      for(let i=1;i<=13;i++){ const v=String(f['Foto '+i]||'').trim(); if(v) ord.push(v); }
+      return ord.length ? ord : String(f['Fotos URLs']||'').split(/[\n,]/).map(s=>s.trim()).filter(Boolean);
+    })(),
     pdf:String(f['Ficha técnica PDF']||f['PDF · URL Cloudflare']||'').trim(),
     material:f['Material cuadro']||f['Material']||''
   };
