@@ -64,14 +64,12 @@ function mapBike(f){
     specs:parseSpecs(f['Specs clave']),
     geometria:parseSpecs(f['Geometría']),
     referencia:f['Referencia']||'',
-    // Fotos en orden: campos «Foto 1»…«Foto 13» (preferente); si no hay, el campo «Fotos URLs».
-    fotos:(()=>{
-      const ord=[];
-      for(let i=1;i<=13;i++){ const v=String(f['Foto '+i]||'').trim(); if(v) ord.push(v); }
-      return ord.length ? ord : String(f['Fotos URLs']||'').split(/[\n,]/).map(s=>s.trim()).filter(Boolean);
-    })(),
-    // Adjuntos del campo «Fotos» (la persona los arrastra a Airtable). El build los descarga y aloja.
+    fotos: [],   // se resuelve en el build (resolveBikePhotos)
+    // Cada «Foto N» es un ADJUNTO (la persona arrastra la foto a ese slot) o, si fuera texto, una URL. Orden 1..13.
+    fotoSlots: Array.from({length:13}, (_,i)=>f['Foto '+(i+1)] ?? null),
+    // Respaldos: campo adjunto único «Fotos» y campo de texto «Fotos URLs».
     fotosAdjuntos: Array.isArray(f['Fotos']) ? f['Fotos'] : [],
+    fotosBulk: String(f['Fotos URLs']||'').split(/[\n,]/).map(s=>s.trim()).filter(Boolean),
     pdf:String(f['Ficha técnica PDF']||f['PDF · URL Cloudflare']||'').trim(),
     material:f['Material cuadro']||f['Material']||''
   };
@@ -1069,31 +1067,46 @@ function assignSlugs(bikes){
   }
 }
 
-// Descarga los adjuntos del campo «Fotos» y los aloja en /dist (URL permanente).
-// Defensivo: si una foto falla, sigue; nunca rompe el build.
-async function downloadBikePhotos(bikes){
-  let total=0;
+// Descarga un adjunto de Airtable y lo aloja en /dist. Devuelve la ruta local o null.
+async function saveAttachment(a, slug, n){
+  if(!a || !a.url) return null;
+  try{
+    const r=await fetch(a.url);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const buf=Buffer.from(await r.arrayBuffer());
+    const ext=((a.type||'').split('/')[1]||'jpg').replace('jpeg','jpg').replace(/[^a-z0-9]/g,'')||'jpg';
+    const rel=`assets/bikes/${slug}/${n}.${ext}`;
+    await mkdir(`${OUT}/assets/bikes/${slug}`,{recursive:true});
+    await writeFile(`${OUT}/${rel}`, buf);
+    return '/'+rel;
+  }catch(e){ console.warn(`⚠  foto ${slug} #${n} no descargada:`, e.message); return null; }
+}
+
+// Resuelve b.fotos: slots numerados Foto 1..13 (adjunto descargado o URL), en orden.
+// Respaldos: campo adjunto único «Fotos», luego «Fotos URLs». Defensivo: nunca rompe el build.
+async function resolveBikePhotos(bikes){
+  let downloaded=0;
   for(const b of bikes){
-    const att = b.fotosAdjuntos;
-    if(!att || !att.length) continue;
-    const saved=[];
-    for(let i=0;i<att.length && i<13;i++){
-      const a=att[i];
-      if(!a || !a.url) continue;
-      try{
-        const r=await fetch(a.url);
-        if(!r.ok) throw new Error('HTTP '+r.status);
-        const buf=Buffer.from(await r.arrayBuffer());
-        const ext=((a.type||'').split('/')[1]||'jpg').replace('jpeg','jpg').replace(/[^a-z0-9]/g,'')||'jpg';
-        const rel=`assets/bikes/${b.slug}/${i+1}.${ext}`;
-        await mkdir(`${OUT}/assets/bikes/${b.slug}`,{recursive:true});
-        await writeFile(`${OUT}/${rel}`, buf);
-        saved.push('/'+rel); total++;
-      }catch(e){ console.warn(`⚠  foto ${b.slug} #${i+1} no descargada:`, e.message); }
+    const out=[];
+    for(const slot of b.fotoSlots){
+      if(!slot) continue;
+      if(Array.isArray(slot) && slot[0] && slot[0].url){          // adjunto en el slot
+        const local=await saveAttachment(slot[0], b.slug, out.length+1);
+        if(local){ out.push(local); downloaded++; }
+      } else if(typeof slot==='string' && slot.trim()){           // URL en texto
+        out.push(slot.trim());
+      }
     }
-    if(saved.length) b.fotos = saved;   // los adjuntos tienen prioridad sobre los campos URL
+    if(!out.length && b.fotosAdjuntos.length){                    // respaldo: campo adjunto «Fotos»
+      for(let i=0;i<b.fotosAdjuntos.length && i<13;i++){
+        const local=await saveAttachment(b.fotosAdjuntos[i], b.slug, out.length+1);
+        if(local){ out.push(local); downloaded++; }
+      }
+    }
+    if(!out.length) out.push(...b.fotosBulk);                     // respaldo: «Fotos URLs»
+    b.fotos = out;
   }
-  if(total) console.log(`  · ${total} foto(s) descargada(s) desde Airtable`);
+  if(downloaded) console.log(`  · ${downloaded} foto(s) descargada(s) desde Airtable`);
 }
 
 async function main(){
@@ -1106,7 +1119,7 @@ async function main(){
   await mkdir(`${OUT}/bici`,{recursive:true});
   await mkdir(`${OUT}/guias`,{recursive:true});
   await cp('assets/img', `${OUT}/assets/img`, {recursive:true}).catch(e=>console.warn('⚠  assets/img no copiado:', e.message));
-  await downloadBikePhotos(bikes);
+  await resolveBikePhotos(bikes);
   await writeFile(`${OUT}/styles.css`, CSS);
   await writeFile(`${OUT}/index.html`, catalogHTML(bikes));
   await writeFile(`${OUT}/catalogo.html`, catalogoHTML(bikes));
