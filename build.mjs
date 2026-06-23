@@ -2,7 +2,7 @@
 // Lee la vista "Disponibles" y escribe /dist (catálogo + una ficha por bici).
 // El token solo se usa aquí, en build (lado servidor). El sitio público es HTML estático.
 
-import { mkdir, writeFile, rm } from 'node:fs/promises';
+import { mkdir, writeFile, rm, cp } from 'node:fs/promises';
 
 const TOKEN = process.env.AIRTABLE_TOKEN;                         // se crea en Cloudflare (read-only)
 const BASE  = process.env.AIRTABLE_BASE  || 'appQUgk8aeD752923'; // base "Bike Trust · Operaciones"
@@ -42,6 +42,13 @@ function parseSpecs(raw){
 // placeholder de imagen elegante (ícono de bici + textura) mientras no hay fotos
 const BIKEICON = `<svg class="ph-ico" viewBox="0 0 80 50" aria-hidden="true"><circle cx="18" cy="34" r="12"/><circle cx="62" cy="34" r="12"/><path d="M18 34 L37 34 L51 13 L60 34"/><path d="M37 34 L47 13 L33 13"/><path d="M51 13 L47 13"/></svg>`;
 const imgPH = label => `<div class="imgph">${BIKEICON}${label?`<span class="ph-t">${esc(label)}</span>`:''}</div>`;
+// foto de stock por disciplina (tiles del home)
+function discImg(d){
+  const k = String(d).toLowerCase();
+  if(k.includes('ruta') || k.includes('road')) return 'disc-ruta.jpg';
+  if(k.includes('urban')) return 'disc-urbana.jpg';
+  return 'disc-mtb.jpg';
+}
 
 function mapBike(f){
   const motor = f['Motorización']||'';
@@ -259,7 +266,7 @@ a{color:inherit;text-decoration:none}
 /* ---------- landing (home estilo TPC · identidad Bike Trust) ---------- */
 .nav2{position:sticky;top:0;z-index:50;background:var(--blanco);border-bottom:1px solid var(--linea)}
 .nav2 .in{max-width:1180px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:15px 28px}
-.nav2 .links{display:flex;align-items:center;gap:28px}
+.nav2 .links{display:flex;align-items:center;gap:23px}
 .nav2 .links a{font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gris)}
 .nav2 .links a:hover{color:var(--carbon)}
 .navcta{background:var(--carbon);color:#fff;border:0;cursor:pointer;font-family:var(--sans);font-weight:500;letter-spacing:.16em;text-transform:uppercase;font-size:.66rem;padding:11px 18px;transition:background .2s}
@@ -309,14 +316,14 @@ a{color:inherit;text-decoration:none}
 .ctaband h2{font-family:var(--serif);font-weight:500;font-size:clamp(2rem,4.5vw,2.8rem);margin:12px 0 10px}
 .ctaband p{color:#cfc8bd;max-width:46ch;margin:0 auto 26px;line-height:1.6}
 .foot2{background:var(--blanco);border-top:1px solid var(--linea)}
-.foot2 .in{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1.5fr 1fr 1.4fr;gap:30px;padding:46px 28px}
+.foot2 .in{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1.6fr 1fr 1fr 1.3fr;gap:30px;padding:46px 28px}
 .foot2 .ftag{font-size:.82rem;color:var(--gris);margin-top:12px;line-height:1.55;max-width:30ch}
 .foot2 .fcol h4{font-size:.64rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bronce);margin-bottom:14px}
 .foot2 .fcol a,.foot2 .fcol .flink{display:block;font-size:.84rem;color:var(--gris);margin-bottom:9px;background:none;border:0;padding:0;cursor:pointer;font-family:var(--sans);letter-spacing:0;text-transform:none;text-align:left}
 .foot2 .fcol a:hover,.foot2 .fcol .flink:hover{color:var(--carbon)}
 .foot2 .fcontact{font-size:.84rem;color:var(--gris);line-height:1.75}
 .foot2 .legal{border-top:1px solid var(--linea);text-align:center;font-size:.7rem;color:var(--gris);padding:16px 28px}
-@media(max-width:680px){.foot2 .in{grid-template-columns:1fr;gap:26px}}
+@media(max-width:680px){.foot2 .in{grid-template-columns:1fr 1fr;gap:26px}}@media(max-width:430px){.foot2 .in{grid-template-columns:1fr}}
 .cc-hero{background:var(--carbon-true);color:#F3EDE4;text-align:center;padding:82px 28px 70px}
 .cc-hero .eyebrow{font-size:.7rem;letter-spacing:.34em;text-transform:uppercase;color:var(--bronce)}
 .cc-hero h1{font-family:var(--serif);font-weight:500;font-size:clamp(2.6rem,6vw,4rem);margin:16px 0 14px}
@@ -401,6 +408,32 @@ a{color:inherit;text-decoration:none}
 .card .img .imgph{transition:transform .4s}.card:hover .img .imgph{transform:scale(1.03)}
 .card .was{display:block;font-family:var(--sans);font-weight:300;font-size:.76rem;color:var(--gris);text-decoration:line-through;text-decoration-color:var(--bronce);line-height:1;margin-bottom:3px}
 .tile .imgph{transition:transform .5s}.tile:hover .imgph{transform:scale(1.04)}
+/* páginas internas (catálogo, consigna, visítanos, guías) */
+.phead{text-align:center;padding:66px 28px 10px;background:var(--blanco);border-bottom:1px solid var(--linea)}
+.phead .eyebrow{font-size:.7rem;letter-spacing:.32em;text-transform:uppercase;color:var(--bronce)}
+.phead h1{font-family:var(--serif);font-weight:500;font-size:clamp(2.3rem,5.5vw,3.5rem);margin:14px 0 12px}
+.phead p{color:var(--gris);max-width:54ch;margin:0 auto;line-height:1.6}
+.catwrap{max-width:1180px;margin:0 auto;padding:0 28px 10px}
+.info2{max-width:1080px;margin:0 auto;padding:54px 28px 0;display:grid;grid-template-columns:1fr 1fr;gap:34px;align-items:start}
+.info2 .det h3{font-family:var(--serif);font-weight:600;font-size:1.5rem;margin-bottom:16px}
+.info2 .det .irow{display:flex;gap:14px;padding:13px 0;border-bottom:1px solid var(--linea);font-size:.92rem;color:var(--carbon)}
+.info2 .det .irow .k{min-width:90px;font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--bronce);padding-top:3px}
+.info2 .det .irow a{color:var(--carbon);text-decoration:underline;text-underline-offset:2px}
+.info2 .det .icta{margin-top:26px;display:flex;gap:12px;flex-wrap:wrap}
+.mapwrap{border:1px solid var(--linea);overflow:hidden;min-height:360px;background:var(--hueso)}
+.mapwrap iframe{width:100%;height:100%;min-height:360px;border:0;display:block;filter:grayscale(.25)}
+.maplink{display:inline-block;margin-top:12px;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--bronce);border-bottom:1px solid var(--bronce);padding-bottom:2px}
+@media(max-width:720px){.info2{grid-template-columns:1fr}.mapwrap{min-height:260px}}
+.prose{max-width:740px;margin:0 auto;padding:50px 28px 0}
+.prose .back{display:inline-block;margin-bottom:18px;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gris)}
+.prose .lead{font-family:var(--serif);font-style:italic;font-size:clamp(1.2rem,2.6vw,1.5rem);line-height:1.45;color:var(--carbon);margin-bottom:28px}
+.prose h2{font-family:var(--serif);font-weight:600;font-size:1.5rem;margin:30px 0 10px}
+.prose p{line-height:1.75;color:#3a3833;margin-bottom:14px}
+.prose ul{margin:0 0 14px 0;padding-left:20px;color:#3a3833;line-height:1.7}.prose li{margin-bottom:7px}
+/* fotos de stock en espacios decorativos (background-image inline) */
+.hslide .himg,.tile,.promo .pimg,.guide .gimg{background-size:cover;background-position:center;background-repeat:no-repeat}
+.tile.has-img .ph{display:none}
+.tile.has-img .ov{background:linear-gradient(to top,rgba(15,15,15,.82),rgba(15,15,15,.05))}
 `;
 
 const HEAD = t => `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
@@ -412,16 +445,19 @@ const HEAD = t => `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
 const TOPBAR = `<header class="nav2"><div class="in">
   <a class="lock" href="/"><svg class="shield"><use href="#sh"/></svg><span><b>BIKE</b> TRUST</span></a>
   <nav class="links">
-    <a href="/#catalogo">Catálogo</a>
+    <a href="/catalogo.html">Catálogo</a>
     <a href="/como-certificamos.html">Cómo certificamos</a>
+    <a href="/consigna.html">Consigna</a>
+    <a href="/visitanos.html">Visítanos</a>
     <button type="button" class="navcta js-agendar">Agenda tu visita</button>
   </nav>
 </div></header>`;
 const FOOT = `<footer class="foot2"><div class="in">
   <div class="fcol"><a class="lock" href="/"><svg class="shield"><use href="#sh"/></svg><span><b>BIKE</b> TRUST</span></a>
     <p class="ftag">Bicicletas Specialized usadas, certificadas. Santiago, Chile.</p></div>
-  <div class="fcol"><h4>Explora</h4><a href="/#catalogo">Catálogo</a><a href="/como-certificamos.html">Cómo certificamos</a><button type="button" class="flink js-agendar">Agenda tu visita</button></div>
-  <div class="fcol fcontact"><h4>Visítanos</h4>Av. Las Condes 12461, Las Condes<br>Santiago · Chile<br>+56 9 8523 2895<br>biketrust.cl</div>
+  <div class="fcol"><h4>Explora</h4><a href="/catalogo.html">Catálogo</a><a href="/como-certificamos.html">Cómo certificamos</a><a href="/consigna.html">Consigna tu bici</a><button type="button" class="flink js-agendar">Agenda tu visita</button></div>
+  <div class="fcol"><h4>Aprende</h4><a href="/guias/leer-diagnostico.html">Cómo leer el diagnóstico</a><a href="/guias/electrica-o-muscular.html">Eléctrica o muscular</a><a href="/guias/estado-honesto.html">Qué es el estado honesto</a></div>
+  <div class="fcol fcontact"><h4>Visítanos</h4><a href="/visitanos.html">Av. Las Condes 12461, Las Condes</a><br>Santiago · Chile<br>+56 9 8523 2895<br>biketrust.cl</div>
 </div><div class="legal">© Bike Trust · Specialized usadas certificadas</div></footer></body></html>`;
 const FOOT_OPEN = FOOT.replace('</body></html>','');
 
@@ -668,10 +704,45 @@ const HOME_JS = String.raw`(function(){
     [].forEach.call(cards,function(card){ card.style.display=(f==='*'||card.getAttribute('data-disc')===f)?'':'none'; });
   }
   [].forEach.call(chips,function(c){ c.addEventListener('click',function(){ filtrar(c.getAttribute('data-f')); }); });
-  [].forEach.call(document.querySelectorAll('.tile'),function(t){
-    t.addEventListener('click',function(e){ e.preventDefault(); filtrar(t.getAttribute('data-f'));
-      var cat=document.getElementById('catalogo'); if(cat) cat.scrollIntoView({behavior:'smooth'}); });
-  });
+})();`;
+
+// Guías (contenido educativo). Alimenta las cards del home y las páginas /guias/*.
+const GUIAS = [
+  { slug:'leer-diagnostico', titulo:'Cómo leer el diagnóstico de una e-bike usada', img:'workshop.jpg',
+    resumen:'Qué significan los kilómetros del motor, la salud de la batería y los ciclos en una e-bike usada.',
+    lead:'En una bici eléctrica usada, los números importan más que las palabras. Esto es lo que medimos en cada unidad y cómo interpretarlo.',
+    cuerpo:[
+      ['Kilómetros del motor','Es el equivalente al odómetro de la e-bike: cuántos kilómetros ha entregado asistencia el motor. Un sistema Specialized está pensado para decenas de miles de kilómetros, así que cifras de pocos miles son señal de una bici con mucha vida por delante.'],
+      ['Salud de la batería','Se mide como un porcentaje sobre la capacidad original (100% = batería nueva). Las baterías pierden capacidad con el uso y el tiempo; sobre 80% es excelente para una usada. Te mostramos el dato tal cual lo arroja el escaneo, sin redondear hacia arriba.'],
+      ['Ciclos de carga','Un ciclo equivale a una carga completa, de 0 a 100%. Las baterías modernas conservan buena salud durante varios cientos de ciclos, así que pocos ciclos significan una batería joven.'],
+      ['Por qué lo medimos','A simple vista, una e-bike usada se ve igual de bien con 500 o con 15.000 km. El diagnóstico digital es la única forma honesta de conocer su estado real, y por eso lo publicamos en cada ficha.']
+    ]},
+  { slug:'electrica-o-muscular', titulo:'Eléctrica o muscular: cómo elegir', img:'disc-mtb.jpg',
+    resumen:'Cómo decidir entre una e-bike y una bici tradicional según tu uso, tu ruta y tu presupuesto.',
+    lead:'¿Te conviene una eléctrica o una muscular? Depende de tu ruta, tu cuerpo y lo que buscas. Te ayudamos a decidir.',
+    cuerpo:[
+      ['Para qué es cada una','La eléctrica te da asistencia del motor: subes más fácil, llegas más lejos y sin terminar agotado. La muscular es más liviana, más simple y más económica, y premia el pedaleo.'],
+      ['Tu ruta y tu uso','Si subes mucho, recorres distancias largas o quieres llegar sin transpirar, la e-bike gana. Si buscas entrenamiento, ligereza y simpleza mecánica, la muscular es tu bici.'],
+      ['Presupuesto y mantención','Las eléctricas cuestan más y suman el motor y la batería a la mantención. Las musculares son más baratas de comprar y de mantener en el tiempo.'],
+      ['Nuestra recomendación','No hay respuesta única. Cuéntanos tu uso al agendar tu visita y te mostramos, en persona, las opciones que de verdad calzan contigo.']
+    ]},
+  { slug:'estado-honesto', titulo:'Qué es el «estado honesto»', img:'disc-ruta.jpg',
+    resumen:'Por qué declaramos cada rayón y detalle real de la bici antes de que compres.',
+    lead:'El «estado honesto» es nuestra forma de declarar los defectos reales de cada bici, de frente, antes de que la compres.',
+    cuerpo:[
+      ['Qué declaramos','Cada rayón, marca, desgaste de transmisión o detalle cosmético real de esa unidad específica. No de «el modelo» en general, sino de la bici exacta que te llevas.'],
+      ['Por qué lo hacemos','Comprar usado a ciegas es la mayor fuente de desconfianza. Si lo sabes antes, no hay sorpresas después: esa es la base de comprar tranquilo.'],
+      ['Cómo lo verás','En cada ficha encontrarás una sección «Estado honesto» con las notas del mecánico. Lo bueno y lo no tan bueno, sin letra chica.']
+    ]}
+];
+
+// filtro de la página de catálogo (chips + parámetro ?d=)
+const CATALOG_JS = String.raw`(function(){
+  var chips=document.querySelectorAll('.chip'), cards=document.querySelectorAll('#catalogo .card');
+  function filtrar(f){ [].forEach.call(chips,function(x){ x.classList.toggle('on', x.getAttribute('data-f')===f); });
+    [].forEach.call(cards,function(c){ c.style.display=(f==='*'||c.getAttribute('data-disc')===f)?'':'none'; }); }
+  [].forEach.call(chips,function(c){ c.addEventListener('click',function(){ filtrar(c.getAttribute('data-f')); }); });
+  try{ var d=new URLSearchParams(location.search).get('d'); if(d) filtrar(d); }catch(e){}
 })();`;
 
 function catalogHTML(bikes){
@@ -684,32 +755,27 @@ function catalogHTML(bikes){
     : `<div class="empty">Pronto, bicis certificadas disponibles.</div>`;
   const ebikes = bikes.filter(b=>b.electrica);
   const SHIELD = `<svg viewBox="0 0 32 36" aria-hidden="true"><path d="M4 6 Q4 3 7 3 H25 Q28 3 28 6 V20 Q28 23.5 25.4 25.2 L16 32 L6.6 25.2 Q4 23.5 4 20 Z"/></svg>`;
-  const slide = (eb,h2,p,cta,ph)=>`<div class="hslide"><div class="htext"><div class="eyebrow">${esc(eb)}</div><h2>${esc(h2)}</h2><p>${esc(p)}</p>${cta}</div><div class="himg">${SHIELD}<div class="ph">${esc(ph)}</div></div></div>`;
+  const slide = (eb,h2,p,cta,img)=>`<div class="hslide"><div class="htext"><div class="eyebrow">${esc(eb)}</div><h2>${esc(h2)}</h2><p>${esc(p)}</p>${cta}</div><div class="himg" style="background-image:url('/assets/img/${img}')"></div></div>`;
   const hero = `<section class="hcar"><div class="hcar-track">
-    ${slide('Specialized usadas · certificadas','Confianza sobre dos ruedas','Bicicletas Specialized de segunda mano, inspeccionadas por mecánicos expertos. Compra usado con la tranquilidad de lo nuevo.',`<a class="btn-primary" style="background:var(--bronce-deep)" href="#catalogo">Ver catálogo</a>`,'Foto destacada · bici héroe')}
-    ${slide('Nuestro estándar','Cada bici, certificada','Inspección mecánica, diagnóstico digital real y estado honesto declarado de frente.',`<a class="btn-ghost light" href="/como-certificamos.html">Cómo certificamos</a>`,'Taller · proceso de certificación')}
-    ${slide('Visítanos en Santiago','Ven a verla en persona','Agenda una visita y te dejamos la bici preparada para que la veas y la pruebes.',`<button type="button" class="btn-primary js-agendar" style="background:var(--bronce-deep)">Agenda tu visita</button>`,'Tienda · Las Condes, Santiago')}
+    ${slide('Specialized usadas · certificadas','Confianza sobre dos ruedas','Bicicletas Specialized de segunda mano, inspeccionadas por mecánicos expertos. Compra usado con la tranquilidad de lo nuevo.',`<a class="btn-primary" style="background:var(--bronce-deep)" href="/catalogo.html">Ver catálogo</a>`,'hero-trail.jpg')}
+    ${slide('Nuestro estándar','Cada bici, certificada','Inspección mecánica, diagnóstico digital real y estado honesto declarado de frente.',`<a class="btn-ghost light" href="/como-certificamos.html">Cómo certificamos</a>`,'workshop.jpg')}
+    ${slide('Visítanos en Santiago','Ven a verla en persona','Agenda una visita y te dejamos la bici preparada para que la veas y la pruebes.',`<button type="button" class="btn-primary js-agendar" style="background:var(--bronce-deep)">Agenda tu visita</button>`,'hero-city.jpg')}
   </div><button type="button" class="hprev" aria-label="Anterior">‹</button><button type="button" class="hnext" aria-label="Siguiente">›</button>
   <div class="hdots">${[0,1,2].map((_,i)=>`<button type="button" class="hdot${i===0?' on':''}" aria-label="Slide ${i+1}"></button>`).join('')}</div></section>`;
   const tiles = discs.length ? `<section style="padding-top:0">
     <div class="sec-head"><div class="eyebrow">Explora</div><h2>Por disciplina</h2></div>
-    <div class="tiles">${discs.slice(0,3).map(d=>`<a class="tile" data-f="${esc(d)}" href="#catalogo">${imgPH('')}<div class="ov"><h3>${esc(d)}</h3><span>Ver</span></div></a>`).join('')}</div>
+    <div class="tiles">${discs.slice(0,3).map(d=>`<a class="tile has-img" style="background-image:url('/assets/img/${discImg(d)}')" href="/catalogo.html?d=${encodeURIComponent(d)}"><div class="ov"><h3>${esc(d)}</h3><span>Ver</span></div></a>`).join('')}</div>
   </section>` : '';
   const ebikesSec = ebikes.length>=2 ? `<section>
     <div class="sec-head"><div class="eyebrow">Con motor</div><h2>E-bikes certificadas</h2><p>Con diagnóstico digital de motor y batería: datos reales de cada unidad.</p></div>
     ${carousel(ebikes.map(cardHTML).join(''))}
   </section>` : '';
-  const GUIDES = [
-    ['Cómo leer el diagnóstico','Qué significan los kilómetros del motor, la salud de la batería y los ciclos en una e-bike usada.'],
-    ['Eléctrica o muscular','Cómo elegir entre una e-bike y una bici tradicional según tu uso, tu ruta y tu presupuesto.'],
-    ['Qué es el estado honesto','Por qué declaramos cada rayón y detalle real antes de que compres. La confianza parte por ahí.']
-  ];
-  const guides = GUIDES.map(g=>`<div class="guide"><div class="gimg">${imgPH('Guía')}</div><div class="gbody"><div class="glabel">Guía</div><h3>${esc(g[0])}</h3><p>${esc(g[1])}</p><a href="/como-certificamos.html">Leer más</a></div></div>`).join('');
+  const guides = GUIAS.map(g=>`<div class="guide"><div class="gimg" style="background-image:url('/assets/img/${g.img}')"></div><div class="gbody"><div class="glabel">Guía</div><h3>${esc(g.titulo)}</h3><p>${esc(g.resumen)}</p><a href="/guias/${esc(g.slug)}.html">Leer más</a></div></div>`).join('');
   return HEAD('Bike Trust · Specialized usadas certificadas') +
   `<div class="annbar"><b>Specialized usadas certificadas</b> · Visítanos en Las Condes, Santiago <button type="button" class="ab-link js-agendar">Agenda tu visita</button></div>` +
   TOPBAR + hero + `
   <section id="catalogo">
-    <div class="sec-head"><div class="eyebrow">El catálogo</div><h2>Nuestras bicis</h2><p>Cada una, certificada por Bike Trust y lista para rodar.</p></div>
+    <div class="sec-head"><div class="eyebrow">El catálogo</div><h2>Nuestras bicis</h2><p>Cada una, certificada por Bike Trust y lista para rodar.</p><a class="viewall" href="/catalogo.html">Ver todas las bicis</a></div>
     ${chips}
     ${catalogo}
   </section>
@@ -717,11 +783,11 @@ function catalogHTML(bikes){
     <div class="eyebrow">Bike Trust</div>
     <h2>La forma confiable de comprar usado</h2>
     <p>Nos especializamos en bicicletas Specialized de segunda mano. Cada una pasa por nuestro taller, se mide con datos reales y se entrega con su estado honesto declarado. Así compras usado sin apostar.</p>
-    <div class="ctas"><a class="btn-primary" href="/como-certificamos.html">Cómo certificamos</a><a class="btn-ghost" href="#catalogo">Ver catálogo</a></div>
+    <div class="ctas"><a class="btn-primary" href="/como-certificamos.html">Cómo certificamos</a><a class="btn-ghost" href="/catalogo.html">Ver catálogo</a></div>
   </section>
   ${tiles}
   <div class="promo"><div class="in">
-    <div class="pimg">${imgPH('Consignación')}</div>
+    <div class="pimg" style="background-image:url('/assets/img/workshop.jpg')"></div>
     <div class="ptxt"><div class="eyebrow">Vende con nosotros</div><h2>¿Tienes una Specialized para vender?</h2><p>Déjala en consignación en Bike Trust. La certificamos, la publicamos y la vendemos por ti, con la confianza que nuestra marca le da a cada bici.</p><a class="btn-primary" href="https://wa.me/56985232895?text=Hola!%20Quiero%20consignar%20mi%20Specialized." target="_blank" rel="noopener">Conversemos</a></div>
   </div></div>
   ${ebikesSec}
@@ -754,7 +820,7 @@ function catalogHTML(bikes){
 function comoCertificamosHTML(bikes){
   const checkDiag = '<div>Diagnóstico digital de motor y batería (e-bikes)</div>';
   return HEAD('Cómo certificamos · Bike Trust') + TOPBAR + `
-  <section class="cc-hero">
+  <section class="cc-hero" style="background-image:linear-gradient(rgba(5,5,5,.74),rgba(5,5,5,.74)),url('/assets/img/workshop.jpg');background-size:cover;background-position:center">
     <div class="eyebrow">El estándar Bike Trust</div>
     <h1>Cómo certificamos</h1>
     <p>Comprar una bici usada no debería ser una apuesta. Por eso cada Specialized que vendemos pasa por un proceso que elimina la incertidumbre.</p>
@@ -780,6 +846,70 @@ function comoCertificamosHTML(bikes){
   </section>` + FOOT_OPEN + reservaModal(bikes) + '</body></html>';
 }
 
+/* ---------- página: catálogo completo ---------- */
+function catalogoHTML(bikes){
+  const discs = [...new Set(bikes.map(b=>b.disciplina).filter(Boolean))];
+  const chips = discs.length>1
+    ? `<div class="filters"><button class="chip on" data-f="*">Todas</button>${discs.map(d=>`<button class="chip" data-f="${esc(d)}">${esc(d)}</button>`).join('')}</div>` : '';
+  const grid = bikes.length
+    ? `<div class="grid">${bikes.map(cardHTML).join('')}</div>`
+    : `<div class="empty">Pronto, bicis certificadas disponibles.</div>`;
+  return HEAD('Catálogo · Bike Trust') + TOPBAR + `
+  <div class="phead"><div class="eyebrow">El catálogo</div><h1>Todas nuestras bicis</h1><p>Specialized usadas, certificadas por Bike Trust. Filtra por disciplina y agenda tu visita.</p></div>
+  <div id="catalogo" class="catwrap">${chips}${grid}</div>
+  <div style="height:40px"></div>` + FOOT_OPEN + reservaModal(bikes) + `<script>${CATALOG_JS}</script></body></html>`;
+}
+
+/* ---------- página: consigna ---------- */
+function consignaHTML(bikes){
+  return HEAD('Consigna tu Specialized · Bike Trust') + TOPBAR + `
+  <section class="cc-hero" style="background-image:linear-gradient(rgba(5,5,5,.74),rgba(5,5,5,.74)),url('/assets/img/workshop.jpg');background-size:cover;background-position:center"><div class="eyebrow">Vende con nosotros</div><h1>Consigna tu Specialized</h1><p>Deja tu bici en manos de Bike Trust. La certificamos, la mostramos a compradores que confían en nuestra marca y la vendemos por ti.</p></section>
+  <div class="cc-intro"><p>«Tú nos confías la bici; nosotros ponemos la certificación, la vitrina y los compradores.»</p></div>
+  <div class="cc-steps">
+    <div class="cc-step"><div class="n">01 · Conversamos</div><h3>Cuéntanos qué tienes</h3><p>Escríbenos por WhatsApp con el modelo, el año y el estado de tu Specialized. Te decimos si calza con lo que buscan nuestros compradores y un rango de precio realista.</p></div>
+    <div class="cc-step"><div class="n">02 · Certificamos</div><h3>Pasa por el taller</h3><p>La inspeccionamos, la afinamos y —si es eléctrica— le hacemos el diagnóstico digital. Queda lista y con su estado honesto declarado.</p></div>
+    <div class="cc-step"><div class="n">03 · Publicamos y mostramos</div><h3>La vitrina de Bike Trust</h3><p>La sumamos al catálogo y la mostramos a una audiencia que ya confía en nuestra certificación. Tú no lidias con compradores ni con visitas.</p></div>
+    <div class="cc-step"><div class="n">04 · Se vende, te pagamos</div><h3>Tu parte, sin complicaciones</h3><p>Cuando se vende, te transferimos lo acordado. <span style="color:var(--bronce)">[ Comisión y condiciones — por confirmar ]</span></p></div>
+  </div>
+  <section class="ctaband"><div class="eyebrow">Empieza hoy</div><h2>¿Tienes una Specialized para vender?</h2><p>Cuéntanos qué tienes y te damos una orientación de precio, sin compromiso.</p><a class="btn-primary" href="https://wa.me/56985232895?text=Hola!%20Quiero%20consignar%20mi%20Specialized." target="_blank" rel="noopener">Conversemos por WhatsApp</a></section>` + FOOT_OPEN + reservaModal(bikes) + '</body></html>';
+}
+
+/* ---------- página: visítanos / contacto ---------- */
+function visitanosHTML(bikes){
+  const dir = 'Av. Las Condes 12461, Las Condes, Santiago';
+  const mapsQ = `https://www.google.com/maps?q=${encodeURIComponent(dir)}`;
+  const mapEmbed = `https://maps.google.com/maps?q=${encodeURIComponent(dir)}&z=15&output=embed`;
+  return HEAD('Visítanos · Bike Trust') + TOPBAR + `
+  <div class="phead"><div class="eyebrow">Estamos en Santiago</div><h1>Visítanos</h1><p>Ven a ver y probar tu próxima Specialized. Si agendas tu visita, te recibimos con la bici preparada.</p></div>
+  <div class="info2">
+    <div class="det">
+      <h3>La tienda</h3>
+      <div class="irow"><span class="k">Dirección</span><span><a href="${mapsQ}" target="_blank" rel="noopener">${esc(dir)}</a></span></div>
+      <div class="irow"><span class="k">Horario</span><span>Lunes a viernes · 10:00–19:00<br>Sábado · 10:00–14:00<br><span style="color:var(--bronce)">[ horario por confirmar ]</span></span></div>
+      <div class="irow"><span class="k">Teléfono</span><span><a href="tel:+56985232895">+56 9 8523 2895</a></span></div>
+      <div class="irow"><span class="k">WhatsApp</span><span><a href="https://wa.me/56985232895" target="_blank" rel="noopener">Escríbenos por WhatsApp</a></span></div>
+      <div class="irow"><span class="k">Web</span><span>biketrust.cl</span></div>
+      <div class="icta"><button type="button" class="btn-primary js-agendar">Agenda tu visita</button><a class="btn-ghost" href="/catalogo.html">Ver catálogo</a></div>
+    </div>
+    <div><div class="mapwrap"><iframe src="${mapEmbed}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Mapa · Bike Trust"></iframe></div>
+      <a class="maplink" href="${mapsQ}" target="_blank" rel="noopener">Cómo llegar · abrir en Google Maps →</a></div>
+  </div>
+  <div style="height:48px"></div>` + FOOT_OPEN + reservaModal(bikes) + '</body></html>';
+}
+
+/* ---------- página: guía ---------- */
+function guiaHTML(g, bikes){
+  const secs = g.cuerpo.map(s=>`<h2>${esc(s[0])}</h2><p>${esc(s[1])}</p>`).join('');
+  return HEAD(`${g.titulo} · Bike Trust`) + TOPBAR + `
+  <section class="cc-hero" style="background-image:linear-gradient(rgba(5,5,5,.76),rgba(5,5,5,.76)),url('/assets/img/${g.img}');background-size:cover;background-position:center"><div class="eyebrow">Guía Bike Trust</div><h1>${esc(g.titulo)}</h1></section>
+  <article class="prose">
+    <a class="back" href="/">← Volver al inicio</a>
+    <p class="lead">${esc(g.lead)}</p>
+    ${secs}
+  </article>
+  <section class="ctaband"><div class="eyebrow">¿Listo para elegir?</div><h2>Agenda tu visita</h2><p>Ven a ver y probar la bici que te interesa. Te asesoramos sin compromiso.</p><div class="ctas" style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap"><button type="button" class="btn-primary js-agendar">Agenda tu visita</button><a class="btn-ghost light" href="/catalogo.html">Ver catálogo</a></div></section>` + FOOT_OPEN + reservaModal(bikes) + '</body></html>';
+}
+
 /* ---------- build ---------- */
 // Asigna un slug único a cada bici. Sin colisión, la URL queda estable
 // (modelo-talla); si dos comparten modelo+talla, se desambigua con -2, -3, …
@@ -802,12 +932,20 @@ async function main(){
   if(reservadas.size) console.log(`  · ${reservadas.size} modelo(s) con visita agendada`);
   await rm(OUT,{recursive:true,force:true});
   await mkdir(`${OUT}/bici`,{recursive:true});
+  await mkdir(`${OUT}/guias`,{recursive:true});
+  await cp('assets/img', `${OUT}/assets/img`, {recursive:true}).catch(e=>console.warn('⚠  assets/img no copiado:', e.message));
   await writeFile(`${OUT}/styles.css`, CSS);
   await writeFile(`${OUT}/index.html`, catalogHTML(bikes));
+  await writeFile(`${OUT}/catalogo.html`, catalogoHTML(bikes));
   await writeFile(`${OUT}/como-certificamos.html`, comoCertificamosHTML(bikes));
+  await writeFile(`${OUT}/consigna.html`, consignaHTML(bikes));
+  await writeFile(`${OUT}/visitanos.html`, visitanosHTML(bikes));
+  for(const g of GUIAS){
+    await writeFile(`${OUT}/guias/${g.slug}.html`, guiaHTML(g, bikes));
+  }
   for(const b of bikes){
     await writeFile(`${OUT}/bici/${b.slug}.html`, fichaHTML(b, bikes));
   }
-  console.log(`✓ ${bikes.length} bici(s) · sitio generado en /${OUT}`);
+  console.log(`✓ ${bikes.length} bici(s) · ${4+GUIAS.length} páginas + fichas · sitio en /${OUT}`);
 }
 main().catch(e=>{ console.error(e); process.exit(1); });
