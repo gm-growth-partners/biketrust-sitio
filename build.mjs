@@ -39,6 +39,10 @@ function parseSpecs(raw){
   return groups;
 }
 
+// placeholder de imagen elegante (ícono de bici + textura) mientras no hay fotos
+const BIKEICON = `<svg class="ph-ico" viewBox="0 0 80 50" aria-hidden="true"><circle cx="18" cy="34" r="12"/><circle cx="62" cy="34" r="12"/><path d="M18 34 L37 34 L51 13 L60 34"/><path d="M37 34 L47 13 L33 13"/><path d="M51 13 L47 13"/></svg>`;
+const imgPH = label => `<div class="imgph">${BIKEICON}${label?`<span class="ph-t">${esc(label)}</span>`:''}</div>`;
+
 function mapBike(f){
   const motor = f['Motorización']||'';
   return {
@@ -388,6 +392,15 @@ a{color:inherit;text-decoration:none}
 .trustband .mini{display:flex;gap:46px;justify-content:center;flex-wrap:wrap;margin-top:36px}
 .trustband .mini div{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:#cfc8bd}
 .trustband .mini b{display:block;font-family:var(--serif);font-size:1.55rem;color:var(--bronce);letter-spacing:0;text-transform:none;margin-bottom:4px}
+/* placeholders de imagen elegantes (mientras no hay fotos) */
+.imgph{position:absolute;inset:0;background:var(--hueso);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px;overflow:hidden}
+.imgph::before{content:"";position:absolute;inset:0;background-image:repeating-linear-gradient(45deg,rgba(168,132,84,.06) 0 1px,transparent 1px 13px)}
+.imgph .ph-ico{position:relative;width:60px;height:auto;opacity:.42}
+.imgph .ph-ico circle,.imgph .ph-ico path{fill:none;stroke:var(--bronce);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.imgph .ph-t{position:relative;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bronce);opacity:.78}
+.card .img .imgph{transition:transform .4s}.card:hover .img .imgph{transform:scale(1.03)}
+.card .was{display:block;font-family:var(--sans);font-weight:300;font-size:.76rem;color:var(--gris);text-decoration:line-through;text-decoration-color:var(--bronce);line-height:1;margin-bottom:3px}
+.tile .imgph{transition:transform .5s}.tile:hover .imgph{transform:scale(1.04)}
 `;
 
 const HEAD = t => `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
@@ -614,13 +627,16 @@ ${FOOT_OPEN}${reservaModal(bikes)}</body></html>`;
 /* ---------- catálogo ---------- */
 function cardHTML(b){
   const url=`/bici/${b.slug}.html`;
-  const img = b.fotos[0] ? `<img src="${esc(b.fotos[0])}" alt="${esc(b.modelo)}">` : `<div class="ph">Foto pendiente</div>`;
+  const img = b.fotos[0] ? `<img src="${esc(b.fotos[0])}" alt="${esc(b.modelo)}">` : imgPH('Foto pendiente');
   const tag = b.reservada ? `<div class="resv-tag">Reservada</div>` : '';
+  const precio = b.precio!=null
+    ? `${b.precioNuevo&&b.precioNuevo>b.precio?`<span class="was">${clp(b.precioNuevo)}</span>`:''}${clp(b.precio)}`
+    : 'Consultar';
   return `<a class="card" href="${url}" data-disc="${esc(b.disciplina)}"><div class="img">${tag}${img}</div><div class="body">
     <div class="disc">${esc(b.disciplina)}${b.talla?' · Talla '+esc(b.talla):''}</div>
     <h3>${esc(b.modelo)}</h3>
     <div class="meta">${esc(b.marca)}${b.anio?' · '+esc(b.anio):''}</div>
-    <div class="foot"><div class="price">${b.precio!=null?clp(b.precio):'Consultar'}</div>
+    <div class="foot"><div class="price">${precio}</div>
       <div class="badge"><svg class="shield" style="width:14px;height:16px"><use href="#sh"/></svg>Certificada</div></div>
   </div></a>`;
 }
@@ -677,7 +693,7 @@ function catalogHTML(bikes){
   <div class="hdots">${[0,1,2].map((_,i)=>`<button type="button" class="hdot${i===0?' on':''}" aria-label="Slide ${i+1}"></button>`).join('')}</div></section>`;
   const tiles = discs.length ? `<section style="padding-top:0">
     <div class="sec-head"><div class="eyebrow">Explora</div><h2>Por disciplina</h2></div>
-    <div class="tiles">${discs.slice(0,3).map(d=>`<a class="tile" data-f="${esc(d)}" href="#catalogo"><div class="ph">Foto ${esc(d)}</div><div class="ov"><h3>${esc(d)}</h3><span>Ver</span></div></a>`).join('')}</div>
+    <div class="tiles">${discs.slice(0,3).map(d=>`<a class="tile" data-f="${esc(d)}" href="#catalogo">${imgPH('')}<div class="ov"><h3>${esc(d)}</h3><span>Ver</span></div></a>`).join('')}</div>
   </section>` : '';
   const ebikesSec = ebikes.length>=2 ? `<section>
     <div class="sec-head"><div class="eyebrow">Con motor</div><h2>E-bikes certificadas</h2><p>Con diagnóstico digital de motor y batería: datos reales de cada unidad.</p></div>
@@ -688,7 +704,7 @@ function catalogHTML(bikes){
     ['Eléctrica o muscular','Cómo elegir entre una e-bike y una bici tradicional según tu uso, tu ruta y tu presupuesto.'],
     ['Qué es el estado honesto','Por qué declaramos cada rayón y detalle real antes de que compres. La confianza parte por ahí.']
   ];
-  const guides = GUIDES.map(g=>`<div class="guide"><div class="gimg">Foto guía</div><div class="gbody"><div class="glabel">Guía</div><h3>${esc(g[0])}</h3><p>${esc(g[1])}</p><a href="/como-certificamos.html">Leer más</a></div></div>`).join('');
+  const guides = GUIDES.map(g=>`<div class="guide"><div class="gimg">${imgPH('Guía')}</div><div class="gbody"><div class="glabel">Guía</div><h3>${esc(g[0])}</h3><p>${esc(g[1])}</p><a href="/como-certificamos.html">Leer más</a></div></div>`).join('');
   return HEAD('Bike Trust · Specialized usadas certificadas') +
   `<div class="annbar"><b>Specialized usadas certificadas</b> · Visítanos en Las Condes, Santiago <button type="button" class="ab-link js-agendar">Agenda tu visita</button></div>` +
   TOPBAR + hero + `
@@ -705,7 +721,7 @@ function catalogHTML(bikes){
   </section>
   ${tiles}
   <div class="promo"><div class="in">
-    <div class="pimg">Foto · consignación</div>
+    <div class="pimg">${imgPH('Consignación')}</div>
     <div class="ptxt"><div class="eyebrow">Vende con nosotros</div><h2>¿Tienes una Specialized para vender?</h2><p>Déjala en consignación en Bike Trust. La certificamos, la publicamos y la vendemos por ti, con la confianza que nuestra marca le da a cada bici.</p><a class="btn-primary" href="https://wa.me/56985232895?text=Hola!%20Quiero%20consignar%20mi%20Specialized." target="_blank" rel="noopener">Conversemos</a></div>
   </div></div>
   ${ebikesSec}
