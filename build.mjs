@@ -325,6 +325,69 @@ a{color:inherit;text-decoration:none}
 .cc-step h3{font-family:var(--serif);font-weight:600;font-size:1.5rem;margin:6px 0 10px}
 .cc-step p{font-size:.92rem;color:var(--gris);line-height:1.6}
 @media(max-width:680px){.cc-steps{grid-template-columns:1fr}}
+/* ===== home réplica estructural de The Pro's Closet (branding Bike Trust) ===== */
+.annbar{background:var(--carbon-true);color:#F3EDE4;text-align:center;font-size:.72rem;letter-spacing:.05em;padding:10px 16px}
+.annbar b{color:var(--bronce);font-weight:500}
+.annbar .ab-link{color:#fff;text-decoration:underline;text-underline-offset:2px;margin-left:10px;cursor:pointer;background:none;border:0;font:inherit;letter-spacing:inherit}
+.hcar{position:relative;overflow:hidden;background:var(--carbon-true);border-bottom:1px solid var(--linea)}
+.hcar-track{display:flex;transition:transform .55s cubic-bezier(.5,0,.2,1)}
+.hslide{min-width:100%;display:grid;grid-template-columns:1fr 1fr}
+.hslide .htext{padding:76px 8% 76px max(28px,6%);color:#F3EDE4;display:flex;flex-direction:column;justify-content:center;align-items:flex-start}
+.hslide .eyebrow{font-size:.7rem;letter-spacing:.32em;text-transform:uppercase;color:var(--bronce)}
+.hslide h2{font-family:var(--serif);font-weight:500;font-size:clamp(2.2rem,4vw,3.5rem);line-height:1.06;margin:14px 0}
+.hslide p{color:#cfc8bd;line-height:1.6;max-width:40ch;margin-bottom:28px}
+.hslide .himg{position:relative;background:var(--hueso);overflow:hidden;min-height:480px;display:flex;align-items:center;justify-content:center}
+.hslide .himg .ph{position:absolute;bottom:14px;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bronce);opacity:.8}
+.hslide .himg svg{width:170px;height:auto;opacity:.13}.hslide .himg svg path{fill:var(--bronce);stroke:none}
+.hprev,.hnext{position:absolute;top:50%;transform:translateY(-50%);z-index:3;background:rgba(255,255,255,.92);border:0;width:42px;height:42px;border-radius:50%;cursor:pointer;font-size:1.1rem;color:var(--carbon);display:flex;align-items:center;justify-content:center}
+.hprev{left:16px}.hnext{right:16px}.hprev:hover,.hnext:hover{background:#fff}
+.hdots{position:absolute;bottom:18px;left:0;right:0;display:flex;gap:8px;justify-content:center;z-index:3}
+.hdot{width:8px;height:8px;border-radius:50%;border:0;background:rgba(255,255,255,.4);cursor:pointer;padding:0}.hdot.on{background:var(--bronce)}
+@media(max-width:760px){.hslide{grid-template-columns:1fr}.hslide .himg{min-height:230px;order:-1}.hslide .htext{padding:46px 28px}.hslide .himg svg{width:120px}}
+.pcar{position:relative;max-width:1180px;margin:0 auto;padding:0 28px}
+.pcar-track{display:flex;gap:22px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;padding:6px 2px 12px;-ms-overflow-style:none;scrollbar-width:none}
+.pcar-track::-webkit-scrollbar{display:none}
+.pcar-track .card{min-width:286px;max-width:300px;scroll-snap-align:start}
+.pcar-arrow{position:absolute;top:42%;z-index:4;background:var(--blanco);border:1px solid var(--linea);width:42px;height:42px;border-radius:50%;cursor:pointer;font-size:1.1rem;color:var(--carbon);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(15,15,15,.1)}
+.pcar-arrow.prev{left:4px}.pcar-arrow.next{right:4px}.pcar-arrow:hover{border-color:var(--bronce);color:var(--bronce-deep)}
+@media(max-width:620px){.pcar-arrow{display:none}}
+.viewall{display:inline-block;margin-top:14px;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--bronce);border-bottom:1px solid var(--bronce);padding-bottom:2px}
+.brandstory{background:var(--blanco);border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);text-align:center;padding:82px 28px;margin-top:72px}
+.brandstory .eyebrow{font-size:.7rem;letter-spacing:.32em;text-transform:uppercase;color:var(--bronce)}
+.brandstory h2{font-family:var(--serif);font-weight:500;font-size:clamp(2.2rem,5vw,3.2rem);margin:14px 0 16px}
+.brandstory p{color:var(--gris);max-width:56ch;margin:0 auto;line-height:1.7;font-size:1.02rem}
+.brandstory .ctas{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:30px}
+.tiles{max-width:1180px;margin:0 auto;padding:34px 28px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.tile{position:relative;aspect-ratio:4/3;border:1px solid var(--linea);background:var(--hueso);overflow:hidden;cursor:pointer;display:flex;align-items:flex-end}
+.tile .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bronce);opacity:.65}
+.tile .ov{position:relative;width:100%;padding:18px 20px;background:linear-gradient(to top,rgba(15,15,15,.72),rgba(15,15,15,0));color:#fff;display:flex;align-items:flex-end;justify-content:space-between}
+.tile .ov h3{font-family:var(--serif);font-weight:600;font-size:1.45rem}
+.tile .ov span{font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:#fff;border-bottom:1px solid var(--bronce);padding-bottom:2px}
+.tile:hover{border-color:var(--bronce)}
+@media(max-width:680px){.tiles{grid-template-columns:1fr 1fr}}@media(max-width:440px){.tiles{grid-template-columns:1fr}}
+.promo{max-width:1180px;margin:72px auto 0;padding:0 28px}
+.promo .in{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--linea);background:var(--hueso)}
+.promo .pimg{position:relative;min-height:300px;display:flex;align-items:center;justify-content:center;border-right:1px solid var(--linea);font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bronce);opacity:.8}
+.promo .ptxt{padding:48px 44px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start}
+.promo .eyebrow{font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--bronce)}
+.promo h2{font-family:var(--serif);font-weight:500;font-size:clamp(1.8rem,3.5vw,2.4rem);margin:12px 0 14px}
+.promo p{color:var(--gris);line-height:1.65;margin-bottom:24px}
+@media(max-width:720px){.promo .in{grid-template-columns:1fr}.promo .pimg{border-right:0;border-bottom:1px solid var(--linea);min-height:190px}}
+.guides{max-width:1180px;margin:0 auto;padding:34px 28px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.guide{border:1px solid var(--linea);background:var(--blanco);display:flex;flex-direction:column}
+.guide .gimg{position:relative;height:168px;background:var(--hueso);display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--linea);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bronce);opacity:.8}
+.guide .gbody{padding:22px 24px 24px;flex:1;display:flex;flex-direction:column;align-items:flex-start}
+.guide .glabel{font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bronce)}
+.guide h3{font-family:var(--serif);font-weight:600;font-size:1.4rem;margin:6px 0 10px}
+.guide p{font-size:.88rem;color:var(--gris);line-height:1.55;margin-bottom:16px;flex:1}
+.guide a{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--carbon);border-bottom:1px solid var(--bronce);padding-bottom:2px}
+@media(max-width:760px){.guides{grid-template-columns:1fr}}
+.trustband{background:var(--carbon-true);color:#F3EDE4;text-align:center;padding:76px 28px;margin-top:72px}
+.trustband .eyebrow{font-size:.7rem;letter-spacing:.32em;text-transform:uppercase;color:var(--bronce)}
+.trustband h2{font-family:var(--serif);font-weight:500;font-size:clamp(1.9rem,4vw,2.7rem);max-width:26ch;margin:14px auto 0;line-height:1.22}
+.trustband .mini{display:flex;gap:46px;justify-content:center;flex-wrap:wrap;margin-top:36px}
+.trustband .mini div{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:#cfc8bd}
+.trustband .mini b{display:block;font-family:var(--serif);font-size:1.55rem;color:var(--bronce);letter-spacing:0;text-transform:none;margin-bottom:4px}
 `;
 
 const HEAD = t => `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
@@ -561,53 +624,100 @@ function cardHTML(b){
       <div class="badge"><svg class="shield" style="width:14px;height:16px"><use href="#sh"/></svg>Certificada</div></div>
   </div></a>`;
 }
-// íconos de línea para los pilares
-const ICONS = {
-  cert:'<svg viewBox="0 0 24 24"><path d="M12 2 L20 5 V11 C20 16 16.5 19.5 12 22 C7.5 19.5 4 16 4 11 V5 Z"/><polyline points="8.5 12 11 14.5 15.5 9.5"/></svg>',
-  diag:'<svg viewBox="0 0 24 24"><polyline points="2 12 7 12 10 5 14 19 17 12 22 12"/></svg>',
-  honest:'<svg viewBox="0 0 24 24"><path d="M2 12 C5 6 9 4 12 4 C15 4 19 6 22 12 C19 18 15 20 12 20 C9 20 5 18 2 12 Z"/><circle cx="12" cy="12" r="3"/></svg>',
-  respaldo:'<svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="6"/><polyline points="9 14 7 22 12 19 17 22 15 14"/></svg>'
-};
-const PILLARS = [
-  [ICONS.cert,'Certificación Bike Trust','Cada bici pasa por el taller de mecánicos expertos antes de salir a la venta.'],
-  [ICONS.diag,'Diagnóstico digital real','En e-bikes medimos km de motor, salud de batería y ciclos. Datos reales, nada estimado.'],
-  [ICONS.honest,'Estado honesto','Los defectos reales, declarados de frente. Sin letra chica ni sorpresas.'],
-  [ICONS.respaldo,'Entrega con respaldo','Te la entregamos afinada y lista para rodar, con el respaldo de Bike Trust.']
-];
-
-// filtro de catálogo por disciplina (client-side, sin dependencias)
-const FILTER_JS = `(function(){
-  var chips=document.querySelectorAll('.chip'); if(!chips.length) return;
-  var cards=document.querySelectorAll('#catalogo .card');
-  [].forEach.call(chips,function(c){ c.addEventListener('click',function(){
-    [].forEach.call(chips,function(x){x.classList.remove('on');}); c.classList.add('on');
-    var f=c.getAttribute('data-f');
+// JS del home: hero carrusel + carruseles de producto + tiles + filtro
+const HOME_JS = String.raw`(function(){
+  var hc=document.querySelector('.hcar');
+  if(hc){
+    var track=hc.querySelector('.hcar-track'), slides=hc.querySelectorAll('.hslide'), dots=hc.querySelectorAll('.hdot');
+    var i=0, n=slides.length, timer;
+    function go(k){ i=(k+n)%n; track.style.transform='translateX(-'+(i*100)+'%)'; [].forEach.call(dots,function(d,j){ d.classList.toggle('on',j===i); }); }
+    function play(){ stop(); if(n>1) timer=setInterval(function(){ go(i+1); },6500); }
+    function stop(){ if(timer) clearInterval(timer); }
+    var nx=hc.querySelector('.hnext'), pv=hc.querySelector('.hprev');
+    if(nx) nx.addEventListener('click',function(){ go(i+1); play(); });
+    if(pv) pv.addEventListener('click',function(){ go(i-1); play(); });
+    [].forEach.call(dots,function(d,j){ d.addEventListener('click',function(){ go(j); play(); }); });
+    play();
+  }
+  [].forEach.call(document.querySelectorAll('.pcar'),function(pc){
+    var tr=pc.querySelector('.pcar-track'); if(!tr) return;
+    function amt(){ return Math.max(280, Math.round(tr.clientWidth*0.85)); }
+    var pv=pc.querySelector('.pcar-arrow.prev'), nx=pc.querySelector('.pcar-arrow.next');
+    if(pv) pv.addEventListener('click',function(){ tr.scrollBy({left:-amt(),behavior:'smooth'}); });
+    if(nx) nx.addEventListener('click',function(){ tr.scrollBy({left:amt(),behavior:'smooth'}); });
+  });
+  var chips=document.querySelectorAll('.chip'), cards=document.querySelectorAll('#catalogo .card');
+  function filtrar(f){
+    [].forEach.call(chips,function(x){ x.classList.toggle('on', x.getAttribute('data-f')===f); });
     [].forEach.call(cards,function(card){ card.style.display=(f==='*'||card.getAttribute('data-disc')===f)?'':'none'; });
-  });});
+  }
+  [].forEach.call(chips,function(c){ c.addEventListener('click',function(){ filtrar(c.getAttribute('data-f')); }); });
+  [].forEach.call(document.querySelectorAll('.tile'),function(t){
+    t.addEventListener('click',function(e){ e.preventDefault(); filtrar(t.getAttribute('data-f'));
+      var cat=document.getElementById('catalogo'); if(cat) cat.scrollIntoView({behavior:'smooth'}); });
+  });
 })();`;
 
 function catalogHTML(bikes){
-  const pillars = PILLARS.map(p=>`<div class="pillar">${p[0]}<h3>${esc(p[1])}</h3><p>${esc(p[2])}</p></div>`).join('');
   const discs = [...new Set(bikes.map(b=>b.disciplina).filter(Boolean))];
   const chips = bikes.length>3 && discs.length>1
     ? `<div class="filters"><button class="chip on" data-f="*">Todas</button>${discs.map(d=>`<button class="chip" data-f="${esc(d)}">${esc(d)}</button>`).join('')}</div>` : '';
-  const grid = bikes.length
-    ? `<div class="grid">${bikes.map(cardHTML).join('')}</div>`
+  const carousel = cards => `<div class="pcar"><button type="button" class="pcar-arrow prev" aria-label="Anterior">‹</button><div class="pcar-track">${cards}</div><button type="button" class="pcar-arrow next" aria-label="Siguiente">›</button></div>`;
+  const catalogo = bikes.length
+    ? carousel(bikes.map(cardHTML).join(''))
     : `<div class="empty">Pronto, bicis certificadas disponibles.</div>`;
-  const shieldBg = `<svg class="shieldbg" viewBox="0 0 32 36" aria-hidden="true"><path d="M4 6 Q4 3 7 3 H25 Q28 3 28 6 V20 Q28 23.5 25.4 25.2 L16 32 L6.6 25.2 Q4 23.5 4 20 Z"/></svg>`;
-  return HEAD('Bike Trust · Specialized usadas certificadas') + TOPBAR + `
-  <section class="lhero">${shieldBg}
-    <div class="eyebrow">Specialized usadas · certificadas</div>
-    <h1>Confianza sobre dos ruedas</h1>
-    <p>Bicicletas Specialized de segunda mano, inspeccionadas por mecánicos expertos, con diagnóstico real y estado honesto. Compra usado con la tranquilidad de lo nuevo.</p>
-    <div class="ctas"><a class="btn-primary" href="#catalogo">Ver catálogo</a><a class="btn-ghost" href="/como-certificamos.html">Cómo certificamos</a></div>
-  </section>
-  <section class="pillars"><div class="in">${pillars}</div></section>
-  <div id="catalogo" class="section">
-    <div class="sec-head"><div class="eyebrow">El catálogo</div><h2>Bicis disponibles ahora</h2><p>Cada una, certificada por Bike Trust y lista para rodar.</p></div>
+  const ebikes = bikes.filter(b=>b.electrica);
+  const SHIELD = `<svg viewBox="0 0 32 36" aria-hidden="true"><path d="M4 6 Q4 3 7 3 H25 Q28 3 28 6 V20 Q28 23.5 25.4 25.2 L16 32 L6.6 25.2 Q4 23.5 4 20 Z"/></svg>`;
+  const slide = (eb,h2,p,cta,ph)=>`<div class="hslide"><div class="htext"><div class="eyebrow">${esc(eb)}</div><h2>${esc(h2)}</h2><p>${esc(p)}</p>${cta}</div><div class="himg">${SHIELD}<div class="ph">${esc(ph)}</div></div></div>`;
+  const hero = `<section class="hcar"><div class="hcar-track">
+    ${slide('Specialized usadas · certificadas','Confianza sobre dos ruedas','Bicicletas Specialized de segunda mano, inspeccionadas por mecánicos expertos. Compra usado con la tranquilidad de lo nuevo.',`<a class="btn-primary" style="background:var(--bronce-deep)" href="#catalogo">Ver catálogo</a>`,'Foto destacada · bici héroe')}
+    ${slide('Nuestro estándar','Cada bici, certificada','Inspección mecánica, diagnóstico digital real y estado honesto declarado de frente.',`<a class="btn-ghost light" href="/como-certificamos.html">Cómo certificamos</a>`,'Taller · proceso de certificación')}
+    ${slide('Visítanos en Santiago','Ven a verla en persona','Agenda una visita y te dejamos la bici preparada para que la veas y la pruebes.',`<button type="button" class="btn-primary js-agendar" style="background:var(--bronce-deep)">Agenda tu visita</button>`,'Tienda · Las Condes, Santiago')}
+  </div><button type="button" class="hprev" aria-label="Anterior">‹</button><button type="button" class="hnext" aria-label="Siguiente">›</button>
+  <div class="hdots">${[0,1,2].map((_,i)=>`<button type="button" class="hdot${i===0?' on':''}" aria-label="Slide ${i+1}"></button>`).join('')}</div></section>`;
+  const tiles = discs.length ? `<section style="padding-top:0">
+    <div class="sec-head"><div class="eyebrow">Explora</div><h2>Por disciplina</h2></div>
+    <div class="tiles">${discs.slice(0,3).map(d=>`<a class="tile" data-f="${esc(d)}" href="#catalogo"><div class="ph">Foto ${esc(d)}</div><div class="ov"><h3>${esc(d)}</h3><span>Ver</span></div></a>`).join('')}</div>
+  </section>` : '';
+  const ebikesSec = ebikes.length>=2 ? `<section>
+    <div class="sec-head"><div class="eyebrow">Con motor</div><h2>E-bikes certificadas</h2><p>Con diagnóstico digital de motor y batería: datos reales de cada unidad.</p></div>
+    ${carousel(ebikes.map(cardHTML).join(''))}
+  </section>` : '';
+  const GUIDES = [
+    ['Cómo leer el diagnóstico','Qué significan los kilómetros del motor, la salud de la batería y los ciclos en una e-bike usada.'],
+    ['Eléctrica o muscular','Cómo elegir entre una e-bike y una bici tradicional según tu uso, tu ruta y tu presupuesto.'],
+    ['Qué es el estado honesto','Por qué declaramos cada rayón y detalle real antes de que compres. La confianza parte por ahí.']
+  ];
+  const guides = GUIDES.map(g=>`<div class="guide"><div class="gimg">Foto guía</div><div class="gbody"><div class="glabel">Guía</div><h3>${esc(g[0])}</h3><p>${esc(g[1])}</p><a href="/como-certificamos.html">Leer más</a></div></div>`).join('');
+  return HEAD('Bike Trust · Specialized usadas certificadas') +
+  `<div class="annbar"><b>Specialized usadas certificadas</b> · Visítanos en Las Condes, Santiago <button type="button" class="ab-link js-agendar">Agenda tu visita</button></div>` +
+  TOPBAR + hero + `
+  <section id="catalogo">
+    <div class="sec-head"><div class="eyebrow">El catálogo</div><h2>Nuestras bicis</h2><p>Cada una, certificada por Bike Trust y lista para rodar.</p></div>
     ${chips}
-    ${grid}
-  </div>
+    ${catalogo}
+  </section>
+  <section class="brandstory">
+    <div class="eyebrow">Bike Trust</div>
+    <h2>La forma confiable de comprar usado</h2>
+    <p>Nos especializamos en bicicletas Specialized de segunda mano. Cada una pasa por nuestro taller, se mide con datos reales y se entrega con su estado honesto declarado. Así compras usado sin apostar.</p>
+    <div class="ctas"><a class="btn-primary" href="/como-certificamos.html">Cómo certificamos</a><a class="btn-ghost" href="#catalogo">Ver catálogo</a></div>
+  </section>
+  ${tiles}
+  <div class="promo"><div class="in">
+    <div class="pimg">Foto · consignación</div>
+    <div class="ptxt"><div class="eyebrow">Vende con nosotros</div><h2>¿Tienes una Specialized para vender?</h2><p>Déjala en consignación en Bike Trust. La certificamos, la publicamos y la vendemos por ti, con la confianza que nuestra marca le da a cada bici.</p><a class="btn-primary" href="https://wa.me/56985232895?text=Hola!%20Quiero%20consignar%20mi%20Specialized." target="_blank" rel="noopener">Conversemos</a></div>
+  </div></div>
+  ${ebikesSec}
+  <section>
+    <div class="sec-head"><div class="eyebrow">Aprende</div><h2>Antes de comprar</h2><p>Lo que conviene saber para elegir tu próxima Specialized usada.</p></div>
+    <div class="guides">${guides}</div>
+  </section>
+  <section class="trustband">
+    <div class="eyebrow">Especialistas en Specialized</div>
+    <h2>Cada bici, inspeccionada, medida y entregada con respaldo.</h2>
+    <div class="mini"><div><b>100%</b>Specialized</div><div><b>Certificada</b>por nuestro taller</div><div><b>Diagnóstico</b>digital real</div><div><b>Estado</b>honesto</div></div>
+  </section>
   <section class="section">
     <div class="sec-head"><div class="eyebrow">Nuestro estándar</div><h2>Cómo certificamos</h2><p>El proceso por el que pasa cada bici antes de llegar a ti.</p></div>
     <div class="steps">
@@ -622,7 +732,7 @@ function catalogHTML(bikes){
     <h2>Ven a verla en persona</h2>
     <p>Agenda una visita y te dejamos la bici preparada para que la veas y la pruebes.</p>
     <button type="button" class="btn-primary js-agendar">Agenda tu visita</button>
-  </section>` + FOOT_OPEN + reservaModal(bikes) + `<script>${FILTER_JS}</script></body></html>`;
+  </section>` + FOOT_OPEN + reservaModal(bikes) + `<script>${HOME_JS}</script></body></html>`;
 }
 
 function comoCertificamosHTML(bikes){
