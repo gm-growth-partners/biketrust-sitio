@@ -87,6 +87,39 @@ async function fetchBikes(){
   return out;
 }
 
+// Slugs de bicis con una visita agendada futura (tabla Reservas). Sólo lee
+// slug + fecha + estado (nunca datos personales). Si la tabla no existe o falla,
+// devuelve un set vacío: el aviso de "reservada" simplemente no aparece.
+async function fetchReservedSlugs(){
+  if(!TOKEN) return new Set();
+  const TABLE_R = process.env.AIRTABLE_RESERVAS_TABLE || 'Reservas';
+  const hoy = new Date().toISOString().slice(0,10);
+  const terminal = new Set(['cancelada','vencida','atendida','no asistió','no asistio']);
+  const set = new Set();
+  try{
+    let offset;
+    do{
+      const u=new URL(`https://api.airtable.com/v0/${BASE}/${encodeURIComponent(TABLE_R)}`);
+      ['Modelos slug','Fecha','Estado'].forEach(f=>u.searchParams.append('fields[]', f));
+      if(offset) u.searchParams.set('offset', offset);
+      const r=await fetch(u,{headers:{Authorization:`Bearer ${TOKEN}`}});
+      if(!r.ok){
+        if(r.status===404||r.status===403){ console.warn(`ℹ  Reservas no accesible (${r.status}) — sin avisos de reserva.`); return new Set(); }
+        throw new Error(`Reservas ${r.status}`);
+      }
+      const j=await r.json();
+      for(const rec of j.records){
+        const f=rec.fields;
+        if(terminal.has(String(f['Estado']||'').toLowerCase().trim())) continue;
+        if(f['Fecha'] && String(f['Fecha']).slice(0,10) < hoy) continue;   // visita ya pasó
+        String(f['Modelos slug']||'').split(/[\n,]/).map(s=>s.trim()).filter(Boolean).forEach(s=>set.add(s));
+      }
+      offset=j.offset;
+    } while(offset);
+  }catch(e){ console.warn('⚠  No se pudieron leer Reservas:', e.message); return new Set(); }
+  return set;
+}
+
 /* ---------- CSS (identidad Bike Trust) ---------- */
 const CSS = `
 :root{--carbon:#0F0F0F;--carbon-true:#050505;--bronce:#A88454;--bronce-deep:#8C6E43;--blanco:#FFFFFF;--hueso:#FAF8F4;--gris:#6E6A63;--linea:#E8E2D8;--serif:'Cormorant Garamond',Georgia,serif;--sans:'Jost',system-ui,sans-serif}
@@ -107,7 +140,7 @@ a{color:inherit;text-decoration:none}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px;padding:54px 0}
 .card{background:var(--blanco);border:1px solid var(--linea);display:flex;flex-direction:column;transition:box-shadow .25s,transform .25s}
 .card:hover{box-shadow:0 20px 50px rgba(15,15,15,.10);transform:translateY(-3px)}
-.card .img{height:200px;background:var(--hueso);overflow:hidden;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--linea)}
+.card .img{position:relative;height:200px;background:var(--hueso);overflow:hidden;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--linea)}
 .card .img img{width:100%;height:100%;object-fit:cover}
 .card .img .ph{font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bronce)}
 .card .body{padding:20px 22px 22px;display:flex;flex-direction:column;gap:6px;flex:1}
@@ -211,6 +244,14 @@ a{color:inherit;text-decoration:none}
 .rsv-okmsg{color:var(--gris);font-size:.95rem;line-height:1.55}
 .rsv-wa{display:inline-block;margin-top:18px;background:#25D366;color:#fff;padding:12px 22px;border-radius:3px;font-size:.82rem;letter-spacing:.03em}
 @media (max-width:480px){.rsv-grid2{grid-template-columns:1fr}}
+/* aviso "reservada" (visita agendada · urgencia, NO la quita de venta) */
+.resv-tag{position:absolute;top:10px;left:10px;z-index:1;display:flex;align-items:center;gap:6px;background:rgba(168,132,84,.95);color:#fff;font-size:.56rem;letter-spacing:.16em;text-transform:uppercase;font-weight:500;padding:5px 9px;border-radius:2px}
+.resv-tag::before{content:"";width:6px;height:6px;border-radius:50%;background:#fff;animation:resvPulse 1.6s ease-in-out infinite}
+@keyframes resvPulse{0%,100%{opacity:1}50%{opacity:.3}}
+.resv-note{display:flex;gap:11px;align-items:flex-start;margin:0 46px 14px;padding:13px 16px;background:var(--hueso);border:1px solid var(--linea);border-left:3px solid var(--bronce);font-size:.84rem;color:var(--carbon);line-height:1.45}
+.resv-note .d{flex:none;width:8px;height:8px;border-radius:50%;background:var(--bronce);margin-top:6px;animation:resvPulse 1.6s ease-in-out infinite}
+.resv-note b{color:var(--bronce-deep);font-weight:600}
+@media (max-width:620px){.resv-note{margin:0 24px 14px}}
 `;
 
 const HEAD = t => `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
@@ -240,6 +281,8 @@ const RESERVA_JS = String.raw`(function(){
   var MAX=3, busy=false;
   function q(s){ return ov.querySelector(s); }
   function show(el,on){ el.classList[on?'remove':'add']('hidden'); }
+  function ymd(d){ var m=d.getMonth()+1, day=d.getDate(); return d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(day<10?'0':'')+day; }
+  function maxBizDate(){ var d=new Date(), n=0; while(n<5){ d.setDate(d.getDate()+1); var wd=d.getDay(); if(wd!==0&&wd!==6) n++; } return d; } // 5 días hábiles desde hoy
   function setStep(n){
     [].forEach.call(ov.querySelectorAll('.rsv-step'),function(s){ s.classList.toggle('on', s.getAttribute('data-step')===String(n)); });
     var num = (n===1||n===2);
@@ -264,13 +307,18 @@ const RESERVA_JS = String.raw`(function(){
     if(slug){ var cb=ov.querySelector('.rsv-cb[value="'+slug+'"]'); if(cb) cb.checked=true; }
     syncModels();
     q('.rsv-err1').classList.add('hidden'); q('.rsv-err2').classList.add('hidden');
-    q('.rsv-date').min=new Date().toISOString().slice(0,10);
+    var dt=q('.rsv-date'); dt.min=ymd(new Date()); dt.max=ymd(maxBizDate());
     ov.classList.add('open'); document.body.style.overflow='hidden';
     setStep(1);
   }
   function closeModal(){ ov.classList.remove('open'); document.body.style.overflow=''; }
   bNext.addEventListener('click',function(){
-    if(!q('.rsv-date').value) return err('.rsv-err1','Elige una fecha.');
+    var v=q('.rsv-date').value;
+    if(!v) return err('.rsv-err1','Elige una fecha.');
+    if(v<ymd(new Date())) return err('.rsv-err1','Elige una fecha de hoy en adelante.');
+    if(v>ymd(maxBizDate())) return err('.rsv-err1','El plazo máximo para agendar es de 5 días hábiles.');
+    var wd=new Date(v+'T00:00').getDay();
+    if(wd===0||wd===6) return err('.rsv-err1','Atendemos en días hábiles (lunes a viernes).');
     if(!q('.rsv-time').value) return err('.rsv-err1','Elige una hora.');
     q('.rsv-err1').classList.add('hidden'); setStep(2);
   });
@@ -387,6 +435,9 @@ function fichaHTML(b, bikes){
       ? `<img src="${esc(b.fotos[i+1])}" alt="">`
       : `<div class="ph-box"><div class="pl">${l[0]}</div><div class="pd">${l[1]}</div></div>`).join('');
   const checkDiag = b.electrica ? '<div>Diagnóstico digital de motor y batería</div>' : '';
+  const resvNote = b.reservada
+    ? `<div class="resv-note"><span class="d"></span><div><b>Alguien agendó una visita para verla.</b> Sigue disponible — agenda la tuya y no te quedes fuera.</div></div>`
+    : '';
 
   return HEAD(`${b.marca} ${b.modelo} · Bike Trust`) + TOPBAR + `
 <article class="ficha">
@@ -397,6 +448,7 @@ function fichaHTML(b, bikes){
   <div class="gallery">${gallery}</div>
   <div class="price"><div><div class="anchor">${anchor}</div><div class="now">${b.precio!=null?clp(b.precio):'Consultar'}</div></div>
     <div class="cert"><div class="s">${puntaje}</div><div class="l">Puntaje<br>certificación${puntajePend}</div></div></div>
+  ${resvNote}
   <button type="button" class="cta js-agendar" data-slug="${esc(b.slug)}">Agenda tu visita</button>
   <div class="ribbon">${ribbon}</div>
   <div class="why"><div class="src">Por qué amarla</div><p>${whyP}</p></div>
@@ -415,7 +467,8 @@ function fichaHTML(b, bikes){
 function cardHTML(b){
   const url=`/bici/${b.slug}.html`;
   const img = b.fotos[0] ? `<img src="${esc(b.fotos[0])}" alt="${esc(b.modelo)}">` : `<div class="ph">Foto pendiente</div>`;
-  return `<a class="card" href="${url}"><div class="img">${img}</div><div class="body">
+  const tag = b.reservada ? `<div class="resv-tag">Reservada</div>` : '';
+  return `<a class="card" href="${url}"><div class="img">${tag}${img}</div><div class="body">
     <div class="disc">${esc(b.disciplina)}${b.talla?' · Talla '+esc(b.talla):''}</div>
     <h3>${esc(b.modelo)}</h3>
     <div class="meta">${esc(b.marca)}${b.anio?' · '+esc(b.anio):''}</div>
@@ -452,6 +505,9 @@ function assignSlugs(bikes){
 async function main(){
   const bikes = await fetchBikes();
   assignSlugs(bikes);
+  const reservadas = await fetchReservedSlugs();
+  for(const b of bikes) b.reservada = reservadas.has(b.slug);
+  if(reservadas.size) console.log(`  · ${reservadas.size} modelo(s) con visita agendada`);
   await rm(OUT,{recursive:true,force:true});
   await mkdir(`${OUT}/bici`,{recursive:true});
   await writeFile(`${OUT}/styles.css`, CSS);

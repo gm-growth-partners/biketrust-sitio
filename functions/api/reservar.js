@@ -29,6 +29,7 @@ export async function onRequestPost({ request, env }) {
     'Fecha':    String(fecha).slice(0, 10),                // YYYY-MM-DD (campo Date)
     'Hora':     String(hora).slice(0, 10),                 // texto "10:30"
     'Modelos':  modelos.join(', ').slice(0, 2000),         // texto legible
+    'Modelos slug': (Array.isArray(data.modelosSlug) ? data.modelosSlug : []).join(', ').slice(0, 500),
     'Origen':   'Web',
     'Estado':   'Nueva'
   };
