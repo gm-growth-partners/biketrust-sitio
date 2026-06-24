@@ -50,9 +50,10 @@ function discImg(d){
   return 'disc-mtb.jpg';
 }
 
-function mapBike(f){
+function mapBike(f, recId){
   const motor = f['Motorización']||'';
   return {
+    recId: recId||'',   // id de la fila en Airtable (para enlazar el Interés a la bici exacta)
     marca:f['Marca']||'', modelo:f['Modelo']||'', anio:f['Año']||'',
     electrica: motor.toLowerCase().startsWith('eléctr'),
     disciplina:f['Disciplina']||'', talla:f['Talla']||'',
@@ -100,7 +101,7 @@ async function fetchBikes(){
     u.searchParams.set('view', VIEW);
     if(offset) u.searchParams.set('offset', offset);
     const j=await fetchJSON(u);
-    out=out.concat(j.records.map(rec=>mapBike(rec.fields)));
+    out=out.concat(j.records.map(rec=>mapBike(rec.fields, rec.id)));
     offset=j.offset;
   } while(offset);
   return out;
@@ -611,7 +612,9 @@ const RESERVA_JS = String.raw`(function(){
     q('.rsv-err2').classList.add('hidden');
     var modelos=sel.map(function(c){return c.getAttribute('data-label');});
     var payload={ fecha:q('.rsv-date').value, hora:q('.rsv-time').value, modelos:modelos,
-      modelosSlug:sel.map(function(c){return c.value;}), nombre:nombre, email:email, telefono:tel };
+      modelosSlug:sel.map(function(c){return c.value;}),
+      modelosId:sel.map(function(c){return c.getAttribute('data-recid');}),
+      nombre:nombre, email:email, telefono:tel };
     busy=true; bSubmit.textContent='Enviando…'; bSubmit.disabled=true;
     fetch('/api/reservar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
       .then(function(r){ if(!r.ok) throw 0; return r.json(); })
@@ -643,7 +646,7 @@ function reservaModal(bikes){
   const models = bikes.map(b=>{
     const meta=[b.disciplina, b.talla&&'Talla '+b.talla].filter(Boolean).join(' · ');
     const label=esc(b.modelo + (b.talla?' · Talla '+b.talla:''));
-    return `<label class="rsv-model"><input type="checkbox" class="rsv-cb" value="${esc(b.slug)}" data-label="${label}"><span class="rsv-check"></span><span class="rsv-mtxt"><span class="rsv-mname">${esc(b.modelo)}</span><span class="rsv-mmeta">${esc(meta)}</span></span></label>`;
+    return `<label class="rsv-model"><input type="checkbox" class="rsv-cb" value="${esc(b.slug)}" data-label="${label}" data-recid="${esc(b.recId)}"><span class="rsv-check"></span><span class="rsv-mtxt"><span class="rsv-mname">${esc(b.modelo)}</span><span class="rsv-mmeta">${esc(meta)}</span></span></label>`;
   }).join('');
   return `<div class="rsv-ov" id="rsv" aria-hidden="true"><div class="rsv-ov-bg"></div>
   <div class="rsv" role="dialog" aria-modal="true" aria-label="Agenda tu visita">

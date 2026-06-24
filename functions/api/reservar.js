@@ -34,7 +34,9 @@ export async function onRequestPost({ request, env }) {
     'Estado':   'Nueva'
   };
   const optional = {
-    'Modelos Slug': (Array.isArray(data.modelosSlug) ? data.modelosSlug : []).join(', ').slice(0, 500)
+    'Modelos Slug': (Array.isArray(data.modelosSlug) ? data.modelosSlug : []).join(', ').slice(0, 500),
+    // record ids de Inventario (uno por bici elegida) → enlace duro Reserva ↔ bici para el CRM.
+    'Bici IDs': (Array.isArray(data.modelosId) ? data.modelosId.filter(Boolean) : []).join(', ').slice(0, 500)
   };
 
   const url = `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(TABLE)}`;
