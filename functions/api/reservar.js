@@ -98,6 +98,7 @@ async function crmUpsert(env, reservaId, { nombre, email, telefono, fecha, model
   const emailLc = String(email || '').trim().toLowerCase();
   const last8   = String(telefono || '').replace(/\D/g, '').slice(-8);
   const biciIds = Array.isArray(modelosId) ? modelosId.filter(Boolean) : [];
+  const now     = new Date().toISOString();   // sello de fechas del lead
 
   // 1) Buscar Lead por email o por los últimos 8 dígitos del teléfono.
   let leadId = null, leadReservas = [];
@@ -125,7 +126,11 @@ async function crmUpsert(env, reservaId, { nombre, email, telefono, fecha, model
     const reservas = Array.from(new Set([...leadReservas, reservaId]));
     await fetch(`${api(LEADS)}/${leadId}`, {
       method: 'PATCH', headers: wH,
-      body: JSON.stringify({ typecast: true, fields: { 'Estado': 'visita_agendada', 'Reservas': reservas } })
+      body: JSON.stringify({ typecast: true, fields: {
+        'Estado': 'visita_agendada',
+        'Fecha última interacción': now,
+        'Reservas': reservas
+      } })
     });
   } else {
     const rc = await fetch(api(LEADS), {
@@ -136,6 +141,8 @@ async function crmUpsert(env, reservaId, { nombre, email, telefono, fecha, model
         'WhatsApp': String(telefono || '').slice(0, 60),
         'Canal origen': 'Web',
         'Estado': 'visita_agendada',
+        'Fecha primer contacto': now,
+        'Fecha última interacción': now,
         'Reservas': [reservaId]
       } })
     });
@@ -149,7 +156,7 @@ async function crmUpsert(env, reservaId, { nombre, email, telefono, fecha, model
       'Lead': [leadId],
       ...(id ? { 'Bici': [id] } : {}),
       'Reservas': [reservaId],   // en tu tabla Intereses el link a Reservas es plural
-      'Origen': 'Web (reserva)',
+      'Origen': 'Web (ficha)',
       'Resultado': 'Agendó',
       ...(fecha ? { 'Fecha': String(fecha).slice(0, 10) } : {})
     }
