@@ -516,12 +516,40 @@ a{color:inherit;text-decoration:none}
 @media(max-width:680px){.support{grid-template-columns:1fr}.support .simg{border-right:0;border-bottom:1px solid var(--linea);min-height:150px}}
 `;
 
-const HEAD = t => `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${esc(t)}</title>
+// URL del sitio para metas absolutas (OpenGraph/canonical/sitemap). Override con SITE_URL en el build.
+const SITE = (process.env.SITE_URL || 'https://biketrust-sitio.pages.dev').replace(/\/$/,'');
+const SITE_DESC = 'Bicicletas Specialized usadas, premium y certificadas en Santiago. Cada bici inspeccionada multipunto, con diagnóstico honesto y garantía. La confianza de comprar usado, sin el riesgo.';
+const escA = s => esc(s).replace(/"/g,'&quot;');                 // escape para atributos (incluye comillas)
+const absUrl = p => /^https?:\/\//.test(p) ? p : SITE + (String(p).startsWith('/') ? p : '/'+p);
+
+// HEAD(titulo, { desc, path, image, type }) — path = URL canónica limpia (sin .html).
+const HEAD = (t, o={}) => {
+  const desc  = escA(o.desc || SITE_DESC);
+  const url   = absUrl(o.path || '/');
+  const image = absUrl(o.image || '/assets/img/hero-trail.jpg');
+  const type  = o.type || 'website';
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${esc(t)}</title>
+<meta name="description" content="${desc}">
+<link rel="canonical" href="${url}">
+<meta property="og:type" content="${type}">
+<meta property="og:site_name" content="Bike Trust">
+<meta property="og:locale" content="es_CL">
+<meta property="og:title" content="${escA(t)}">
+<meta property="og:description" content="${desc}">
+<meta property="og:url" content="${url}">
+<meta property="og:image" content="${image}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${escA(t)}">
+<meta name="twitter:description" content="${desc}">
+<meta name="twitter:image" content="${image}">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/styles.css"></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="sh" viewBox="0 0 32 36"><path d="M4 6 Q4 3 7 3 H25 Q28 3 28 6 V20 Q28 23.5 25.4 25.2 L16 32 L6.6 25.2 Q4 23.5 4 20 Z"/></symbol></svg>`;
+};
 const TOPBAR = `<header class="nav2"><div class="in">
   <a class="lock" href="/"><svg class="shield"><use href="#sh"/></svg><span><b>BIKE</b> TRUST</span></a>
   <nav class="links">
@@ -540,6 +568,31 @@ const FOOT = `<footer class="foot2"><div class="in">
   <div class="fcol fcontact"><h4>Visítanos</h4><a href="/visitanos.html">Av. Las Condes 12461, Las Condes</a><br>Santiago · Chile<br>+56 9 8523 2895<br>biketrust.cl</div>
 </div><div class="legal">© Bike Trust · Specialized usadas certificadas</div></footer></body></html>`;
 const FOOT_OPEN = FOOT.replace('</body></html>','');
+
+// Favicon: el escudo de la marca, en bronce.
+const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 36"><path d="M4 6 Q4 3 7 3 H25 Q28 3 28 6 V20 Q28 23.5 25.4 25.2 L16 32 L6.6 25.2 Q4 23.5 4 20 Z" fill="#A88454"/></svg>`;
+
+// sitemap.xml con todas las URLs limpias (home, páginas, guías, fichas).
+function sitemapXML(bikes){
+  const today = new Date().toISOString().slice(0,10);
+  const urls = ['/', '/catalogo', '/como-certificamos', '/consigna', '/visitanos',
+    ...GUIAS.map(g=>`/guias/${g.slug}`), ...bikes.map(b=>`/bici/${b.slug}`)];
+  const body = urls.map(u=>`  <url><loc>${SITE}${u}</loc><lastmod>${today}</lastmod></url>`).join('\n');
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
+}
+
+// Página 404 on-brand. Cloudflare Pages la sirve automáticamente en rutas no encontradas.
+function notFoundHTML(){
+  return HEAD('Página no encontrada · Bike Trust', {path:'/404'}) +
+`<header class="nav2"><div class="in"><a class="lock" href="/"><svg class="shield"><use href="#sh"/></svg><span><b>BIKE</b> TRUST</span></a></div></header>
+<main style="max-width:640px;margin:0 auto;padding:90px 24px 110px;text-align:center">
+  <div style="color:var(--bronce);letter-spacing:.18em;text-transform:uppercase;font-size:.72rem;margin-bottom:14px">Error 404</div>
+  <h1 style="font-family:var(--serif);font-weight:600;font-size:2.1rem;line-height:1.15;margin-bottom:16px">Esta bici ya no está disponible</h1>
+  <p style="color:var(--gris);font-size:1rem;line-height:1.6;margin-bottom:30px">Puede que se haya vendido, o que el enlace haya cambiado. Pero tenemos más Specialized certificadas esperándote.</p>
+  <a class="btn-primary" href="/catalogo" style="display:inline-block">Ver el catálogo</a>
+  <div style="margin-top:18px"><a href="/" style="color:var(--bronce);font-size:.9rem">Volver al inicio</a></div>
+</main>` + FOOT;
+}
 
 /* ---------- reserva (modal de agendamiento) ---------- */
 const WA_NUM = '56985232895';                  // WhatsApp tienda (fallback de contacto)
@@ -760,7 +813,10 @@ function fichaHTML(b, bikes){
     <div class="checks"><div>Integridad del cuadro verificada</div><div>Componentes inspeccionados</div><div>Transmisión limpiada y afinada</div><div>Suspensión revisada</div><div>Ruedas centradas</div>${b.electrica?'<div>Diagnóstico digital de motor y batería</div>':''}</div>
     <p class="promise">Nos especializamos en Specialized usadas. Cada bici pasa por el taller de mecánicos expertos y se entrega con respaldo. <span style="color:var(--bronce)">[ Términos de garantía — por confirmar ]</span></p></div>`;
 
-  return HEAD(`${b.marca} ${b.modelo} · Bike Trust`) + TOPBAR + `
+  return HEAD(`${b.marca} ${b.modelo}${b.talla?' · Talla '+b.talla:''} · Bike Trust`, {
+    path:`/bici/${b.slug}`, type:'product', image:b.fotos[0],
+    desc:`${b.marca} ${b.modelo}${b.talla?' talla '+b.talla:''} usada y certificada por Bike Trust${b.precio?' · '+clp(b.precio):''}. ${b.electrica?'E-bike con diagnóstico de batería, motor y ciclos. ':''}Inspección multipunto y estado honesto declarado.`
+  }) + TOPBAR + `
   <a class="back2" href="/catalogo.html">← Volver al catálogo</a>
   <div class="product">
     <div class="pgal">${galMain}<div class="pgal-thumbs">${galThumbs}</div></div>
@@ -917,7 +973,7 @@ function catalogHTML(bikes){
     ${carousel(ebikes.map(cardHTML).join(''))}
   </section>` : '';
   const guides = GUIAS.map(g=>`<div class="guide"><div class="gimg" style="background-image:url('/assets/img/${g.img}')"></div><div class="gbody"><div class="glabel">Guía</div><h3>${esc(g.titulo)}</h3><p>${esc(g.resumen)}</p><a href="/guias/${esc(g.slug)}.html">Leer más</a></div></div>`).join('');
-  return HEAD('Bike Trust · Specialized usadas certificadas') +
+  return HEAD('Bike Trust · Specialized usadas certificadas', {path:'/'}) +
   `<div class="annbar"><b>Specialized usadas certificadas</b> · Visítanos en Las Condes, Santiago <button type="button" class="ab-link js-agendar">Agenda tu visita</button></div>` +
   TOPBAR + hero + `
   <section id="catalogo">
@@ -965,7 +1021,7 @@ function catalogHTML(bikes){
 
 function comoCertificamosHTML(bikes){
   const checkDiag = '<div>Diagnóstico digital de motor y batería (e-bikes)</div>';
-  return HEAD('Cómo certificamos · Bike Trust') + TOPBAR + `
+  return HEAD('Cómo certificamos · Bike Trust', {path:'/como-certificamos', desc:'Cómo certificamos cada Specialized usada: inspección multipunto, diagnóstico de e-bikes (km de motor, salud de batería, ciclos) y estado honesto declarado de frente.'}) + TOPBAR + `
   <section class="cc-hero" style="background-image:linear-gradient(rgba(5,5,5,.74),rgba(5,5,5,.74)),url('/assets/img/workshop.jpg');background-size:cover;background-position:center">
     <div class="eyebrow">El estándar Bike Trust</div>
     <h1>Cómo certificamos</h1>
@@ -1000,7 +1056,7 @@ function catalogoHTML(bikes){
   const grid = bikes.length
     ? `<div class="grid">${bikes.map(cardHTML).join('')}</div>`
     : `<div class="empty">Pronto, bicis certificadas disponibles.</div>`;
-  return HEAD('Catálogo · Bike Trust') + TOPBAR + `
+  return HEAD('Catálogo · Bike Trust', {path:'/catalogo', desc:'Catálogo de bicicletas Specialized usadas y certificadas: MTB, ruta y urbanas, eléctricas y musculares. Cada una inspeccionada, con diagnóstico honesto y garantía.'}) + TOPBAR + `
   <div class="phead"><div class="eyebrow">El catálogo</div><h1>Todas nuestras bicis</h1><p>Specialized usadas, certificadas por Bike Trust. Filtra por disciplina y agenda tu visita.</p></div>
   <div id="catalogo" class="catwrap">${chips}${grid}</div>
   <div style="height:40px"></div>` + FOOT_OPEN + reservaModal(bikes) + `<script>${CATALOG_JS}</script></body></html>`;
@@ -1008,7 +1064,7 @@ function catalogoHTML(bikes){
 
 /* ---------- página: consigna ---------- */
 function consignaHTML(bikes){
-  return HEAD('Consigna tu Specialized · Bike Trust') + TOPBAR + `
+  return HEAD('Consigna tu Specialized · Bike Trust', {path:'/consigna', desc:'Consigna tu Specialized con Bike Trust: la certificamos, la publicamos y la vendemos por ti. Tú defines el precio; nosotros ponemos la confianza.'}) + TOPBAR + `
   <section class="cc-hero" style="background-image:linear-gradient(rgba(5,5,5,.74),rgba(5,5,5,.74)),url('/assets/img/workshop.jpg');background-size:cover;background-position:center"><div class="eyebrow">Vende con nosotros</div><h1>Consigna tu Specialized</h1><p>Deja tu bici en manos de Bike Trust. La certificamos, la mostramos a compradores que confían en nuestra marca y la vendemos por ti.</p></section>
   <div class="cc-intro"><p>«Tú nos confías la bici; nosotros ponemos la certificación, la vitrina y los compradores.»</p></div>
   <div class="cc-steps">
@@ -1025,7 +1081,7 @@ function visitanosHTML(bikes){
   const dir = 'Av. Las Condes 12461, Las Condes, Santiago';
   const mapsQ = `https://www.google.com/maps?q=${encodeURIComponent(dir)}`;
   const mapEmbed = `https://maps.google.com/maps?q=${encodeURIComponent(dir)}&z=15&output=embed`;
-  return HEAD('Visítanos · Bike Trust') + TOPBAR + `
+  return HEAD('Visítanos · Bike Trust', {path:'/visitanos', desc:'Visítanos en Las Condes, Santiago. Agenda y prueba en persona tu próxima Specialized usada y certificada.'}) + TOPBAR + `
   <div class="phead"><div class="eyebrow">Estamos en Santiago</div><h1>Visítanos</h1><p>Ven a ver y probar tu próxima Specialized. Si agendas tu visita, te recibimos con la bici preparada.</p></div>
   <div class="info2">
     <div class="det">
@@ -1046,7 +1102,7 @@ function visitanosHTML(bikes){
 /* ---------- página: guía ---------- */
 function guiaHTML(g, bikes){
   const secs = g.cuerpo.map(s=>`<h2>${esc(s[0])}</h2><p>${esc(s[1])}</p>`).join('');
-  return HEAD(`${g.titulo} · Bike Trust`) + TOPBAR + `
+  return HEAD(`${g.titulo} · Bike Trust`, {path:`/guias/${g.slug}`, type:'article', desc:g.resumen}) + TOPBAR + `
   <section class="cc-hero" style="background-image:linear-gradient(rgba(5,5,5,.76),rgba(5,5,5,.76)),url('/assets/img/${g.img}');background-size:cover;background-position:center"><div class="eyebrow">Guía Bike Trust</div><h1>${esc(g.titulo)}</h1></section>
   <article class="prose">
     <a class="back" href="/">← Volver al inicio</a>
@@ -1135,6 +1191,11 @@ async function main(){
   for(const b of bikes){
     await writeFile(`${OUT}/bici/${b.slug}.html`, fichaHTML(b, bikes));
   }
-  console.log(`✓ ${bikes.length} bici(s) · ${4+GUIAS.length} páginas + fichas · sitio en /${OUT}`);
+  // Producción / SEO: favicon (escudo), robots, sitemap y 404 on-brand.
+  await writeFile(`${OUT}/favicon.svg`, FAVICON);
+  await writeFile(`${OUT}/robots.txt`, `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n`);
+  await writeFile(`${OUT}/sitemap.xml`, sitemapXML(bikes));
+  await writeFile(`${OUT}/404.html`, notFoundHTML());
+  console.log(`✓ ${bikes.length} bici(s) · ${4+GUIAS.length} páginas + fichas · +SEO (og, sitemap, robots, favicon, 404) · sitio en /${OUT}`);
 }
 main().catch(e=>{ console.error(e); process.exit(1); });
