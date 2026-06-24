@@ -148,7 +148,7 @@ async function crmUpsert(env, reservaId, { nombre, email, telefono, fecha, model
     fields: {
       'Lead': [leadId],
       ...(id ? { 'Bici': [id] } : {}),
-      'Reserva': [reservaId],
+      'Reservas': [reservaId],   // en tu tabla Intereses el link a Reservas es plural
       'Origen': 'Web (reserva)',
       'Resultado': 'Agendó',
       ...(fecha ? { 'Fecha': String(fecha).slice(0, 10) } : {})
