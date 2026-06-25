@@ -759,6 +759,102 @@ const FICHA_JS = String.raw`(function(){
   });});
 })();`;
 
+// ---------- Ficha técnica imprimible (auto-generada, A4, print-to-PDF) ----------
+const FICHA_CSS = `
+:root{--bronce:#A88454;--tinta:#1a1a1a;--gris:#6b6b6b;--linea:#e6e1d8;--hueso:#faf8f4}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Jost',sans-serif;color:var(--tinta);background:#d9d6d0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.toolbar{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 22px;background:#fff;border-bottom:1px solid var(--linea);box-shadow:0 1px 8px rgba(0,0,0,.06)}
+.toolbar a{color:var(--gris);text-decoration:none;font-size:.85rem}
+.toolbar button{background:var(--bronce);color:#fff;border:0;padding:11px 24px;font-family:'Jost',sans-serif;font-weight:500;letter-spacing:.05em;cursor:pointer;font-size:.84rem}
+.sheet{width:210mm;min-height:297mm;margin:26px auto;background:#fff;padding:18mm 16mm;box-shadow:0 8px 36px rgba(0,0,0,.2)}
+.brandbar{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--bronce);padding-bottom:12px;margin-bottom:20px}
+.brandbar .lock{display:flex;align-items:center;gap:9px}
+.brandbar .shield{width:25px;height:29px;fill:var(--bronce)}
+.brandbar .bn{font-weight:600;letter-spacing:.14em;font-size:.92rem}
+.brandbar .bn b{color:var(--bronce)}
+.brandbar .doc{font-size:.64rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gris)}
+h1{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:2.4rem;line-height:1.04}
+.sub{color:var(--gris);font-size:.9rem;margin-top:4px;letter-spacing:.02em}
+.intro{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.08rem;color:var(--gris);margin:14px 0 4px;line-height:1.4}
+.hero{width:100%;height:80mm;object-fit:cover;background:var(--hueso);border:1px solid var(--linea);margin:18px 0 20px}
+.hero.ph{display:flex;align-items:center;justify-content:center}
+.shbig{width:46px;height:52px;fill:var(--linea)}
+.row2{display:grid;grid-template-columns:1.6fr 1fr;gap:22px;margin-bottom:8px}
+.kv{width:100%;border-collapse:collapse;font-size:.85rem}
+.kv td{padding:7px 0;border-bottom:1px solid var(--linea)}
+.kv td:first-child{color:var(--gris);width:46%}
+.kv td:last-child{text-align:right;font-weight:500}
+.cert{background:var(--hueso);border:1px solid var(--linea);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px}
+.cert .score{font-family:'Cormorant Garamond',serif;font-size:3.2rem;font-weight:600;color:var(--bronce);line-height:1}
+.cert .clbl{font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gris);margin-top:6px;text-align:center}
+.sec{margin-top:20px;break-inside:avoid}
+.sec h2{font-weight:600;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--bronce);border-bottom:1px solid var(--linea);padding-bottom:6px;margin-bottom:11px}
+.diag{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.diag .d{background:var(--hueso);border:1px solid var(--linea);padding:13px 10px;text-align:center}
+.diag .dv{font-family:'Cormorant Garamond',serif;font-size:1.7rem;font-weight:600}
+.diag .dl{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gris);margin-top:4px}
+.honest{list-style:none}
+.honest li{font-size:.85rem;margin:5px 0;padding-left:15px;position:relative}
+.honest li:before{content:'—';position:absolute;left:0;color:var(--bronce)}
+.sb{margin-bottom:11px;break-inside:avoid}
+.sb h3{font-size:.82rem;font-weight:600;margin-bottom:3px}
+.sr{display:flex;justify-content:space-between;font-size:.82rem;padding:4px 0;border-bottom:1px dotted var(--linea)}
+.sr span:first-child{color:var(--gris)}
+.foot{margin-top:26px;border-top:2px solid var(--bronce);padding-top:11px;display:flex;justify-content:space-between;font-size:.7rem;color:var(--gris)}
+@media print{ body{background:#fff} .toolbar{display:none} .sheet{width:auto;min-height:auto;margin:0;padding:12mm 13mm;box-shadow:none} @page{size:A4;margin:0} }
+`;
+
+function fichaTecnicaHTML(b){
+  const motor = b.electrica ? 'Eléctrica' : 'Muscular';
+  const hero = (b.fotos && b.fotos[0])
+    ? `<img class="hero" src="${esc(b.fotos[0])}" alt="${esc(b.marca+' '+b.modelo)}">`
+    : `<div class="hero ph"><svg class="shbig"><use href="#sh"/></svg></div>`;
+  const kv = [
+    ['Marca', b.marca||'—'], ['Modelo', b.modelo||'—'], ['Año', b.anio||'—'],
+    ['Disciplina', b.disciplina||'—'], ['Motorización', motor], ['Talla', b.talla||'—'],
+    ['Rango de altura', b.rangoAltura||'—'], ['Material del cuadro', b.material||'—'],
+    ['Referencia', b.referencia||'—'], ['Precio Bike Trust', b.precio?clp(b.precio):'—'],
+    ['Valor de nueva', b.precioNuevo?clp(b.precioNuevo):'—']
+  ].map(([k,v])=>`<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('');
+  const cert = (b.puntaje!=null && b.puntaje!=='')
+    ? `<div class="score">${esc(b.puntaje)}</div><div class="clbl">Puntaje de certificación</div>`
+    : `<div class="score">✓</div><div class="clbl">Certificada por Bike Trust</div>`;
+  const diag = b.electrica
+    ? `<div class="sec"><h2>Diagnóstico de e-bike</h2><div class="diag">
+        <div class="d"><div class="dv">${b.diagKm!=null?esc(b.diagKm)+' km':'—'}</div><div class="dl">Km del motor</div></div>
+        <div class="d"><div class="dv">${b.diagBat!=null?esc(b.diagBat)+'%':'—'}</div><div class="dl">Salud de batería</div></div>
+        <div class="d"><div class="dv">${b.diagCic!=null?esc(b.diagCic):'—'}</div><div class="dl">Ciclos de carga</div></div>
+      </div></div>` : '';
+  const honest = (b.estado && b.estado.length)
+    ? `<div class="sec"><h2>Estado honesto</h2><ul class="honest">${b.estado.map(l=>`<li>${esc(l)}</li>`).join('')}</ul></div>` : '';
+  const blocks = g => g.map(x=>`<div class="sb"><h3>${esc(x.grupo)}</h3>${x.filas.map(f=>`<div class="sr"><span>${esc(f[0])}</span><span>${esc(f[1])}</span></div>`).join('')}</div>`).join('');
+  const specs = (b.specs && b.specs.length) ? `<div class="sec"><h2>Especificaciones</h2>${blocks(b.specs)}</div>` : '';
+  const geo = (b.geometria && b.geometria.length) ? `<div class="sec"><h2>Geometría</h2>${blocks(b.geometria)}</div>` : '';
+  const intro = b.porQue ? `<p class="intro">${esc(b.porQue)}</p>` : '';
+  const today = new Date().toLocaleDateString('es-CL',{year:'numeric',month:'long',day:'numeric'});
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Ficha técnica · ${esc(b.marca+' '+b.modelo)} · Bike Trust</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>${FICHA_CSS}</style></head><body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="sh" viewBox="0 0 32 36"><path d="M4 6 Q4 3 7 3 H25 Q28 3 28 6 V20 Q28 23.5 25.4 25.2 L16 32 L6.6 25.2 Q4 23.5 4 20 Z"/></symbol></svg>
+<div class="toolbar"><a href="/bici/${esc(b.slug)}.html">← Volver a la ficha</a><button onclick="window.print()">Descargar PDF</button></div>
+<article class="sheet">
+  <div class="brandbar"><div class="lock"><svg class="shield"><use href="#sh"/></svg><span class="bn"><b>BIKE</b> TRUST</span></div><div class="doc">Ficha técnica · Certificado</div></div>
+  <h1>${esc(b.marca)} ${esc(b.modelo)}</h1>
+  <div class="sub">${esc(b.disciplina||'')} · ${esc(motor)}${b.talla?' · Talla '+esc(b.talla):''}${b.anio?' · '+esc(b.anio):''}</div>
+  ${intro}
+  ${hero}
+  <div class="row2"><table class="kv">${kv}</table><div class="cert">${cert}</div></div>
+  ${diag}${honest}${specs}${geo}
+  <div class="foot"><span>Certificada por Bike Trust · Santiago, Chile</span><span>Emitida ${esc(today)} · biketrust.cl</span></div>
+</article></body></html>`;
+}
+
 function fichaHTML(b, bikes){
   const fotos = b.fotos;
   const galMain = fotos.length
@@ -802,12 +898,11 @@ function fichaHTML(b, bikes){
     b.referencia?['Referencia', b.referencia]:null
   ].filter(Boolean);
   const detailsRows = det.map(r=>`<div class="row"><span>${esc(r[0])}</span><span>${esc(r[1])}</span></div>`).join('');
-  const pdfSection = b.pdf
-    ? `<div class="pdfbox"><iframe src="${esc(b.pdf)}#view=FitH" title="Ficha técnica completa"></iframe></div>
-       <div class="pdf-actions"><a class="btn-primary" href="${esc(b.pdf)}" target="_blank" rel="noopener">Abrir / descargar PDF</a></div>`
-    : `<div class="pdfbox" style="display:flex;align-items:center;justify-content:center;min-height:220px;text-align:center;padding:34px">
-         <div style="color:var(--gris);font-size:.9rem;line-height:1.5"><div style="color:var(--bronce);font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;margin-bottom:8px">Ficha técnica completa</div>Aquí se inserta el PDF con la ficha técnica detallada de esta unidad.<br><span style="color:var(--bronce)">[ por adjuntar ]</span></div>
-       </div>`;
+  const pdfSection = `<div class="pdfbox" style="display:flex;align-items:center;justify-content:space-between;gap:22px;flex-wrap:wrap;padding:26px 30px">
+       <div style="flex:1;min-width:240px"><div style="color:var(--bronce);font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;margin-bottom:8px">Ficha técnica certificada</div>
+         <div style="color:var(--gris);font-size:.92rem;line-height:1.55">El documento completo de esta unidad —especificaciones, diagnóstico y estado honesto— generado por Bike Trust y listo para descargar en PDF.</div></div>
+       <a class="btn-primary" href="/ficha/${esc(b.slug)}.html" target="_blank" rel="noopener">Ver ficha técnica (PDF)</a>
+     </div>`;
   const certblk = `<div class="certblk"><div class="head"><svg class="shield" style="width:26px;height:30px"><use href="#sh"/></svg><h2>Certificada por Bike Trust</h2></div>
     <div class="sub">Inspeccionada · Probada · Confiable</div>
     <div class="checks"><div>Integridad del cuadro verificada</div><div>Componentes inspeccionados</div><div>Transmisión limpiada y afinada</div><div>Suspensión revisada</div><div>Ruedas centradas</div>${b.electrica?'<div>Diagnóstico digital de motor y batería</div>':''}</div>
@@ -1177,6 +1272,7 @@ async function main(){
   await rm(OUT,{recursive:true,force:true});
   await mkdir(`${OUT}/bici`,{recursive:true});
   await mkdir(`${OUT}/guias`,{recursive:true});
+  await mkdir(`${OUT}/ficha`,{recursive:true});
   await cp('assets/img', `${OUT}/assets/img`, {recursive:true}).catch(e=>console.warn('⚠  assets/img no copiado:', e.message));
   await resolveBikePhotos(bikes);
   await writeFile(`${OUT}/styles.css`, CSS);
@@ -1190,6 +1286,7 @@ async function main(){
   }
   for(const b of bikes){
     await writeFile(`${OUT}/bici/${b.slug}.html`, fichaHTML(b, bikes));
+    await writeFile(`${OUT}/ficha/${b.slug}.html`, fichaTecnicaHTML(b));   // ficha técnica imprimible
   }
   // Producción / SEO: favicon (escudo), robots, sitemap y 404 on-brand.
   await writeFile(`${OUT}/favicon.svg`, FAVICON);
