@@ -69,7 +69,8 @@ function mapBike(f, recId){
     // Cada «Foto N» es un ADJUNTO (la persona arrastra la foto a ese slot) o, si fuera texto, una URL. Orden 1..13.
     fotoSlots: Array.from({length:13}, (_,i)=>f['Foto '+(i+1)] ?? null),
     // Respaldos: campo adjunto único «Fotos» y campo de texto «Fotos URLs».
-    fotosAdjuntos: Array.isArray(f['Fotos']) ? f['Fotos'] : [],
+    fotosAdjuntos: Array.isArray(f['Fotos galería']) ? f['Fotos galería']
+                 : (Array.isArray(f['Fotos']) ? f['Fotos'] : []),
     fotosBulk: String(f['Fotos URLs']||'').split(/[\n,]/).map(s=>s.trim()).filter(Boolean),
     pdf:String(f['Ficha técnica PDF']||f['PDF · URL Cloudflare']||'').trim(),
     material:f['Material cuadro']||f['Material']||''
