@@ -1243,19 +1243,20 @@ async function resolveBikePhotos(bikes){
   let downloaded=0;
   for(const b of bikes){
     const out=[];
-    for(const slot of b.fotoSlots){
-      if(!slot) continue;
-      if(Array.isArray(slot) && slot[0] && slot[0].url){          // adjunto en el slot
-        const local=await saveAttachment(slot[0], b.slug, out.length+1);
-        if(local){ out.push(local); downloaded++; }
-      } else if(typeof slot==='string' && slot.trim()){           // URL en texto
-        out.push(slot.trim());
-      }
+    // Prioridad: «Fotos galería» (campo único multi-adjunto que usan el form, la interfaz y el sitio).
+    for(let i=0;i<b.fotosAdjuntos.length && i<13;i++){
+      const local=await saveAttachment(b.fotosAdjuntos[i], b.slug, out.length+1);
+      if(local){ out.push(local); downloaded++; }
     }
-    if(!out.length && b.fotosAdjuntos.length){                    // respaldo: campo adjunto «Fotos»
-      for(let i=0;i<b.fotosAdjuntos.length && i<13;i++){
-        const local=await saveAttachment(b.fotosAdjuntos[i], b.slug, out.length+1);
-        if(local){ out.push(local); downloaded++; }
+    if(!out.length){                                             // respaldo: slots «Foto 1..13»
+      for(const slot of b.fotoSlots){
+        if(!slot) continue;
+        if(Array.isArray(slot) && slot[0] && slot[0].url){        // adjunto en el slot
+          const local=await saveAttachment(slot[0], b.slug, out.length+1);
+          if(local){ out.push(local); downloaded++; }
+        } else if(typeof slot==='string' && slot.trim()){         // URL en texto
+          out.push(slot.trim());
+        }
       }
     }
     if(!out.length) out.push(...b.fotosBulk);                     // respaldo: «Fotos URLs»
