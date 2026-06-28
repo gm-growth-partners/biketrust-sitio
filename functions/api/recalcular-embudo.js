@@ -93,6 +93,8 @@ async function recalcular(env) {
     { item: 'Cerró',         orden: 4, count: (p) => p.stage[4] },
     { item: 'Tasa cierre',   orden: 5, pct:   (p) => pct(p.stage[4], p.total) },
   ];
+  // Campos de selección por tipo (para los desplegables de la interfaz).
+  const perFields = (p) => p.tipo === 'semana' ? { Semana: p.periodo } : p.tipo === 'mes' ? { Mes: p.periodo } : {};
   const rows = [];
   for (const k in P) {
     const p = P[k], total = p.total;
@@ -100,7 +102,7 @@ async function recalcular(env) {
     let prev = total;
     STAGES.forEach((s, i) => {
       const c = p.stage[i];
-      rows.push({ Clave: `${p.tipo}|${p.periodo}|funnel|${s.etapa}`, Tipo: p.tipo, Periodo: p.periodo,
+      rows.push({ Clave: `${p.tipo}|${p.periodo}|funnel|${s.etapa}`, Tipo: p.tipo, Periodo: p.periodo, ...perFields(p),
         Dim: 'funnel', Item: s.etapa, Orden: i + 1,
         Conteo: c, 'Pct global': pct(c, total), 'Pct anterior': pct(c, prev) });
       prev = c;
@@ -108,13 +110,13 @@ async function recalcular(env) {
     // canal (orden alfabético estable)
     Object.keys(p.canal).sort().forEach((cn, idx) => {
       const cc = p.canal[cn];
-      rows.push({ Clave: `${p.tipo}|${p.periodo}|canal|${cn}`, Tipo: p.tipo, Periodo: p.periodo,
+      rows.push({ Clave: `${p.tipo}|${p.periodo}|canal|${cn}`, Tipo: p.tipo, Periodo: p.periodo, ...perFields(p),
         Dim: 'canal', Item: cn, Orden: idx + 1,
         Conteo: cc.leads, 'Pct global': pct(cc.agendo, cc.leads), 'Pct anterior': 0 });
     });
     // kpi
     KPIS.forEach((kp) => {
-      rows.push({ Clave: `${p.tipo}|${p.periodo}|kpi|${kp.item}`, Tipo: p.tipo, Periodo: p.periodo,
+      rows.push({ Clave: `${p.tipo}|${p.periodo}|kpi|${kp.item}`, Tipo: p.tipo, Periodo: p.periodo, ...perFields(p),
         Dim: 'kpi', Item: kp.item, Orden: kp.orden,
         Conteo: kp.count ? kp.count(p) : 0, 'Pct global': kp.pct ? kp.pct(p) : 0, 'Pct anterior': 0 });
     });
@@ -126,7 +128,7 @@ async function recalcular(env) {
     const batch = rows.slice(i, i + 10).map((fields) => ({ fields }));
     const wr = await fetch(api(METR), {
       method: 'PATCH', headers: wH,
-      body: JSON.stringify({ performUpsert: { fieldsToMergeOn: ['Clave'] }, records: batch }),
+      body: JSON.stringify({ performUpsert: { fieldsToMergeOn: ['Clave'] }, typecast: true, records: batch }),
     });
     if (!wr.ok) throw new Error('upsert ' + wr.status + ' ' + (await wr.text()));
   }
