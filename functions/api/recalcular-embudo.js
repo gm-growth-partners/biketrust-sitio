@@ -117,7 +117,7 @@ async function recalcular(env) {
     { item: 'Cerró',           orden: 4, count: (p) => p.stage[4] },
     { item: 'Tasa conversión', orden: 5, pct:   (p) => pct(p.stage[4], p.total) },     // cerró / total leads
     { item: 'Tasa cierre',     orden: 6, pct:   (p) => pct(p.stage[4], p.stage[3]) },  // cerró / visitó (asistió)
-    { item: 'Facturación',     orden: 7, count: (p) => p.revenue },
+    { item: 'Facturación',     orden: 7, monto: (p) => p.revenue },                    // moneda → campo Monto
   ];
   // Campos de selección por tipo (para los desplegables de la interfaz).
   const perFields = (p) => p.tipo === 'semana' ? { Semana: p.label } : p.tipo === 'mes' ? { Mes: p.label } : {};
@@ -144,7 +144,8 @@ async function recalcular(env) {
     KPIS.forEach((kp) => {
       rows.push({ Clave: `${p.tipo}|${p.periodo}|kpi|${kp.item}`, Tipo: p.tipo, Periodo: p.periodo, ...perFields(p),
         Dim: 'kpi', Item: kp.item, Orden: kp.orden,
-        Conteo: kp.count ? kp.count(p) : 0, 'Pct global': kp.pct ? kp.pct(p) : 0, 'Pct anterior': 0 });
+        Conteo: kp.count ? kp.count(p) : 0, 'Pct global': kp.pct ? kp.pct(p) : 0, 'Pct anterior': 0,
+        Monto: kp.monto ? kp.monto(p) : 0 });
     });
   }
 
