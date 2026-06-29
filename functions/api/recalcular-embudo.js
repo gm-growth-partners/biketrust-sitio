@@ -10,7 +10,6 @@
 const BASE_DEFAULT  = 'appQUgk8aeD752923';
 const TABLE_DEFAULT = 'tblj1AgQxvHBUHgeM';   // tabla Metricas por ID (rename-proof)
 const LEADS_DEFAULT = 'Leads';
-const INV_DEFAULT   = 'tblWJS2PtWkGnkDsB';   // tabla Inventario por ID (para facturación)
 
 // Etapas del embudo (orden) → bandera ACUMULATIVA en Leads.
 const STAGES = [
@@ -35,7 +34,7 @@ async function recalcular(env) {
   const WRITE = env.AIRTABLE_WRITE_TOKEN;
   const LEADS = env.AIRTABLE_LEADS_TABLE   || LEADS_DEFAULT;
   const METR  = env.AIRTABLE_METRICAS_TABLE || TABLE_DEFAULT;
-  const INV   = env.AIRTABLE_INVENTARIO_TABLE || INV_DEFAULT;
+  const INTER = env.AIRTABLE_INTERESES_TABLE || 'Intereses';
   if (!READ || !WRITE) throw new Error('not_configured (faltan tokens)');
   const api = (t) => `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(t)}`;
 
@@ -58,11 +57,13 @@ async function recalcular(env) {
     const k = `${tipo}|${periodo}`;
     return P[k] || (P[k] = { tipo, periodo, label, total: 0, stage: [0, 0, 0, 0, 0], canal: {}, revenue: 0 });
   };
+  const leadInfo = {};   // leadId → {date entrada, cerro} para la facturación
   for (const rec of leads) {
     const f = rec.fields;
     const reached = STAGES.map(s => (f[s.flag] ? 1 : 0));
     const canal = f['Canal origen'] || '(sin canal)';
     const date  = f['Fecha primer contacto'];           // 'YYYY-MM-DD' o undefined
+    leadInfo[rec.id] = { date, cerro: reached[4] === 1 };  // índice 4 = Llegó a cerró
 
     // [tipo, periodo(token sortable), label(legible)]
     const targets = [['global', 'Total', 'Total']];      // global = TODOS los leads
@@ -82,30 +83,34 @@ async function recalcular(env) {
     }
   }
 
-  // 2b) Facturación: sumar Precio de bicis Vendidas, bucketeadas por su Fecha VENTA.
-  const iqs = ['Precio', 'Fecha venta', 'Estado'].map(f => `fields%5B%5D=${encodeURIComponent(f)}`).join('&') + '&pageSize=100';
-  let bikes = [], ioff = null;
+  // 2b) Facturación = Precio Bici de los Intereses CERRÓ cuyo lead está cerró,
+  //     bucketeada por la SEMANA DE ENTRADA del lead (cohorte) → cuadra con "Cerró".
+  const fqs = ['Resultado', 'Precio Bici', 'Lead'].map(f => `fields%5B%5D=${encodeURIComponent(f)}`).join('&') + '&pageSize=100';
+  let intereses = [], joff = null;
   do {
-    const u = `${api(INV)}?${iqs}${ioff ? `&offset=${ioff}` : ''}`;
+    const u = `${api(INTER)}?${fqs}${joff ? `&offset=${joff}` : ''}`;
     const r = await fetch(u, { headers: { Authorization: `Bearer ${READ}` } });
-    if (!r.ok) throw new Error('read_inventario ' + r.status);
+    if (!r.ok) throw new Error('read_intereses ' + r.status);
     const j = await r.json();
-    bikes = bikes.concat(j.records || []);
-    ioff = j.offset || null;
-  } while (ioff);
-  for (const rec of bikes) {
+    intereses = intereses.concat(j.records || []);
+    joff = j.offset || null;
+  } while (joff);
+  for (const rec of intereses) {
     const f = rec.fields;
-    const fv = f['Fecha venta'];
-    const precio = Number(f['Precio']) || 0;
-    if (f['Estado'] !== 'Vendida' || !precio || !fv || !/^\d{4}-\d{2}-\d{2}/.test(fv)) continue;
-    const [yy, mm, dd] = fv.slice(0, 10).split('-').map(Number);
-    const ym = fv.slice(0, 7);
-    const w  = weekOfMonth(dd);
-    const targets = [
-      ['global', 'Total', 'Total'],
-      ['semana', `${ym}-S${w}`, `Sem ${w} - ${MESES[mm - 1]} ${yy}`],
-      ['mes', ym, `${MESES[mm - 1]} ${yy}`],
-    ];
+    if (f['Resultado'] !== 'Cerró') continue;
+    const info = leadInfo[(f['Lead'] || [])[0]];
+    if (!info || !info.cerro) continue;                  // solo si el lead está cerró
+    const precio = (f['Precio Bici'] || []).reduce((a, b) => a + (Number(b) || 0), 0);
+    if (!precio) continue;
+    const d = info.date;
+    const targets = [['global', 'Total', 'Total']];
+    if (d && /^\d{4}-\d{2}-\d{2}/.test(d)) {
+      const [yy, mm, dd] = d.slice(0, 10).split('-').map(Number);
+      const ym = d.slice(0, 7);
+      const w  = weekOfMonth(dd);
+      targets.push(['semana', `${ym}-S${w}`, `Sem ${w} - ${MESES[mm - 1]} ${yy}`]);
+      targets.push(['mes', ym, `${MESES[mm - 1]} ${yy}`]);
+    }
     for (const [tipo, periodo, label] of targets) bucket(tipo, periodo, label).revenue += precio;
   }
 
