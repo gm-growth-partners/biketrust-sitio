@@ -614,6 +614,7 @@ const RESERVA_JS = String.raw`(function(){
   function show(el,on){ el.classList[on?'remove':'add']('hidden'); }
   function ymd(d){ var m=d.getMonth()+1, day=d.getDate(); return d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(day<10?'0':'')+day; }
   function maxBizDate(){ var d=new Date(), n=0; while(n<5){ d.setDate(d.getDate()+1); var wd=d.getDay(); if(wd!==0&&wd!==6) n++; } return d; } // 5 días hábiles desde hoy
+  function minDate(){ var d=new Date(), wd; do { d.setDate(d.getDate()+1); wd=d.getDay(); } while(wd===0||wd===6); return d; } // primer día hábil DESPUÉS de hoy (no mismo día)
   function setStep(n){
     [].forEach.call(ov.querySelectorAll('.rsv-step'),function(s){ s.classList.toggle('on', s.getAttribute('data-step')===String(n)); });
     var num = (n===1||n===2);
@@ -638,7 +639,7 @@ const RESERVA_JS = String.raw`(function(){
     if(slug){ var cb=ov.querySelector('.rsv-cb[value="'+slug+'"]'); if(cb) cb.checked=true; }
     syncModels();
     q('.rsv-err1').classList.add('hidden'); q('.rsv-err2').classList.add('hidden');
-    var dt=q('.rsv-date'); dt.min=ymd(new Date()); dt.max=ymd(maxBizDate());
+    var dt=q('.rsv-date'); dt.min=ymd(minDate()); dt.max=ymd(maxBizDate());
     ov.classList.add('open'); document.body.style.overflow='hidden';
     setStep(1);
   }
@@ -646,7 +647,7 @@ const RESERVA_JS = String.raw`(function(){
   bNext.addEventListener('click',function(){
     var v=q('.rsv-date').value;
     if(!v) return err('.rsv-err1','Elige una fecha.');
-    if(v<ymd(new Date())) return err('.rsv-err1','Elige una fecha de hoy en adelante.');
+    if(v<ymd(minDate())) return err('.rsv-err1','No agendamos para el mismo día; elige desde el día siguiente.');
     if(v>ymd(maxBizDate())) return err('.rsv-err1','El plazo máximo para agendar es de 5 días hábiles.');
     var wd=new Date(v+'T00:00').getDay();
     if(wd===0||wd===6) return err('.rsv-err1','Atendemos en días hábiles (lunes a viernes).');
