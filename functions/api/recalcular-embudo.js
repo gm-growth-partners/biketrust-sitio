@@ -10,6 +10,7 @@
 const BASE_DEFAULT  = 'appQUgk8aeD752923';
 const TABLE_DEFAULT = 'tblj1AgQxvHBUHgeM';   // tabla Metricas por ID (rename-proof)
 const LEADS_DEFAULT = 'Leads';
+const INV_DEFAULT   = 'tblWJS2PtWkGnkDsB';   // tabla Inventario por ID (para facturación)
 
 // Etapas del embudo (orden) → bandera ACUMULATIVA en Leads.
 const STAGES = [
@@ -34,6 +35,7 @@ async function recalcular(env) {
   const WRITE = env.AIRTABLE_WRITE_TOKEN;
   const LEADS = env.AIRTABLE_LEADS_TABLE   || LEADS_DEFAULT;
   const METR  = env.AIRTABLE_METRICAS_TABLE || TABLE_DEFAULT;
+  const INV   = env.AIRTABLE_INVENTARIO_TABLE || INV_DEFAULT;
   if (!READ || !WRITE) throw new Error('not_configured (faltan tokens)');
   const api = (t) => `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(t)}`;
 
@@ -54,7 +56,7 @@ async function recalcular(env) {
   const P = {};
   const bucket = (tipo, periodo, label) => {
     const k = `${tipo}|${periodo}`;
-    return P[k] || (P[k] = { tipo, periodo, label, total: 0, stage: [0, 0, 0, 0, 0], canal: {} });
+    return P[k] || (P[k] = { tipo, periodo, label, total: 0, stage: [0, 0, 0, 0, 0], canal: {}, revenue: 0 });
   };
   for (const rec of leads) {
     const f = rec.fields;
@@ -80,13 +82,42 @@ async function recalcular(env) {
     }
   }
 
+  // 2b) Facturación: sumar Precio de bicis Vendidas, bucketeadas por su Fecha VENTA.
+  const iqs = ['Precio', 'Fecha venta', 'Estado'].map(f => `fields%5B%5D=${encodeURIComponent(f)}`).join('&') + '&pageSize=100';
+  let bikes = [], ioff = null;
+  do {
+    const u = `${api(INV)}?${iqs}${ioff ? `&offset=${ioff}` : ''}`;
+    const r = await fetch(u, { headers: { Authorization: `Bearer ${READ}` } });
+    if (!r.ok) throw new Error('read_inventario ' + r.status);
+    const j = await r.json();
+    bikes = bikes.concat(j.records || []);
+    ioff = j.offset || null;
+  } while (ioff);
+  for (const rec of bikes) {
+    const f = rec.fields;
+    const fv = f['Fecha venta'];
+    const precio = Number(f['Precio']) || 0;
+    if (f['Estado'] !== 'Vendida' || !precio || !fv || !/^\d{4}-\d{2}-\d{2}/.test(fv)) continue;
+    const [yy, mm, dd] = fv.slice(0, 10).split('-').map(Number);
+    const ym = fv.slice(0, 7);
+    const w  = weekOfMonth(dd);
+    const targets = [
+      ['global', 'Total', 'Total'],
+      ['semana', `${ym}-S${w}`, `Sem ${w} - ${MESES[mm - 1]} ${yy}`],
+      ['mes', ym, `${MESES[mm - 1]} ${yy}`],
+    ];
+    for (const [tipo, periodo, label] of targets) bucket(tipo, periodo, label).revenue += precio;
+  }
+
   // 3) Construir filas (funnel + canal + kpi) por período.
   const KPIS = [
     { item: 'Leads totales', orden: 1, count: (p) => p.total },
     { item: 'Agendó',        orden: 2, count: (p) => p.stage[1] },
     { item: 'Confirmó',      orden: 3, count: (p) => p.stage[2] },
-    { item: 'Cerró',         orden: 4, count: (p) => p.stage[4] },
-    { item: 'Tasa cierre',   orden: 5, pct:   (p) => pct(p.stage[4], p.total) },
+    { item: 'Cerró',           orden: 4, count: (p) => p.stage[4] },
+    { item: 'Tasa conversión', orden: 5, pct:   (p) => pct(p.stage[4], p.total) },     // cerró / total leads
+    { item: 'Tasa cierre',     orden: 6, pct:   (p) => pct(p.stage[4], p.stage[3]) },  // cerró / visitó (asistió)
+    { item: 'Facturación',     orden: 7, count: (p) => p.revenue },
   ];
   // Campos de selección por tipo (para los desplegables de la interfaz).
   const perFields = (p) => p.tipo === 'semana' ? { Semana: p.label } : p.tipo === 'mes' ? { Mes: p.label } : {};
