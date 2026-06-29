@@ -71,7 +71,7 @@ export async function onRequestPost({ request, env }) {
   if (reservaId) {
     try {
       await crmUpsert(env, reservaId, {
-        nombre, email, telefono, fecha,
+        nombre, email, telefono, fecha, hora,
         modelosId: Array.isArray(data.modelosId) ? data.modelosId.filter(Boolean) : []
       });
     } catch (e) { /* el CRM es best-effort; la reserva ya está a salvo */ }
@@ -86,7 +86,7 @@ export async function onRequestPost({ request, env }) {
 // Lee con AIRTABLE_TOKEN, escribe con AIRTABLE_WRITE_TOKEN. Usa typecast para
 // que Airtable cree solo las opciones de los Single select que falten.
 // ───────────────────────────────────────────────────────────────────────────
-async function crmUpsert(env, reservaId, { nombre, email, telefono, fecha, modelosId }) {
+async function crmUpsert(env, reservaId, { nombre, email, telefono, fecha, hora, modelosId }) {
   const BASE  = env.AIRTABLE_BASE || 'appQUgk8aeD752923';
   const READ  = env.AIRTABLE_TOKEN || env.AIRTABLE_WRITE_TOKEN;   // lectura (buscar lead)
   const WRITE = env.AIRTABLE_WRITE_TOKEN;
@@ -99,6 +99,7 @@ async function crmUpsert(env, reservaId, { nombre, email, telefono, fecha, model
   const last8   = String(telefono || '').replace(/\D/g, '').slice(-8);
   const biciIds = Array.isArray(modelosId) ? modelosId.filter(Boolean) : [];
   const now     = new Date().toISOString();   // sello de fechas del lead
+  const fechaVisita = (fecha && hora) ? `${fecha}T${hora}:00` : (fecha ? `${fecha}T12:00:00` : null);
 
   // 1) Buscar Lead por email o por los últimos 8 dígitos del teléfono.
   let leadId = null, leadReservas = [];
@@ -129,6 +130,7 @@ async function crmUpsert(env, reservaId, { nombre, email, telefono, fecha, model
       body: JSON.stringify({ typecast: true, fields: {
         'Estado': 'visita_agendada',
         'Fecha última interacción': now,
+        ...(fechaVisita ? { 'Fecha visita': fechaVisita } : {}),
         'Reservas': reservas
       } })
     });
@@ -143,6 +145,7 @@ async function crmUpsert(env, reservaId, { nombre, email, telefono, fecha, model
         'Estado': 'visita_agendada',
         'Fecha primer contacto': now,
         'Fecha última interacción': now,
+        ...(fechaVisita ? { 'Fecha visita': fechaVisita } : {}),
         'Reservas': [reservaId]
       } })
     });
