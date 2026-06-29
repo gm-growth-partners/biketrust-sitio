@@ -23,18 +23,10 @@ const STAGES = [
 const pad2 = (n) => String(n).padStart(2, '0');
 const pct  = (num, den) => (den ? Math.round((100 * num) / den) : 0);
 
-// Semana ISO en UTC (año-ISO correcto en bordes de año). Recibe Y,M,D numéricos.
-function isoWeekLabel(y, m, d) {
-  const target = new Date(Date.UTC(y, m - 1, d));
-  const dayNr = (target.getUTCDay() + 6) % 7;            // Lun=0 … Dom=6
-  target.setUTCDate(target.getUTCDate() - dayNr + 3);     // jueves de esta semana
-  const isoYear = target.getUTCFullYear();
-  const firstThu = new Date(Date.UTC(isoYear, 0, 4));     // 4-ene siempre es semana 1
-  const firstDayNr = (firstThu.getUTCDay() + 6) % 7;
-  firstThu.setUTCDate(firstThu.getUTCDate() - firstDayNr + 3);
-  const week = 1 + Math.round((target - firstThu) / (7 * 86400000));
-  return `${isoYear}-W${pad2(week)}`;
-}
+const MESES = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
+               'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
+// Semana-del-mes (1..5) directo del día → "Sem 2 - JULIO 2026". Sin zona horaria.
+const weekOfMonth = (dd) => Math.ceil(dd / 7);
 
 async function recalcular(env) {
   const BASE  = env.AIRTABLE_BASE || BASE_DEFAULT;
@@ -60,9 +52,9 @@ async function recalcular(env) {
 
   // 2) Acumular por período. clave "Tipo|Periodo" → agregados.
   const P = {};
-  const bucket = (tipo, periodo) => {
+  const bucket = (tipo, periodo, label) => {
     const k = `${tipo}|${periodo}`;
-    return P[k] || (P[k] = { tipo, periodo, total: 0, stage: [0, 0, 0, 0, 0], canal: {} });
+    return P[k] || (P[k] = { tipo, periodo, label, total: 0, stage: [0, 0, 0, 0, 0], canal: {} });
   };
   for (const rec of leads) {
     const f = rec.fields;
@@ -70,14 +62,17 @@ async function recalcular(env) {
     const canal = f['Canal origen'] || '(sin canal)';
     const date  = f['Fecha primer contacto'];           // 'YYYY-MM-DD' o undefined
 
-    const targets = [['global', 'Total']];               // global = TODOS los leads
+    // [tipo, periodo(token sortable), label(legible)]
+    const targets = [['global', 'Total', 'Total']];      // global = TODOS los leads
     if (date && /^\d{4}-\d{2}-\d{2}/.test(date)) {
       const [yy, mm, dd] = date.slice(0, 10).split('-').map(Number);
-      targets.push(['semana', isoWeekLabel(yy, mm, dd)]);
-      targets.push(['mes', date.slice(0, 7)]);           // 'YYYY-MM'
+      const ym = date.slice(0, 7);                        // 'YYYY-MM' (token mes)
+      const w  = weekOfMonth(dd);
+      targets.push(['semana', `${ym}-S${w}`, `Sem ${w} - ${MESES[mm - 1]} ${yy}`]);
+      targets.push(['mes', ym, `${MESES[mm - 1]} ${yy}`]);
     }
-    for (const [tipo, periodo] of targets) {
-      const p = bucket(tipo, periodo);
+    for (const [tipo, periodo, label] of targets) {
+      const p = bucket(tipo, periodo, label);
       p.total++;
       for (let i = 0; i < 5; i++) p.stage[i] += reached[i];
       const c = p.canal[canal] || (p.canal[canal] = { leads: 0, agendo: 0 });
@@ -94,7 +89,7 @@ async function recalcular(env) {
     { item: 'Tasa cierre',   orden: 5, pct:   (p) => pct(p.stage[4], p.total) },
   ];
   // Campos de selección por tipo (para los desplegables de la interfaz).
-  const perFields = (p) => p.tipo === 'semana' ? { Semana: p.periodo } : p.tipo === 'mes' ? { Mes: p.periodo } : {};
+  const perFields = (p) => p.tipo === 'semana' ? { Semana: p.label } : p.tipo === 'mes' ? { Mes: p.label } : {};
   const rows = [];
   for (const k in P) {
     const p = P[k], total = p.total;
@@ -122,7 +117,9 @@ async function recalcular(env) {
     });
   }
 
-  // 4) UPSERT por "Clave" en lotes de 10.
+  // 4) UPSERT por "Clave" en lotes de 10. Orden cronológico → opciones de
+  //    Semana/Mes se crean en orden en los desplegables.
+  rows.sort((a, b) => (a.Clave < b.Clave ? -1 : a.Clave > b.Clave ? 1 : 0));
   const wH = { Authorization: `Bearer ${WRITE}`, 'Content-Type': 'application/json' };
   for (let i = 0; i < rows.length; i += 10) {
     const batch = rows.slice(i, i + 10).map((fields) => ({ fields }));
