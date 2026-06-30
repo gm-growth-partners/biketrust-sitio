@@ -2,7 +2,7 @@
 
 > Este archivo lo lee Claude Code automáticamente al iniciar sesión en este repo.
 > Es la **memoria viva del proyecto**: estado, arquitectura, errores ya cometidos (para NO repetirlos) y cómo debe trabajar Claude. **Léelo completo antes de actuar.** Idioma de trabajo: **español**.
-> Última actualización: **2026-06-25**.
+> Última actualización: **2026-06-30**.
 
 ---
 
@@ -18,25 +18,33 @@ Bike Trust vende bicicletas **Specialized usadas, premium y certificadas** (Sant
 
 ---
 
-## 2. Estado actual (2026-06-25)
+## 2. Estado actual (2026-06-30)
 
 | Frente | Estado |
 |---|---|
 | 🟢 **Web** | EN VIVO (https://biketrust-sitio.pages.dev). Catálogo, fichas e-commerce, reservas, guías, SEO (OG/sitemap/robots/favicon/404), **ficha técnica PDF auto-generada**. |
 | 🟢 **Backend/CRM** | OPERATIVO y verificado E2E. Inventario + Leads + Intereses + Reservas. Reserva web→Lead+Intereses automático. |
-| 🟢 **Interfaces Airtable** | 3 construidas: **Control de Inventario** (form alta + panel + por completar), **Pipeline CRM** (Kanban), **Reporte de los lunes** (embudo/medición). |
+| 🟢 **Interfaces Airtable** | **Control de Inventario** (form alta + panel + por completar), **Pipeline CRM** (Kanban), **Reportes** (semanal/mensual/global por período), **Agenda** (calendario de visitas). |
+| 🟢 **Reporting por período** | 3 páginas (semana/mes/global) desde tabla `Metricas` precalculada por `functions/api/recalcular-embudo.js` (botón manual). Facturación reconstruida desde cierres. |
+| 🟢 **Conexión de venta** | `functions/api/registrar-venta.js` EN VIVO y probada con clic real: deja Lead `cerró`+fecha · Interés `Cerró` · Bici `Vendida`+fecha en una llamada. Disparo desde Leads/Agenda (botón Open URL). |
 | 🔴 **Funnel ManyChat** | Diseñado, sin construir. Desbloqueado (ya hay acceso IG). Falta ManyChat Pro + Meta Business. |
 
-**Pendientes menores:** limpiar datos DEMO (flag `DEMO` en Leads/Intereses); quitar 3 filtros de página en "Reporte de los lunes"; colores en cards de inventario + botón "+ Nueva bici"; conectar dominio `biketrust.cl` (falta setear env `SITE_URL` en Cloudflare al hacerlo).
+**Pendiente inmediato (RETOMAR — pausado 2026-06-30):** terminar el wiring del botón de venta en la **Agenda** (probar edición inline de `Bici comprada` en vista previa; elegir botón nativo con URL+campo `RecID` o el botón-campo ya funcional; probar con DEMO antes de quitar el otro; dar permiso **Editar** al staff al compartir). Detalle completo en la memoria de Claude `project_biketrust_reporte_metricas.md`.
+
+**Pendientes menores:** limpiar datos DEMO (flag `DEMO` en Leads/Intereses); colores en cards de inventario + botón "+ Nueva bici"; reconstruir/limpiar facturación demo; conectar dominio `biketrust.cl` (setear env `SITE_URL` en Cloudflare al hacerlo). **Env Cloudflare nuevas:** `RECALC_KEY` (reporte) y `VENTA_KEY` (registrar-venta).
 
 ---
 
 ## 3. Arquitectura y datos técnicos
 
-- **Repo:** github.com/gm-growth-partners/biketrust-sitio (rama `main`, auto-deploy on push). Carpeta local: `C:\Users\Gabriel\Desktop\GM Growth Partners\Clientes\biketrust.cl\Estrategia\2. Fragua\github`.
+- **Repo:** github.com/gm-growth-partners/biketrust-sitio (rama `main`, auto-deploy on push). Carpeta local: `C:\Users\Gabriel\Desktop\GM Growth Partners\Clientes\2. biketrust.cl\Estrategia\2. Fragua\github` (ojo: la carpeta cliente es **`2. biketrust.cl`** con prefijo numérico).
 - **Build:** `build.mjs` (Node, sin dependencias, `fetch` nativo). Lee la vista **Disponibles** de **Inventario** y genera `/dist` (catálogo + ficha por bici + ficha técnica imprimible + SEO).
 - **Airtable:** base `appQUgk8aeD752923` ("Biketrust Operaciones").
-- **Pages Function:** `functions/api/reservar.js` — recibe la reserva web, la escribe en Reservas y **hace upsert de Lead + crea Intereses** (best-effort). Lee con `AIRTABLE_TOKEN`, escribe con `AIRTABLE_WRITE_TOKEN`.
+- **Pages Functions** (lado servidor; leen con `AIRTABLE_TOKEN`, escriben con `AIRTABLE_WRITE_TOKEN`):
+  - `functions/api/reservar.js` — reserva web → Reservas + upsert Lead + Intereses (best-effort). Estampa `Fecha visita`.
+  - `functions/api/recalcular-embudo.js` — recalcula la tabla `Metricas` por período (botón manual). Protegida por env `RECALC_KEY`.
+  - `functions/api/registrar-venta.js` — venta atómica (Lead cerró + Interés Cerró + Bici Vendida + fechas). Toma la bici de `Leads.Bici comprada` o del param `bici`. GET (botón Open URL) + POST. Protegida por env `VENTA_KEY`. Tiene retry-on-429.
+  - **Gotcha API (nuevo):** el GET de **un registro único** (`/Tabla/{recId}`) **NO acepta `?fields[]=`** (da 422); eso solo va en el endpoint de LISTADO. Leer el registro completo.
 - **Tokens (SOLO env, NUNCA en repo):** `AIRTABLE_TOKEN` (read) y `AIRTABLE_WRITE_TOKEN` (write) en Cloudflare. Para que Claude trabaje datos/esquema por API hay un **PAT en `.dev.vars`** (gitignored) como `AIRTABLE_PAT`. **El PAT se pegó una vez en el chat — conviene rotarlo.**
 
 ### Cómo Claude trabaja Airtable
@@ -48,7 +56,7 @@ Bike Trust vende bicicletas **Specialized usadas, premium y certificadas** (Sant
 ## 4. Modelo de datos (lo esencial — NO renombrar campos sin avisar; alimentan web y funnel)
 
 - **Inventario** (la bici): primario `Etiqueta` (fórmula Marca+Modelo+Talla). `Estado` (single select): `Borrador · En reacondicionamiento · Disponible · Reservada · Vendida` (solo `Disponible` se publica). Campos de ficha: Marca, Modelo, Año, Motorización, Disciplina, Talla, Precio, Precio nuevo, Puntaje certificación, Diag·(km/batería/ciclos), Specs clave, Geometría, Estado honesto, Por qué amarla, Rango altura, Material cuadro, Referencia, **Fotos galería** (campo único de fotos). Counts (rollup): Interesados, Recibió ficha, Agendaron, Cerraron. `Fecha venta`, `DEMO`.
-- **Leads** (la persona): **primario `Lead`** = fórmula `IF({Nombre},{Nombre},IF({Email},{Email},"Sin nombre"))`. `Estado` = máquina de 12 estados (`nuevo → ficha_entregada / quiz_iniciado → quiz_abandonado / match_entregado / no_match → visita_agendada → visita_confirmada → visitó → cerró`; terminales `muerto`, `descartado`). `Canal origen`, `Temperatura`, `WhatsApp`, `Email`, fechas, flags 1/0 (`Llegó a ficha/agendó/visitó/cerró`), `¿Suelto?` (fórmula reenganche >3 días), `Valor potencial` (rollup SUM), links Intereses/Reservas, `DEMO`.
+- **Leads** (la persona): **primario `Lead`** = fórmula `IF({Nombre},{Nombre},IF({Email},{Email},"Sin nombre"))`. `Estado` = máquina de 13 estados (`nuevo → ficha_entregada / quiz_iniciado → quiz_abandonado / match_entregado / no_match → visita_agendada → visita_confirmada → no_show / visitó → cerró`; terminales `muerto`, `descartado`). `Canal origen` (+`Tienda` para walk-in), `Temperatura`, `WhatsApp`, `Email`, fechas (`Fecha primer contacto`, `Fecha última interacción`, **`Fecha visita`** dateTime, **`Fecha cierre`**), flags 1/0 (`Llegó a ficha/agendó/confirmó/visitó/cerró`), `¿Suelto?` (fórmula reenganche >3 días), `Valor potencial` (rollup SUM), `RecID` (RECORD_ID()), **`Bici comprada`** (link a Inventario, single — la bici que se llevó), **`Registrar venta`** (botón Open URL → `/api/registrar-venta`), links Intereses/Reservas, `DEMO`.
 - **Intereses** (lead↔bici): primario `Interés ID` (autonumber). `Origen` (Puerta 1/Puerta 2/Web (ficha)), `Resultado` (Ficha entregada/Match/No-match/Agendó/Cerró), links Lead/Bici/Reel/Reservas, `Precio Bici` (lookup Bici→Precio), `DEMO`.
 - **Reservas**: campos que escribe la web (Nombre, Email, Teléfono, Fecha, Hora, Modelos, Modelos Slug, **Bici IDs**, Origen=Web, Estado=Nueva) + links Leads/Intereses.
 - **Reels**: para el funnel (sin uso aún).
@@ -97,9 +105,12 @@ Bike Trust vende bicicletas **Specialized usadas, premium y certificadas** (Sant
 
 ## 8. Pendientes / próximos pasos
 
-1. **Limpiar datos DEMO** (Leads + Intereses con `DEMO=1`) cuando se confirme producción.
-2. **Pulidos menores:** quitar filtros de página en "Reporte de los lunes"; colores de cards + botón "+ Nueva bici" en inventario.
-3. **Dominio `biketrust.cl`** → Cloudflare Pages + setear env `SITE_URL` (para que OG/canonical/sitemap usen el dominio real).
-4. **Funnel ManyChat** (fase grande, desbloqueada): Puerta 1 (reel→ficha por DM), Puerta 2 (quiz), flujo central ManyChat↔Airtable (upsert por handle IG — agregar campo texto para el `@handle` e incluirlo en la fórmula del primario `Lead`), reenganche diario de sueltos, medición/pixel, imagen de ficha para el DM. Requiere ManyChat Pro + Meta Business.
+1. **TERMINAR botón de venta en la Agenda (RETOMAR, pausado 2026-06-30):** probar edición inline de `Bici comprada` en la vista previa; elegir botón nativo (URL + campo `RecID`) o el botón-campo ya funcional; probar con DEMO antes de quitar el otro; dar permiso **Editar** al staff al compartir. (Detalle: memoria de Claude `project_biketrust_reporte_metricas.md`.)
+2. **Limpiar datos DEMO** (Leads + Intereses con `DEMO=1`) cuando se confirme producción; limpiar inconsistencias de facturación demo.
+3. **Pulidos menores:** colores de cards + botón "+ Nueva bici" en inventario; páginas Ventas (Intereses Cerró por lead + rollups `N° compras`/`Total comprado`).
+4. **Dominio `biketrust.cl`** → Cloudflare Pages + setear env `SITE_URL` (para que OG/canonical/sitemap usen el dominio real).
+5. **Walk-in** (venta sin lead) → UI/form mínima que pegue a `/api/registrar-venta` (POST).
+6. **Aviso diario al staff** (fase ManyChat): cada mañana ~8-9 AM, mensaje con las visitas de HOY (leads con `Fecha visita`=hoy).
+7. **Funnel ManyChat** (fase grande, desbloqueada): Puerta 1 (reel→ficha por DM), Puerta 2 (quiz), flujo central ManyChat↔Airtable (upsert por handle IG — agregar campo texto para el `@handle` e incluirlo en la fórmula del primario `Lead`), reenganche diario de sueltos, medición/pixel, imagen de ficha para el DM. Requiere ManyChat Pro + Meta Business. **Contrato que ManyChat debe cumplir** (o el reporte no funciona): cada lead nace con `Fecha primer contacto`, avanza `Estado` por valores canónicos, usa `Canal origen` canónico, deduplica por @handle.
 
 > Documento maestro de diseño del funnel: `…/2. Fragua/airtable/BikeTrust_Diseno_Tecnico.docx` y la guía de Airtable en la misma carpeta.
