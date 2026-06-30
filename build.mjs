@@ -59,7 +59,7 @@ function mapBike(f, recId){
     disciplina:f['Disciplina']||'', talla:f['Talla']||'',
     precio:num(f['Precio']), precioNuevo:num(f['Precio nuevo']),
     puntaje: (f['Puntaje certificación']??null),
-    diagKm:num(f['Diag · km motor']), diagBat:num(f['Diag · salud batería']), diagCic:num(f['Diag · ciclos']),
+    diagKm:num(f['Diag · km motor']), diagBat:(f['Diag · salud batería']==null||f['Diag · salud batería']==='')?null:Math.round(Number(f['Diag · salud batería'])*100), diagCic:num(f['Diag · ciclos']),
     rangoAltura:f['Rango altura']||'', porQue:f['Por qué amarla']||'',
     estado:String(f['Estado honesto']||'').split('\n').map(s=>s.trim()).filter(Boolean),
     specs:parseSpecs(f['Specs clave']),
