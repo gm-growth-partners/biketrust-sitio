@@ -453,6 +453,7 @@ a{color:inherit;text-decoration:none}
 .product{max-width:1180px;margin:26px auto 0;padding:0 28px;display:grid;grid-template-columns:1.12fr .88fr;gap:42px;align-items:start}
 @media(max-width:860px){.product{grid-template-columns:1fr;gap:24px}}
 .back2{display:inline-block;max-width:1180px;margin:18px auto 0;padding:0 28px;width:100%;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gris)}
+.pgal{min-width:0}
 .pgal-main{position:relative;background:var(--hueso);border:1px solid var(--linea);aspect-ratio:4/3;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .pgal-main.has-img{cursor:zoom-in}
 .pgal-main img{width:100%;height:100%;object-fit:cover}
