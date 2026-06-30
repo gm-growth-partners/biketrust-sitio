@@ -1,5 +1,7 @@
 # Bike Trust · Sitio
 
+> 📖 **Documentación completa del sistema** (operación del staff, CRM, ventas, reportes y arquitectura): ver **[`DOCUMENTACION.md`](DOCUMENTACION.md)**. Este README cubre solo el build y deploy del sitio estático.
+
 Sitio estático generado desde Airtable (Airtable = única fuente de verdad).
 El build lee la vista **Disponibles** de la tabla **Inventario** y genera un catálogo + una ficha por bici, sobre la identidad de marca. Corre en **Cloudflare Pages** desde este repo.
 
@@ -66,8 +68,8 @@ Batería: M2-Series · 700 Wh
 Horquilla: RockShox Boxxer 180 mm
 ```
 
-### Fotos (por ahora)
-Pega URLs permanentes en `Fotos URLs`, separadas por coma o salto de línea (la 1ª es el héroe). Si está vacío, salen los placeholders. *(Próxima iteración: importar automáticamente las fotos adjuntas en Airtable — lo armamos cuando lleguen las fotos.)*
+### Fotos
+Sube las fotos como **adjuntos** al campo **`Fotos galería`** de la bici (la 1ª es el héroe). El build las **descarga y auto-hostea** en `/assets/bikes/<slug>/` (no dependen de las URLs de Airtable, que expiran). Si el campo está vacío, salen los placeholders. *(El campo de texto `Fotos URLs` sigue funcionando como respaldo, pero `Fotos galería` es el camino principal.)*
 
 ### Diagnóstico
 El bloque de diagnóstico (km, batería, ciclos) se muestra solo si `Motorización = Eléctrica`. En bicis musculares se oculta solo.
