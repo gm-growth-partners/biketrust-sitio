@@ -66,6 +66,7 @@ function mapBike(f, recId){
     geometria:parseSpecs(f['Geometría']),
     referencia:f['Referencia']||'',
     fotos: [],   // se resuelve en el build (resolveBikePhotos)
+    fotoReferencial: !!f['Foto referencial'],  // foto del MODELO (no la unidad real) → muestra etiqueta honesta
     // Cada «Foto N» es un ADJUNTO (la persona arrastra la foto a ese slot) o, si fuera texto, una URL. Orden 1..13.
     fotoSlots: Array.from({length:13}, (_,i)=>f['Foto '+(i+1)] ?? null),
     // Respaldos: campo adjunto único «Fotos» y campo de texto «Fotos URLs».
@@ -270,6 +271,10 @@ a{color:inherit;text-decoration:none}
 .resv-tag::before{content:"";width:6px;height:6px;border-radius:50%;background:#fff;animation:resvPulse 1.6s ease-in-out infinite}
 @keyframes resvPulse{0%,100%{opacity:1}50%{opacity:.3}}
 .resv-note{display:flex;gap:11px;align-items:flex-start;margin:0 46px 14px;padding:13px 16px;background:var(--hueso);border:1px solid var(--linea);border-left:3px solid var(--bronce);font-size:.84rem;color:var(--carbon);line-height:1.45}
+/* etiqueta "imagen referencial" (foto del modelo, no de la unidad real) */
+.ref-tag{position:absolute;bottom:8px;left:8px;z-index:1;background:rgba(15,15,15,.62);color:#fff;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;padding:3px 7px;border-radius:2px}
+.pgal-main.has-img{position:relative}
+.ref-note{position:absolute;left:0;right:0;bottom:0;z-index:1;background:rgba(15,15,15,.6);color:#fff;font-size:.62rem;letter-spacing:.05em;text-align:center;padding:6px 10px}
 .resv-note .d{flex:none;width:8px;height:8px;border-radius:50%;background:var(--bronce);margin-top:6px;animation:resvPulse 1.6s ease-in-out infinite}
 .resv-note b{color:var(--bronce-deep);font-weight:600}
 @media (max-width:620px){.resv-note{margin:0 24px 14px}}
@@ -860,7 +865,7 @@ function fichaTecnicaHTML(b){
 function fichaHTML(b, bikes){
   const fotos = b.fotos;
   const galMain = fotos.length
-    ? `<div class="pgal-main has-img"><img src="${esc(fotos[0])}" alt="${esc(b.marca+' '+b.modelo)}"></div>`
+    ? `<div class="pgal-main has-img"><img src="${esc(fotos[0])}" alt="${esc(b.marca+' '+b.modelo)}">${b.fotoReferencial?`<div class="ref-note">Imagen referencial del modelo · la unidad real puede variar</div>`:''}</div>`
     : `<div class="pgal-main">${imgPH('Foto pendiente')}</div>`;
   const galThumbs = fotos.length
     ? fotos.map((f,i)=>`<button type="button" class="pgal-thumb${i===0?' on':''}" data-src="${esc(f)}"><img src="${esc(f)}" alt=""></button>`).join('')
@@ -964,10 +969,11 @@ function cardHTML(b){
   const url=`/bici/${b.slug}.html`;
   const img = b.fotos[0] ? `<img src="${esc(b.fotos[0])}" alt="${esc(b.modelo)}">` : imgPH('Foto pendiente');
   const tag = b.reservada ? `<div class="resv-tag">Reservada</div>` : '';
+  const ref = (b.fotoReferencial && b.fotos[0]) ? `<div class="ref-tag" title="Foto del modelo, no de la unidad real">Imagen referencial</div>` : '';
   const precio = b.precio!=null
     ? `${b.precioNuevo&&b.precioNuevo>b.precio?`<span class="was">${clp(b.precioNuevo)}</span>`:''}${clp(b.precio)}`
     : 'Consultar';
-  return `<a class="card" href="${url}" data-disc="${esc(b.disciplina)}"><div class="img">${tag}${img}</div><div class="body">
+  return `<a class="card" href="${url}" data-disc="${esc(b.disciplina)}"><div class="img">${tag}${ref}${img}</div><div class="body">
     <div class="disc">${esc(b.disciplina)}${b.talla?' · Talla '+esc(b.talla):''}</div>
     <h3>${esc(b.modelo)}</h3>
     <div class="meta">${esc(b.marca)}${b.anio?' · '+esc(b.anio):''}</div>
