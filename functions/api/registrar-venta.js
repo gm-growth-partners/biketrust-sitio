@@ -53,15 +53,16 @@ export async function registrarVenta(env, input) {
   const wH  = { Authorization: `Bearer ${WRITE}`, 'Content-Type': 'application/json' };
   const { iso, today } = nowStamps();
 
-  const biciId   = String(input.bici || '').trim();
-  let   leadId   = String(input.lead || '').trim();
+  let   biciId    = String(input.bici || '').trim();
+  let   leadId    = String(input.lead || '').trim();
   let   interesId = String(input.interes || '').trim();
-  if (!biciId) throw new Error('missing_bici (falta el record id de la bici)');
 
-  const out = { biciId, leadId: leadId || null, interesId: null, created: { lead: false, interes: false } };
+  const out = { biciId: biciId || null, leadId: leadId || null, interesId: null, created: { lead: false, interes: false } };
 
   // 1) Walk-in: sin lead previo → crear un lead mínimo (cerró desde ya).
+  //    Requiere `bici` en el input (un lead nuevo no tiene "Bici comprada").
   if (!leadId) {
+    if (!biciId) throw new Error('missing_bici (walk-in requiere `bici`)');
     const nombre = String(input.nombre || '').trim();
     if (!nombre && !input.telefono && !input.email) {
       throw new Error('missing_lead (sin `lead`, se requiere al menos `nombre` para walk-in)');
@@ -84,21 +85,26 @@ export async function registrarVenta(env, input) {
     out.leadId = leadId; out.created.lead = true;
   }
 
-  // 2) Resolver el Interés a cerrar: id dado → buscar lead↔bici → crear.
-  // OJO: el GET de un registro único NO acepta ?fields[] (da 422). Se lee el
-  // registro completo y se toma el campo que interesa.
-  if (!interesId) {
+  // 2) Leer el lead UNA vez para: (a) sacar la bici de "Bici comprada" si no vino
+  //    en el input — es lo que el staff elige en la Agenda — y (b) sus Intereses
+  //    para resolver cuál cerrar. OJO: el GET de un registro único NO acepta
+  //    ?fields[] (da 422) → se lee completo.
+  const linkIds = (v) => (Array.isArray(v) ? v : []).map(x => (typeof x === 'string' ? x : x.id)).filter(Boolean);
+  let leadFields = null;
+  if (!biciId || !interesId) {
     const lr = await afetch(`${api(LEADS)}/${leadId}`, { headers: rH });
-    if (lr.ok) {
-      const ids = ((await lr.json()).fields?.Intereses || [])
-        .map(x => (typeof x === 'string' ? x : x.id)).filter(Boolean);
-      for (const id of ids) {
-        const ir = await afetch(`${api(INTER)}/${id}`, { headers: rH });
-        if (!ir.ok) continue;
-        const b = ((await ir.json()).fields?.Bici || [])
-          .map(x => (typeof x === 'string' ? x : x.id)).filter(Boolean);
-        if (b.includes(biciId)) { interesId = id; break; }
-      }
+    if (lr.ok) leadFields = (await lr.json()).fields || {};
+  }
+  if (!biciId && leadFields) biciId = linkIds(leadFields['Bici comprada'])[0] || '';
+  if (!biciId) throw new Error('missing_bici (elige la bici comprada en el lead)');
+  out.biciId = biciId;
+
+  // 3) Resolver el Interés a cerrar: id dado → buscar lead↔bici → crear.
+  if (!interesId && leadFields) {
+    for (const id of linkIds(leadFields.Intereses)) {
+      const ir = await afetch(`${api(INTER)}/${id}`, { headers: rH });
+      if (!ir.ok) continue;
+      if (linkIds((await ir.json()).fields?.Bici).includes(biciId)) { interesId = id; break; }
     }
   }
 
