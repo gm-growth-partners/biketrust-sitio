@@ -880,7 +880,6 @@ function fichaHTML(b, bikes){
     ? `<div class="bb-row"><b>Calza:</b> ${esc(b.rangoAltura)}<a class="bb-link" href="/visitanos.html">Te asesoramos en tu visita</a></div>` : '';
   const reservaBB = b.reservada
     ? `<div class="bb-resv"><span class="d"></span><div><b>Alguien agendó una visita para verla.</b> Sigue disponible — agéndala tú también.</div></div>` : '';
-  const waMsg = encodeURIComponent(`Hola! Me interesa la ${b.marca} ${b.modelo}${b.talla?' (talla '+b.talla+')':''}. ¿Sigue disponible?`);
 
   const diag = b.electrica ? `<div class="diag"><div class="head"><svg class="shield"><use href="#sh"/></svg><span>Diagnóstico digital · escaneo en tienda</span></div>
     <div class="g">
@@ -957,7 +956,7 @@ function fichaHTML(b, bikes){
     </div>
     <div class="psec"><h2>Ficha técnica completa</h2>${pdfSection}</div>
     <div class="psec">${certblk}</div>
-    <div class="psec"><div class="support"><div class="simg" style="background-image:url('/assets/img/workshop.jpg')"></div><div class="stxt"><h3>¿Dudas sobre esta bici?</h3><p>Escríbenos y te contamos todo lo que necesites saber, o agenda una visita para verla en persona.</p><div class="sactions"><button type="button" class="btn-primary js-agendar" data-slug="${esc(b.slug)}">Agenda tu visita</button><a class="btn-ghost" href="https://wa.me/56985232895?text=${waMsg}" target="_blank" rel="noopener">WhatsApp</a></div></div></div></div>
+    <div class="psec"><div class="support"><div class="simg" style="background-image:url('/assets/img/workshop.jpg')"></div><div class="stxt"><h3>¿Dudas sobre esta bici?</h3><p>Agenda una visita y resuélvelas en persona: pruébala, revisa su estado real y conversa con nuestro equipo antes de decidir.</p><div class="sactions"><button type="button" class="btn-primary js-agendar" data-slug="${esc(b.slug)}">Agenda tu visita</button></div></div></div></div>
   </div>
   ${lightbox}
 ${FOOT_OPEN}${reservaModal(bikes)}<script>${FICHA_JS}</script></body></html>`;
