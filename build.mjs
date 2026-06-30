@@ -933,7 +933,6 @@ function fichaHTML(b, bikes){
       ${reservaBB}
       <div class="bb-cta">
         <button type="button" class="btn-primary js-agendar" data-slug="${esc(b.slug)}">Agenda tu visita</button>
-        <a class="btn-ghost" href="https://wa.me/56985232895?text=${waMsg}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
       </div>
     </div>
   </div>
