@@ -27,9 +27,13 @@ Bike Trust vende bicicletas **Specialized usadas, premium y certificadas** (Sant
 | 🟢 **Interfaces Airtable** | **Control de Inventario** (form alta + panel + por completar), **Pipeline CRM** (Kanban), **Reportes** (semanal/mensual/global por período), **Agenda** (calendario de visitas). |
 | 🟢 **Reporting por período** | 3 páginas (semana/mes/global) desde tabla `Metricas` precalculada por `functions/api/recalcular-embudo.js` (botón manual). Facturación reconstruida desde cierres. |
 | 🟢 **Conexión de venta** | `functions/api/registrar-venta.js` EN VIVO y probada con clic real: deja Lead `cerró`+fecha · Interés `Cerró` · Bici `Vendida`+fecha en una llamada. Disparo desde Leads/Agenda (botón Open URL). |
-| 🟡 **Funnel ManyChat** | ManyChat Pro ya conectado a IG/Meta Business. **Día 3 del plan (contrato + endpoints puente) CERRADO 2026-07-01.** Falta construir el flujo dentro de ManyChat (Día 4: Puerta 1). |
+| 🟡 **Funnel ManyChat** | ManyChat Pro ya conectado a IG/Meta Business. Endpoints puente `mc-lead`/`mc-evento` CERRADOS 2026-07-01. Falta el flujo en ManyChat + agenda/WhatsApp (Fases 1–4). |
 
-**Foco actual (2026-07-01, a pedido de los dueños): cerrar el embudo al 100%, resto en segundo plano.** Ver `…/2. Fragua/PLAN_embudo.md` para el plan día a día. Día 3 (schema `@handle IG` + `/api/mc-lead` + `/api/mc-evento`, verificados E2E en vivo) ✅. **Siguiente: Día 4 — Puerta 1** (armar en ManyChat el trigger de comentario/DM en un reel → responde ficha por DM → llama `/api/mc-lead` y `/api/mc-evento` vía External Request).
+**Foco actual (2026-07-01, a pedido de los dueños): cerrar el embudo al 100%, resto en segundo plano.**
+
+⚠️ **REDISEÑO 2026-07-01 — arquitectura 100% automatizada.** El embudo se automatiza de punta a punta hasta el showroom; el humano solo cierra en tienda (y escala precio). El "cerrador humano en el agendamiento" del diseño original se reemplaza por **agenda-en-el-chat + recordatorios por WhatsApp** (Instagram no deja mandar fuera de la ventana de 24h; WhatsApp con plantillas sí). **Documento autoritativo del diseño: `…/2. Fragua/ARQUITECTURA_EMBUDO.md`** (7 etapas, dependencia dura = conectar WhatsApp Business API a ManyChat). Plan operativo día a día: `…/2. Fragua/PLAN_embudo.md`.
+
+**Estado de fases:** Fase 1 (Puerta 1 = captura + ficha + calificación en ManyChat, con `mc-lead`/`mc-evento` en vivo) = **en curso**. Sigue: Fase 2 `/api/mc-agenda` + selector de horarios · Fase 3 WhatsApp + recordatorios · Fase 4 reenganche + Puerta 2 (quiz `/api/mc-match`).
 
 **Pendiente inmediato (RETOMAR — pausado 2026-06-30, en segundo plano mientras se cierra el embudo):** terminar el wiring del botón de venta en la **Agenda** (probar edición inline de `Bici comprada` en vista previa; elegir botón nativo con URL+campo `RecID` o el botón-campo ya funcional; probar con DEMO antes de quitar el otro; dar permiso **Editar** al staff al compartir). Detalle completo en la memoria de Claude `project_biketrust_reporte_metricas.md`.
 
