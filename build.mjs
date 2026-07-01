@@ -774,6 +774,8 @@ const FICHA_CSS = `
 body{font-family:'Jost',sans-serif;color:var(--tinta);background:#d9d6d0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .toolbar{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 22px;background:#fff;border-bottom:1px solid var(--linea);box-shadow:0 1px 8px rgba(0,0,0,.06)}
 .toolbar a{color:var(--gris);text-decoration:none;font-size:.85rem}
+.toolbar .tb-brand{color:var(--gris);font-size:.8rem;letter-spacing:.1em}
+.toolbar .tb-brand b{color:var(--bronce)}
 .toolbar button{background:var(--bronce);color:#fff;border:0;padding:11px 24px;font-family:'Jost',sans-serif;font-weight:500;letter-spacing:.05em;cursor:pointer;font-size:.84rem}
 .sheet{width:210mm;min-height:297mm;margin:26px auto;background:#fff;padding:18mm 16mm;box-shadow:0 8px 36px rgba(0,0,0,.2)}
 .brandbar{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--bronce);padding-bottom:12px;margin-bottom:20px}
@@ -850,7 +852,7 @@ function fichaTecnicaHTML(b){
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>${FICHA_CSS}</style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="sh" viewBox="0 0 32 36"><path d="M4 6 Q4 3 7 3 H25 Q28 3 28 6 V20 Q28 23.5 25.4 25.2 L16 32 L6.6 25.2 Q4 23.5 4 20 Z"/></symbol></svg>
-<div class="toolbar"><a href="/bici/${esc(b.slug)}.html">← Volver a la ficha</a><button onclick="window.print()">Descargar PDF</button></div>
+<div class="toolbar"><span class="tb-brand"><b>BIKE</b> TRUST · Ficha técnica</span><button onclick="window.print()">Descargar PDF</button></div>
 <article class="sheet">
   <div class="brandbar"><div class="lock"><svg class="shield"><use href="#sh"/></svg><span class="bn"><b>BIKE</b> TRUST</span></div><div class="doc">Ficha técnica · Certificado</div></div>
   <h1>${esc(b.marca)} ${esc(b.modelo)}</h1>
