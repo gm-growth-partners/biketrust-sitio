@@ -61,6 +61,29 @@ function fechaVisitaDe(fecha, hora) {
   return h ? `${f.slice(0, 10)}T${h.slice(0, 5)}:00` : `${f.slice(0, 10)}T12:00:00`;
 }
 
+// Los 2 horarios A/B dinámicos, calculados en hora Chile (UTC-4). Fuente única
+// que comparten el GET (pinta el selector) y el POST (resuelve `slot`), para que
+// los botones de ManyChat NUNCA haya que editar aunque roten las semanas.
+//   A = próximo sábado 11:00 · B = próximo viernes 18:00.
+function slotsAB() {
+  const nowCL = new Date(Date.now() - 4 * 3600 * 1000);
+  const y = nowCL.getUTCFullYear(), mo = nowCL.getUTCMonth(), d = nowCL.getUTCDate();
+  const dow = nowCL.getUTCDay(); // 0=Dom … 6=Sáb
+  const proximo = (targetDow, hora) => {
+    let delta = (targetDow - dow + 7) % 7;
+    if (delta === 0) delta = 7; // siempre el próximo, no hoy
+    const fecha = new Date(Date.UTC(y, mo, d + delta)).toISOString().slice(0, 10);
+    return { fecha, hora, fechaVisita: `${fecha}T${hora}:00` };
+  };
+  const nombreDia = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+  const A = proximo(6, '11:00'), B = proximo(5, '18:00');
+  const fmt = (wd, s) => `${nombreDia[wd]} ${s.fecha.slice(8, 10)}, ${s.hora}`;
+  return [
+    { id: 'A', label: fmt(6, A), ...A },
+    { id: 'B', label: fmt(5, B), ...B },
+  ];
+}
+
 const cfg = (env) => {
   const BASE  = env.AIRTABLE_BASE || BASE_DEFAULT;
   const READ  = env.AIRTABLE_TOKEN || env.AIRTABLE_WRITE_TOKEN;
@@ -95,10 +118,14 @@ export async function onRequestPost({ request, env }) {
   const biciIn    = data?.bici ? String(data.bici).trim() : '';
   const origen    = String(data?.origen || 'Puerta 1 (reel/comentario)').trim();
   const resultado = String(data?.resultado || 'Agendó').trim();
-  const fechaVisita = fechaVisitaDe(data?.fecha, data?.hora);
+  const slot      = data?.slot ? String(data.slot).trim().toUpperCase() : '';
+
+  // fecha/hora explícitos mandan; si no, se resuelve por `slot` (A/B) server-side.
+  let fechaVisita = fechaVisitaDe(data?.fecha, data?.hora);
+  if (!fechaVisita && slot) fechaVisita = slotsAB().find(s => s.id === slot)?.fechaVisita || null;
 
   if (!leadIn && !handle) return reply({ error: 'missing_fields (lead o handle)' }, 422);
-  if (!fechaVisita) return reply({ error: 'missing_fields (fecha [+hora])' }, 422);
+  if (!fechaVisita) return reply({ error: 'missing_fields (fecha [+hora] o slot A/B)' }, 422);
 
   const C = cfg(env);
   if (!C.READ || !C.WRITE) return reply({ error: 'not_configured' }, 503);
@@ -195,7 +222,7 @@ export async function onRequestPost({ request, env }) {
 
   return reply({
     ok: true, leadId, interesId, interesCreado, biciId: biciId || null,
-    fechaVisita, estadoActual: fieldsLead['Estado'] || estadoActual, estadoAplicado,
+    slot: slot || null, fechaVisita, estadoActual: fieldsLead['Estado'] || estadoActual, estadoAplicado,
   });
 }
 
@@ -206,31 +233,5 @@ export async function onRequestPost({ request, env }) {
 export async function onRequestGet({ request, env }) {
   const url = new URL(request.url);
   if (!keyOk(env, url)) return reply({ error: 'unauthorized' }, 401);
-
-  // "Hoy" en horario de Chile (UTC-4) para no equivocar el día de madrugada.
-  const nowCL = new Date(Date.now() - 4 * 3600 * 1000);
-  const y = nowCL.getUTCFullYear(), mo = nowCL.getUTCMonth(), d = nowCL.getUTCDate();
-  const dow = nowCL.getUTCDay(); // 0=Dom … 6=Sáb
-
-  // Próxima ocurrencia de un día de semana (estrictamente futura), a la hora dada.
-  const proximo = (targetDow, hora) => {
-    let delta = (targetDow - dow + 7) % 7;
-    if (delta === 0) delta = 7; // siempre el próximo, no hoy
-    const dt = new Date(Date.UTC(y, mo, d + delta));
-    const fecha = dt.toISOString().slice(0, 10);
-    return { fecha, hora, fechaVisita: `${fecha}T${hora}:00` };
-  };
-
-  const nombreDia = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-  const A = proximo(6, '11:00'); // sábado AM
-  const B = proximo(5, '18:00'); // viernes PM
-  const fmt = (dow, s) => `${nombreDia[dow]} ${s.fecha.slice(8, 10)}, ${s.hora}`;
-
-  return reply({
-    ok: true,
-    slots: [
-      { id: 'A', label: fmt(6, A), ...A },
-      { id: 'B', label: fmt(5, B), ...B },
-    ],
-  });
+  return reply({ ok: true, slots: slotsAB() });
 }
