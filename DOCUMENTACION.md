@@ -24,7 +24,7 @@ Bike Trust vende **bicicletas Specialized usadas, premium y certificadas** (Sant
 |---|---|---|
 | **Web** | Sitio estático (catálogo + ficha por bici + guías) en Cloudflare Pages. La "capa de confianza". | 🟢 En vivo: https://biketrust-sitio.pages.dev |
 | **Backend / CRM** | La base Airtable: Inventario, Leads, Intereses, Reservas, Reels + interfaces para operar. | 🟢 Operativo |
-| **Funnel** | Instagram + ManyChat (lo que llenará el CRM con leads). | 🔴 Diseñado, sin construir |
+| **Funnel** | Instagram + ManyChat (lo que llena el CRM con leads). Captura + ficha + **agendamiento** en vivo; falta WhatsApp. Doc propio: **[`EMBUDO.md`](EMBUDO.md)**. | 🟡 Fases 1-2 en vivo |
 
 **Principio rector:** nada guarda su propia copia de los datos. El sitio se **regenera** desde Airtable en cada publicación.
 
@@ -174,6 +174,6 @@ Base Airtable `appQUgk8aeD752923` ("Biketrust Operaciones"). **No renombrar camp
 3. **Fotos/datos de Vado SL y Tarmac SL7** (no estaban en el sitio antiguo).
 4. **Limpieza pre-producción** — datos DEMO + rotar PAT.
 5. **Decisión Borrador sí/no** — a conversar con los dueños (recomendado mantenerlo, ver §2.1).
-6. **Funnel ManyChat** (fase grande): Puerta 1 (reel → ficha por DM), Puerta 2 (quiz), flujo central ManyChat ↔ Airtable, aviso diario de visitas al staff, reenganche de leads sueltos, medición. Requiere ManyChat Pro + Meta Business.
+6. **Funnel ManyChat** — Puerta 1 + agendamiento **en vivo**; pendiente WhatsApp (confirmación/recordatorios), briefing diario, Puerta 2 (quiz), reenganche. **Roadmap y estado detallado en [`EMBUDO.md`](EMBUDO.md).**
 
 **Contrato que ManyChat deberá cumplir** (o el reporte se rompe): cada lead nace con `Fecha primer contacto`, avanza `Estado` por valores canónicos, usa `Canal origen` canónico y deduplica por `@handle`.

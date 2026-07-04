@@ -1,6 +1,10 @@
 # Bike Trust · Sitio
 
-> 📖 **Documentación completa del sistema** (operación del staff, CRM, ventas, reportes y arquitectura): ver **[`DOCUMENTACION.md`](DOCUMENTACION.md)**. Este README cubre solo el build y deploy del sitio estático.
+> 📖 **Documentación del sistema:**
+> - **[`DOCUMENTACION.md`](DOCUMENTACION.md)** — web, CRM, operación del staff, ventas, reportes y arquitectura.
+> - **[`EMBUDO.md`](EMBUDO.md)** — el embudo de captación Instagram + ManyChat → Airtable (puertas, flujo, endpoints, cómo publicar reels a escala, roadmap).
+>
+> Este README cubre solo el build y deploy del sitio estático.
 
 Sitio estático generado desde Airtable (Airtable = única fuente de verdad).
 El build lee la vista **Disponibles** de la tabla **Inventario** y genera un catálogo + una ficha por bici, sobre la identidad de marca. Corre en **Cloudflare Pages** desde este repo.
