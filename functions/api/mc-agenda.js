@@ -61,6 +61,19 @@ function fechaVisitaDe(fecha, hora) {
   return h ? `${f.slice(0, 10)}T${h.slice(0, 5)}:00` : `${f.slice(0, 10)}T12:00:00`;
 }
 
+// Fecha legible en español a partir del naive `YYYY-MM-DDTHH:MM:00` (que ya es
+// hora de Chile). Se formatea en UTC para que el reloj de pared no se corra.
+// La usa la confirmación inmediata de ManyChat (cf_fecha_visita). → "sábado, 10 de julio, 11:00".
+function fechaVisitaLegibleDe(naive) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(String(naive || ''));
+  if (!m) return String(naive || '');
+  const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]));
+  const fecha = new Intl.DateTimeFormat('es-CL', {
+    timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long',
+  }).format(d);
+  return `${fecha}, ${m[4]}:${m[5]}`;
+}
+
 // Los 2 horarios A/B dinámicos, calculados en hora Chile (UTC-4). Fuente única
 // que comparten el GET (pinta el selector) y el POST (resuelve `slot`), para que
 // los botones de ManyChat NUNCA haya que editar aunque roten las semanas.
@@ -119,12 +132,13 @@ export async function onRequestPost({ request, env }) {
   const origen    = String(data?.origen || 'Puerta 1 (reel/comentario)').trim();
   const resultado = String(data?.resultado || 'Agendó').trim();
   const slot      = data?.slot ? String(data.slot).trim().toUpperCase() : '';
+  const subId     = data?.subscriber_id ? String(data.subscriber_id).trim() : ''; // id de ManyChat, para la Fase 3
 
   // fecha/hora explícitos mandan; si no, se resuelve por `slot` (A/B) server-side.
   let fechaVisita = fechaVisitaDe(data?.fecha, data?.hora);
   if (!fechaVisita && slot) fechaVisita = slotsAB().find(s => s.id === slot)?.fechaVisita || null;
 
-  if (!leadIn && !handle) return reply({ error: 'missing_fields (lead o handle)' }, 422);
+  if (!leadIn && !handle && !subId) return reply({ error: 'missing_fields (lead, handle o subscriber_id)' }, 422);
   if (!fechaVisita) return reply({ error: 'missing_fields (fecha [+hora] o slot A/B)' }, 422);
 
   const C = cfg(env);
@@ -132,17 +146,27 @@ export async function onRequestPost({ request, env }) {
   const now = new Date().toISOString();
   const today = new Date(Date.now() - 4 * 3600 * 1000).toISOString().slice(0, 10); // Chile UTC-4
 
-  // 1) Resolver el Lead: id directo o por @handle IG.
-  let leadId = leadIn;
-  if (!leadId) {
-    const lower = handle.toLowerCase().replace(/'/g, "\\'");
-    const u = `${C.api(C.LEADS)}?maxRecords=1&filterByFormula=${encodeURIComponent(`LOWER({@handle IG})='${lower}'`)}`;
+  // 1) Resolver el Lead: id directo → @handle IG → MC subscriber id.
+  //    El subscriber_id es la vía fiable cuando el reagendo llega por WhatsApp
+  //    (ahí el @handle de IG puede venir vacío). Se guardó en la agenda.
+  const findLead = async (formula) => {
+    const u = `${C.api(C.LEADS)}?maxRecords=1&filterByFormula=${encodeURIComponent(formula)}`;
     const rr = await afetch(u, { headers: C.rH });
-    if (!rr.ok) return reply({ error: 'airtable_read', status: rr.status, detail: await rr.text() }, 502);
-    const rec = (await rr.json()).records?.[0];
-    if (!rec) return reply({ error: 'lead_not_found (llama /api/mc-lead primero)' }, 404);
-    leadId = rec.id;
+    if (!rr.ok) return { err: reply({ error: 'airtable_read', status: rr.status, detail: await rr.text() }, 502) };
+    return { id: (await rr.json()).records?.[0]?.id || null };
+  };
+  let leadId = leadIn;
+  if (!leadId && handle) {
+    const r = await findLead(`LOWER({@handle IG})='${handle.toLowerCase().replace(/'/g, "\\'")}'`);
+    if (r.err) return r.err;
+    leadId = r.id;
   }
+  if (!leadId && subId) {
+    const r = await findLead(`{MC subscriber id}='${subId.replace(/'/g, "\\'")}'`);
+    if (r.err) return r.err;
+    leadId = r.id;
+  }
+  if (!leadId) return reply({ error: 'lead_not_found (llama /api/mc-lead primero)' }, 404);
 
   // 2) Leer el Lead completo (Estado actual + sus Intereses).
   const lr = await afetch(`${C.api(C.LEADS)}/${leadId}`, { headers: C.rH });
@@ -175,13 +199,40 @@ export async function onRequestPost({ request, env }) {
     }
   }
 
+  // 4b) Nombre del modelo (para cf_bici de las plantillas de WhatsApp).
+  let biciNombre = '';
+  if (biciId) {
+    const br = await afetch(`${C.api('Inventario')}/${biciId}`, { headers: C.rH });
+    if (br.ok) { const bf = (await br.json()).fields || {}; biciNombre = bf.Modelo || bf.Etiqueta || ''; }
+  }
+  const fechaVisitaLegible = fechaVisitaLegibleDe(fechaVisita);
+
+  // ¿Cuántas horas faltan para la visita? (naive = hora Chile; se compara contra
+  // "ahora en Chile" con el mismo criterio -4 que el resto del código.)
+  const horasHasta = (() => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(String(fechaVisita));
+    if (!m) return Infinity;
+    const visit = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]);
+    return (visit - (Date.now() - 4 * 3600 * 1000)) / 3600000;
+  })();
+
   // 5) Lead → datos de agenda + opt-in + Estado (con guarda de no-regresión).
+  //    Se resetean los flags de recordatorio (si es un reagendo, el motor debe
+  //    volver a mandar para la nueva fecha). Excepción: si agenda con < 47h de
+  //    anticipación, la confirmación inmediata ya cubre el aviso "de 48h" → se
+  //    marca ese recordatorio como enviado para NO mandar dos mensajes seguidos.
+  const suprime48 = horasHasta < 47;
   const fieldsLead = {
     'Fecha visita': fechaVisita,
     'Fecha última interacción': now,
+    'Recordatorio 48h': suprime48 ? now : null,
+    'Recordatorio 8am': null,
+    'Recordatorio 2h': null,
   };
   if (telefono) fieldsLead['WhatsApp'] = telefono;
   if (optin) { fieldsLead['Opt-in WhatsApp'] = true; fieldsLead['Fecha opt-in'] = today; }
+  if (subId) fieldsLead['MC subscriber id'] = subId;
+  if (biciNombre) fieldsLead['MC bici'] = biciNombre;
 
   let estadoAplicado = false;
   const rangoNuevo = RANGO['visita_agendada'];
@@ -222,6 +273,7 @@ export async function onRequestPost({ request, env }) {
 
   return reply({
     ok: true, leadId, interesId, interesCreado, biciId: biciId || null,
+    biciNombre: biciNombre || null, fechaVisitaLegible,
     slot: slot || null, fechaVisita, estadoActual: fieldsLead['Estado'] || estadoActual, estadoAplicado,
   });
 }
