@@ -20,7 +20,7 @@
 | 1 | **Puerta 1 — comentario en reel** → ficha + calificación | ✅ En vivo |
 | 2 | **Agendamiento en el chat** (selector de horario → Airtable) | ✅ En vivo y probado con usuario real |
 | 3 | **Cierre en tienda** (staff marca vino/compró en la Agenda) | ✅ En vivo |
-| 4 | **Confirmación + recordatorios por WhatsApp** (Fase 3) | ⏸️ Bloqueado por acceso a Meta |
+| 4 | **Confirmación + recordatorios por WhatsApp** (Fase 3) | 🔧 En curso: WhatsApp conectado, 4 plantillas en revisión de Meta |
 | 5 | **Briefing diario al staff** (visitas del día) | 🔧 Por construir |
 | 6 | **Puerta 2 — router del DM + quiz + waitlist** | 💡 Diseñado, en fila |
 
@@ -100,7 +100,7 @@ Automatización **`Embudo Bike Trust v2`** (la v1 quedó descartada). Requiere M
 9. **Mensaje 4 — horario** — 2 botones: `Sábado en la mañana` → Solicitud externa `mc-agenda` con `slot:"A"` · `Viernes en la tarde` → `slot:"B"`.
 10. **Mensaje 5 — confirmación** — ambos botones convergen aquí.
 
-**Campos personalizados de ManyChat necesarios:** `cf_telefono` (texto), `cf_fecha_visita` (texto, opcional para eco).
+**Campos personalizados de ManyChat (User Fields, todos texto):** `cf_telefono` (teléfono capturado), `cf_fecha_visita` (fecha/hora legible que rellena el motor), `cf_bici` (modelo, lo rellena el motor). Se crean vacíos; el flujo de IG solo llena `cf_telefono` — los otros los puebla el motor de recordatorios antes de cada envío (§8).
 
 **Cuerpos JSON de las Solicitudes externas** — ver §5. El `{{Nombre de usuario}}` se inserta como **campo de sistema** (username IG), no se escribe a mano.
 
@@ -174,25 +174,35 @@ Los endpoints ya garantizan esto; respetarlo también en cualquier flujo nuevo.
 
 ---
 
-## 8. Fase 3 — Confirmación y recordatorios por WhatsApp ⏸️
+## 8. Fase 3 — Confirmación y recordatorios por WhatsApp 🔧
 
-**Dependencia dura:** conectar **WhatsApp Business API a ManyChat** (número de WhatsApp Business + Meta Business + aprobación de plantillas, 24-48h). ManyChat Pro soporta el canal. Sin esto, captura+ficha+agenda en IG funcionan, pero recordatorios/reenganche no. *(Estado 2026-07-03: número conseguido; a la espera de acceso total a Meta.)*
+**Estado (2026-07-03):** WhatsApp Business **conectado a ManyChat** ✅. Ahora en el **número de PRUEBA de Meta** (`+1 555…`, tope 5 msgs/24h a destinatarios de test) → **falta registrar el número chileno real** para producción. Las **4 plantillas están enviadas a revisión de Meta** (24-48h).
 
-**Qué construir:**
-1. **Conectar el número** en ManyChat (Settings → Channels → WhatsApp).
-2. **4 plantillas** enviadas a aprobar (categoría correcta = error #1 de rechazo):
+### Las 4 plantillas (diseño final enviado a aprobar)
 
-| Plantilla | Categoría | Cuerpo (variables) |
-|---|---|---|
-| `confirmacion_visita` | **Utility** | `¡Hola {{1}}! 👋 Tu visita para probar la {{2}} quedó reservada para el {{3}}.` 📍 `[dirección]`. `¿Me confirmas?` · Botones: `✅ Sí, confirmo` · `🔁 Reagendar` |
-| `recordatorio_48h` | **Utility** | `¡Hola {{1}}! 👋 Te recordamos tu visita para probar la {{2}}: {{3}}.` … `¿Nos confirmas?` · `✅ Confirmar` · `🔁 Reagendar` |
-| `recordatorio_2h` | **Utility** | `¡Hola {{1}}! 👋 Tu visita es hoy a las {{2}}. Te esperamos en [dirección] 🚴 ¿Nos vemos?` · `👍 Ahí estaré` · `🔁 Reagendar` |
-| `reactivacion_stock` | **Marketing** | `¡Hola {{1}}! 👋 Tenemos novedades: {{2}}. ¿Quieres que te la reservemos?` · `🚴 Sí, me interesa` · `🔁 Ahora no` |
+Todas en idioma **Spanish (MEX)**, sin encabezado, footer opcional `Bike Trust · Specialized certificadas`. Dirección fija en el cuerpo: `Av. Las Condes 12461`. **Sin variable de nombre** (saludo `¡Hola! 👋`) — los contactos de IG no traen nombre confiable, y "Nombre de página" es el nombre del negocio, no del lead.
 
-- **Utility** = transaccional (aprueba rápido); **Marketing** = promocional. Meta pausó Marketing solo para números **de EE.UU.** → número chileno OK. **No poner lenguaje promocional en las Utility** o el clasificador las rechaza.
-- Sin links acortados ni `wa.me`. Variables: `{{1}}`=nombre (perfil WhatsApp, con fallback), `{{2}}`=modelo, `{{3}}`=fecha+hora.
-- **El botón "Confirmar" retoma el flujo → `mc-evento` con `estado=visita_confirmada`** = Etapa 5 del embudo.
-3. **Motor de recordatorios** 🔧 — Cron de Cloudflare que barre `Leads.Fecha visita`, detecta visitas a 48h/2h, encuentra el contacto en ManyChat (por teléfono/handle) y dispara la plantilla vía la API de ManyChat.
+| Plantilla | Categoría | Cuerpo | Botones (Quick Reply) |
+|---|---|---|---|
+| `confirmacion_visita` | **Utility** | `¡Hola! 👋 Tu visita para probar la {{1}} quedó reservada para el {{2}}.` 📍 dirección. `¿Me confirmas que vienes?` | `Sí, confirmo` · `Reagendar` |
+| `recordatorio_48h` | **Utility** | `¡Hola! 👋 Te recordamos tu visita para probar la {{1}}: {{2}}.` … `Si necesitas cambiar la hora, toca abajo.` | `Reagendar` |
+| `recordatorio_2h` | **Utility** | `¡Hola! 👋 Hoy es tu visita para probar la {{1}} 🚴 Te esperamos a las {{2}}.` … | `Reagendar` |
+| `reactivacion_stock` | **Marketing** | `¡Hola! 👋 Tenemos novedades en Bike Trust: {{1}} 🚴 ¿Quieres que te la reservemos?` | `Sí quiero verla` · `Más información` |
+
+- **Variables (bindeadas a campos de ManyChat):** `{{1}}` → `cf_bici` (modelo) · `{{2}}` → `cf_fecha_visita`. En el `recordatorio_2h`, `cf_fecha_visita` lleva solo la hora. Los rellena el **motor** antes de cada envío.
+- **Categoría:** Utility = transaccional (aprueba rápido); Marketing = promocional. Meta pausó Marketing solo para números **de EE.UU.** → número chileno OK. Marcar mal la categoría = rechazo #1.
+- **Lógica de la secuencia:** la confirmación se pide **una sola vez** (en `confirmacion_visita`). Los recordatorios **solo recuerdan** (no re-preguntan) y dan salida con `Reagendar`.
+
+### Comportamiento de los botones (se cablea post-aprobación)
+
+El botón en la plantilla es solo una etiqueta; su acción se arma en un flujo de ManyChat después de aprobar. Cambiar la *acción* NO requiere re-aprobación; cambiar el *texto/estructura* sí.
+- **`Sí, confirmo`** → `mc-evento` con `estado=visita_confirmada` (Etapa 5). Endpoint ya existe.
+- **`Reagendar`** → reusa el selector de horarios del §4 → `mc-agenda` con nuevo slot → actualiza `Fecha visita`.
+
+### Lo que falta 🔧
+
+1. **Registrar el número chileno real** (acción del cliente): agregar el número a la WABA + verificar + nombre para mostrar. Requisito: que NO esté activo en la app de WhatsApp de un celular. Saca del modo prueba.
+2. **Motor de recordatorios** (backend, mío) — Cron de Cloudflare que barre `Leads.Fecha visita`, detecta visitas a 48h/2h, **puebla `cf_bici` y `cf_fecha_visita`** en el contacto y dispara la plantilla vía la API de ManyChat. Requiere: **token de API de ManyChat** + **guardar el `subscriber_id` de ManyChat en Airtable** (para direccionar el envío — pasito a agregar en el flujo de agenda).
 
 ---
 
@@ -229,7 +239,7 @@ Las 3 rutas terminan en un toque humano real (visita al showroom, o aviso de que
 
 1. **Fase 1 — Puerta 1** (captura + ficha + califica): `mc-lead` + `mc-evento` + flujo ManyChat. ✅ **En vivo.**
 2. **Fase 2 — Agenda**: `mc-agenda` + selector de horario. ✅ **En vivo y probado con usuario real.**
-3. **Fase 3 — WhatsApp**: conectar canal + plantillas + motor de recordatorios → mata el no-show. ⏸️ **Bloqueado por Meta.**
+3. **Fase 3 — WhatsApp**: conectar canal + plantillas + motor de recordatorios → mata el no-show. 🔧 **En curso:** canal conectado (número de prueba), 4 plantillas en revisión de Meta; falta registrar número real + construir el motor.
 4. **Fase base final — Briefing diario** al staff. 🔧
 5. **Fase 4 — Puerta 2**: router del DM + quiz (`mc-match`) + waitlist + reenganche de sueltos. 💡
 6. **Fase 5 — Go-live**: test integral + limpiar datos DEMO + conectar dominio.
