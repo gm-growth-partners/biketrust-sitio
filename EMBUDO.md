@@ -20,11 +20,13 @@
 | 1 | **Puerta 1 — comentario en reel** → ficha + calificación | ✅ En vivo |
 | 2 | **Agendamiento en el chat** (selector de horario → Airtable) | ✅ En vivo y probado con usuario real |
 | 3 | **Cierre en tienda** (staff marca vino/compró en la Agenda) | ✅ En vivo |
-| 4 | **Confirmación + recordatorios por WhatsApp** (Fase 3) | 🔧 En curso: WhatsApp conectado, 4 plantillas en revisión de Meta |
-| 5 | **Briefing diario al staff** (visitas del día) | 🔧 Por construir |
+| 4 | **Confirmación + recordatorios por WhatsApp** (Fase 3) | ✅ En vivo y autónomo: confirmación (al agendar) + recordatorio 48h + recordatorio 8am del día. Motor cron cada 15 min. |
+| 5 | **Briefing diario al staff** (visitas del día) | 🔧 Por construir (próxima pieza) |
 | 6 | **Puerta 2 — router del DM + quiz + waitlist** | 💡 Diseñado, en fila |
 
-**Qué falta para "sistema base terminado":** #4 (WhatsApp) + #5 (briefing). Después se abre la expansión #6.
+**Qué falta para "sistema base terminado":** solo #5 (briefing diario a Luis). El #4 (WhatsApp) quedó **en vivo y automático** (2026-07-07). Después se abre la expansión #6.
+
+**Pendientes finos del #4:** (a) registrar el estado `visita_confirmada` — la plantilla enviada NO trae botón "Sí, confirmo", así que hoy la confirmación es informativa (no se trackea quién confirma); si se quiere trackear, hay que agregar el botón a la plantilla (re-aprobación Meta) + cablearlo a `mc-evento`. (b) El recordatorio de "2h antes" quedó fuera por simplicidad (se puede sumar con una variable de entorno si se decide).
 
 ---
 
@@ -62,7 +64,7 @@ La bici de la Puerta 1 se resuelve **por dato, no por flujo**: el reel comentado
 | 2 | **Ficha + califica** — entrega ficha + preguntas | IG DM | 🤖 | `mc-evento` → Estado + Interés | ✅ |
 | 3 | **Puente** — pide teléfono + opt-in WhatsApp | IG DM | 🤖 | Lead: `WhatsApp`, `Opt-in WhatsApp` | ✅ |
 | 4 | **Agenda en el chat** — elige horario A/B | IG DM | 🤖 | `mc-agenda` → `Fecha visita` + `visita_agendada` + Interés "Agendó" | ✅ |
-| 5 | **Confirma + recuerda** — plantillas 48h/2h | WhatsApp | 🤖 | Estado → `visita_confirmada` (botón "Confirmar" → `mc-evento`) | ⏸️ |
+| 5 | **Confirma + recuerda** — confirmación (al agendar) + recordatorios 48h/8am | WhatsApp | 🤖 | `cron-recordatorios` dispara plantillas; `Recordatorio 48h/8am` en el Lead | ✅ (registro de `visita_confirmada` pendiente: falta botón "Sí confirmo" en la plantilla) |
 | 6 | **Showroom — el cierre** — prueba + precio | Presencial | 🧑 | `registrar-venta` → `cerró` + `Vendida` | ✅ |
 | 7 | **Post-visita / reenganche** — no-show, suelto, "volvió a stock" | WhatsApp + IG | 🤖 | Estado, reactivación | 🔧 |
 
@@ -174,9 +176,11 @@ Los endpoints ya garantizan esto; respetarlo también en cualquier flujo nuevo.
 
 ---
 
-## 8. Fase 3 — Confirmación y recordatorios por WhatsApp 🔧
+## 8. Fase 3 — Confirmación y recordatorios por WhatsApp ✅ EN VIVO
 
-**Estado (2026-07-03):** WhatsApp Business **conectado a ManyChat** ✅. Ahora en el **número de PRUEBA de Meta** (`+1 555…`, tope 5 msgs/24h a destinatarios de test) → **falta registrar el número chileno real** para producción. Las **4 plantillas están enviadas a revisión de Meta** (24-48h).
+**Estado (2026-07-07):** **EN VIVO y autónomo.** Número chileno real registrado en Meta, plantillas aprobadas, WhatsApp conectado a ManyChat. El opt-in de WhatsApp se captura en el flujo de Instagram (paso "Recopilación de datos → Teléfono → Guardar como ID de WhatsApp") y quedó **demostrado en producción** que el contacto de IG así se vuelve alcanzable por WhatsApp sin que escriba primero.
+
+**Cadencia final (simplificada 2026-07-07):** al lead → **confirmación** (al agendar) + **recordatorio 48h antes** + **recordatorio a las 8 AM del día**. *(El "2h antes" se dejó fuera por simplicidad; se puede sumar seteando `FLOW_NS_2H`.)*
 
 ### Las 4 plantillas (diseño final enviado a aprobar)
 
@@ -193,16 +197,21 @@ Todas en idioma **Spanish (MEX)**, sin encabezado, footer opcional `Bike Trust �
 - **Categoría:** Utility = transaccional (aprueba rápido); Marketing = promocional. Meta pausó Marketing solo para números **de EE.UU.** → número chileno OK. Marcar mal la categoría = rechazo #1.
 - **Lógica de la secuencia:** la confirmación se pide **una sola vez** (en `confirmacion_visita`). Los recordatorios **solo recuerdan** (no re-preguntan) y dan salida con `Reagendar`.
 
-### Comportamiento de los botones (se cablea post-aprobación)
+### Cómo quedó implementado (2026-07-07)
 
-El botón en la plantilla es solo una etiqueta; su acción se arma en un flujo de ManyChat después de aprobar. Cambiar la *acción* NO requiere re-aprobación; cambiar el *texto/estructura* sí.
-- **`Sí, confirmo`** → `mc-evento` con `estado=visita_confirmada` (Etapa 5). Endpoint ya existe.
-- **`Reagendar`** → reusa el selector de horarios del §4 → `mc-agenda` con nuevo slot → actualiza `Fecha visita`.
+**Confirmación (inmediata):** es el **último paso del flujo de agenda en ManyChat** (nodo WhatsApp "fuera de la ventana de 24h" con la plantilla `confirmacion_visita`). Los datos los llena el **mapeo de respuesta** de la Solicitud externa `mc-agenda`: `biciNombre`→`cf_bici`, `fechaVisitaLegible`→`cf_fecha_visita`. Sale apenas la persona agenda.
 
-### Lo que falta 🔧
+**Recordatorios 48h + 8am (motor server-side):**
+- **`functions/api/cron-recordatorios.js`** — barre `Leads` (visita futura ≤50h, estado agendada/confirmada, opt-in, con `MC subscriber id`), decide la ventana (48h / 8am del día), puebla `cf_bici`+`cf_fecha_visita` vía la API de ManyChat (`setCustomFieldByName`) y dispara la plantilla (`sendFlow`). Idempotente: estampa `Recordatorio 48h`/`Recordatorio 8am` en el Lead. Envía **solo** las ventanas cuyo `FLOW_NS_*` esté seteado (lanzamiento por fases). Protegido por `CRON_KEY`. `?dry=1` simula sin enviar.
+- **`worker-cron/`** — Worker de Cloudflare con Cron Trigger `*/15 * * * *` que le pega al endpoint. Desplegado y verificado (tick real → 200).
+- **Captura del `subscriber_id`:** `mc-agenda` recibe `subscriber_id` (System Field "ID de contacto" de ManyChat) en el body y lo guarda en `Leads.MC subscriber id`; el motor lo usa para direccionar el envío. También cachea el modelo en `Leads.MC bici`.
+- **Plantilla→ventana:** `recordatorio_48h`→`FLOW_NS_48H` (48h antes) · `recordatorio_2h`→`FLOW_NS_8AM` (aviso de las 8 AM; su texto "hoy es tu visita" calza para la mañana). Env en Cloudflare Pages: `MANYCHAT_TOKEN`, `FLOW_NS_48H`, `FLOW_NS_8AM`, `CRON_KEY`.
+- **Reagendar:** el botón "Reagendar" de las plantillas → Solicitud externa a `mc-agenda` (`slot`, `handle`, `subscriber_id`) → reescribe `Fecha visita` + reinicia los flags de recordatorio. El flujo de Reagendar va **dentro** de la ventana de 24h (el toque del botón la abre).
 
-1. **Registrar el número chileno real** (acción del cliente): agregar el número a la WABA + verificar + nombre para mostrar. Requisito: que NO esté activo en la app de WhatsApp de un celular. Saca del modo prueba.
-2. **Motor de recordatorios** (backend, mío) — Cron de Cloudflare que barre `Leads.Fecha visita`, detecta visitas a 48h/2h, **puebla `cf_bici` y `cf_fecha_visita`** en el contacto y dispara la plantilla vía la API de ManyChat. Requiere: **token de API de ManyChat** + **guardar el `subscriber_id` de ManyChat en Airtable** (para direccionar el envío — pasito a agregar en el flujo de agenda).
+### Lo que falta del #4 🔧
+
+1. **Registrar `visita_confirmada`:** la plantilla `confirmacion_visita` enviada **no trae el botón "Sí, confirmo"** → hoy la confirmación es informativa (no se trackea quién confirma). Para trackearlo: agregar el botón a la plantilla (re-aprobación Meta) + cablearlo a `mc-evento` (`estado=visita_confirmada`). Endpoint ya listo.
+2. **(Opcional) Recordatorio de 2h antes:** requiere una 4ª plantilla (`recordatorio_final`, "en un rato te esperamos") aprobada + setear `FLOW_NS_2H`. Se dejó fuera por simplicidad.
 
 ---
 
@@ -239,8 +248,8 @@ Las 3 rutas terminan en un toque humano real (visita al showroom, o aviso de que
 
 1. **Fase 1 — Puerta 1** (captura + ficha + califica): `mc-lead` + `mc-evento` + flujo ManyChat. ✅ **En vivo.**
 2. **Fase 2 — Agenda**: `mc-agenda` + selector de horario. ✅ **En vivo y probado con usuario real.**
-3. **Fase 3 — WhatsApp**: conectar canal + plantillas + motor de recordatorios → mata el no-show. 🔧 **En curso:** canal conectado (número de prueba), 4 plantillas en revisión de Meta; falta registrar número real + construir el motor.
-4. **Fase base final — Briefing diario** al staff. 🔧
+3. **Fase 3 — WhatsApp**: canal + plantillas + confirmación + motor de recordatorios (48h/8am) → mata el no-show. ✅ **En vivo y autónomo (2026-07-07).** Motor `cron-recordatorios` + worker cron `*/15`. Pendiente fino: registrar `visita_confirmada` (falta botón en la plantilla).
+4. **Fase base final — Briefing diario a Luis** (8 AM, visitas del día). 🔧 **Próxima pieza.**
 5. **Fase 4 — Puerta 2**: router del DM + quiz (`mc-match`) + waitlist + reenganche de sueltos. 💡
 6. **Fase 5 — Go-live**: test integral + limpiar datos DEMO + conectar dominio.
 
@@ -250,4 +259,5 @@ Las 3 rutas terminan en un toque humano real (visita al showroom, o aviso de que
 
 - [`DOCUMENTACION.md`](DOCUMENTACION.md) — web, CRM, operación del staff, reportes, modelo de datos.
 - [`CLAUDE.md`](CLAUDE.md) — notas técnicas finas, gotchas de API, cómo trabajar el repo.
-- Código de los endpoints: [`functions/api/`](functions/api/) (`mc-lead.js`, `mc-evento.js`, `mc-agenda.js`, `reservar.js`, `recalcular-embudo.js`, `registrar-venta.js`).
+- Código de los endpoints: [`functions/api/`](functions/api/) (`mc-lead.js`, `mc-evento.js`, `mc-agenda.js`, `cron-recordatorios.js`, `reservar.js`, `recalcular-embudo.js`, `registrar-venta.js`).
+- Motor de recordatorios / disparador cron: [`worker-cron/`](worker-cron/) (Worker de Cloudflare, `*/15 * * * *`).

@@ -18,7 +18,7 @@ Bike Trust vende bicicletas **Specialized usadas, premium y certificadas** (Sant
 
 ---
 
-## 2. Estado actual (2026-06-30)
+## 2. Estado actual (2026-07-07)
 
 | Frente | Estado |
 |---|---|
@@ -27,9 +27,10 @@ Bike Trust vende bicicletas **Specialized usadas, premium y certificadas** (Sant
 | 🟢 **Interfaces Airtable** | **Control de Inventario** (form alta + panel + por completar), **Pipeline CRM** (Kanban), **Reportes** (semanal/mensual/global por período), **Agenda** (calendario de visitas). |
 | 🟢 **Reporting por período** | 3 páginas (semana/mes/global) desde tabla `Metricas` precalculada por `functions/api/recalcular-embudo.js` (botón manual). Facturación reconstruida desde cierres. |
 | 🟢 **Conexión de venta** | `functions/api/registrar-venta.js` EN VIVO y probada con clic real: deja Lead `cerró`+fecha · Interés `Cerró` · Bici `Vendida`+fecha en una llamada. Disparo desde Leads/Agenda (botón Open URL). |
-| 🟡 **Funnel ManyChat** | ManyChat Pro ya conectado a IG/Meta Business. Endpoints puente `mc-lead`/`mc-evento` CERRADOS 2026-07-01. Falta el flujo en ManyChat + agenda/WhatsApp (Fases 1–4). |
+| 🟢 **Funnel ManyChat (Fases 1–3)** | EN VIVO y autónomo (2026-07-07). Puerta 1 (comentario→ficha→califica), agenda-en-el-chat (`mc-agenda`), **confirmación + recordatorios 48h/8am por WhatsApp** (`cron-recordatorios` + worker cron `*/15`). Opt-in IG→WhatsApp funcionando; `subscriber_id` guardado en Airtable. Pendiente fino: registrar `visita_confirmada` (la plantilla enviada no trae botón "Sí confirmo"). |
+| 🔧 **Briefing diario a Luis** | Por construir (próxima pieza): WhatsApp 8 AM con las visitas del día · reutiliza la mecánica del motor. |
 
-**Foco actual (2026-07-01, a pedido de los dueños): cerrar el embudo al 100%, resto en segundo plano.**
+**Foco actual (2026-07-07): embudo automatizado hasta el showroom CERRADO. Sigue: briefing a Luis, luego pulir medición (filtrar DEMO del reporte) y la ingesta boceto/lanzamiento.**
 
 ⚠️ **REDISEÑO 2026-07-01 — arquitectura 100% automatizada.** El embudo se automatiza de punta a punta hasta el showroom; el humano solo cierra en tienda (y escala precio). El "cerrador humano en el agendamiento" del diseño original se reemplaza por **agenda-en-el-chat + recordatorios por WhatsApp** (Instagram no deja mandar fuera de la ventana de 24h; WhatsApp con plantillas sí). **Documento autoritativo del diseño: `…/2. Fragua/ARQUITECTURA_EMBUDO.md`** (7 etapas, dependencia dura = conectar WhatsApp Business API a ManyChat). Plan operativo día a día: `…/2. Fragua/PLAN_embudo.md`.
 
