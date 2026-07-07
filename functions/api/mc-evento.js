@@ -54,13 +54,16 @@ export async function onRequestPost({ request, env }) {
 
   const handle   = data?.handle ? String(data.handle).trim().replace(/^@/, '') : '';
   const leadIn   = data?.lead ? String(data.lead).trim() : '';
+  const subId    = data?.subscriber_id ? String(data.subscriber_id).trim() : ''; // id ManyChat (vía fiable en WhatsApp)
   const estado   = data?.estado ? String(data.estado).trim() : '';
   const origen   = String(data?.origen || '').trim();
   const resultado = String(data?.resultado || '').trim();
   const reel     = data?.reel ? String(data.reel).trim() : '';
   const biciIn   = data?.bici ? String(data.bici).trim() : '';
-  if (!leadIn && !handle) return reply({ error: 'missing_fields (lead o handle)' }, 422);
-  if (!origen || !resultado) return reply({ error: 'missing_fields (origen, resultado)' }, 422);
+  // soloEstado: solo avanza el Estado, sin crear Interés (ej. botón "Sí, confirmo").
+  const soloEstado = data?.soloEstado === true || data?.soloEstado === 1 || String(data?.soloEstado).toLowerCase() === 'true';
+  if (!leadIn && !handle && !subId) return reply({ error: 'missing_fields (lead, handle o subscriber_id)' }, 422);
+  if (!soloEstado && (!origen || !resultado)) return reply({ error: 'missing_fields (origen, resultado)' }, 422);
 
   const BASE  = env.AIRTABLE_BASE || BASE_DEFAULT;
   const READ  = env.AIRTABLE_TOKEN || env.AIRTABLE_WRITE_TOKEN;
@@ -76,18 +79,26 @@ export async function onRequestPost({ request, env }) {
   const now = new Date().toISOString();
   const today = now.slice(0, 10);
 
-  // 1) Resolver el Lead: id directo, o buscar por @handle IG.
-  let leadId = leadIn;
-  if (!leadId) {
-    const lower = handle.toLowerCase().replace(/'/g, "\\'");
-    const u = `${api(LEADS)}?maxRecords=1&filterByFormula=${encodeURIComponent(`LOWER({@handle IG})='${lower}'`)}`;
+  // 1) Resolver el Lead: id directo → @handle IG → MC subscriber id (fiable en
+  //    WhatsApp, donde el @handle puede venir vacío — ej. el botón "Sí, confirmo").
+  const findLead = async (formula) => {
+    const u = `${api(LEADS)}?maxRecords=1&filterByFormula=${encodeURIComponent(formula)}`;
     const rr = await afetch(u, { headers: rH });
-    if (!rr.ok) return reply({ error: 'airtable_read', status: rr.status, detail: await rr.text() }, 502);
-    const j = await rr.json();
-    const rec = j.records && j.records[0];
-    if (!rec) return reply({ error: 'lead_not_found (llama /api/mc-lead primero)' }, 404);
-    leadId = rec.id;
+    if (!rr.ok) return { err: reply({ error: 'airtable_read', status: rr.status, detail: await rr.text() }, 502) };
+    return { id: (await rr.json()).records?.[0]?.id || null };
+  };
+  let leadId = leadIn;
+  if (!leadId && handle) {
+    const r = await findLead(`LOWER({@handle IG})='${handle.toLowerCase().replace(/'/g, "\\'")}'`);
+    if (r.err) return r.err;
+    leadId = r.id;
   }
+  if (!leadId && subId) {
+    const r = await findLead(`{MC subscriber id}='${subId.replace(/'/g, "\\'")}'`);
+    if (r.err) return r.err;
+    leadId = r.id;
+  }
+  if (!leadId) return reply({ error: 'lead_not_found (llama /api/mc-lead primero)' }, 404);
 
   // 2) Leer el Lead completo (Estado actual, para la guarda de no-regresión).
   const lr = await afetch(`${api(LEADS)}/${leadId}`, { headers: rH });
@@ -122,21 +133,25 @@ export async function onRequestPost({ request, env }) {
   });
   if (!lp.ok) return reply({ error: 'airtable_update', status: lp.status, detail: await lp.text() }, 502);
 
-  // 5) Crear el Interés (siempre — es el registro de "qué pasó" en este evento).
-  const interesFields = {
-    'Lead': [leadId],
-    'Origen': origen,
-    'Resultado': resultado,
-    'Fecha': today,
-    ...(biciId ? { 'Bici': [biciId] } : {}),
-    ...(reelId ? { 'Reel': [reelId] } : {}),
-  };
-  const ir = await afetch(api(INTER), {
-    method: 'POST', headers: wH,
-    body: JSON.stringify({ typecast: true, fields: interesFields }),
-  });
-  if (!ir.ok) return reply({ error: 'airtable_interes', status: ir.status, detail: await ir.text() }, 502);
-  const interesId = (await ir.json()).id;
+  // 5) Crear el Interés (registro de "qué pasó"), salvo en modo soloEstado
+  //    (ej. "Sí, confirmo": solo avanza el Estado, no es un evento lead↔bici nuevo).
+  let interesId = null;
+  if (!soloEstado) {
+    const interesFields = {
+      'Lead': [leadId],
+      'Origen': origen,
+      'Resultado': resultado,
+      'Fecha': today,
+      ...(biciId ? { 'Bici': [biciId] } : {}),
+      ...(reelId ? { 'Reel': [reelId] } : {}),
+    };
+    const ir = await afetch(api(INTER), {
+      method: 'POST', headers: wH,
+      body: JSON.stringify({ typecast: true, fields: interesFields }),
+    });
+    if (!ir.ok) return reply({ error: 'airtable_interes', status: ir.status, detail: await ir.text() }, 502);
+    interesId = (await ir.json()).id;
+  }
 
   return reply({
     ok: true, leadId, interesId, biciId: biciId || null,
