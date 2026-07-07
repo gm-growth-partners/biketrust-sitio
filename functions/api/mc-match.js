@@ -230,7 +230,7 @@ export async function onRequestPost({ request, env }) {
   const disponibles = inventario.filter(b => b.fields?.Estado === 'Disponible');
 
   // 3) MATCH.
-  let hero = null, alternativa = null, opciones = [], waitlist = false, modeloBuscado = '';
+  let hero = null, alternativa = null, opciones = [], otras = [], otrasTexto = '', waitlist = false, modeloBuscado = '';
 
   if (modelo) {
     // ── Modo A · modelo en texto libre ──────────────────────────────────────
@@ -247,16 +247,24 @@ export async function onRequestPost({ request, env }) {
       .sort((a, b) => (b.sub - a.sub) || (b.cov - a.cov));
 
     const dispMatch = matches(disponibles);
-    if (dispMatch.length === 1) {
-      hero = biciView(C, dispMatch[0].b);
-    } else if (dispMatch.length > 1) {
-      opciones = dispMatch.slice(0, 3).map(x => biciView(C, x.b)); // ManyChat desambigua (máx 3 botones)
+    if (dispMatch.length >= 1) {
+      // Siempre hay una PRINCIPAL (la mejor coincidencia). Si hay más, van como
+      // `otras` + una línea de texto lista para el DM — así ManyChat no necesita
+      // botones dinámicos: muestra la principal (ficha+agenda) + el texto de las otras.
+      opciones = dispMatch.slice(0, 3).map(x => biciView(C, x.b)); // completo (referencia API)
+      hero = opciones[0];
+      if (dispMatch.length > 1) {
+        otras = opciones.slice(1);
+        otrasTexto = 'También tengo: ' + otras.map(o =>
+          `${o.modelo}${o.talla ? ' (talla ' + o.talla + ')' : ''} · ${o.precioCLP}`).join(' · ') +
+          '. Escríbeme el nombre exacto si prefieres una de esas.';
+      }
     } else {
       // No hay Disponible. ¿Existe pero vendida/reservada? → alternativa por su disciplina.
       waitlist = true; modeloBuscado = modelo;
-      const otras = matches(inventario.filter(b => b.fields?.Estado !== 'Disponible'));
-      if (otras.length) {
-        const ref = otras[0].b.fields;
+      const vendidas = matches(inventario.filter(b => b.fields?.Estado !== 'Disponible'));
+      if (vendidas.length) {
+        const ref = vendidas[0].b.fields;
         const ranked = rankDisponibles(disponibles, {
           disciplina: ref.Disciplina, motorizacion: ref['Motorización'],
           presupuesto: ref.Precio, talla: ref.Talla,
@@ -278,10 +286,9 @@ export async function onRequestPost({ request, env }) {
   }
 
   const match = !!hero;
-  const nuevoEstado = match ? 'match_entregado' : (opciones.length ? null : 'no_match');
+  const nuevoEstado = match ? 'match_entregado' : 'no_match';
 
-  // 4) Avanzar el Estado (guarda de no-regresión). En multi-opción no se decide
-  //    aún (no hay bici elegida) → solo se toca la interacción.
+  // 4) Avanzar el Estado (guarda de no-regresión).
   let estadoAplicado = false;
   const fieldsLead = { 'Fecha última interacción': now };
   if (subId && !leadCreado) fieldsLead['MC subscriber id'] = subId;
@@ -342,7 +349,9 @@ export async function onRequestPost({ request, env }) {
     mode: modelo ? 'modelo' : 'quiz',
     match, waitlist,
     hero, alternativa,
-    opciones,                         // >1 match en modo A → ManyChat desambigua
+    opciones,                         // todas las coincidencias (referencia/API)
+    otras,                            // coincidencias secundarias (modo modelo)
+    otrasTexto: otrasTexto || null,   // línea lista para el DM cuando hay varias
     modeloBuscado: modeloBuscado || null,
     leadId, leadCreado,
     interesId, interesCreado,
