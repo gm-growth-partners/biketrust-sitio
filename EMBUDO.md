@@ -23,7 +23,7 @@
 | 4 | **Confirmación + recordatorios por WhatsApp** (Fase 3) | ✅ **En vivo, autónomo y VERIFICADO E2E** (2026-07-07): confirmación (al agendar, con botón "Sí confirmo" que registra `visita_confirmada`) + recordatorio 48h + recordatorio 8am. Motor cron cada 15 min. |
 | 5 | **Briefing diario al staff** (visitas del día) | 🟡 Backend listo y desplegado; espera aprobación de plantilla Meta + contacto de Luis |
 | 5b | **Reenganche + nudges** (no-show, suelto, stock) | 🟡 Motor desplegado; espera plantillas Meta + nudges de IG (armados por el usuario) |
-| 6 | **Puerta 2 — router del DM + quiz + waitlist + consignación** | 💡 En rediseño (ver §10) |
+| 6 | **Puerta 2 — router del DM + quiz + waitlist + consignación** | 🔧 Backend listo: `mc-match` + `mc-consigna` construidos y verificados E2E (ver §10). Falta desplegar + armar ManyChat |
 
 **Estado (2026-07-07):** el **embudo base (Puerta 1 comentario → showroom) está EN VIVO y verificado de punta a punta** con una corrida real (lead pasó captura→agenda→confirmación, todo escrito en Airtable, incl. `visita_confirmada`). Pendiente de Meta (relojes corriendo): plantillas del briefing, reenganche y la confirmación v2 (con Reagendar). Sigue: **Puerta 2 (DM) — en rediseño**.
 
@@ -141,6 +141,20 @@ Agenda la visita (Etapa 4).
 - **Devuelve:** `{ ok, leadId, interesId, interesCreado, biciId, slot, fechaVisita, estadoActual, estadoAplicado }`.
 - **Clave de escala:** `slot` se resuelve a fecha en el **servidor** → los botones de horario de ManyChat **no se editan nunca**.
 
+### `mc-match` — `POST /api/mc-match` ✅ (Puerta 2)
+Corazón de la Puerta 2: consulta el Inventario y rutea según lo **Disponible**.
+- **Body (dos modos):** identidad `handle` y/o `subscriber_id` (+ `lead` opcional). **Modo A** `{ modelo: "<texto>" }` · **Modo B (quiz)** `{ motorizacion, disciplina, presupuesto, talla }` (todos opcionales; `talla` puede venir vacía).
+- **Match:** *Modo A* — 1 Disponible calza → `hero`; varias (ej. "levo" → 3) → `opciones[]` (ManyChat desambigua, sin Interés todavía); solo vendida/reservada → `no_match` + `alternativa` (misma disciplina) + waitlist; nada → `no_match` + waitlist. *Modo B* — puntúa las Disponibles (disciplina/motorización fuerte, presupuesto, talla blanda) → `hero` + `alternativa`.
+- **Escribe:** upsert Lead (si falta y hay handle, nace con contrato mc-lead) → Estado `match_entregado`/`no_match` (con guarda) → **Interés** `Match` (`Es hero`, link Bici, `Crit ·` del quiz) cuando hay UNA bici, o `No-match` + `Modelo buscado` (waitlist). En multi-opción NO crea Interés (se crea al agendar). No duplica.
+- **Devuelve:** `{ ok, mode, match, waitlist, hero, alternativa, opciones[], modeloBuscado, leadId, leadCreado, interesId, interesCreado, estadoActual, estadoAplicado }`. Cada bici trae `fichaUrl` (`/ficha/<slug>`, reconstruido igual que build.mjs), `precioCLP`, `foto`, talla, año, disciplina, motorización.
+- **Ficha + agenda:** ManyChat usa `hero.fichaUrl` + `hero.biciId` (lo pasa como `bici` a `mc-agenda`, reusando toda la Puerta 1).
+
+### `mc-consigna` — `POST /api/mc-consigna` ✅ (Puerta 2)
+Rama "Vender mi bici": crea el registro en **Consignaciones** (estado `Nueva`) + Lead.
+- **Body:** `{ handle?, subscriber_id?, modelo, anio?, talla?, estadoBici?, precio?, contacto?, fotos?, notas?, canal? }`. `modelo` obligatorio; identidad por handle o subscriber_id. `fotos` = URL o array (best-effort; si Airtable no las baja, reintenta sin fotos y lo anota).
+- **Escribe:** upsert Lead (si nace → `Canal origen=Consignación`; si existe **no pisa** su Canal/Estado) → registro en `Consignaciones` (Modelo, Año, Talla, Estado bici, Precio esperado, Contacto, Fotos, Notas, Estado=`Nueva`, Fecha, link `Lead`).
+- **Devuelve:** `{ ok, consignaId, leadId, leadCreado }`. El **contacto humano** lo hace ManyChat asignando el chat a un agente; el endpoint solo persiste.
+
 > Endpoints del canal web/venta (documentados en [`DOCUMENTACION.md`](DOCUMENTACION.md) §5): `reservar.js`, `recalcular-embudo.js`, `registrar-venta.js`.
 
 ---
@@ -242,22 +256,25 @@ Bot: *"Para consignar tu bici, cuéntame algunos datos 📋"* → **captura** (R
 Sub-menú: `¿Cómo certifican?` · `Precios / pago` · `Ubicación`. Respuestas armadas → link a "Cómo certificamos" / catálogo → **botón "Agendar visita"** al final (los devuelve a compra). Airtable: Lead tibio `Canal=DM IG`.
 
 ### Piezas a construir
-| Pieza | Nueva/Reusa | Detalle |
+| Pieza | Nueva/Reusa | Estado |
 |---|---|---|
-| **`mc-match`** (endpoint) | 🆕 corazón de Puerta 2 | consulta Inventario, devuelve match + alternativa (1a y 1b) |
-| **`mc-consigna`** (endpoint) | 🆕 | escribe la consignación en Airtable |
-| Tabla **`Consignaciones`** | 🆕 | Modelo, Año, Estado, Precio esperado, Fotos, Contacto, Estado (Nueva/Evaluada), link Lead |
-| Waitlist | 🆕 | Interés `Waitlist` + campo "Modelo buscado" |
-| Router + FAQ + agenda directa + consignación | ManyChat | reusa mc-lead/mc-evento/mc-agenda |
-| Opción `Consignación` en `Canal origen` | ajuste | agregar la opción |
+| **`mc-match`** (endpoint) | 🆕 corazón de Puerta 2 | ✅ **Construido + verificado E2E** (21/21). Match modelo (1a) + quiz (1b) + alternativa + waitlist |
+| **`mc-consigna`** (endpoint) | 🆕 | ✅ **Construido + verificado E2E** (16/16). Escribe la consignación + upsert Lead |
+| Tabla **`Consignaciones`** | 🆕 | ✅ Ya existía + se le agregó el link `Lead` (`fldcKfqUaZq43rXK3`) |
+| Waitlist | 🆕 | ✅ Interés `No-match` + campo **`Modelo buscado`** (`fldF2HMPpUjah094S`) creado |
+| Opción `Consignación` en `Canal origen` | ajuste | ✅ Agregada (la crea mc-consigna vía typecast) |
+| Router + FAQ + agenda directa + consignación | ManyChat | 🔧 **Por armar** (reusa mc-lead/mc-evento/mc-agenda + los 2 nuevos) |
+| Reel evergreen | ManyChat | 🔧 Por armar (mc-match ya rutea vendida→alternativa) |
+
+> **Nota de build (2026-07-07):** el Interés del quiz usa los campos `Crit · motorización/disciplina/presupuesto/talla` + `Es hero` que ya existían en `Intereses`. Ambos endpoints leen `AIRTABLE_TOKEN` / escriben `AIRTABLE_WRITE_TOKEN`, patrón mc-agenda (retry-429, `MC_KEY` opcional). **Falta desplegarlos** (push a main) para que ManyChat los alcance.
 
 ### Reel evergreen (conecta Puerta 1 → Puerta 2)
 Cuando una bici se vende, en vez de pausar su reel, `mc-evento` devuelve si sigue `Disponible`; un bloque **Condición** en ManyChat bifurca: disponible → ficha+agenda · vendida → **quiz (Puerta 2)**. El reel nunca se apaga y recicla el tráfico.
 
 ### Orden de build
-1. **Router + FAQ + agenda directa + consignación** (rápido; reusa casi todo + consignación ya definida = datos + humano).
-2. **`mc-match` + modelo específico + quiz** (el build grande).
-3. **Waitlist + reel evergreen** (recuperación).
+1. ✅ **`mc-match` + `mc-consigna`** (backend, el build grande) — construidos y verificados E2E 2026-07-07.
+2. 🔧 **Desplegar** (push a main) + armar en ManyChat el **router + sub-flujos + FAQ + agenda directa + consignación** (reusa mc-lead/mc-evento/mc-agenda + los 2 nuevos).
+3. 🔧 **Waitlist visible + reel evergreen** (recuperación; mc-match ya devuelve la alternativa y el flag waitlist).
 
 ---
 

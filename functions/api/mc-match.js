@@ -1,0 +1,352 @@
+// Cloudflare Pages Function · POST /api/mc-match
+// Corazón de la Puerta 2 (DM). ManyChat, dentro de la ventana de 24h del DM de
+// Instagram, manda acá o bien un MODELO en texto libre (rama "sé cuál quiero")
+// o los CRITERIOS del quiz (motorización · disciplina · presupuesto · talla,
+// rama "ayúdame a elegir"). El endpoint consulta el Inventario en Airtable y
+// devuelve la bici Disponible que hace match — o una alternativa similar +
+// waitlist si no hay — y de paso deja registrado el lead + el Interés.
+//
+//   Modo A · modelo específico:  body { modelo: "<texto>" }
+//     · 1 Disponible calza      → hero (ficha + agenda)
+//     · varias Disponibles      → opciones[] (ManyChat desambigua; sin Interés aún)
+//     · solo vendida/reservada  → no_match + alternativa (misma disciplina) + waitlist
+//     · nada calza              → no_match + waitlist (guarda "Modelo buscado")
+//   Modo B · quiz (criterios):   body { motorizacion, disciplina, presupuesto, talla }
+//     · puntúa las Disponibles  → hero (protagonista) + alternativa
+//     · inventario vacío        → no_match + waitlist
+//
+//   - Lead    → resuelto por lead/handle/subscriber_id; si no existe y hay handle,
+//               se crea (contrato mc-lead: @handle, Canal, Estado, fechas).
+//               Estado avanza a match_entregado / no_match (guarda de no-regresión).
+//   - Interés → Match (Es hero, link Bici, Crit·… del quiz) cuando hay UNA bici;
+//               No-match (+ "Modelo buscado") en waitlist. En multi-opción NO crea
+//               Interés (se crea al agendar, vía mc-agenda). No duplica.
+//
+// El slug de la ficha se reconstruye igual que build.mjs: slug(`${modelo}-${talla}`)
+// → /ficha/<slug>. Sin colisiones modelo+talla en el catálogo actual reproduce las
+// URLs reales; un duplicado exacto futuro necesitaría el sufijo -N del build.
+//
+// Lee con AIRTABLE_TOKEN, escribe con AIRTABLE_WRITE_TOKEN. Protegido por env
+// MC_KEY (?key=). Sin env → abierto (mismo criterio que los otros puentes ManyChat).
+
+const JSONH = { 'Content-Type': 'application/json; charset=utf-8' };
+const reply = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: JSONH });
+
+const BASE_DEFAULT = 'appQUgk8aeD752923';
+const SITE_DEFAULT = 'https://biketrust-sitio.pages.dev';
+
+// Orden de la máquina de estados (idéntico a mc-evento/mc-agenda). 99 = terminal.
+const RANGO = {
+  nuevo: 0,
+  ficha_entregada: 1, quiz_iniciado: 1,
+  quiz_abandonado: 2, match_entregado: 2, no_match: 2,
+  visita_agendada: 3,
+  visita_confirmada: 4,
+  no_show: 5, 'visitó': 5,
+  'cerró': 6,
+  muerto: 99, descartado: 99,
+};
+
+async function afetch(url, opts, tries = 3) {
+  for (let i = 0; ; i++) {
+    const r = await fetch(url, opts);
+    if (r.status !== 429 || i >= tries - 1) return r;
+    await new Promise(res => setTimeout(res, 1200 * (i + 1)));
+  }
+}
+
+function keyOk(env, url) {
+  const need = env.MC_KEY;
+  return need ? url.searchParams.get('key') === need : true;
+}
+
+const linkIds = (v) => (Array.isArray(v) ? v : []).map(x => (typeof x === 'string' ? x : x.id)).filter(Boolean);
+
+// slug idéntico al de build.mjs (line 28): minúsculas, sin acentos, no-alfanum → '-'.
+const slugify = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
+// Normaliza texto para comparar (búsqueda de modelo / igualdad de select).
+const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  .replace(/[^a-z0-9]+/g, ' ').trim();
+
+const clp = (n) => (n == null || n === '') ? null : '$' + Number(n).toLocaleString('es-CL');
+
+// Presupuesto tolerante: "$3.000.000", "3000000", "3 millones" → número (techo).
+function parsePresupuesto(v) {
+  if (v == null || v === '') return null;
+  const s = String(v).toLowerCase();
+  const digits = s.replace(/[^0-9]/g, '');
+  if (!digits) return null;
+  let n = parseInt(digits, 10);
+  if (/mill/.test(s) && n < 1000) n = n * 1000000; // "3 millones" → 3.000.000
+  return n;
+}
+
+const cfg = (env) => {
+  const BASE = env.AIRTABLE_BASE || BASE_DEFAULT;
+  const READ = env.AIRTABLE_TOKEN || env.AIRTABLE_WRITE_TOKEN;
+  const WRITE = env.AIRTABLE_WRITE_TOKEN;
+  return {
+    BASE, READ, WRITE,
+    SITE: (env.SITE_URL || SITE_DEFAULT).replace(/\/+$/, ''),
+    LEADS: env.AIRTABLE_LEADS_TABLE || 'Leads',
+    INTER: env.AIRTABLE_INTERESES_TABLE || 'Intereses',
+    INV: env.AIRTABLE_INVENTARIO_TABLE || 'Inventario',
+    api: (t) => `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(t)}`,
+    rH: { Authorization: `Bearer ${READ}` },
+    wH: { Authorization: `Bearer ${WRITE}`, 'Content-Type': 'application/json' },
+  };
+};
+
+// Vista pública de una bici (lo que ManyChat pinta en el DM).
+function biciView(C, b) {
+  const f = b.fields || {};
+  const modelo = f.Modelo || f.Etiqueta || '';
+  const talla = f.Talla || '';
+  const slug = slugify(`${modelo}-${talla}`);
+  const fotos = f['Fotos galería'];
+  const foto = Array.isArray(fotos) && fotos[0]
+    ? (fotos[0].thumbnails?.large?.url || fotos[0].url) : null;
+  return {
+    biciId: b.id,
+    modelo,
+    etiqueta: f.Etiqueta || modelo,
+    marca: f.Marca || '',
+    talla: talla || null,
+    anio: f['Año'] || null,
+    precio: f.Precio ?? null,
+    precioCLP: clp(f.Precio),
+    disciplina: f.Disciplina || null,
+    motorizacion: f['Motorización'] || null,
+    rangoAltura: f['Rango altura'] || null,
+    foto,
+    fichaUrl: `${C.SITE}/ficha/${slug}`,
+  };
+}
+
+// Puntúa una bici contra criterios (disciplina/motorización/presupuesto/talla).
+// Todos blandos: la talla nunca bloquea ("no sé mi talla → se confirma en la visita").
+function scoreBici(f, crit) {
+  let score = 0;
+  if (crit.disciplina && norm(f.Disciplina) === norm(crit.disciplina)) score += 40;
+  if (crit.motorizacion && norm(f['Motorización']) === norm(crit.motorizacion)) score += 30;
+  if (crit.presupuesto != null && f.Precio != null) {
+    if (f.Precio <= crit.presupuesto) score += 20 - Math.min(15, (crit.presupuesto - f.Precio) / 1e6); // dentro: premia lo cercano al techo
+    else score -= Math.min(25, (f.Precio - crit.presupuesto) / 1e6 * 5); // sobre presupuesto: penaliza
+  }
+  if (crit.talla && norm(f.Talla) === norm(crit.talla)) score += 10;
+  return score;
+}
+
+// Devuelve las Disponibles ordenadas por score desc (excluye un id opcional).
+function rankDisponibles(disponibles, crit, excludeId) {
+  return disponibles
+    .filter(b => b.id !== excludeId)
+    .map(b => ({ b, s: scoreBici(b.fields, crit) }))
+    .sort((x, y) => y.s - x.s);
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+export async function onRequestPost({ request, env }) {
+  const url = new URL(request.url);
+  if (!keyOk(env, url)) return reply({ error: 'unauthorized' }, 401);
+
+  let data;
+  try { data = await request.json(); }
+  catch { return reply({ error: 'bad_json' }, 400); }
+
+  const handle = data?.handle ? String(data.handle).trim().replace(/^@/, '') : '';
+  const leadIn = data?.lead ? String(data.lead).trim() : '';
+  const subId = data?.subscriber_id ? String(data.subscriber_id).trim() : '';
+  const modelo = data?.modelo ? String(data.modelo).trim() : '';
+  const crit = {
+    motorizacion: data?.motorizacion ? String(data.motorizacion).trim() : '',
+    disciplina: data?.disciplina ? String(data.disciplina).trim() : '',
+    presupuesto: parsePresupuesto(data?.presupuesto),
+    talla: data?.talla ? String(data.talla).trim() : '',
+  };
+  const esQuiz = !modelo && !!(crit.motorizacion || crit.disciplina || crit.presupuesto != null || crit.talla);
+  const origen = String(data?.origen || 'Puerta 2 (quiz)').trim();
+  const canal = String(data?.canal || (esQuiz ? 'Quiz' : 'DM IG')).trim();
+
+  if (!modelo && !esQuiz) return reply({ error: 'missing_fields (modelo o criterios del quiz)' }, 422);
+  if (!leadIn && !handle && !subId) return reply({ error: 'missing_fields (lead, handle o subscriber_id)' }, 422);
+
+  const C = cfg(env);
+  if (!C.READ || !C.WRITE) return reply({ error: 'not_configured' }, 503);
+  const now = new Date().toISOString();
+  const today = new Date(Date.now() - 4 * 3600 * 1000).toISOString().slice(0, 10); // Chile UTC-4
+
+  // 1) Resolver el Lead: id directo → @handle IG → MC subscriber id.
+  const findLead = async (formula) => {
+    const u = `${C.api(C.LEADS)}?maxRecords=1&filterByFormula=${encodeURIComponent(formula)}`;
+    const rr = await afetch(u, { headers: C.rH });
+    if (!rr.ok) return { err: reply({ error: 'airtable_read', status: rr.status, detail: await rr.text() }, 502) };
+    return { id: (await rr.json()).records?.[0]?.id || null };
+  };
+  let leadId = leadIn, leadCreado = false;
+  if (!leadId && handle) {
+    const r = await findLead(`LOWER({@handle IG})='${handle.toLowerCase().replace(/'/g, "\\'")}'`);
+    if (r.err) return r.err;
+    leadId = r.id;
+  }
+  if (!leadId && subId) {
+    const r = await findLead(`{MC subscriber id}='${subId.replace(/'/g, "\\'")}'`);
+    if (r.err) return r.err;
+    leadId = r.id;
+  }
+
+  // 1b) No existe: si hay handle, nace acá con el contrato de mc-lead. Sin handle
+  //     (solo subscriber_id) no hay identidad estable de dedup → 404.
+  let estadoActual = 'nuevo';
+  if (!leadId) {
+    if (!handle) return reply({ error: 'lead_not_found (llama /api/mc-lead primero)' }, 404);
+    const cr = await afetch(C.api(C.LEADS), {
+      method: 'POST', headers: C.wH,
+      body: JSON.stringify({ typecast: true, fields: {
+        '@handle IG': handle,
+        'Canal origen': canal,
+        'Estado': 'nuevo',
+        'Fecha primer contacto': now,
+        'Fecha última interacción': now,
+        ...(subId ? { 'MC subscriber id': subId } : {}),
+      } }),
+    });
+    if (!cr.ok) return reply({ error: 'airtable_lead_create', status: cr.status, detail: await cr.text() }, 502);
+    leadId = (await cr.json()).id; leadCreado = true;
+  } else {
+    // Leer estado actual (guarda de no-regresión) + cachear subscriber_id si llegó.
+    const lr = await afetch(`${C.api(C.LEADS)}/${leadId}`, { headers: C.rH });
+    if (!lr.ok) return reply({ error: 'lead_not_found', status: lr.status }, 404);
+    estadoActual = (await lr.json()).fields?.Estado || 'nuevo';
+  }
+
+  // 2) Traer el Inventario (14 unidades premium → una página basta; cap 100).
+  const invU = `${C.api(C.INV)}?pageSize=100`;
+  const ir = await afetch(invU, { headers: C.rH });
+  if (!ir.ok) return reply({ error: 'airtable_inventario', status: ir.status, detail: await ir.text() }, 502);
+  const inventario = (await ir.json()).records || [];
+  const disponibles = inventario.filter(b => b.fields?.Estado === 'Disponible');
+
+  // 3) MATCH.
+  let hero = null, alternativa = null, opciones = [], waitlist = false, modeloBuscado = '';
+
+  if (modelo) {
+    // ── Modo A · modelo en texto libre ──────────────────────────────────────
+    const q = norm(modelo);
+    const qTokens = q.split(' ').filter(Boolean);
+    const matches = (records) => records
+      .map(b => {
+        const txt = norm(`${b.fields?.Marca || ''} ${b.fields?.Modelo || ''}`);
+        const sub = txt.includes(q);
+        const allTok = qTokens.every(t => txt.includes(t));
+        return { b, hit: sub || allTok, sub, cov: qTokens.filter(t => txt.includes(t)).length };
+      })
+      .filter(x => x.hit)
+      .sort((a, b) => (b.sub - a.sub) || (b.cov - a.cov));
+
+    const dispMatch = matches(disponibles);
+    if (dispMatch.length === 1) {
+      hero = biciView(C, dispMatch[0].b);
+    } else if (dispMatch.length > 1) {
+      opciones = dispMatch.slice(0, 3).map(x => biciView(C, x.b)); // ManyChat desambigua (máx 3 botones)
+    } else {
+      // No hay Disponible. ¿Existe pero vendida/reservada? → alternativa por su disciplina.
+      waitlist = true; modeloBuscado = modelo;
+      const otras = matches(inventario.filter(b => b.fields?.Estado !== 'Disponible'));
+      if (otras.length) {
+        const ref = otras[0].b.fields;
+        const ranked = rankDisponibles(disponibles, {
+          disciplina: ref.Disciplina, motorizacion: ref['Motorización'],
+          presupuesto: ref.Precio, talla: ref.Talla,
+        });
+        if (ranked[0] && ranked[0].s > 0) alternativa = biciView(C, ranked[0].b);
+      }
+    }
+  } else {
+    // ── Modo B · quiz por criterios ─────────────────────────────────────────
+    if (disponibles.length) {
+      const ranked = rankDisponibles(disponibles, crit);
+      hero = biciView(C, ranked[0].b);
+      if (ranked[1] && ranked[1].s > 0) alternativa = biciView(C, ranked[1].b);
+    } else {
+      waitlist = true;
+      modeloBuscado = [crit.motorizacion, crit.disciplina, crit.talla, crit.presupuesto ? clp(crit.presupuesto) : '']
+        .filter(Boolean).join(' · ');
+    }
+  }
+
+  const match = !!hero;
+  const nuevoEstado = match ? 'match_entregado' : (opciones.length ? null : 'no_match');
+
+  // 4) Avanzar el Estado (guarda de no-regresión). En multi-opción no se decide
+  //    aún (no hay bici elegida) → solo se toca la interacción.
+  let estadoAplicado = false;
+  const fieldsLead = { 'Fecha última interacción': now };
+  if (subId && !leadCreado) fieldsLead['MC subscriber id'] = subId;
+  if (nuevoEstado) {
+    const rangoNuevo = RANGO[nuevoEstado] ?? 999;
+    const rangoActual = estadoActual in RANGO ? RANGO[estadoActual] : 0;
+    if (rangoNuevo >= rangoActual) { fieldsLead['Estado'] = nuevoEstado; estadoAplicado = true; }
+  }
+  const lp = await afetch(`${C.api(C.LEADS)}/${leadId}`, {
+    method: 'PATCH', headers: C.wH,
+    body: JSON.stringify({ typecast: true, fields: fieldsLead }),
+  });
+  if (!lp.ok) return reply({ error: 'airtable_lead_update', status: lp.status, detail: await lp.text() }, 502);
+
+  // 5) Interés: Match (hay UNA bici) o No-match/waitlist. En multi-opción no se
+  //    crea (se creará al agendar la elegida, vía mc-agenda — no duplica).
+  const critFields = esQuiz ? {
+    ...(crit.motorizacion ? { 'Crit · motorización': crit.motorizacion } : {}),
+    ...(crit.disciplina ? { 'Crit · disciplina': crit.disciplina } : {}),
+    ...(crit.presupuesto != null ? { 'Crit · presupuesto': crit.presupuesto } : {}),
+    ...(crit.talla ? { 'Crit · talla': crit.talla } : {}),
+  } : {};
+
+  let interesId = null, interesCreado = false;
+  if (match) {
+    const cr = await afetch(C.api(C.INTER), {
+      method: 'POST', headers: C.wH,
+      body: JSON.stringify({ typecast: true, fields: {
+        'Lead': [leadId],
+        'Bici': [hero.biciId],
+        'Origen': origen,
+        'Resultado': 'Match',
+        'Es hero': true,
+        'Fecha': today,
+        ...critFields,
+      } }),
+    });
+    if (!cr.ok) return reply({ error: 'airtable_interes_create', status: cr.status, detail: await cr.text() }, 502);
+    interesId = (await cr.json()).id; interesCreado = true;
+  } else if (waitlist) {
+    const cr = await afetch(C.api(C.INTER), {
+      method: 'POST', headers: C.wH,
+      body: JSON.stringify({ typecast: true, fields: {
+        'Lead': [leadId],
+        'Origen': origen,
+        'Resultado': 'No-match',
+        'Modelo buscado': modeloBuscado.slice(0, 200),
+        'Fecha': today,
+        ...critFields,
+      } }),
+    });
+    if (!cr.ok) return reply({ error: 'airtable_interes_create', status: cr.status, detail: await cr.text() }, 502);
+    interesId = (await cr.json()).id; interesCreado = true;
+  }
+
+  return reply({
+    ok: true,
+    mode: modelo ? 'modelo' : 'quiz',
+    match, waitlist,
+    hero, alternativa,
+    opciones,                         // >1 match en modo A → ManyChat desambigua
+    modeloBuscado: modeloBuscado || null,
+    leadId, leadCreado,
+    interesId, interesCreado,
+    estadoActual: fieldsLead['Estado'] || estadoActual, estadoAplicado,
+  });
+}
+// Sólo POST. Pages responde 405 automáticamente a otros métodos en esta ruta.
