@@ -1,0 +1,21 @@
+# Worker de Cloudflare que dispara el motor de recordatorios (Fase 3 del embudo).
+# Pages Functions NO soporta cron nativo, así que este Worker mínimo pega el
+# endpoint /api/cron-recordatorios del sitio Pages cada 15 minutos.
+#
+# Se despliega UNA vez, aparte del auto-deploy de Pages:
+#   cd worker-cron
+#   npx wrangler deploy
+#   npx wrangler secret put CRON_KEY      # el mismo valor que la env CRON_KEY de Pages
+#
+# Ver worker-cron/README.md para el paso a paso.
+
+name = "biketrust-recordatorios-cron"
+main = "src/index.js"
+compatibility_date = "2026-01-01"
+
+[triggers]
+crons = ["*/15 * * * *"]   # cada 15 min; ventanas de 48h/2h toleran de sobra el desfase
+
+[vars]
+CRON_URL = "https://biketrust-sitio.pages.dev/api/cron-recordatorios"
+# CRON_KEY se setea como SECRET (no acá): npx wrangler secret put CRON_KEY
