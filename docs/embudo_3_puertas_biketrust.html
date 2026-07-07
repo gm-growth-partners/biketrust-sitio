@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bike Trust · Embudo de las 3 Puertas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --carbon: #080808;
+    --hierro: #1A1A1A;
+    --hierro-2: #242424;
+    --brasa: #E25822;
+    --fundicion: #FF8C42;
+    --cal: #F5F1EA;
+    --cal-muted: #D5D0C8;
+    --acero: #888888;
+    --acero-dim: #555555;
+    --border: rgba(245, 241, 234, 0.09);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--carbon);
+    color: var(--cal);
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.6;
+    font-size: 16px;
+    padding-bottom: 3rem;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem 0; }
+  .eyebrow {
+    font-size: 11px; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--brasa); font-weight: 500; margin-bottom: 1rem;
+  }
+  h1 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: clamp(34px, 5vw, 56px); font-weight: 500;
+    line-height: 1.05; letter-spacing: -1.5px; margin-bottom: 1rem;
+  }
+  h1 em { font-style: italic; color: var(--brasa); font-weight: 400; }
+  .lead {
+    font-size: 17px; color: var(--cal-muted); max-width: 760px; line-height: 1.6;
+  }
+  .lead strong { color: var(--cal); font-weight: 500; }
+  .hint {
+    margin-top: 1.25rem; font-size: 13px; color: var(--acero);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .hint .dot { color: var(--brasa); font-size: 18px; line-height: 0; }
+
+  /* legend */
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 1.5rem 2rem;
+    margin: 1.75rem 0 0; padding: 1.1rem 1.4rem;
+    background: var(--hierro); border: 1px solid var(--border); border-radius: 12px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--cal-muted); }
+  .legend-swatch { width: 26px; height: 14px; border-radius: 4px; flex: none; }
+
+  /* diagram scroll frame */
+  .diagram-frame {
+    margin: 1.5rem auto 0; max-width: 1200px; padding: 0 2rem;
+  }
+  .diagram-scroll {
+    overflow-x: auto; overflow-y: hidden;
+    background: var(--hierro);
+    border: 1px solid var(--border); border-radius: 16px;
+    padding: 1.5rem;
+  }
+  .diagram-scroll svg { display: block; min-width: 1180px; }
+  .scrollnote { font-size: 12px; color: var(--acero-dim); text-align: center; margin-top: 10px; letter-spacing: .5px; }
+
+  /* SVG element styles */
+  .b-fill { fill: var(--hierro-2); stroke: var(--border); stroke-width: 1; }
+  .b-door { fill: var(--hierro-2); stroke: rgba(226,88,34,.35); stroke-width: 1.2; }
+  .b-cta  { fill: rgba(226,88,34,.10); stroke: rgba(226,88,34,.5); stroke-width: 1.2; }
+  .b-hub  { fill: rgba(226,88,34,.16); stroke: var(--brasa); stroke-width: 2; }
+  .b-trunk{ fill: var(--hierro-2); stroke: rgba(226,88,34,.35); stroke-width: 1.2; }
+  .b-exc  { fill: #161616; stroke: rgba(136,136,136,.4); stroke-width: 1; stroke-dasharray: 4 3; }
+  .accent { fill: var(--brasa); }
+
+  .t-lbl  { font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; fill: var(--cal); }
+  .t-sub  { font-family:'DM Sans',sans-serif; font-size:11.5px; font-weight:400; fill: var(--acero); }
+  .t-door { font-family:'DM Sans',sans-serif; font-size:14.5px; font-weight:500; fill: var(--cal); }
+  .t-hub  { font-family:'Fraunces',Georgia,serif; font-size:18px; font-weight:500; fill: var(--cal); }
+  .t-hsub { font-family:'DM Sans',sans-serif; font-size:11.5px; fill: var(--cal-muted); }
+  .t-stage{ font-family:'DM Sans',sans-serif; font-size:11px; font-weight:500; letter-spacing:3px; fill: var(--acero); text-transform:uppercase; }
+  .t-exc  { font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; fill: var(--acero); }
+  .flow   { fill:none; stroke: var(--brasa); stroke-width:1.6; opacity:.85; }
+  .flow-exc { fill:none; stroke: var(--acero); stroke-width:1.4; stroke-dasharray: 4 3; opacity:.7; }
+  .bracket{ fill:none; stroke: rgba(226,88,34,.3); stroke-width:1.2; }
+
+  .footer {
+    max-width:1200px; margin:2.5rem auto 0; padding: 1.5rem 2rem 0;
+    border-top:1px solid var(--border); text-align:center;
+  }
+  .footer .mark { font-family:'Fraunces',Georgia,serif; font-size:20px; font-weight:500; }
+  .footer .mark em { font-style:italic; color:var(--brasa); font-weight:400; }
+  .footer .meta { font-size:11px; color:var(--acero-dim); letter-spacing:1px; margin-top:6px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="eyebrow">Bike Trust · Sistema de captación</div>
+  <h1>Tres puertas, <em>un</em> solo destino</h1>
+  <p class="lead">
+    Un cliente puede entrar por la <strong>web</strong>, por un <strong>comentario</strong> en un reel o por <strong>DM</strong>.
+    Sean cuales sean, todos los caminos de compra <strong>convergen en el mismo agendamiento</strong> y siguen el mismo tronco automatizado hasta el showroom. La única excepción es quien quiere <strong>vender</strong> su bici: ese se deriva a una persona.
+  </p>
+  <div class="hint"><span class="dot">●</span> Desliza el diagrama hacia los lados para ver el recorrido completo.</div>
+</div>
+
+<div class="diagram-frame">
+  <div class="diagram-scroll">
+    <svg width="100%" viewBox="0 0 1770 700" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagrama del embudo: las tres puertas de entrada (web, comentario, DM) convergen en el agendamiento y siguen el mismo flujo hasta el showroom.">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+
+      <!-- stage labels -->
+      <text class="t-stage" x="120" y="34">Puertas de entrada</text>
+      <text class="t-stage" x="1015" y="34" text-anchor="middle">Convergencia</text>
+      <text class="t-stage" x="1450" y="34" text-anchor="middle">Flujo compartido</text>
+
+      <!-- bracket over the trunk -->
+      <path class="bracket" d="M1160 50 L1740 50" />
+      <path class="bracket" d="M1160 50 L1160 60 M1740 50 L1740 60" />
+
+      <!-- ===== CONNECTORS (drawn first, behind boxes) ===== -->
+      <!-- Web lane -->
+      <path class="flow" d="M210 110 L268 110" marker-end="url(#ar)"/>
+      <path class="flow" d="M440 110 L518 110" marker-end="url(#ar)"/>
+      <!-- Comentario lane -->
+      <path class="flow" d="M210 250 L268 250" marker-end="url(#ar)"/>
+      <path class="flow" d="M440 250 L518 250" marker-end="url(#ar)"/>
+      <!-- DM router fan -->
+      <path class="flow" d="M210 490 C244 460, 246 440, 268 440" marker-end="url(#ar)"/>
+      <path class="flow" d="M210 505 L268 520" marker-end="url(#ar)"/>
+      <path class="flow" d="M210 520 C244 560, 246 628, 268 628" marker-end="url(#ar)"/>
+      <!-- Comprar path -->
+      <path class="flow" d="M462 440 L478 440" marker-end="url(#ar)"/>
+      <path class="flow" d="M682 440 L708 440" marker-end="url(#ar)"/>
+      <!-- Consultar path -->
+      <path class="flow" d="M462 520 L478 520" marker-end="url(#ar)"/>
+      <path class="flow" d="M682 520 L708 520" marker-end="url(#ar)"/>
+      <!-- Vender path (exception) -->
+      <path class="flow-exc" d="M462 628 L478 628" marker-end="url(#ar)"/>
+      <path class="flow-exc" d="M682 628 L708 628" marker-end="url(#ar)"/>
+
+      <!-- CONVERGENCE arrows to the hub (left edge x=922, center y=355) -->
+      <path class="flow" d="M672 110 C812 110, 862 300, 920 332" marker-end="url(#ar)"/>
+      <path class="flow" d="M672 250 C822 250, 866 322, 920 346" marker-end="url(#ar)"/>
+      <path class="flow" d="M852 440 C892 440, 902 392, 920 368" marker-end="url(#ar)"/>
+      <path class="flow" d="M852 520 C892 520, 905 420, 920 384" marker-end="url(#ar)"/>
+
+      <!-- trunk -->
+      <path class="flow" d="M1112 355 L1168 355" marker-end="url(#ar)"/>
+      <path class="flow" d="M1332 355 L1388 355" marker-end="url(#ar)"/>
+      <path class="flow" d="M1552 355 L1588 355" marker-end="url(#ar)"/>
+
+      <!-- ===== BOXES ===== -->
+      <!-- Lane A: Web -->
+      <g>
+        <rect class="b-door" x="30" y="80" width="180" height="60" rx="10"/>
+        <rect class="accent" x="30" y="80" width="4" height="60" rx="2"/>
+        <text class="t-door" x="52" y="106">🌐 Web</text>
+        <text class="t-sub" x="52" y="124">link en bio → sitio</text>
+      </g>
+      <g><rect class="b-fill" x="270" y="82" width="170" height="56" rx="10"/>
+        <text class="t-lbl" x="355" y="107" text-anchor="middle">Ficha en el sitio</text>
+        <text class="t-sub" x="355" y="124" text-anchor="middle">catálogo e-commerce</text></g>
+      <g><rect class="b-cta" x="520" y="82" width="152" height="56" rx="10"/>
+        <text class="t-lbl" x="596" y="115" text-anchor="middle">📅 Reservar</text></g>
+
+      <!-- Lane B: Comentario -->
+      <g>
+        <rect class="b-door" x="30" y="220" width="180" height="60" rx="10"/>
+        <rect class="accent" x="30" y="220" width="4" height="60" rx="2"/>
+        <text class="t-door" x="52" y="246">💬 Comentario</text>
+        <text class="t-sub" x="52" y="264">en un reel</text>
+      </g>
+      <g><rect class="b-fill" x="270" y="222" width="170" height="56" rx="10"/>
+        <text class="t-lbl" x="355" y="247" text-anchor="middle">Ficha por DM</text>
+        <text class="t-sub" x="355" y="264" text-anchor="middle">+ califica</text></g>
+      <g><rect class="b-cta" x="520" y="222" width="152" height="56" rx="10"/>
+        <text class="t-lbl" x="596" y="255" text-anchor="middle">📅 Agendar</text></g>
+
+      <!-- Lane C: DM router -->
+      <g>
+        <rect class="b-door" x="30" y="460" width="180" height="90" rx="10"/>
+        <rect class="accent" x="30" y="460" width="4" height="90" rx="2"/>
+        <text class="t-door" x="52" y="495">📩 DM / historia</text>
+        <text class="t-sub" x="52" y="515">🤖 Router (bot)</text>
+        <text class="t-sub" x="52" y="532">¿comprar · vender · consultar?</text>
+      </g>
+      <!-- Comprar -->
+      <g><rect class="b-fill" x="270" y="412" width="192" height="56" rx="10"/>
+        <text class="t-lbl" x="366" y="437" text-anchor="middle">🚴 Comprar</text>
+        <text class="t-sub" x="366" y="454" text-anchor="middle">sé cuál quiero · quiz · ir a ver</text></g>
+      <g><rect class="b-fill" x="478" y="412" width="204" height="56" rx="10"/>
+        <text class="t-lbl" x="580" y="437" text-anchor="middle">Ficha / match</text>
+        <text class="t-sub" x="580" y="454" text-anchor="middle">mc-match → stock</text></g>
+      <g><rect class="b-cta" x="708" y="412" width="144" height="56" rx="10"/>
+        <text class="t-lbl" x="780" y="445" text-anchor="middle">📅 Agendar</text></g>
+      <!-- Consultar -->
+      <g><rect class="b-fill" x="270" y="492" width="192" height="56" rx="10"/>
+        <text class="t-lbl" x="366" y="517" text-anchor="middle">💬 Consultar</text>
+        <text class="t-sub" x="366" y="534" text-anchor="middle">certifican · precio · lugar</text></g>
+      <g><rect class="b-fill" x="478" y="492" width="204" height="56" rx="10"/>
+        <text class="t-lbl" x="580" y="517" text-anchor="middle">FAQ + confianza</text>
+        <text class="t-sub" x="580" y="534" text-anchor="middle">→ botón agendar</text></g>
+      <g><rect class="b-cta" x="708" y="492" width="144" height="56" rx="10"/>
+        <text class="t-lbl" x="780" y="525" text-anchor="middle">📅 Agendar</text></g>
+      <!-- Vender (exception) -->
+      <g><rect class="b-exc" x="270" y="600" width="192" height="56" rx="10"/>
+        <text class="t-exc" x="366" y="625" text-anchor="middle">💰 Vender / Consignar</text>
+        <text class="t-sub" x="366" y="642" text-anchor="middle">captura datos de la bici</text></g>
+      <g><rect class="b-exc" x="478" y="600" width="204" height="56" rx="10"/>
+        <text class="t-exc" x="580" y="632" text-anchor="middle">👤 Humano (evalúa)</text></g>
+      <g><rect class="b-exc" x="708" y="600" width="150" height="56" rx="10"/>
+        <text class="t-exc" x="783" y="625" text-anchor="middle">✋ No va a agenda</text>
+        <text class="t-sub" x="783" y="642" text-anchor="middle">es venta, no compra</text></g>
+
+      <!-- HUB: Agendamiento -->
+      <g>
+        <rect class="b-hub" x="922" y="300" width="190" height="110" rx="14"/>
+        <text class="t-hub" x="1017" y="345" text-anchor="middle">📅 Agendamiento</text>
+        <text class="t-hsub" x="1017" y="368" text-anchor="middle">elige horario A/B</text>
+        <text class="t-hsub" x="1017" y="385" text-anchor="middle">→ visita_agendada</text>
+      </g>
+
+      <!-- TRUNK -->
+      <g><rect class="b-trunk" x="1170" y="327" width="162" height="56" rx="10"/>
+        <text class="t-lbl" x="1251" y="352" text-anchor="middle">✅ Confirmación</text>
+        <text class="t-sub" x="1251" y="369" text-anchor="middle">WhatsApp, al instante</text></g>
+      <g><rect class="b-trunk" x="1388" y="327" width="162" height="56" rx="10"/>
+        <text class="t-lbl" x="1469" y="352" text-anchor="middle">⏰ Recordatorios</text>
+        <text class="t-sub" x="1469" y="369" text-anchor="middle">48h + 8am del día</text></g>
+      <g><rect class="b-hub" x="1588" y="319" width="152" height="72" rx="12"/>
+        <text class="t-lbl" x="1664" y="350" text-anchor="middle">🏪 Showroom</text>
+        <text class="t-sub" x="1664" y="368" text-anchor="middle">cierre humano</text></g>
+    </svg>
+  </div>
+  <div class="scrollnote">← desliza →</div>
+</div>
+
+<div class="wrap" style="padding-top:0;">
+  <div class="legend">
+    <div class="legend-item"><span class="legend-swatch" style="background:rgba(226,88,34,.10); border:1px solid rgba(226,88,34,.5);"></span> Paso de compra (converge)</div>
+    <div class="legend-item"><span class="legend-swatch" style="background:rgba(226,88,34,.16); border:1px solid var(--brasa);"></span> Nodo clave (agendamiento / showroom)</div>
+    <div class="legend-item"><span class="legend-swatch" style="background:#161616; border:1px dashed rgba(136,136,136,.5);"></span> Consignación → humano (no agenda)</div>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="mark">GMGP · <em>La Forja</em></div>
+  <div class="meta">Bike Trust · Embudo de captación · 2026</div>
+</div>
+
+</body>
+</html>
