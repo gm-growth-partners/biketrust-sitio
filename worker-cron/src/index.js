@@ -9,7 +9,8 @@ export default {
     const key = encodeURIComponent(env.CRON_KEY || '');
     const recUrl = env.CRON_URL;                                          // .../api/cron-recordatorios
     const briefUrl = env.CRON_URL.replace('cron-recordatorios', 'cron-briefing');
-    for (const [name, url] of [['recordatorios', recUrl], ['briefing', briefUrl]]) {
+    const reengUrl = env.CRON_URL.replace('cron-recordatorios', 'cron-reenganche');
+    for (const [name, url] of [['recordatorios', recUrl], ['briefing', briefUrl], ['reenganche', reengUrl]]) {
       try {
         const r = await fetch(`${url}?key=${key}`, { method: 'GET', headers: { 'User-Agent': 'biketrust-cron' } });
         const body = await r.text();
