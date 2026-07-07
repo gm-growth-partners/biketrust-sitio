@@ -223,23 +223,41 @@ Cada mañana a una hora fija, un mensaje al celular del staff (y opcionalmente a
 
 ---
 
-## 10. Expansión: router del DM + quiz (Puerta 2) + waitlist 💡
+## 10. Puerta 2 — Embudo de entrada por DM (diseño completo) 🔧
 
-Cuando el sistema base esté cerrado (§8 + §9), se abre la Puerta 2. Al escribir al **DM directo** (o responder una historia), el bot muestra un mensaje con **3 botones** que rutean por intención:
+Entrada: **DM directo** o **respuesta a historia** → ambos caen en el **Router**. Diseño autoritativo (2026-07-07). Reusa todo lo de Puerta 1 (mc-lead/mc-evento/mc-agenda) y agrega el router + `mc-match` + consignación.
 
-| Botón | Intención | Rutea a | Reusa/nuevo |
-|---|---|---|---|
-| **A · «Sé cuál quiero»** | Vio algo, viene decidido | Ficha + Agenda | reusa lo construido |
-| **B · «Ayúdame a elegir»** | No sabe qué le sirve | **Quiz** (Puerta 2) → Match → Agenda | nuevo |
-| **C · «Busco algo puntual»** | Modelo/talla que quizás no hay | **Waitlist** "lo conseguimos" | nuevo |
+### Router (bienvenida)
+Mensaje: *"¡Hola! 👋 Soy el asistente de Bike Trust. ¿En qué te ayudo?"* → **3 botones**: `🚴 Comprar` · `💰 Vender mi bici` · `💬 Consultar`. Capa de **AI/keywords** encima: si escriben libre, clasifica la intención y rutea; si no entiende → muestra el menú. Fallback final: *"Te conecto con una persona"* (asigna humano).
 
-Las 3 rutas terminan en un toque humano real (visita al showroom, o aviso de que se consiguió la bici) → **no se necesita botón de "hablar con persona"**, fiel al principio. Fallback: texto libre raro → reencauza al router / avisa al staff.
+### Rama 1 — 🚴 COMPRAR (sub-menú: `Sé cuál quiero` · `Ayúdame a elegir` · `Solo ir a verlas`)
+- **1a · Modelo específico:** bot pide el modelo → **`mc-match`** consulta Inventario → **Disponible:** ficha + agenda (reusa Puerta 1) · **No disponible:** ofrece similar (misma disciplina/talla/rango) + **waitlist** "te aviso cuando llegue". Airtable: Lead `Canal=DM IG` + Interés `Origen=Puerta 2`.
+- **1b · Ayúdame a elegir (quiz):** 4 preguntas (motorización · uso/disciplina · presupuesto · talla) → **`mc-match`** cruza con stock → **protagonista + alternativa** → ficha + agenda. "No sé mi talla" → sigue igual (se confirma en la visita). Airtable: Lead `Canal=Quiz` + Interés `Match`.
+- **1c · Solo ir a verlas:** directo al selector de horarios → agenda "showroom general" (sin bici específica).
 
-**El quiz** (Puerta 2): 3 ejes (motorización · uso/disciplina · presupuesto) + talla → cruza con stock → bici protagonista + alternativa. Rama "no sé mi talla" → sigue igual (se confirma en el chat). Endpoint nuevo **`mc-match`**.
+### Rama 2 — 💰 VENDER (Consignación)
+Bot: *"Para consignar tu bici, cuéntame algunos datos 📋"* → **captura** (Recopilación de datos): modelo · año · estado/km (batería si eléctrica) · precio esperado · fotos · teléfono → *"¡Listo! Un especialista te contactará."* → **asigna la conversación a un humano** (staff) + escribe el registro. Airtable: tabla nueva **`Consignaciones`** (link a Lead con `Canal=Consignación`).
 
-**Reel evergreen (mejora relacionada):** en vez de pausar la automatización cuando la bici se vende, `mc-evento` devuelve si la bici sigue `Disponible`; un bloque **Condición** en ManyChat bifurca: disponible → ficha+agenda, vendida → quiz. El reel recicla su tráfico y nunca se apaga.
+### Rama 3 — 💬 CONSULTAR (FAQ + reenganche)
+Sub-menú: `¿Cómo certifican?` · `Precios / pago` · `Ubicación`. Respuestas armadas → link a "Cómo certificamos" / catálogo → **botón "Agendar visita"** al final (los devuelve a compra). Airtable: Lead tibio `Canal=DM IG`.
 
-**Piezas a construir:** (1) flujo router del DM · (2) flujo del quiz + `mc-match` · (3) captura de waitlist (tabla/campos + endpoint) · (4) conectar respuestas a historia al router.
+### Piezas a construir
+| Pieza | Nueva/Reusa | Detalle |
+|---|---|---|
+| **`mc-match`** (endpoint) | 🆕 corazón de Puerta 2 | consulta Inventario, devuelve match + alternativa (1a y 1b) |
+| **`mc-consigna`** (endpoint) | 🆕 | escribe la consignación en Airtable |
+| Tabla **`Consignaciones`** | 🆕 | Modelo, Año, Estado, Precio esperado, Fotos, Contacto, Estado (Nueva/Evaluada), link Lead |
+| Waitlist | 🆕 | Interés `Waitlist` + campo "Modelo buscado" |
+| Router + FAQ + agenda directa + consignación | ManyChat | reusa mc-lead/mc-evento/mc-agenda |
+| Opción `Consignación` en `Canal origen` | ajuste | agregar la opción |
+
+### Reel evergreen (conecta Puerta 1 → Puerta 2)
+Cuando una bici se vende, en vez de pausar su reel, `mc-evento` devuelve si sigue `Disponible`; un bloque **Condición** en ManyChat bifurca: disponible → ficha+agenda · vendida → **quiz (Puerta 2)**. El reel nunca se apaga y recicla el tráfico.
+
+### Orden de build
+1. **Router + FAQ + agenda directa + consignación** (rápido; reusa casi todo + consignación ya definida = datos + humano).
+2. **`mc-match` + modelo específico + quiz** (el build grande).
+3. **Waitlist + reel evergreen** (recuperación).
 
 ---
 
