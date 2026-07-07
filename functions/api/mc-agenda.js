@@ -205,6 +205,10 @@ export async function onRequestPost({ request, env }) {
     const br = await afetch(`${C.api('Inventario')}/${biciId}`, { headers: C.rH });
     if (br.ok) { const bf = (await br.json()).fields || {}; biciNombre = bf.Modelo || bf.Etiqueta || ''; }
   }
+  // Agenda sin bici específica (rama "Solo ir a verlas" de la Puerta 2): la
+  // plantilla dice "probar la {{1}}", así que un default legible evita el "probar
+  // la ." vacío (y que Meta rechace la plantilla por variable en blanco).
+  if (!biciNombre) biciNombre = 'bici que más te guste';
   const fechaVisitaLegible = fechaVisitaLegibleDe(fechaVisita);
 
   // ¿Cuántas horas faltan para la visita? (naive = hora Chile; se compara contra
