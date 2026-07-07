@@ -344,15 +344,31 @@ export async function onRequestPost({ request, env }) {
     interesId = (await cr.json()).id; interesCreado = true;
   }
 
+  // Campos APLANADOS (primer nivel) para que el mapeo de respuesta en ManyChat
+  // sea trivial: valores simples, sin rutas anidadas (`$.hero.modelo`) que la UI
+  // no siempre lee bien. Vacíos = '' (ManyChat los trata como campo en blanco).
+  const H = hero || {}, A = alternativa || {};
+  const flat = {
+    heroModelo: H.modelo || '',
+    heroPrecio: H.precioCLP || '',
+    heroTalla: H.talla || '',
+    heroFicha: H.fichaUrl || '',
+    heroBici: H.biciId || '',
+    heroFoto: H.foto || '',
+    altModelo: A.modelo || '',
+    altPrecio: A.precioCLP || '',
+    altFicha: A.fichaUrl || '',
+    altBici: A.biciId || '',
+  };
+
   return reply({
     ok: true,
     mode: modelo ? 'modelo' : 'quiz',
     match, waitlist,
-    hero, alternativa,
-    opciones,                         // todas las coincidencias (referencia/API)
-    otras,                            // coincidencias secundarias (modo modelo)
-    otrasTexto: otrasTexto || null,   // línea lista para el DM cuando hay varias
+    ...flat,                          // ← usar estos en ManyChat (planos)
+    otrasTexto: otrasTexto || '',     // línea lista para el DM cuando hay varias
     modeloBuscado: modeloBuscado || null,
+    hero, alternativa, opciones, otras, // objetos completos (referencia/API)
     leadId, leadCreado,
     interesId, interesCreado,
     estadoActual: fieldsLead['Estado'] || estadoActual, estadoAplicado,
