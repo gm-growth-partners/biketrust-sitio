@@ -38,9 +38,11 @@ async function recalcular(env) {
   if (!READ || !WRITE) throw new Error('not_configured (faltan tokens)');
   const api = (t) => `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(t)}`;
 
-  // 1) Leer TODOS los Leads (paginado): banderas + fecha + canal.
+  // 1) Leer TODOS los Leads REALES (paginado): banderas + fecha + canal.
+  //    Se excluyen los leads DEMO (datos de prueba) para no contaminar el reporte.
   const readFields = [...STAGES.map(s => s.flag), 'Fecha primer contacto', 'Canal origen'];
-  const qs = readFields.map(f => `fields%5B%5D=${encodeURIComponent(f)}`).join('&') + '&pageSize=100';
+  const qs = readFields.map(f => `fields%5B%5D=${encodeURIComponent(f)}`).join('&')
+    + '&pageSize=100&filterByFormula=' + encodeURIComponent('NOT({DEMO})');
   let leads = [], offset = null;
   do {
     const u = `${api(LEADS)}?${qs}${offset ? `&offset=${offset}` : ''}`;
@@ -85,7 +87,8 @@ async function recalcular(env) {
 
   // 2b) Facturación = Precio Bici de los Intereses CERRÓ cuyo lead está cerró,
   //     bucketeada por la SEMANA DE ENTRADA del lead (cohorte) → cuadra con "Cerró".
-  const fqs = ['Resultado', 'Precio Bici', 'Lead'].map(f => `fields%5B%5D=${encodeURIComponent(f)}`).join('&') + '&pageSize=100';
+  const fqs = ['Resultado', 'Precio Bici', 'Lead'].map(f => `fields%5B%5D=${encodeURIComponent(f)}`).join('&')
+    + '&pageSize=100&filterByFormula=' + encodeURIComponent('NOT({DEMO})');
   let intereses = [], joff = null;
   do {
     const u = `${api(INTER)}?${fqs}${joff ? `&offset=${joff}` : ''}`;
