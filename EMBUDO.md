@@ -20,13 +20,12 @@
 | 1 | **Puerta 1 — comentario en reel** → ficha + calificación | ✅ En vivo |
 | 2 | **Agendamiento en el chat** (selector de horario → Airtable) | ✅ En vivo y probado con usuario real |
 | 3 | **Cierre en tienda** (staff marca vino/compró en la Agenda) | ✅ En vivo |
-| 4 | **Confirmación + recordatorios por WhatsApp** (Fase 3) | ✅ En vivo y autónomo: confirmación (al agendar) + recordatorio 48h + recordatorio 8am del día. Motor cron cada 15 min. |
-| 5 | **Briefing diario al staff** (visitas del día) | 🔧 Por construir (próxima pieza) |
-| 6 | **Puerta 2 — router del DM + quiz + waitlist** | 💡 Diseñado, en fila |
+| 4 | **Confirmación + recordatorios por WhatsApp** (Fase 3) | ✅ **En vivo, autónomo y VERIFICADO E2E** (2026-07-07): confirmación (al agendar, con botón "Sí confirmo" que registra `visita_confirmada`) + recordatorio 48h + recordatorio 8am. Motor cron cada 15 min. |
+| 5 | **Briefing diario al staff** (visitas del día) | 🟡 Backend listo y desplegado; espera aprobación de plantilla Meta + contacto de Luis |
+| 5b | **Reenganche + nudges** (no-show, suelto, stock) | 🟡 Motor desplegado; espera plantillas Meta + nudges de IG (armados por el usuario) |
+| 6 | **Puerta 2 — router del DM + quiz + waitlist + consignación** | 💡 En rediseño (ver §10) |
 
-**Qué falta para "sistema base terminado":** solo #5 (briefing diario a Luis). El #4 (WhatsApp) quedó **en vivo y automático** (2026-07-07). Después se abre la expansión #6.
-
-**Pendientes finos del #4:** (a) registrar el estado `visita_confirmada` — la plantilla enviada NO trae botón "Sí, confirmo", así que hoy la confirmación es informativa (no se trackea quién confirma); si se quiere trackear, hay que agregar el botón a la plantilla (re-aprobación Meta) + cablearlo a `mc-evento`. (b) El recordatorio de "2h antes" quedó fuera por simplicidad (se puede sumar con una variable de entorno si se decide).
+**Estado (2026-07-07):** el **embudo base (Puerta 1 comentario → showroom) está EN VIVO y verificado de punta a punta** con una corrida real (lead pasó captura→agenda→confirmación, todo escrito en Airtable, incl. `visita_confirmada`). Pendiente de Meta (relojes corriendo): plantillas del briefing, reenganche y la confirmación v2 (con Reagendar). Sigue: **Puerta 2 (DM) — en rediseño**.
 
 ---
 
