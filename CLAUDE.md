@@ -55,6 +55,7 @@ Bike Trust vende bicicletas **Specialized usadas, premium y certificadas** (Sant
   - `functions/api/mc-evento.js` — **puente ManyChat**: avanza `Estado` del lead (con guarda de no-regresión) + crea Interés; resuelve la bici directo o vía el reel comentado (`Reels.Bici`). POST. Protegida por env opcional `MC_KEY`.
   - `functions/api/mc-match.js` — **Puerta 2 (corazón)**: recibe un modelo en texto (rama "sé cuál quiero") o los criterios del quiz → consulta Inventario → devuelve la bici Disponible que hace match (o alternativa + waitlist) + escribe Lead/Interés (`Match`/`No-match`). POST. Verificado E2E. Protegida por env opcional `MC_KEY`. **Falta desplegar.**
   - `functions/api/mc-consigna.js` — **Puerta 2 (vender)**: crea el registro en `Consignaciones` (estado `Nueva`) + upsert Lead (`Canal=Consignación`). POST. Verificado E2E. Protegida por env opcional `MC_KEY`. **Falta desplegar.**
+  - `functions/api/mc-waitlist.js` — **Puerta 2 (Consíganmela)**: crea el **ticket de búsqueda** en `Solicitudes` (modelo/talla/presupuesto/notas, Estado=Nueva, Origen=Bot DM, link Lead) + teléfono/opt-in en el Lead + marca `Encargo`=✓ en el Interés No-match. POST. Verificado E2E. Protegida por env opcional `MC_KEY`.
   - **Gotcha API (nuevo):** el GET de **un registro único** (`/Tabla/{recId}`) **NO acepta `?fields[]=`** (da 422); eso solo va en el endpoint de LISTADO. Leer el registro completo.
 - **Tokens (SOLO env, NUNCA en repo):** `AIRTABLE_TOKEN` (read) y `AIRTABLE_WRITE_TOKEN` (write) en Cloudflare. Para que Claude trabaje datos/esquema por API hay un **PAT en `.dev.vars`** (gitignored) como `AIRTABLE_PAT`. **El PAT se pegó una vez en el chat — conviene rotarlo.**
 
@@ -71,6 +72,8 @@ Bike Trust vende bicicletas **Specialized usadas, premium y certificadas** (Sant
 - **Intereses** (lead↔bici): primario `Interés ID` (autonumber). `Origen` (Puerta 1/Puerta 2/Web (ficha)), `Resultado` (Ficha entregada/Match/No-match/Agendó/Cerró), links Lead/Bici/Reel/Reservas, `Precio Bici` (lookup Bici→Precio), `DEMO`.
 - **Reservas**: campos que escribe la web (Nombre, Email, Teléfono, Fecha, Hora, Modelos, Modelos Slug, **Bici IDs**, Origen=Web, Estado=Nueva) + links Leads/Intereses.
 - **Reels**: para el funnel (sin uso aún).
+- **Consignaciones** (`tblQTsCHnf8ebO2T1`, rama Vender de Puerta 2): Modelo, Año, Talla, Estado bici, Precio esperado, Contacto, Fotos, `Estado` (`Nueva/En evaluación/Aceptada/Rechazada`), Fecha, Notas, link `Lead`. La escribe `mc-consigna`.
+- **Solicitudes** (`tblHnU7eHyhlbxyGM`, tickets de búsqueda «Consíganmela»): primario `Modelo buscado`, Motorización, Disciplina, Talla, Presupuesto (currency), Notas, `Estado` (`Nueva/Buscando/Conseguida/Cerrada`), Fecha, Contacto, `Origen` (`Bot DM/Manual`), link `Lead`. La escribe `mc-waitlist` (bot) y el staff por formulario (manual). Es la cola de sourcing.
 
 ---
 

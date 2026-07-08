@@ -1,21 +1,24 @@
 // Cloudflare Pages Function · POST /api/mc-waitlist
 // Botón «🎯 Consíganmela» de la Puerta 2 (DM). Cuando mc-match no encontró el
-// modelo (waitlist), el lead puede ENCARGARNOS la búsqueda: este endpoint guarda
-// su teléfono + opt-in de WhatsApp y marca el Interés No-match como Encargo
-// activo. El equipo lo ve en la cola de sourcing (Intereses con Encargo=✓) y le
-// avisa cuando la consiga (manual hoy; plantilla reactivacion_stock a futuro).
+// modelo, el lead nos ENCARGA la búsqueda: el bot le pide los datos de la bici
+// que busca (talla, presupuesto, detalles) + su teléfono, y este endpoint crea
+// el TICKET en la tabla `Solicitudes` (Estado=Nueva) — la cola de sourcing que
+// el staff trabaja desde la interfaz (cards por Estado). Los tickets manuales
+// del staff se crean por formulario en la misma tabla (Origen=Manual).
 //
-// Body: { handle?, subscriber_id?, telefono?, optin?, modelo? }
+// Body: { handle?, subscriber_id?, telefono?, optin?, modelo?, talla?,
+//         presupuesto?, disciplina?, motorizacion?, notas? }
 //   - Identidad por handle o subscriber_id. El lead normalmente ya existe (lo
-//     creó mc-match al buscar); si no existe y hay handle, nace acá (contrato
-//     mc-lead, Canal=DM IG, Estado=no_match).
-//   - modelo (opcional): respaldo por si no hay un Interés No-match previo — se
-//     crea uno con ese texto en "Modelo buscado".
+//     creó mc-match al buscar); si no existe y hay handle, nace acá.
+//   - `presupuesto` tolerante: "3000000", "$3.000.000", "Hasta $3 millones".
+//   - Los merge tags sin resolver de ManyChat ({{cuf_…}}) se ignoran.
 //
-//   - Lead    → WhatsApp + Opt-in WhatsApp + Fecha opt-in + MC subscriber id +
-//               Fecha última interacción (el Estado no se toca: mc-match ya lo dejó).
-//   - Interés → el No-match más reciente del lead pasa a Encargo=✓ (reusa, no
-//               duplica); si no existe, se crea con Encargo=✓.
+//   - Solicitud → Modelo buscado, Talla, Presupuesto, Disciplina, Motorización,
+//                 Notas, Contacto, Estado=Nueva, Fecha, Origen=Bot DM, link Lead.
+//   - Lead      → WhatsApp + Opt-in WhatsApp + Fecha opt-in + MC subscriber id +
+//                 Fecha última interacción (el Estado no se toca: mc-match ya lo dejó).
+//   - Interés   → el No-match más reciente del lead pasa a Encargo=✓ (marca de
+//                 embudo; el ticket operativo vive en Solicitudes).
 //
 // Lee con AIRTABLE_TOKEN, escribe con AIRTABLE_WRITE_TOKEN. Protegido por env
 // MC_KEY (?key=). Sin env → abierto (mismo criterio que los otros puentes ManyChat).
@@ -38,6 +41,23 @@ function keyOk(env, url) {
   return need ? url.searchParams.get('key') === need : true;
 }
 
+// Texto limpio: recorta, y descarta merge tags sin resolver ({{cuf_…}}).
+const clean = (v, max = 200) => {
+  const s = v == null ? '' : String(v).trim();
+  return s.includes('{{') ? '' : s.slice(0, max);
+};
+
+// Presupuesto tolerante (mismo criterio que mc-match): "$3.000.000", "3 millones".
+function parsePresupuesto(v) {
+  const s = clean(v, 60).toLowerCase();
+  if (!s) return null;
+  const digits = s.replace(/[^0-9]/g, '');
+  if (!digits) return null;
+  let n = parseInt(digits, 10);
+  if (/mill/.test(s) && n < 1000) n = n * 1000000;
+  return n;
+}
+
 const cfg = (env) => {
   const BASE = env.AIRTABLE_BASE || BASE_DEFAULT;
   const READ = env.AIRTABLE_TOKEN || env.AIRTABLE_WRITE_TOKEN;
@@ -46,6 +66,7 @@ const cfg = (env) => {
     BASE, READ, WRITE,
     LEADS: env.AIRTABLE_LEADS_TABLE || 'Leads',
     INTER: env.AIRTABLE_INTERESES_TABLE || 'Intereses',
+    SOLIC: env.AIRTABLE_SOLICITUDES_TABLE || 'Solicitudes',
     api: (t) => `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(t)}`,
     rH: { Authorization: `Bearer ${READ}` },
     wH: { Authorization: `Bearer ${WRITE}`, 'Content-Type': 'application/json' },
@@ -62,11 +83,14 @@ export async function onRequestPost({ request, env }) {
 
   const handle = data?.handle ? String(data.handle).trim().replace(/^@/, '') : '';
   const subId = data?.subscriber_id ? String(data.subscriber_id).trim() : '';
-  const telefono = data?.telefono ? String(data.telefono).slice(0, 60) : '';
+  const telefono = clean(data?.telefono, 60);
   const optin = data?.optin === true || data?.optin === 1 || data?.optin === '1' || String(data?.optin).toLowerCase() === 'true';
-  // Ignora merge tags sin resolver de ManyChat ({{cuf_…}}) — mismo bug que ya vimos.
-  const modeloRaw = data?.modelo ? String(data.modelo).trim().slice(0, 200) : '';
-  const modelo = modeloRaw.includes('{{') ? '' : modeloRaw;
+  const modelo = clean(data?.modelo);
+  const talla = clean(data?.talla, 40);
+  const presupuesto = parsePresupuesto(data?.presupuesto);
+  const disciplina = clean(data?.disciplina ?? data?.uso, 40);
+  const motorizacion = clean(data?.motorizacion, 40);
+  const notas = clean(data?.notas, 2000);
 
   if (!handle && !subId) return reply({ error: 'missing_fields (handle o subscriber_id)' }, 422);
 
@@ -124,42 +148,48 @@ export async function onRequestPost({ request, env }) {
   });
   if (!lp.ok) return reply({ error: 'airtable_lead_update', status: lp.status, detail: await lp.text() }, 502);
 
-  // 3) El Interés No-match más reciente del lead → Encargo=✓ (reusa, no duplica).
-  //    Se busca vía el lookup `Lead RecID` de Intereses.
-  const f = `AND(FIND('${leadId}', ARRAYJOIN({Lead RecID})), {Resultado}='No-match')`;
-  const iu = `${C.api(C.INTER)}?maxRecords=1&filterByFormula=${encodeURIComponent(f)}` +
-    `&sort%5B0%5D%5Bfield%5D=${encodeURIComponent('Interés ID')}&sort%5B0%5D%5Bdirection%5D=desc`;
-  const ir = await afetch(iu, { headers: C.rH });
-  if (!ir.ok) return reply({ error: 'airtable_interes_read', status: ir.status, detail: await ir.text() }, 502);
-  const interes = (await ir.json()).records?.[0] || null;
+  // 3) Crear el TICKET en Solicitudes (Estado=Nueva → cola de sourcing del staff).
+  const sr = await afetch(C.api(C.SOLIC), {
+    method: 'POST', headers: C.wH,
+    body: JSON.stringify({ typecast: true, fields: {
+      'Modelo buscado': modelo,
+      'Estado': 'Nueva',
+      'Origen': 'Bot DM',
+      'Fecha': today,
+      'Lead': [leadId],
+      ...(talla ? { 'Talla': talla } : {}),
+      ...(presupuesto != null ? { 'Presupuesto': presupuesto } : {}),
+      ...(disciplina ? { 'Disciplina': disciplina } : {}),
+      ...(motorizacion ? { 'Motorización': motorizacion } : {}),
+      ...(notas ? { 'Notas': notas } : {}),
+      ...(telefono ? { 'Contacto': telefono } : {}),
+    } }),
+  });
+  if (!sr.ok) return reply({ error: 'airtable_solicitud_create', status: sr.status, detail: await sr.text() }, 502);
+  const solicitudId = (await sr.json()).id;
 
-  let interesId = null, interesCreado = false, modeloBuscado = modelo;
-  if (interes) {
-    interesId = interes.id;
-    modeloBuscado = interes.fields?.['Modelo buscado'] || modelo;
-    const fields = { 'Encargo': true, 'Fecha': today };
-    if (modelo && !interes.fields?.['Modelo buscado']) fields['Modelo buscado'] = modelo;
-    const pr = await afetch(`${C.api(C.INTER)}/${interesId}`, {
-      method: 'PATCH', headers: C.wH,
-      body: JSON.stringify({ typecast: true, fields }),
-    });
-    if (!pr.ok) return reply({ error: 'airtable_interes_update', status: pr.status, detail: await pr.text() }, 502);
-  } else {
-    const cr = await afetch(C.api(C.INTER), {
-      method: 'POST', headers: C.wH,
-      body: JSON.stringify({ typecast: true, fields: {
-        'Lead': [leadId],
-        'Origen': 'Puerta 2 (quiz)',
-        'Resultado': 'No-match',
-        'Modelo buscado': modelo,
-        'Encargo': true,
-        'Fecha': today,
-      } }),
-    });
-    if (!cr.ok) return reply({ error: 'airtable_interes_create', status: cr.status, detail: await cr.text() }, 502);
-    interesId = (await cr.json()).id; interesCreado = true;
-  }
+  // 4) Marca de embudo: el Interés No-match más reciente del lead → Encargo=✓
+  //    (best-effort: si falla no rompe el ticket, que ya quedó creado).
+  let interesId = null;
+  try {
+    const f = `AND(FIND('${leadId}', ARRAYJOIN({Lead RecID})), {Resultado}='No-match')`;
+    const iu = `${C.api(C.INTER)}?maxRecords=1&filterByFormula=${encodeURIComponent(f)}` +
+      `&sort%5B0%5D%5Bfield%5D=${encodeURIComponent('Interés ID')}&sort%5B0%5D%5Bdirection%5D=desc`;
+    const ir = await afetch(iu, { headers: C.rH });
+    if (ir.ok) {
+      const interes = (await ir.json()).records?.[0] || null;
+      if (interes) {
+        interesId = interes.id;
+        const fields = { 'Encargo': true, 'Fecha': today };
+        if (modelo && !interes.fields?.['Modelo buscado']) fields['Modelo buscado'] = modelo;
+        await afetch(`${C.api(C.INTER)}/${interesId}`, {
+          method: 'PATCH', headers: C.wH,
+          body: JSON.stringify({ typecast: true, fields }),
+        });
+      }
+    }
+  } catch { /* best-effort */ }
 
-  return reply({ ok: true, encargo: true, leadId, leadCreado, interesId, interesCreado, modeloBuscado: modeloBuscado || null });
+  return reply({ ok: true, encargo: true, solicitudId, leadId, leadCreado, interesId, modeloBuscado: modelo || null });
 }
 // Sólo POST. Pages responde 405 automáticamente a otros métodos en esta ruta.
