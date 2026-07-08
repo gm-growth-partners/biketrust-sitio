@@ -55,7 +55,8 @@ Cuando un cliente compra, **una sola acción** deja sincronizadas las tres seña
 
 1. Elegir la **bici vendida** (lista de Disponibles/Reservadas con precio).
 2. **¿Venía agendado?** → **Sí**: elegir el lead en la lista. · **No (walk-in)**: escribir nombre + teléfono (se crea el lead con `Canal origen = Tienda`).
-3. **Registrar la venta** → listo.
+3. **Precio efectivo de venta** (si Luis negoció; vacío = precio de lista) + **método de pago** (opcional). Quedan en el Interés Cerró y **la facturación del reporte usa el precio efectivo** cuando existe.
+4. **Registrar la venta** → listo.
 
 Cubre los dos casos (venta de lead agendado y venta de mostrador) por el **mismo flujo atómico**.
 

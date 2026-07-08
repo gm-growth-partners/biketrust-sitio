@@ -85,9 +85,11 @@ async function recalcular(env) {
     }
   }
 
-  // 2b) Facturación = Precio Bici de los Intereses CERRÓ cuyo lead está cerró,
+  // 2b) Facturación = precio de los Intereses CERRÓ cuyo lead está cerró,
   //     bucketeada por la SEMANA DE ENTRADA del lead (cohorte) → cuadra con "Cerró".
-  const fqs = ['Resultado', 'Precio Bici', 'Lead'].map(f => `fields%5B%5D=${encodeURIComponent(f)}`).join('&')
+  //     Usa `Precio venta` (efectivo, negociado — lo escribe el form de venta) si
+  //     existe; si no, cae al `Precio Bici` de lista (lookup).
+  const fqs = ['Resultado', 'Precio Bici', 'Precio venta', 'Lead'].map(f => `fields%5B%5D=${encodeURIComponent(f)}`).join('&')
     + '&pageSize=100&filterByFormula=' + encodeURIComponent('NOT({DEMO})');
   let intereses = [], joff = null;
   do {
@@ -103,7 +105,7 @@ async function recalcular(env) {
     if (f['Resultado'] !== 'Cerró') continue;
     const info = leadInfo[(f['Lead'] || [])[0]];
     if (!info || !info.cerro) continue;                  // solo si el lead está cerró
-    const precio = (f['Precio Bici'] || []).reduce((a, b) => a + (Number(b) || 0), 0);
+    const precio = Number(f['Precio venta']) || (f['Precio Bici'] || []).reduce((a, b) => a + (Number(b) || 0), 0);
     if (!precio) continue;
     const d = info.date;
     const targets = [['global', 'Total', 'Total']];

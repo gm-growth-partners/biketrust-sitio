@@ -108,11 +108,23 @@ export async function registrarVenta(env, input) {
     }
   }
 
+  // Precio efectivo + método de pago (Luis negocia): quedan en el Interés Cerró
+  // — el registro de la venta. Si no vienen, el reporte usa el precio de lista.
+  const precioVenta = (() => {
+    const d = String(input.precioVenta ?? '').replace(/[^0-9]/g, '');
+    return d ? parseInt(d, 10) : null;
+  })();
+  const metodoPago = String(input.metodoPago || '').trim().slice(0, 60);
+  const ventaFields = {
+    ...(precioVenta != null ? { 'Precio venta': precioVenta } : {}),
+    ...(metodoPago ? { 'Método de pago': metodoPago } : {}),
+  };
+
   if (interesId) {
     // Reusar el interés existente: pasarlo a Cerró (no duplicar).
     const pr = await afetch(`${api(INTER)}/${interesId}`, {
       method: 'PATCH', headers: wH,
-      body: JSON.stringify({ typecast: true, fields: { 'Resultado': 'Cerró', 'Fecha': today } }),
+      body: JSON.stringify({ typecast: true, fields: { 'Resultado': 'Cerró', 'Fecha': today, ...ventaFields } }),
     });
     if (!pr.ok) throw new Error('cerrar_interes ' + pr.status + ' ' + (await pr.text()));
   } else {
@@ -121,7 +133,7 @@ export async function registrarVenta(env, input) {
       method: 'POST', headers: wH,
       body: JSON.stringify({ typecast: true, fields: {
         'Lead': [leadId], 'Bici': [biciId],
-        'Resultado': 'Cerró', 'Fecha': today,
+        'Resultado': 'Cerró', 'Fecha': today, ...ventaFields,
       } }),
     });
     if (!cr.ok) throw new Error('crear_interes ' + cr.status + ' ' + (await cr.text()));
@@ -239,6 +251,12 @@ async function formHTML(env, key) {
     <input id="telefono" placeholder="+56 9 …">
   </div>
 
+  <label>Precio efectivo de venta (si se negoció)</label>
+  <input id="precio" inputmode="numeric" placeholder="Ej: 5.800.000 — vacío = precio de lista">
+
+  <label>Método de pago</label>
+  <select id="pago"><option value="">— Opcional —</option><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option><option>Otro</option></select>
+
   <button id="btn" type="submit">Registrar la venta</button>
   <div class="err" id="err"></div>
 </form>
@@ -263,6 +281,8 @@ $('f').addEventListener('submit',async ev=>{
     body.nombre=$('nombre').value.trim(); body.telefono=$('telefono').value.trim();
     if(!body.nombre){$('err').textContent='Escribe el nombre del cliente.';return}
   }
+  const p=$('precio').value.trim(); if(p) body.precioVenta=p;
+  const mp=$('pago').value; if(mp) body.metodoPago=mp;
   $('btn').disabled=true; $('btn').textContent='Registrando…';
   try{
     const r=await fetch(location.pathname+'?key='+encodeURIComponent(KEY),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
