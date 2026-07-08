@@ -153,7 +153,8 @@ Corazón de la Puerta 2: consulta el Inventario y rutea según lo **Disponible**
 Rama "Vender mi bici": crea el registro en **Consignaciones** (estado `Nueva`) + Lead.
 - **Body:** `{ handle?, subscriber_id?, modelo, anio?, talla?, estadoBici?, precio?, contacto?, fotos?, notas?, canal? }`. `modelo` obligatorio; identidad por handle o subscriber_id. `fotos` = URL o array (best-effort; si Airtable no las baja, reintenta sin fotos y lo anota).
 - **Escribe:** upsert Lead (si nace → `Canal origen=Consignación`; si existe **no pisa** su Canal/Estado) → registro en `Consignaciones` (Modelo, Año, Talla, Estado bici, Precio esperado, Contacto, Fotos, Notas, Estado=`Nueva`, Fecha, link `Lead`).
-- **Devuelve:** `{ ok, consignaId, leadId, leadCreado }`. El **contacto humano** lo hace ManyChat asignando el chat a un agente; el endpoint solo persiste.
+- **Aviso a Luis (WhatsApp):** tras crear la consignación, manda el resumen (modelo · año · talla · precio · estado · contacto · IG) al WhatsApp del staff vía ManyChat (`cf_consigna_datos` + sendFlow). **Por fases:** requiere plantilla `nueva_consignacion` (Utility) aprobada + env `FLOW_NS_CONSIGNA` + `LUIS_SUBSCRIBER_ID` (+`MANYCHAT_TOKEN`, ya seteada). Sin env → no-op (`aviso:"no_configurado"`); si falla el envío, la consignación igual queda creada. Interín: acción "Notificar a los asignados" en el flujo de ManyChat.
+- **Devuelve:** `{ ok, consignaId, leadId, leadCreado, aviso }`. El **contacto humano** lo hace ManyChat (conversación abierta + notificación); el endpoint persiste y avisa.
 
 ### `mc-waitlist` — `POST /api/mc-waitlist` ✅ (Puerta 2 · tickets de búsqueda)
 Botón **«🎯 Consíganmela»**: convierte un no-match en un **ticket de búsqueda completo** en la tabla **`Solicitudes`** (`tblHnU7eHyhlbxyGM`).

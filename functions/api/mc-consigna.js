@@ -23,6 +23,7 @@ const JSONH = { 'Content-Type': 'application/json; charset=utf-8' };
 const reply = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: JSONH });
 
 const BASE_DEFAULT = 'appQUgk8aeD752923';
+const MC_API = 'https://api.manychat.com';
 
 async function afetch(url, opts, tries = 3) {
   for (let i = 0; ; i++) {
@@ -35,6 +36,30 @@ async function afetch(url, opts, tries = 3) {
 function keyOk(env, url) {
   const need = env.MC_KEY;
   return need ? url.searchParams.get('key') === need : true;
+}
+
+// ── ManyChat helpers (mismo patrón que cron-recordatorios) ──────────────────
+// Para el AVISO A LUIS: setCustomFieldByName(cf_consigna_datos) + sendFlow del
+// flow de 1 nodo que envuelve la plantilla `nueva_consignacion` (Utility).
+async function mcPost(token, path, body) {
+  return afetch(`${MC_API}${path}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+const mcSid = (s) => (/^\d+$/.test(s) ? Number(s) : s); // ManyChat usa id numérico.
+async function mcSetField(token, sid, name, value) {
+  const r = await mcPost(token, '/fb/subscriber/setCustomFieldByName', {
+    subscriber_id: mcSid(sid), field_name: name, field_value: value,
+  });
+  if (!r.ok) throw new Error(`setField ${name}: ${r.status} ${await r.text()}`);
+}
+async function mcSendFlow(token, sid, flowNs) {
+  const r = await mcPost(token, '/fb/sending/sendFlow', {
+    subscriber_id: mcSid(sid), flow_ns: flowNs,
+  });
+  if (!r.ok) throw new Error(`sendFlow: ${r.status} ${await r.text()}`);
 }
 
 const num = (v) => {
@@ -60,6 +85,10 @@ const cfg = (env) => {
     api: (t) => `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(t)}`,
     rH: { Authorization: `Bearer ${READ}` },
     wH: { Authorization: `Bearer ${WRITE}`, 'Content-Type': 'application/json' },
+    // Aviso a Luis (staff) — se activa solo cuando las 3 env están seteadas.
+    MC_TOKEN: env.MANYCHAT_TOKEN || '',
+    FLOW_CONSIGNA: env.FLOW_NS_CONSIGNA || '',
+    LUIS_SID: env.LUIS_SUBSCRIBER_ID || '',
   };
 };
 
@@ -173,6 +202,29 @@ export async function onRequestPost({ request, env }) {
   if (!cr.ok) return reply({ error: 'airtable_consigna_create', status: cr.status, detail: await cr.text() }, 502);
   const consignaId = (await cr.json()).id;
 
-  return reply({ ok: true, consignaId, leadId, leadCreado });
+  // 4) AVISO A LUIS por WhatsApp (best-effort: si falla, la consignación ya
+  //    quedó creada — el staff igual la ve en la página de Consignaciones).
+  //    Requiere plantilla `nueva_consignacion` aprobada por Meta + 3 env:
+  //    MANYCHAT_TOKEN · FLOW_NS_CONSIGNA (flow de 1 nodo) · LUIS_SUBSCRIBER_ID.
+  let aviso = 'no_configurado';
+  if (C.MC_TOKEN && C.FLOW_CONSIGNA && C.LUIS_SID) {
+    try {
+      const resumen = [
+        modelo + (anio != null ? ` ${anio}` : ''),
+        talla ? `talla ${talla}` : '',
+        precio != null ? `pide $${Number(precio).toLocaleString('es-CL')}` : '',
+        estadoBici ? estadoBici.slice(0, 150) : '',
+        `contacto: ${contacto || 'sin teléfono'}`,
+        handle ? `IG @${handle}` : '',
+      ].filter(Boolean).join(' · ');
+      await mcSetField(C.MC_TOKEN, C.LUIS_SID, 'cf_consigna_datos', resumen.slice(0, 900));
+      await mcSendFlow(C.MC_TOKEN, C.LUIS_SID, C.FLOW_CONSIGNA);
+      aviso = 'enviado';
+    } catch (e) {
+      aviso = 'error: ' + String(e && e.message || e).slice(0, 200);
+    }
+  }
+
+  return reply({ ok: true, consignaId, leadId, leadCreado, aviso });
 }
 // Sólo POST. Pages responde 405 automáticamente a otros métodos en esta ruta.
