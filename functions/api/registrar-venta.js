@@ -158,11 +158,142 @@ function keyOk(env, url) {
   return need ? url.searchParams.get('key') === need : true;
 }
 
-// GET → botón de Airtable (Open URL). Lee params y responde HTML legible.
+const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const clp = (n) => (n == null || n === '') ? '' : '$' + Number(n).toLocaleString('es-CL');
+
+// ─── El FORMULARIO de venta única (?form=1) ─────────────────────────────────
+// El único camino de registro para el staff: elige la bici, y si venía agendado
+// elige el lead — si es walk-in, nombre + teléfono. El submit hace POST a este
+// mismo endpoint (flujo atómico de siempre). Botón "Registrar venta" del Panel
+// de inventario → Open URL a /api/registrar-venta?form=1&key=VENTA_KEY.
+async function formHTML(env, key) {
+  const BASE = env.AIRTABLE_BASE || BASE_DEFAULT;
+  const READ = env.AIRTABLE_TOKEN || env.AIRTABLE_WRITE_TOKEN;
+  const INV = env.AIRTABLE_INVENTARIO_TABLE || 'Inventario';
+  const LEADS = env.AIRTABLE_LEADS_TABLE || 'Leads';
+  const api = (t) => `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(t)}`;
+  const rH = { Authorization: `Bearer ${READ}` };
+
+  // Bicis vendibles (Disponible + Reservada).
+  const bu = `${api(INV)}?pageSize=100&filterByFormula=${encodeURIComponent("OR({Estado}='Disponible',{Estado}='Reservada')")}` +
+    ['Etiqueta', 'Precio', 'Estado'].map(f => '&fields%5B%5D=' + encodeURIComponent(f)).join('');
+  const br = await afetch(bu, { headers: rH });
+  const bicis = br.ok ? ((await br.json()).records || []) : [];
+
+  // Leads activos (no cerrados/terminales), los más recientes primero.
+  const lu = `${api(LEADS)}?pageSize=100&filterByFormula=${encodeURIComponent("NOT(OR({Estado}='cerró',{Estado}='muerto',{Estado}='descartado'))")}` +
+    `&sort%5B0%5D%5Bfield%5D=${encodeURIComponent('Fecha última interacción')}&sort%5B0%5D%5Bdirection%5D=desc` +
+    ['Lead', 'Estado', 'Fecha visita'].map(f => '&fields%5B%5D=' + encodeURIComponent(f)).join('');
+  const lr = await afetch(lu, { headers: rH });
+  const leads = lr.ok ? ((await lr.json()).records || []) : [];
+
+  const biciOpts = bicis
+    .sort((a, b) => String(a.fields.Etiqueta).localeCompare(String(b.fields.Etiqueta)))
+    .map(b => `<option value="${esc(b.id)}">${esc(b.fields.Etiqueta)} · ${clp(b.fields.Precio)}${b.fields.Estado === 'Reservada' ? ' · reservada' : ''}</option>`).join('');
+  const leadOpts = leads.map(l => {
+    const f = l.fields;
+    const visita = f['Fecha visita'] ? ' · visita ' + String(f['Fecha visita']).slice(0, 10) : '';
+    return `<option value="${esc(l.id)}">${esc(f.Lead || 'Sin nombre')} · ${esc(f.Estado || '')}${visita}</option>`;
+  }).join('');
+
+  return `<!doctype html><html lang="es"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Registrar venta · Bike Trust</title>
+<style>
+  :root{--brasa:#E25822;--ink:#1d2433;--line:#e3e0da;}
+  *{box-sizing:border-box} body{font-family:system-ui,'Segoe UI',sans-serif;color:var(--ink);background:#faf8f5;margin:0;padding:24px 16px}
+  .card{max-width:520px;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:14px;padding:28px}
+  h2{margin:0 0 4px} .sub{color:#777;font-size:14px;margin:0 0 22px}
+  label{display:block;font-weight:600;font-size:14px;margin:18px 0 6px}
+  select,input{width:100%;padding:10px 12px;font-size:15px;border:1px solid var(--line);border-radius:8px;background:#fff}
+  .modo{display:flex;gap:10px;margin-top:6px}
+  .modo label{flex:1;margin:0;border:1px solid var(--line);border-radius:8px;padding:10px;text-align:center;cursor:pointer;font-weight:500}
+  .modo input{display:none} .modo label:has(input:checked){border-color:var(--brasa);background:#fdf1eb;color:var(--brasa)}
+  button{width:100%;margin-top:24px;padding:13px;font-size:16px;font-weight:600;color:#fff;background:var(--brasa);border:none;border-radius:9px;cursor:pointer}
+  button:disabled{opacity:.5;cursor:default}
+  .oculto{display:none} .err{color:#b3261e;font-size:14px;margin-top:12px;white-space:pre-wrap}
+  .ok{text-align:center;padding:16px 0} .ok h2{font-size:26px}
+  .ok ul{text-align:left;line-height:1.9}
+</style>
+<body><div class="card" id="card">
+<h2>💰 Registrar venta</h2>
+<p class="sub">Un solo paso: deja el lead cerrado, el interés en Cerró y la bici Vendida.</p>
+<form id="f">
+  <label>Bici vendida</label>
+  <select id="bici" required><option value="">— Elige la bici —</option>${biciOpts}</select>
+
+  <label>¿El cliente venía agendado?</label>
+  <div class="modo">
+    <label><input type="radio" name="modo" value="lead" checked> Sí, es un lead</label>
+    <label><input type="radio" name="modo" value="walkin"> No, llegó a la tienda</label>
+  </div>
+
+  <div id="g-lead">
+    <label>Lead</label>
+    <select id="lead"><option value="">— Elige el lead —</option>${leadOpts}</select>
+  </div>
+  <div id="g-walkin" class="oculto">
+    <label>Nombre del cliente</label>
+    <input id="nombre" placeholder="Nombre y apellido">
+    <label>Teléfono (WhatsApp)</label>
+    <input id="telefono" placeholder="+56 9 …">
+  </div>
+
+  <button id="btn" type="submit">Registrar la venta</button>
+  <div class="err" id="err"></div>
+</form>
+</div>
+<script>
+const KEY=${JSON.stringify(key || '')};
+const $=id=>document.getElementById(id);
+document.querySelectorAll('input[name=modo]').forEach(r=>r.addEventListener('change',()=>{
+  const lead=document.querySelector('input[name=modo]:checked').value==='lead';
+  $('g-lead').classList.toggle('oculto',!lead);
+  $('g-walkin').classList.toggle('oculto',lead);
+}));
+$('f').addEventListener('submit',async ev=>{
+  ev.preventDefault(); $('err').textContent='';
+  const modo=document.querySelector('input[name=modo]:checked').value;
+  const body={bici:$('bici').value};
+  if(!body.bici){$('err').textContent='Elige la bici.';return}
+  if(modo==='lead'){
+    body.lead=$('lead').value;
+    if(!body.lead){$('err').textContent='Elige el lead (o marca "llegó a la tienda").';return}
+  }else{
+    body.nombre=$('nombre').value.trim(); body.telefono=$('telefono').value.trim();
+    if(!body.nombre){$('err').textContent='Escribe el nombre del cliente.';return}
+  }
+  $('btn').disabled=true; $('btn').textContent='Registrando…';
+  try{
+    const r=await fetch(location.pathname+'?key='+encodeURIComponent(KEY),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const j=await r.json();
+    if(j.ok){
+      document.getElementById('card').innerHTML='<div class="ok"><h2>✅ Venta registrada</h2><ul>'+
+        '<li><b>Lead</b> cerrado con fecha'+(j.created&&j.created.lead?' (creado walk-in)':'')+'.</li>'+
+        '<li><b>Interés</b> marcado Cerró'+(j.created&&j.created.interes?' (creado)':' (reusado)')+'.</li>'+
+        '<li><b>Bici</b> marcada Vendida — sale del catálogo en la próxima publicación.</li>'+
+        '</ul><p>Puedes cerrar esta pestaña.</p></div>';
+    }else{ $('err').textContent='Error: '+(j.error||'desconocido'); $('btn').disabled=false; $('btn').textContent='Registrar la venta'; }
+  }catch(e){ $('err').textContent='Error de red: '+e; $('btn').disabled=false; $('btn').textContent='Registrar la venta'; }
+});
+</script></body></html>`;
+}
+
+// GET → botón de Airtable (Open URL). Con ?form=1 (o sin parámetros de acción)
+// sirve el FORMULARIO de venta única; con ?lead=/?bici= registra directo (botón
+// de la Agenda, retrocompatible) y responde HTML legible.
 export async function onRequestGet({ request, env }) {
   const url = new URL(request.url);
   if (!keyOk(env, url)) return new Response('No autorizado', { status: 401 });
   const q = url.searchParams;
+  if (q.get('form') === '1' || (!q.get('lead') && !q.get('bici') && !q.get('interes'))) {
+    try {
+      const html = await formHTML(env, q.get('key'));
+      return new Response(html, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    } catch (e) {
+      return new Response('Error: ' + (e && e.message || e), { status: 502, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+    }
+  }
   try {
     const r = await registrarVenta(env, {
       bici: q.get('bici'), lead: q.get('lead'), interes: q.get('interes'),

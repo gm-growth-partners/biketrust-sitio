@@ -49,14 +49,20 @@ El alta está pensada en **dos momentos**, porque recibir la bici y dejarla list
 
 > El estado `Borrador` es una **puerta de control de calidad**: evita que una bici a medio llenar (sin fotos ni diagnóstico) se publique. Es el corazón de la promesa "certificada y transparente".
 
-### 2.2 Registrar una venta (desde la Agenda)
+### 2.2 Registrar una venta (formulario único)
 
-Cuando un cliente compra, **una sola acción** deja sincronizadas las tres señales de venta (antes se desincronizaban → "facturación sin cierres"):
+Cuando un cliente compra, **una sola acción** deja sincronizadas las tres señales de venta (antes se desincronizaban → "facturación sin cierres"). **El camino estándar es el formulario de venta** (botón **"💰 Registrar venta"** en el Panel de inventario → abre `/api/registrar-venta?form=1`):
 
+1. Elegir la **bici vendida** (lista de Disponibles/Reservadas con precio).
+2. **¿Venía agendado?** → **Sí**: elegir el lead en la lista. · **No (walk-in)**: escribir nombre + teléfono (se crea el lead con `Canal origen = Tienda`).
+3. **Registrar la venta** → listo.
+
+Cubre los dos casos (venta de lead agendado y venta de mostrador) por el **mismo flujo atómico**.
+
+*Atajo desde la Agenda (mismo endpoint, cero divergencia):*
 1. Interfaz **Agenda** → abrir la visita del lead (calendario por `Fecha visita`).
-2. En el campo **`Bici comprada`**, elegir la bici que se llevó (selector de **todo el inventario** — puede ser distinta a las que vino a ver).
-3. Clic en el botón **`Registrar venta`**.
-4. Se abre una pestaña con "✅ Venta registrada". Cerrarla y volver.
+2. En el campo **`Bici comprada`**, elegir la bici que se llevó.
+3. Clic en el botón **`Registrar venta`** → pestaña "✅ Venta registrada".
 
 Eso deja, de una sola vez:
 - **Lead** → `Estado = cerró` + `Fecha cierre`
@@ -126,7 +132,7 @@ Funciones serverless en `functions/api/` (corren en Cloudflare). Leen con `AIRTA
 |---|---|---|---|
 | `reservar.js` | `POST /api/reservar` | Reserva web → tabla Reservas + upsert Lead + Intereses. Estampa `Fecha visita`. | — |
 | `recalcular-embudo.js` | `GET/POST /api/recalcular-embudo` | Recalcula la tabla `Metricas` por período. Botón en la interfaz Reportes. | env `RECALC_KEY` (`?key=`) |
-| `registrar-venta.js` | `GET/POST /api/registrar-venta` | Venta atómica: Lead cerró + Interés Cerró + Bici Vendida + fechas. Toma la bici de `Leads.Bici comprada`. | env `VENTA_KEY` (`?key=`) |
+| `registrar-venta.js` | `GET/POST /api/registrar-venta` | Venta atómica: Lead cerró + Interés Cerró + Bici Vendida + fechas. Con `?form=1` sirve el **formulario de venta única** (bici + lead agendado o walk-in). También toma la bici de `Leads.Bici comprada` (botón de la Agenda). | env `VENTA_KEY` (`?key=`) |
 
 **Variables de entorno en Cloudflare Pages:**
 
