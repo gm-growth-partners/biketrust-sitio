@@ -87,10 +87,15 @@ export async function onRequestPost({ request, env }) {
   const optin = data?.optin === true || data?.optin === 1 || data?.optin === '1' || String(data?.optin).toLowerCase() === 'true';
   const modelo = clean(data?.modelo);
   const talla = clean(data?.talla, 40);
-  const presupuesto = parsePresupuesto(data?.presupuesto);
+  const presupuestoRaw = clean(data?.presupuesto, 60);
+  const presupuesto = parsePresupuesto(presupuestoRaw);
   const disciplina = clean(data?.disciplina ?? data?.uso, 40);
   const motorizacion = clean(data?.motorizacion, 40);
   const notas = clean(data?.notas, 2000);
+  // «Sin límite» (o cualquier respuesta sin cifra) no cabe en el campo currency →
+  // se preserva en Notas: para el staff, "sin tope declarado" es un dato, no un vacío.
+  const notasTicket = [notas, presupuestoRaw && presupuesto == null ? `Presupuesto: ${presupuestoRaw}` : '']
+    .filter(Boolean).join(' · ');
 
   if (!handle && !subId) return reply({ error: 'missing_fields (handle o subscriber_id)' }, 422);
 
@@ -161,7 +166,7 @@ export async function onRequestPost({ request, env }) {
       ...(presupuesto != null ? { 'Presupuesto': presupuesto } : {}),
       ...(disciplina ? { 'Disciplina': disciplina } : {}),
       ...(motorizacion ? { 'Motorización': motorizacion } : {}),
-      ...(notas ? { 'Notas': notas } : {}),
+      ...(notasTicket ? { 'Notas': notasTicket } : {}),
       ...(telefono ? { 'Contacto': telefono } : {}),
     } }),
   });
