@@ -155,6 +155,13 @@ Rama "Vender mi bici": crea el registro en **Consignaciones** (estado `Nueva`) +
 - **Escribe:** upsert Lead (si nace → `Canal origen=Consignación`; si existe **no pisa** su Canal/Estado) → registro en `Consignaciones` (Modelo, Año, Talla, Estado bici, Precio esperado, Contacto, Fotos, Notas, Estado=`Nueva`, Fecha, link `Lead`).
 - **Devuelve:** `{ ok, consignaId, leadId, leadCreado }`. El **contacto humano** lo hace ManyChat asignando el chat a un agente; el endpoint solo persiste.
 
+### `mc-waitlist` — `POST /api/mc-waitlist` ✅ (Puerta 2)
+Botón **«🎯 Consíganmela»**: convierte un no-match en un **encargo de búsqueda** accionable.
+- **Body:** `{ handle?, subscriber_id?, telefono?, optin?, modelo? }`. Identidad por handle o subscriber_id (el lead normalmente ya existe, lo creó mc-match). Ignora merge tags sin resolver (`{{cuf_…}}`) en `modelo`.
+- **Escribe:** Lead → `WhatsApp` + `Opt-in WhatsApp` + `Fecha opt-in` + `MC subscriber id` (queda alcanzable). Interés → el `No-match` más reciente del lead pasa a **`Encargo`=✓** (reusa, no duplica; si no existe lo crea con `Modelo buscado`).
+- **Devuelve:** `{ ok, encargo, leadId, leadCreado, interesId, interesCreado, modeloBuscado }`.
+- **Cola de sourcing:** los encargos activos = Intereses con `Encargo`=✓ (+ `Modelo buscado` + contacto del lead). Además de recuperar al lead, dicen **qué bicis salir a conseguir**. Aviso al conseguirla: manual hoy; plantilla `reactivacion_stock` a futuro.
+
 > Endpoints del canal web/venta (documentados en [`DOCUMENTACION.md`](DOCUMENTACION.md) §5): `reservar.js`, `recalcular-embudo.js`, `registrar-venta.js`.
 
 ---
