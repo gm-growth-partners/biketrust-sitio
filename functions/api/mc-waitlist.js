@@ -27,6 +27,7 @@ const JSONH = { 'Content-Type': 'application/json; charset=utf-8' };
 const reply = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: JSONH });
 
 const BASE_DEFAULT = 'appQUgk8aeD752923';
+const MC_API = 'https://api.manychat.com';
 
 async function afetch(url, opts, tries = 3) {
   for (let i = 0; ; i++) {
@@ -39,6 +40,30 @@ async function afetch(url, opts, tries = 3) {
 function keyOk(env, url) {
   const need = env.MC_KEY;
   return need ? url.searchParams.get('key') === need : true;
+}
+
+// ── ManyChat helpers (mismo patrón que mc-consigna / cron-recordatorios) ────
+// Para el AVISO A LUIS: setCustomFieldByName(cf_solicitud_datos) + sendFlow del
+// flow de 1 nodo que envuelve la plantilla `nueva_solicitud` (Utility).
+async function mcPost(token, path, body) {
+  return afetch(`${MC_API}${path}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+const mcSid = (s) => (/^\d+$/.test(s) ? Number(s) : s); // ManyChat usa id numérico.
+async function mcSetField(token, sid, name, value) {
+  const r = await mcPost(token, '/fb/subscriber/setCustomFieldByName', {
+    subscriber_id: mcSid(sid), field_name: name, field_value: value,
+  });
+  if (!r.ok) throw new Error(`setField ${name}: ${r.status} ${await r.text()}`);
+}
+async function mcSendFlow(token, sid, flowNs) {
+  const r = await mcPost(token, '/fb/sending/sendFlow', {
+    subscriber_id: mcSid(sid), flow_ns: flowNs,
+  });
+  if (!r.ok) throw new Error(`sendFlow: ${r.status} ${await r.text()}`);
 }
 
 // Texto limpio: recorta, y descarta merge tags sin resolver ({{cuf_…}}).
@@ -70,6 +95,10 @@ const cfg = (env) => {
     api: (t) => `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(t)}`,
     rH: { Authorization: `Bearer ${READ}` },
     wH: { Authorization: `Bearer ${WRITE}`, 'Content-Type': 'application/json' },
+    // Aviso a Luis (staff) — se activa solo cuando las 3 env están seteadas.
+    MC_TOKEN: env.MANYCHAT_TOKEN || '',
+    FLOW_SOLICITUD: env.FLOW_NS_SOLICITUD || '',
+    LUIS_SID: env.LUIS_SUBSCRIBER_ID || '',
   };
 };
 
@@ -195,6 +224,29 @@ export async function onRequestPost({ request, env }) {
     }
   } catch { /* best-effort */ }
 
-  return reply({ ok: true, encargo: true, solicitudId, leadId, leadCreado, interesId, modeloBuscado: modelo || null });
+  // 5) AVISO A LUIS por WhatsApp (best-effort: si falla, el ticket ya quedó
+  //    creado — el staff igual lo ve en la página de Solicitudes).
+  //    Requiere plantilla `nueva_solicitud` aprobada por Meta + 3 env:
+  //    MANYCHAT_TOKEN · FLOW_NS_SOLICITUD (flow de 1 nodo) · LUIS_SUBSCRIBER_ID.
+  let aviso = 'no_configurado';
+  if (C.MC_TOKEN && C.FLOW_SOLICITUD && C.LUIS_SID) {
+    try {
+      const resumen = [
+        modelo || 'modelo no indicado',
+        talla ? `talla ${talla}` : '',
+        presupuesto != null ? `hasta $${Number(presupuesto).toLocaleString('es-CL')}` : (presupuestoRaw ? `presupuesto: ${presupuestoRaw}` : ''),
+        notas ? notas.slice(0, 120) : '',
+        `contacto: ${telefono || 'sin teléfono'}`,
+        handle ? `IG @${handle}` : '',
+      ].filter(Boolean).join(' · ');
+      await mcSetField(C.MC_TOKEN, C.LUIS_SID, 'cf_solicitud_datos', resumen.slice(0, 900));
+      await mcSendFlow(C.MC_TOKEN, C.LUIS_SID, C.FLOW_SOLICITUD);
+      aviso = 'enviado';
+    } catch (e) {
+      aviso = 'error: ' + String(e && e.message || e).slice(0, 200);
+    }
+  }
+
+  return reply({ ok: true, encargo: true, solicitudId, leadId, leadCreado, interesId, modeloBuscado: modelo || null, aviso });
 }
 // Sólo POST. Pages responde 405 automáticamente a otros métodos en esta ruta.

@@ -162,6 +162,7 @@ Botón **«🎯 Consíganmela»**: convierte un no-match en un **ticket de búsq
 - **Escribe:** **Solicitud** → Modelo buscado, Talla, Presupuesto, Disciplina, Motorización, Notas, Contacto, `Estado=Nueva`, `Origen=Bot DM`, Fecha, link `Lead`. **Lead** → `WhatsApp` + `Opt-in WhatsApp` + `Fecha opt-in` + `MC subscriber id`. **Interés** → el `No-match` más reciente pasa a `Encargo`=✓ (marca de embudo, best-effort).
 - **Devuelve:** `{ ok, encargo, solicitudId, leadId, leadCreado, interesId, modeloBuscado }`.
 - **Cola de sourcing = tabla `Solicitudes`** (Estado `Nueva → Buscando → Conseguida → Cerrada`): el staff la trabaja desde la interfaz (cards) y crea tickets manuales por formulario en la misma tabla (`Origen=Manual`). Además de recuperar al lead, dice **qué bicis salir a conseguir**. Aviso al conseguirla: manual hoy; plantilla `reactivacion_stock` a futuro.
+- **Aviso a Luis (WhatsApp):** tras crear el ticket, manda el resumen (modelo · talla · presupuesto · notas · contacto · IG) al staff vía ManyChat (`cf_solicitud_datos` + sendFlow). **Por fases:** requiere plantilla `nueva_solicitud` (Utility) aprobada + env `FLOW_NS_SOLICITUD` + `LUIS_SUBSCRIBER_ID` (+`MANYCHAT_TOKEN`). Sin env → no-op (`aviso:"no_configurado"`); si falla, el ticket igual queda creado. Mismo patrón que el aviso de consignaciones de mc-consigna.
 
 > Endpoints del canal web/venta (documentados en [`DOCUMENTACION.md`](DOCUMENTACION.md) §5): `reservar.js`, `recalcular-embudo.js`, `registrar-venta.js`.
 
