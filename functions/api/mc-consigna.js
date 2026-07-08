@@ -174,6 +174,7 @@ export async function onRequestPost({ request, env }) {
   const fields = {
     'Modelo': modelo,
     'Estado': 'Nueva',
+    'Origen': 'Bot DM',
     'Fecha': today,
     'Lead': [leadId],
     ...(anio != null ? { 'Año': anio } : {}),
