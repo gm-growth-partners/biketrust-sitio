@@ -98,7 +98,7 @@ Si el guardado falla, el modal cae a **WhatsApp** con un mensaje pre-armado (no 
 
 | Interfaz | Para qué |
 |---|---|
-| **Control de Inventario** | Cargar bicis (botón "+ Nueva bici"), ver stock (galería), completar Borradores ("Por completar"), editar inventario. |
+| **Control de Inventario** | Cargar bicis, ver stock, completar Borradores ("Por completar", con textos de ayuda por campo). Páginas nuevas: **Solicitudes de búsqueda** y **Bicis ofrecidas** (colas de sourcing, cards por Estado, con formularios de carga manual) + botón **Registrar venta** (form único con precio efectivo y método de pago). |
 | **Pipeline CRM** | Tablero Kanban de Leads por `Estado` (arrastrable). Clic en un lead → sus Intereses + valor potencial. |
 | **Agenda** | Calendario de visitas por `Fecha visita`. Registrar el desenlace y la venta (§2.2). |
 | **Reportes** | Embudo + tasas + facturación por período (semanal/mensual/global). |
@@ -159,6 +159,8 @@ Base Airtable `appQUgk8aeD752923` ("Biketrust Operaciones"). **No renombrar camp
 - **Leads** (la persona) — primario `Lead` (fórmula nombre/email). `Estado` = máquina de 13 estados. `Canal origen`, `Temperatura`, WhatsApp, Email, `Fecha primer contacto`/`última interacción`/`visita`/`cierre`, banderas de embudo, `Valor potencial` (rollup), **`Bici comprada`** (link a Inventario para la venta), **`Registrar venta`** (botón), `RecID`.
 - **Intereses** (lead ↔ bici) — `Origen`, `Resultado` (`Ficha entregada/Match/No-match/Agendó/Cerró`), links Lead/Bici/Reservas, `Precio Bici` (lookup).
 - **Reservas** — datos de la reserva web + links a Leads/Intereses.
+- **Solicitudes** — tickets de búsqueda («Consíganmela» del bot u origen manual): Modelo buscado, Motorización, Disciplina, Talla, Presupuesto, Notas, `Estado` (`Nueva/Buscando/Conseguida/Cerrada`), Fecha, Contacto, `Origen` (`Bot DM/Manual`), link `Lead`. Es la cola de sourcing del equipo.
+- **Consignaciones** — ofertas de bicicletas (rama Vender del bot u origen manual): Modelo, Año, Talla, Estado bici, Precio esperado, Contacto, Fotos, `Estado` (`Nueva/En evaluación/Compra directa/Consignación/Rechazada`), Fecha, Notas, `Origen`, link `Lead`. Al aceptarse, una automatización crea la bici en Inventario (Borrador).
 - **Metricas** — capa precalculada del reporte (una fila por dato/período, upsert por `Clave`).
 
 > Detalle de campos y notas técnicas finas: ver `CLAUDE.md`.

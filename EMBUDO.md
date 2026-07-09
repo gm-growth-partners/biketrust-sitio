@@ -23,7 +23,7 @@
 | 4 | **Confirmación + recordatorios por WhatsApp** (Fase 3) | ✅ **En vivo, autónomo y VERIFICADO E2E** (2026-07-07): confirmación (al agendar, con botón "Sí confirmo" que registra `visita_confirmada`) + recordatorio 48h + recordatorio 8am. Motor cron cada 15 min. |
 | 5 | **Briefing diario al staff** (visitas del día) | 🟡 Backend listo y desplegado; espera aprobación de plantilla Meta + contacto de Luis |
 | 5b | **Reenganche + nudges** (no-show, suelto, stock) | 🟡 Motor desplegado; espera plantillas Meta + nudges de IG (armados por el usuario) |
-| 6 | **Puerta 2 — router del DM + quiz + waitlist + consignación** | 🔧 Backend listo: `mc-match` + `mc-consigna` construidos y verificados E2E (ver §10). Falta desplegar + armar ManyChat |
+| 6 | **Puerta 2 — router del DM + quiz + encargos + consignación** | ✅ **EN VIVO y probado E2E (2026-07-08)**: router + 3 rutas de compra + «Consíganmela» (ticket completo → tabla `Solicitudes`) + Vender (→ `Consignaciones`, aceptada → nace en Inventario). FAQ temporal. Avisos al equipo 🟡 Meta |
 
 **Estado (2026-07-07):** el **embudo base (Puerta 1 comentario → showroom) está EN VIVO y verificado de punta a punta** con una corrida real (lead pasó captura→agenda→confirmación, todo escrito en Airtable, incl. `visita_confirmada`). Pendiente de Meta (relojes corriendo): plantillas del briefing, reenganche y la confirmación v2 (con Reagendar). Sigue: **Puerta 2 (DM) — en rediseño**.
 
@@ -281,9 +281,9 @@ Sub-menú: `¿Cómo certifican?` · `Precios / pago` · `Ubicación`. Respuestas
 Cuando una bici se vende, en vez de pausar su reel, `mc-evento` devuelve si sigue `Disponible`; un bloque **Condición** en ManyChat bifurca: disponible → ficha+agenda · vendida → **quiz (Puerta 2)**. El reel nunca se apaga y recicla el tráfico.
 
 ### Orden de build
-1. ✅ **`mc-match` + `mc-consigna`** (backend, el build grande) — construidos y verificados E2E 2026-07-07.
-2. 🔧 **Desplegar** (push a main) + armar en ManyChat el **router + sub-flujos + FAQ + agenda directa + consignación** (reusa mc-lead/mc-evento/mc-agenda + los 2 nuevos).
-3. 🔧 **Waitlist visible + reel evergreen** (recuperación; mc-match ya devuelve la alternativa y el flag waitlist).
+1. ✅ Backend completo: `mc-match` + `mc-consigna` + `mc-waitlist` v2 (tickets → tabla `Solicitudes`).
+2. ✅ **ManyChat armado y probado E2E (2026-07-08):** router + Sé cuál quiero + quiz + solo ir a verlas + «Consíganmela» (talla/presupuesto/detalle + teléfono) + Vender (4 preguntas + teléfono → conversación abierta + notificación). FAQ = mensaje temporal.
+3. 🔧 Restante: FAQ real · secuencia `Conseguida` → aviso automático al solicitante (plantilla `reactivacion_stock` ya aprobada) · avisos al equipo por WhatsApp (🟡 Meta) · reel evergreen.
 
 ---
 
