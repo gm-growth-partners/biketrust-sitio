@@ -7,7 +7,7 @@
 >
 > Complementa a [`DOCUMENTACION.md`](DOCUMENTACION.md) (web + CRM + reportes) y a
 > [`CLAUDE.md`](CLAUDE.md) (notas técnicas finas y gotchas). Idioma: español.
-> Última actualización: **2026-07-03**.
+> Última actualización: **2026-07-09** (estado de lanzamiento).
 
 **Leyenda de estado:** ✅ en vivo y verificado · 🔧 por construir · ⏸️ bloqueado por dependencia externa · 💡 diseñado, en fila.
 
@@ -21,9 +21,10 @@
 | 2 | **Agendamiento en el chat** (selector de horario → Airtable) | ✅ En vivo y probado con usuario real |
 | 3 | **Cierre en tienda** (staff marca vino/compró en la Agenda) | ✅ En vivo |
 | 4 | **Confirmación + recordatorios por WhatsApp** (Fase 3) | ✅ **En vivo, autónomo y VERIFICADO E2E** (2026-07-07): confirmación (al agendar, con botón "Sí confirmo" que registra `visita_confirmada`) + recordatorio 48h + recordatorio 8am. Motor cron cada 15 min. |
-| 5 | **Briefing diario al staff** (visitas del día) | 🟡 Backend listo y desplegado; espera aprobación de plantilla Meta + contacto de Luis |
-| 5b | **Reenganche + nudges** (no-show, suelto, stock) | 🟡 Motor desplegado; espera plantillas Meta + nudges de IG (armados por el usuario) |
-| 6 | **Puerta 2 — router del DM + quiz + encargos + consignación** | ✅ **EN VIVO y probado E2E (2026-07-08)**: router + 3 rutas de compra + «Consíganmela» (ticket completo → tabla `Solicitudes`) + Vender (→ `Consignaciones`, aceptada → nace en Inventario). FAQ temporal. Avisos al equipo 🟡 Meta |
+| 5 | **Briefing diario al staff** (visitas del día) | ✅ **EN VIVO (2026-07-09)**: 8AM a Luis + Roberto (`BRIEFING_SIDS`), probado con `?force=1` |
+| 5b | **Reenganche + nudges** (no-show, suelto, stock) | 🟡 Motor desplegado; plantillas aprobadas — activación post-launch (nodos + `FLOW_NS_NOSHOW/SUELTO`) |
+| 6 | **Puerta 2 — router del DM + quiz + encargos + consignación** | ✅ **EN VIVO y probado E2E**: router + 3 rutas de compra + «Consíganmela» (ticket + aviso staff + `encargo_recibido` al cliente, todo EN VIVO) + Vender (→ `Consignaciones` + aviso a Roberto EN VIVO). Quiz recomienda por **estatura**. FAQ temporal |
+| 7 | **Región (ambas puertas)** — "¿Estás en Santiago?" → ticket de llamado | ✅ **EN VIVO y probado (2026-07-09)** en P1 (vía `reel`) y P2 (vía `cf_hero_bici`). Aviso al staff 🟡 Meta (`nuevo_llamado`); mientras, pantalla 📞 Llamados |
 
 **Estado (2026-07-07):** el **embudo base (Puerta 1 comentario → showroom) está EN VIVO y verificado de punta a punta** con una corrida real (lead pasó captura→agenda→confirmación, todo escrito en Airtable, incl. `visita_confirmada`). Pendiente de Meta (relojes corriendo): plantillas del briefing, reenganche y la confirmación v2 (con Reagendar). Sigue: **Puerta 2 (DM) — en rediseño**.
 
@@ -113,12 +114,15 @@ Automatización **`Embudo Bike Trust v2`** (la v1 quedó descartada). Requiere M
 - **IG no comparte el teléfono del usuario** → no hay autofill mientras el canal sea IG; se escribe a mano. Se resuelve en Fase 3 (botón "Seguir por WhatsApp").
 - **Merge tags que no resuelven** (`{{full_name}}` en comentarios) entran como texto literal → NO mandar `nombre` en `mc-lead`; la identidad es el `@handle`.
 - **Categoría de plantillas WhatsApp:** ver §8 (el error #1 de rechazo).
+- **Enfriamiento ~24h del disparador de comentarios:** un mismo contacto no re-dispara la automatización del mismo post hasta pasadas ~24h (anti-spam de ManyChat, no configurable). Clientes nuevos disparan siempre; para testear usar una cuenta virgen.
+- **El mapeo de respuesta NO limpia campos con valores vacíos** → los `cf_hero_*` quedan pegados de corridas anteriores. Por eso se BORRAN (acción "borrar valor") antes de cada `mc-match`, en la misma caja de Acciones.
+- **Preguntas apiladas en ráfaga pueden perder una en IG** (el flujo queda esperando una pregunta que nunca se mostró; se delata porque la validación responde al texto libre). → la pregunta de teléfono de la rama región va en su PROPIO nodo.
 
 ---
 
 ## 5. Los endpoints del embudo (contratos)
 
-Pages Functions en `functions/api/`. Leen con `AIRTABLE_TOKEN`, escriben con `AIRTABLE_WRITE_TOKEN`. Base `appQUgk8aeD752923`. Todos con retry-on-429 y guarda de no-regresión donde aplica. Protección opcional `MC_KEY` (`?key=`) — hoy **sin setear** → abiertos.
+Pages Functions en `functions/api/`. Leen con `AIRTABLE_TOKEN`, escriben con `AIRTABLE_WRITE_TOKEN`. Base `appQUgk8aeD752923`. Todos con retry-on-429 y guarda de no-regresión donde aplica. **`MC_KEY` ACTIVA desde 2026-07-09** (Secret en Pages): los 7 puentes exigen `?key=` (401 sin ella, verificado); todas las Solicitudes externas de ManyChat la llevan — **toda solicitud nueva debe incluirla**.
 
 ### `mc-lead` — `POST /api/mc-lead`
 Da de alta o "toca" un Lead por su `@handle IG` (dedup case-insensitive).
@@ -282,7 +286,7 @@ Sub-menú: `¿Cómo certifican?` · `Precios / pago` · `Ubicación`. Respuestas
 | Router + FAQ + agenda directa + consignación | ManyChat | 🔧 **Por armar** (reusa mc-lead/mc-evento/mc-agenda + los 2 nuevos) |
 | Reel evergreen | ManyChat | 🔧 Por armar (mc-match ya rutea vendida→alternativa) |
 
-> **Nota de build (2026-07-07):** el Interés del quiz usa los campos `Crit · motorización/disciplina/presupuesto/talla` + `Es hero` que ya existían en `Intereses`. Ambos endpoints leen `AIRTABLE_TOKEN` / escriben `AIRTABLE_WRITE_TOKEN`, patrón mc-agenda (retry-429, `MC_KEY` opcional). **Falta desplegarlos** (push a main) para que ManyChat los alcance.
+> **Nota de build (2026-07-07):** el Interés del quiz usa los campos `Crit · motorización/disciplina/presupuesto/talla` + `Es hero` que ya existían en `Intereses`. Ambos endpoints leen `AIRTABLE_TOKEN` / escriben `AIRTABLE_WRITE_TOKEN`, patrón mc-agenda (retry-429, `MC_KEY`). Desplegados y EN VIVO; el quiz recomienda por **estatura** desde 2026-07-09 (`altura` cruza `Rango altura` — pendiente backfill de las 14 bicis).
 
 ### Reel evergreen (conecta Puerta 1 → Puerta 2)
 Cuando una bici se vende, en vez de pausar su reel, `mc-evento` devuelve si sigue `Disponible`; un bloque **Condición** en ManyChat bifurca: disponible → ficha+agenda · vendida → **quiz (Puerta 2)**. El reel nunca se apaga y recicla el tráfico.

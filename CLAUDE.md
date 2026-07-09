@@ -2,7 +2,7 @@
 
 > Este archivo lo lee Claude Code automáticamente al iniciar sesión en este repo.
 > Es la **memoria viva del proyecto**: estado, arquitectura, errores ya cometidos (para NO repetirlos) y cómo debe trabajar Claude. **Léelo completo antes de actuar.** Idioma de trabajo: **español**.
-> Última actualización: **2026-06-30**.
+> Última actualización: **2026-07-09** (pre-launch; lanzamiento 2026-07-10).
 
 ---
 
@@ -27,10 +27,10 @@ Bike Trust vende bicicletas **Specialized usadas, premium y certificadas** (Sant
 | 🟢 **Interfaces Airtable** | **Control de Inventario** (form alta + panel + por completar), **Pipeline CRM** (Kanban), **Reportes** (semanal/mensual/global por período), **Agenda** (calendario de visitas). |
 | 🟢 **Reporting por período** | 3 páginas (semana/mes/global) desde tabla `Metricas` precalculada por `functions/api/recalcular-embudo.js` (botón manual). Facturación reconstruida desde cierres. |
 | 🟢 **Conexión de venta** | `functions/api/registrar-venta.js` EN VIVO y probada con clic real: deja Lead `cerró`+fecha · Interés `Cerró` · Bici `Vendida`+fecha en una llamada. Disparo desde Leads/Agenda (botón Open URL). |
-| 🟢 **Funnel ManyChat (P1 + P2)** | EN VIVO y autónomo. Puerta 1 (comentario→ficha→agenda) + **Puerta 2 probada E2E (2026-07-08)**: router DM → modelo exacto (`mc-match` consulta stock en vivo) · quiz · solo ir a verlas · encargos «Consíganmela» (`mc-waitlist` → tabla `Solicitudes`) · Vender (`mc-consigna` → `Consignaciones`) · FAQ temporal. Confirmación («Sí confirmo»→`visita_confirmada`) + recordatorios 48h/8am. |
+| 🟢 **Funnel ManyChat (P1 + P2)** | EN VIVO, autónomo y **con candado (`MC_KEY`, 2026-07-09)**. Puerta 1 (comentario→ficha→agenda) + Puerta 2 (router DM → modelo exacto · quiz por **estatura** · solo ir a verlas · «Consíganmela» con `encargo_recibido` al cliente · Vender con aviso a Roberto · FAQ temporal) + **región en AMBAS puertas** ("¿Estás en Santiago?" → ticket `Llamados`). Confirmación + recordatorios 48h/8am. 4 corridas reales + viaje sintético 14/14 (2026-07-09). |
 | 🟢 **Sourcing (Puerta 2)** | Tablas **`Solicitudes`** y **`Consignaciones`** (+`Origen` Bot DM/Manual) con páginas cards, formularios manuales y automatizaciones de completado. **Oferta aceptada → la bici nace sola en Inventario (Borrador)**, verificado E2E. Avisos WhatsApp al equipo construidos (`FLOW_NS_SOLICITUD`/`FLOW_NS_CONSIGNA` definidos) — 🟡 esperan plantillas Meta. |
 | 🟢 **Venta única** | Form `/api/registrar-venta?form=1` (bici + lead agendado o walk-in + **precio efectivo** + método de pago) EN VIVO, botón en Panel de inventario. La facturación del reporte usa el precio efectivo. |
-| 🟡 **Briefing diario a Luis** | Backend desplegado (`cron-briefing` + tick del worker); espera plantilla Meta + reanudar el contacto de Luis + verificar envs. |
+| 🟢 **Avisos WhatsApp al staff** | EN VIVO (2026-07-09): briefing 8AM (Luis+Roberto) · nueva solicitud · nueva oferta · `encargo_recibido` al cliente. 🟡 Esperan Meta: `nuevo_llamado` y `visita_reagendada` (tickets igual se crean; se ven en pantalla). |
 
 **Foco actual (2026-07-08): sistema operativo completo (captación P1+P2 + sourcing + venta única). Manual de operación entregado (`…/2. Fragua/manual_operacion_biketrust.html`). Pendiente: MC_KEY (clave generada, receta lista) · limpieza de data de prueba · FAQ real · activaciones Meta (avisos al equipo, briefing, reenganche, `encargo_recibido`) · por construir: secuencia `Conseguida`→cliente (con `reactivacion_stock` ya aprobada) y aviso de reagendo del mismo día · decisión pendiente: destinatarios de los avisos (Luis/Roberto/ambos).**
 
@@ -53,10 +53,10 @@ Bike Trust vende bicicletas **Specialized usadas, premium y certificadas** (Sant
   - `functions/api/reservar.js` — reserva web → Reservas + upsert Lead + Intereses (best-effort). Estampa `Fecha visita`.
   - `functions/api/recalcular-embudo.js` — recalcula la tabla `Metricas` por período (botón manual). Protegida por env `RECALC_KEY`.
   - `functions/api/registrar-venta.js` — venta atómica (Lead cerró + Interés Cerró + Bici Vendida + fechas) + **cascada de tickets**: cierra solos los `Solicitudes`/`Llamados` abiertos del comprador (links inversos en Leads; best-effort, la venta no falla por esto). Toma la bici de `Leads.Bici comprada` o del param `bici`. GET (botón Open URL) + POST. Protegida por env `VENTA_KEY`. Tiene retry-on-429.
-  - `functions/api/mc-lead.js` — **puente ManyChat**: upsert de Lead por `@handle IG` (dedup). POST. Protegida por env opcional `MC_KEY` (no seteada aún → hoy abierta).
+  - `functions/api/mc-lead.js` — **puente ManyChat**: upsert de Lead por `@handle IG` (dedup). POST. Protegida por `MC_KEY` (**ACTIVA desde 2026-07-09** — igual que todos los puentes mc-*; toda Solicitud externa nueva en ManyChat debe llevar `?key=`).
   - `functions/api/mc-evento.js` — **puente ManyChat**: avanza `Estado` del lead (con guarda de no-regresión) + crea Interés; resuelve la bici directo o vía el reel comentado (`Reels.Bici`). POST. Protegida por env opcional `MC_KEY`.
-  - `functions/api/mc-match.js` — **Puerta 2 (corazón)**: recibe un modelo en texto (rama "sé cuál quiero") o los criterios del quiz → consulta Inventario → devuelve la bici Disponible que hace match (o alternativa + waitlist) + escribe Lead/Interés (`Match`/`No-match`). POST. Verificado E2E. Protegida por env opcional `MC_KEY`. **Falta desplegar.**
-  - `functions/api/mc-consigna.js` — **Puerta 2 (vender)**: crea el registro en `Consignaciones` (estado `Nueva`) + upsert Lead (`Canal=Consignación`). POST. Verificado E2E. Protegida por env opcional `MC_KEY`. **Falta desplegar.**
+  - `functions/api/mc-match.js` — **Puerta 2 (corazón)**: recibe un modelo en texto (rama "sé cuál quiero") o los criterios del quiz → consulta Inventario → devuelve la bici Disponible que hace match (o alternativa + waitlist) + escribe Lead/Interés (`Match`/`No-match`). Modo quiz recomienda por **estatura** (`altura` → `Rango altura` de cada bici). POST. EN VIVO.
+  - `functions/api/mc-consigna.js` — **Puerta 2 (vender)**: crea el registro en `Consignaciones` (estado `Nueva`) + upsert Lead (`Canal=Consignación`) + aviso WhatsApp a Roberto/Luis (`AVISO_CONSIGNA_SIDS`, EN VIVO). POST. EN VIVO.
   - `functions/api/mc-waitlist.js` — **Puerta 2 (Consíganmela)**: crea el **ticket de búsqueda** en `Solicitudes` (modelo/talla/presupuesto/notas, Estado=Nueva, Origen=Bot DM, link Lead) + teléfono/opt-in en el Lead + marca `Encargo`=✓ en el Interés No-match + aviso al staff (por fases). POST. Verificado E2E. Protegida por env opcional `MC_KEY`.
   - `functions/api/mc-llamado.js` — **Puerta 2 (región)**: ticket de LLAMADO en tabla `Llamados` para leads fuera de Santiago (ciudad/franja/bici de interés/teléfono). **NO escribe `Fecha visita`** (no dispara recordatorios). Aviso al staff por fases. POST. Verificado E2E.
   - **Avisos al staff multi-destinatario (todos por fases hasta que Meta apruebe):** `AVISO_CONSIGNA_SIDS` / `AVISO_SOLICITUD_SIDS` / `AVISO_LLAMADO_SIDS` / `AVISO_REAGENDO_SIDS` / `BRIEFING_SIDS` = ids de ManyChat separados por coma, fallback `LUIS_SUBSCRIBER_ID`. Luis=`579628082` · Roberto=`302195575`. mc-agenda además avisa el **reagendo del mismo día** (`FLOW_NS_REAGENDO`).
@@ -129,7 +129,7 @@ Bike Trust vende bicicletas **Specialized usadas, premium y certificadas** (Sant
 **0. FOCO ACTUAL (2026-07-01, pedido de los dueños): cerrar el embudo ManyChat al 100%, todo lo demás en segundo plano.**
    - Día 3 (contrato + `/api/mc-lead` + `/api/mc-evento`) ✅ CERRADO, ver `PLAN_embudo.md`.
    - **Siguiente: Día 4 — Puerta 1.** En ManyChat (ya conectado a IG/Meta Business): trigger de comentario/DM en un reel "Ficha-modelo" → responde por DM con la ficha (imagen+link de la bici) → **External Request** POST a `/api/mc-lead` (`handle`, `canal="Comentario IG"` o `"DM IG"`) y luego a `/api/mc-evento` (`lead` o `handle`, `estado="ficha_entregada"`, `origen="Puerta 1 (reel/comentario)"`, `resultado="Ficha entregada"`, `reel`=Post ID Instagram del reel comentado — el endpoint resuelve la bici solo vía `Reels.Bici`). Falta: crear el registro en `Reels` por cada reel real (Post ID + Tipo=Ficha-modelo + link a la bici) y armar el flujo visual en ManyChat.
-   - Pendiente menor: setear `MC_KEY` en Cloudflare para proteger los 2 endpoints (hoy abiertos, igual que estaban los otros antes de configurar su key).
+   - ✅ `MC_KEY` seteada (2026-07-09): los 7 puentes protegidos, 401 sin key verificado.
 
 1. **TERMINAR botón de venta en la Agenda (RETOMAR, pausado 2026-06-30):** probar edición inline de `Bici comprada` en la vista previa; elegir botón nativo (URL + campo `RecID`) o el botón-campo ya funcional; probar con DEMO antes de quitar el otro; dar permiso **Editar** al staff al compartir. (Detalle: memoria de Claude `project_biketrust_reporte_metricas.md`.)
 2. **Limpiar datos DEMO** (Leads + Intereses con `DEMO=1`) cuando se confirme producción; limpiar inconsistencias de facturación demo.
