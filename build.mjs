@@ -59,6 +59,7 @@ function mapBike(f, recId){
     disciplina:f['Disciplina']||'', talla:f['Talla']||'',
     precio:num(f['Precio']), precioNuevo:num(f['Precio nuevo']),
     puntaje: (f['Puntaje certificación']??null),
+    desglose:String(f['Desglose puntaje']||'').split('\n').map(s=>s.trim()).filter(Boolean).map(l=>{const i=l.indexOf(':'); return i>0?[l.slice(0,i).trim(),l.slice(i+1).trim()]:['',l];}),
     diagKm:num(f['Diag · km motor']), diagBat:(f['Diag · salud batería']==null||f['Diag · salud batería']==='')?null:Math.round(Number(f['Diag · salud batería'])*100), diagCic:num(f['Diag · ciclos']),
     rangoAltura:f['Rango altura']||'', porQue:f['Por qué amarla']||'',
     estado:String(f['Estado honesto']||'').split('\n').map(s=>s.trim()).filter(Boolean),
@@ -828,8 +829,10 @@ function fichaTecnicaHTML(b){
     ['Valor de nueva', b.precioNuevo?clp(b.precioNuevo):'—']
   ].map(([k,v])=>`<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('');
   const cert = (b.puntaje!=null && b.puntaje!=='')
-    ? `<div class="score">${esc(b.puntaje)}</div><div class="clbl">Puntaje de certificación</div>`
+    ? `<div class="score">${esc(b.puntaje)}<span style="font-size:1.4rem;color:var(--gris)"> / 7</span></div><div class="clbl">Puntaje de certificación</div>`
     : `<div class="score">✓</div><div class="clbl">Certificada por Bike Trust</div>`;
+  const desg = (b.desglose && b.desglose.length)
+    ? `<div class="sec"><h2>Desglose de la certificación</h2>${b.desglose.map(([k,v])=>`<div class="sr"><span>${esc(k||'Ítem')}</span><span>${esc(v)}</span></div>`).join('')}</div>` : '';
   const diag = b.electrica
     ? `<div class="sec"><h2>Diagnóstico de e-bike</h2><div class="diag">
         <div class="d"><div class="dv">${b.diagKm!=null?esc(b.diagKm)+' km':'—'}</div><div class="dl">Km del motor</div></div>
@@ -860,7 +863,7 @@ function fichaTecnicaHTML(b){
   ${intro}
   ${hero}
   <div class="row2"><table class="kv">${kv}</table><div class="cert">${cert}</div></div>
-  ${diag}${honest}${specs}${geo}
+  ${desg}${diag}${honest}${specs}${geo}
   <div class="foot"><span>Certificada por Bike Trust · Santiago, Chile</span><span>Emitida ${esc(today)} · biketrust.cl</span></div>
 </article></body></html>`;
 }
@@ -903,7 +906,7 @@ function fichaHTML(b, bikes){
     ['Talla', b.talla||'—'], ['Disciplina', b.disciplina||'—'],
     ['Motorización', b.electrica?'Eléctrica':'Muscular'],
     ['Material del cuadro', b.material||'por confirmar'],
-    ['Puntaje certificación', b.puntaje!=null?b.puntaje+'/100':'por confirmar'],
+    ['Puntaje certificación', b.puntaje!=null?b.puntaje+' / 7':'por confirmar'],
     b.referencia?['Referencia', b.referencia]:null
   ].filter(Boolean);
   const detailsRows = det.map(r=>`<div class="row"><span>${esc(r[0])}</span><span>${esc(r[1])}</span></div>`).join('');

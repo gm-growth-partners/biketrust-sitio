@@ -69,6 +69,7 @@ Eso deja, de una sola vez:
 - **Lead** → `Estado = cerró` + `Fecha cierre`
 - **Interés** (del par lead↔bici) → `Resultado = Cerró` (reusa el existente o crea uno)
 - **Bici** → `Estado = Vendida` + `Fecha venta` (sale del catálogo en la próxima publicación)
+- **Tickets del comprador** → sus `Solicitudes` y `Llamados` abiertos pasan solos a `Cerrada` (regla: una solicitud se cierra cuando el cliente COMPRA). El staff no tiene que ir a cerrar nada a mano: registrar la venta es la única acción.
 
 > Detrás, el botón llama a la Pages Function `/api/registrar-venta` (ver §5). El reporte de facturación lee estos cierres automáticamente.
 
@@ -133,7 +134,7 @@ Funciones serverless en `functions/api/` (corren en Cloudflare). Leen con `AIRTA
 |---|---|---|---|
 | `reservar.js` | `POST /api/reservar` | Reserva web → tabla Reservas + upsert Lead + Intereses. Estampa `Fecha visita`. | — |
 | `recalcular-embudo.js` | `GET/POST /api/recalcular-embudo` | Recalcula la tabla `Metricas` por período. Botón en la interfaz Reportes. | env `RECALC_KEY` (`?key=`) |
-| `registrar-venta.js` | `GET/POST /api/registrar-venta` | Venta atómica: Lead cerró + Interés Cerró + Bici Vendida + fechas. Con `?form=1` sirve el **formulario de venta única** (bici + lead agendado o walk-in). También toma la bici de `Leads.Bici comprada` (botón de la Agenda). | env `VENTA_KEY` (`?key=`) |
+| `registrar-venta.js` | `GET/POST /api/registrar-venta` | Venta atómica: Lead cerró + Interés Cerró + Bici Vendida + fechas + **cascada de tickets** (Solicitudes/Llamados abiertos del lead → Cerrada, best-effort). Con `?form=1` sirve el **formulario de venta única** (bici + lead agendado o walk-in). También toma la bici de `Leads.Bici comprada` (botón de la Agenda). | env `VENTA_KEY` (`?key=`) |
 
 **Variables de entorno en Cloudflare Pages:**
 

@@ -5,6 +5,10 @@
 //   - Lead      → Estado=cerró + Fecha cierre + Fecha última interacción
 //   - Interés   → Resultado=Cerró + Fecha (reusa el del lead↔bici, o crea uno)
 //   - Inventario→ Estado=Vendida + Fecha venta
+//   - Tickets   → Solicitudes y Llamados ABIERTOS del lead → Estado=Cerrada
+//                 (regla de negocio: una Solicitud se cierra cuando el cliente
+//                 COMPRA; un Llamado pendiente queda resuelto por la venta).
+//                 Best-effort: si falla, la venta igual queda registrada.
 //
 // Escribe TODO directo y sincrónico (no depende de la automatización async de
 // Airtable "Venta: Interés Cerró"; esa queda como red de seguridad idempotente
@@ -46,6 +50,8 @@ export async function registrarVenta(env, input) {
   const LEADS = env.AIRTABLE_LEADS_TABLE      || 'Leads';
   const INTER = env.AIRTABLE_INTERESES_TABLE  || 'Intereses';
   const INV   = env.AIRTABLE_INVENTARIO_TABLE || 'Inventario';
+  const SOLIC = env.AIRTABLE_SOLICITUDES_TABLE || 'Solicitudes';
+  const LLAM  = env.AIRTABLE_LLAMADOS_TABLE    || 'Llamados';
   if (!READ || !WRITE) throw new Error('not_configured (faltan tokens)');
 
   const api = (t) => `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(t)}`;
@@ -57,7 +63,7 @@ export async function registrarVenta(env, input) {
   let   leadId    = String(input.lead || '').trim();
   let   interesId = String(input.interes || '').trim();
 
-  const out = { biciId: biciId || null, leadId: leadId || null, interesId: null, created: { lead: false, interes: false } };
+  const out = { biciId: biciId || null, leadId: leadId || null, interesId: null, created: { lead: false, interes: false }, ticketsCerrados: { solicitudes: 0, llamados: 0 } };
 
   // 1) Walk-in: sin lead previo → crear un lead mínimo (cerró desde ya).
   //    Requiere `bici` en el input (un lead nuevo no tiene "Bici comprada").
@@ -161,6 +167,36 @@ export async function registrarVenta(env, input) {
     } }),
   });
   if (!bp.ok) throw new Error('vender_bici ' + bp.status + ' ' + (await bp.text()));
+
+  // 5) CASCADA DE TICKETS (best-effort): los tickets abiertos del comprador se
+  //    cierran solos — el staff no tiene que acordarse de nada más que registrar
+  //    la venta. Solicitudes ("Cerrada = cuando COMPRA") y Llamados. Los links
+  //    inversos viven en el lead (campos `Solicitudes` / `Llamados`).
+  try {
+    if (!leadFields) {
+      const lr2 = await afetch(`${api(LEADS)}/${leadId}`, { headers: rH });
+      if (lr2.ok) leadFields = (await lr2.json()).fields || {};
+    }
+    const cerrarAbiertos = async (tabla, ids, contador) => {
+      for (const id of ids) {
+        const gr = await afetch(`${api(tabla)}/${id}`, { headers: rH });
+        if (!gr.ok) continue;
+        const estado = (await gr.json()).fields?.Estado || '';
+        if (estado === 'Cerrada') continue;
+        const pr = await afetch(`${api(tabla)}/${id}`, {
+          method: 'PATCH', headers: wH,
+          body: JSON.stringify({ fields: { 'Estado': 'Cerrada' } }),
+        });
+        if (pr.ok) out.ticketsCerrados[contador]++;
+      }
+    };
+    if (leadFields) {
+      await cerrarAbiertos(SOLIC, linkIds(leadFields['Solicitudes']), 'solicitudes');
+      await cerrarAbiertos(LLAM,  linkIds(leadFields['Llamados']),   'llamados');
+    }
+  } catch (e) {
+    out.ticketsError = String(e && e.message || e).slice(0, 200);
+  }
 
   return out;
 }
@@ -288,10 +324,15 @@ $('f').addEventListener('submit',async ev=>{
     const r=await fetch(location.pathname+'?key='+encodeURIComponent(KEY),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const j=await r.json();
     if(j.ok){
+      const tc=j.ticketsCerrados||{};
+      const tks=[];
+      if(tc.solicitudes)tks.push(tc.solicitudes+' solicitud(es) de búsqueda');
+      if(tc.llamados)tks.push(tc.llamados+' llamado(s) pendiente(s)');
       document.getElementById('card').innerHTML='<div class="ok"><h2>✅ Venta registrada</h2><ul>'+
         '<li><b>Lead</b> cerrado con fecha'+(j.created&&j.created.lead?' (creado walk-in)':'')+'.</li>'+
         '<li><b>Interés</b> marcado Cerró'+(j.created&&j.created.interes?' (creado)':' (reusado)')+'.</li>'+
         '<li><b>Bici</b> marcada Vendida — sale del catálogo en la próxima publicación.</li>'+
+        (tks.length?'<li><b>Tickets</b> cerrados solos: '+tks.join(' y ')+'.</li>':'')+
         '</ul><p>Puedes cerrar esta pestaña.</p></div>';
     }else{ $('err').textContent='Error: '+(j.error||'desconocido'); $('btn').disabled=false; $('btn').textContent='Registrar la venta'; }
   }catch(e){ $('err').textContent='Error de red: '+e; $('btn').disabled=false; $('btn').textContent='Registrar la venta'; }
@@ -327,6 +368,7 @@ export async function onRequestGet({ request, env }) {
 <li><b>Lead</b> marcado <code>cerró</code> con fecha de cierre${r.created.lead ? ' (creado walk-in)' : ''}.</li>
 <li><b>Interés</b> marcado <code>Cerró</code>${r.created.interes ? ' (creado)' : ' (reusado)'}.</li>
 <li><b>Bici</b> marcada <code>Vendida</code> con fecha de venta.</li>
+${(r.ticketsCerrados && (r.ticketsCerrados.solicitudes || r.ticketsCerrados.llamados)) ? `<li><b>Tickets</b> cerrados solos: ${[r.ticketsCerrados.solicitudes ? r.ticketsCerrados.solicitudes + ' solicitud(es)' : '', r.ticketsCerrados.llamados ? r.ticketsCerrados.llamados + ' llamado(s)' : ''].filter(Boolean).join(' y ')}.</li>` : ''}
 </ul>
 <p>Ya puedes cerrar esta pestaña y volver al panel.</p></body>`;
     return new Response(html, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
