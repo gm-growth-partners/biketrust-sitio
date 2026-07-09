@@ -2,17 +2,19 @@
 // Ticket de LLAMADO para leads de región (Puerta 2). Cuando la persona no está
 // en Santiago, en vez de agendar una visita al showroom se agenda una llamada:
 // el bot captura ciudad + franja preferida + teléfono, crea el ticket en la
-// tabla `Llamados` (Estado=Nueva) y avisa al staff por WhatsApp para que llame.
-// La bici de interés viaja como dato (cf_hero_bici) y queda linkeada al ticket.
+// tabla `Llamados` (Estado=Llamada pendiente) y avisa al staff por WhatsApp
+// para que llame. La bici de interés viaja como dato: `bici` (record id, viene
+// de cf_hero_bici en Puerta 2) o `reel` (Post ID Instagram, Puerta 1 → se
+// resuelve vía Reels.Bici, igual que mc-evento/mc-agenda).
 //
-// Body: { handle?, subscriber_id?, telefono?, optin?, ciudad?, franja?, bici?, notas? }
+// Body: { handle?, subscriber_id?, telefono?, optin?, ciudad?, franja?, bici?, reel?, notas? }
 //   - Identidad por handle o subscriber_id (el lead normalmente ya existe).
 //   - IMPORTANTE: un llamado NO escribe `Fecha visita` en el Lead (eso activaría
 //     los recordatorios de visita del motor cron). El ciclo del llamado vive en
 //     su tarjeta: Nueva → Llamado → Cerrada.
 //
 //   - Llamado → Nombre (del lead), Teléfono, Ciudad, Franja, Bici de interés,
-//               Estado=Nueva, Origen=Bot DM, Fecha, Notas, link Lead.
+//               Estado=Llamada pendiente, Origen=Bot DM, Fecha, Notas, link Lead.
 //   - Lead    → WhatsApp + Opt-in + MC subscriber id + Fecha última interacción.
 //   - Aviso   → WhatsApp al staff (cf_llamado_datos + sendFlow). Por fases:
 //               plantilla `nuevo_llamado` aprobada + env FLOW_NS_LLAMADO +
@@ -77,6 +79,7 @@ const cfg = (env) => {
     BASE, READ, WRITE,
     LEADS: env.AIRTABLE_LEADS_TABLE || 'Leads',
     LLAM: env.AIRTABLE_LLAMADOS_TABLE || 'Llamados',
+    REELS: env.AIRTABLE_REELS_TABLE || 'Reels',
     api: (t) => `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(t)}`,
     rH: { Authorization: `Bearer ${READ}` },
     wH: { Authorization: `Bearer ${WRITE}`, 'Content-Type': 'application/json' },
@@ -104,6 +107,7 @@ export async function onRequestPost({ request, env }) {
   const ciudad = clean(data?.ciudad, 80);
   const franja = clean(data?.franja, 40);
   const biciIn = clean(data?.bici, 40);
+  const reel = clean(data?.reel, 80);
   const notas = clean(data?.notas, 2000);
 
   if (!handle && !subId) return reply({ error: 'missing_fields (handle o subscriber_id)' }, 422);
@@ -161,20 +165,34 @@ export async function onRequestPost({ request, env }) {
   });
   if (!lp.ok) return reply({ error: 'airtable_lead_update', status: lp.status, detail: await lp.text() }, 502);
 
-  // 3) Crear el TICKET de llamado (Estado=Nueva → cola del staff).
+  // 2b) Resolver la bici de interés: `bici` directo (Puerta 2, cf_hero_bici) →
+  //     `reel` (Puerta 1, Post ID Instagram → Reels.Bici). Best-effort: sin
+  //     bici el ticket igual se crea.
+  let biciId = biciIn;
+  if (!biciId && reel) {
+    const u = `${C.api(C.REELS)}?maxRecords=1&filterByFormula=${encodeURIComponent(`{Post ID Instagram}='${reel.replace(/'/g, "\\'")}'`)}`;
+    const rr = await afetch(u, { headers: C.rH });
+    if (rr.ok) {
+      const rec = (await rr.json()).records?.[0];
+      const link = rec?.fields?.Bici;
+      biciId = (Array.isArray(link) ? link[0] : link) || '';
+    }
+  }
+
+  // 3) Crear el TICKET de llamado (Estado=Llamada pendiente → cola del staff).
   const nombre = leadFields?.Nombre || (handle ? '@' + handle : 'Lead de región');
   const lr = await afetch(C.api(C.LLAM), {
     method: 'POST', headers: C.wH,
     body: JSON.stringify({ typecast: true, fields: {
       'Nombre': nombre,
-      'Estado': 'Nueva',
+      'Estado': 'Llamada pendiente',
       'Origen': 'Bot DM',
       'Fecha': today,
       'Lead': [leadId],
       ...(telefono ? { 'Teléfono': telefono } : {}),
       ...(ciudad ? { 'Ciudad': ciudad } : {}),
       ...(franja ? { 'Franja': franja } : {}),
-      ...(biciIn ? { 'Bici de interés': [biciIn] } : {}),
+      ...(biciId ? { 'Bici de interés': [biciId] } : {}),
       ...(notas ? { 'Notas': notas } : {}),
     } }),
   });
@@ -183,8 +201,8 @@ export async function onRequestPost({ request, env }) {
 
   // 3b) Nombre del modelo para el resumen del aviso (best-effort).
   let biciNombre = '';
-  if (biciIn) {
-    const br = await afetch(`${C.api('Inventario')}/${biciIn}`, { headers: C.rH });
+  if (biciId) {
+    const br = await afetch(`${C.api('Inventario')}/${biciId}`, { headers: C.rH });
     if (br.ok) { const bf = (await br.json()).fields || {}; biciNombre = bf.Modelo || bf.Etiqueta || ''; }
   }
 

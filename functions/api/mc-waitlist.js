@@ -185,12 +185,13 @@ export async function onRequestPost({ request, env }) {
   });
   if (!lp.ok) return reply({ error: 'airtable_lead_update', status: lp.status, detail: await lp.text() }, 502);
 
-  // 3) Crear el TICKET en Solicitudes (Estado=Nueva → cola de sourcing del staff).
+  // 3) Crear el TICKET en Solicitudes (Estado=Llamada pendiente → el staff
+  //    llama a confirmar detalles y lo pasa a Buscando).
   const sr = await afetch(C.api(C.SOLIC), {
     method: 'POST', headers: C.wH,
     body: JSON.stringify({ typecast: true, fields: {
       'Modelo buscado': modelo,
-      'Estado': 'Nueva',
+      'Estado': 'Llamada pendiente',
       'Origen': 'Bot DM',
       'Fecha': today,
       'Lead': [leadId],
