@@ -105,7 +105,11 @@ export async function onRequestPost({ request, env }) {
   const telefono = clean(data?.telefono, 60);
   const optin = data?.optin === true || data?.optin === 1 || data?.optin === '1' || String(data?.optin).toLowerCase() === 'true';
   const ciudad = clean(data?.ciudad, 80);
-  const franja = clean(data?.franja, 40);
+  // Franja: los botones de ManyChat traen la hora ("Mañana 11:00") — se normaliza
+  // al valor canónico del select (Mañana/Tarde) para no crear opciones basura.
+  const franjaRaw = clean(data?.franja, 40);
+  const franja = /^ma[ñn]ana/i.test(franjaRaw) ? 'Mañana'
+    : /^tarde/i.test(franjaRaw) ? 'Tarde' : franjaRaw;
   const biciIn = clean(data?.bici, 40);
   const reel = clean(data?.reel, 80);
   const notas = clean(data?.notas, 2000);
