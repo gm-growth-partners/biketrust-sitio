@@ -23,6 +23,32 @@ const JSONH = { 'Content-Type': 'application/json; charset=utf-8' };
 const reply = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: JSONH });
 
 const BASE_DEFAULT = 'appQUgk8aeD752923';
+const MC_API = 'https://api.manychat.com';
+
+// ── ManyChat helpers (para el AVISO DE REAGENDO DEL MISMO DÍA al staff) ─────
+async function mcPost(token, path, body) {
+  return afetch(`${MC_API}${path}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+const mcSid = (s) => (/^\d+$/.test(s) ? Number(s) : s);
+async function mcSetField(token, sid, name, value) {
+  const r = await mcPost(token, '/fb/subscriber/setCustomFieldByName', {
+    subscriber_id: mcSid(sid), field_name: name, field_value: value,
+  });
+  if (!r.ok) throw new Error(`setField ${name}: ${r.status} ${await r.text()}`);
+}
+async function mcSendFlow(token, sid, flowNs) {
+  const r = await mcPost(token, '/fb/sending/sendFlow', {
+    subscriber_id: mcSid(sid), flow_ns: flowNs,
+  });
+  if (!r.ok) throw new Error(`sendFlow: ${r.status} ${await r.text()}`);
+}
+// Fecha y hora de un instante en horario de Chile (DST-safe).
+const chileFecha = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+const chileHora = (d) => new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', hour12: false }).format(d);
 
 // Orden de la máquina de estados (idéntico a mc-evento). 99 = terminal.
 const RANGO = {
@@ -109,6 +135,12 @@ const cfg = (env) => {
     api: (t) => `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(t)}`,
     rH: { Authorization: `Bearer ${READ}` },
     wH: { Authorization: `Bearer ${WRITE}`, 'Content-Type': 'application/json' },
+    // Aviso de reagendo del MISMO DÍA al staff (por fases, como los demás).
+    // Destinatarios: ids de ManyChat separados por coma (fallback LUIS_SUBSCRIBER_ID).
+    MC_TOKEN: env.MANYCHAT_TOKEN || '',
+    FLOW_REAGENDO: env.FLOW_NS_REAGENDO || '',
+    STAFF_SIDS: String(env.AVISO_REAGENDO_SIDS || env.LUIS_SUBSCRIBER_ID || '')
+      .split(',').map(s => s.trim()).filter(Boolean),
   };
 };
 
@@ -275,10 +307,46 @@ export async function onRequestPost({ request, env }) {
     interesId = (await cr.json()).id; interesCreado = true;
   }
 
+  // 7) AVISO DE REAGENDO DEL MISMO DÍA: si el lead tenía visita para HOY y la
+  //    movió, el staff debe enterarse al instante (para no preparar la bici ni
+  //    esperar en vano). Si reagenda con días de anticipación NO se avisa: el
+  //    briefing matinal ya trae la agenda corregida. Best-effort: nunca rompe
+  //    el reagendo, que ya quedó escrito.
+  let avisoReagendo = 'no_aplica';
+  const prevVisita = leadFields['Fecha visita'] || null;
+  if (prevVisita) {
+    const prev = new Date(prevVisita);
+    const nuevaMs = Date.parse(`${fechaVisita}-04:00`); // naive Chile → epoch (UTC-4)
+    const eraHoy = chileFecha(prev) === chileFecha(new Date());
+    const cambio = !Number.isFinite(nuevaMs) || Math.abs(nuevaMs - prev.getTime()) > 60000;
+    if (eraHoy && cambio) {
+      avisoReagendo = 'no_configurado';
+      if (C.MC_TOKEN && C.FLOW_REAGENDO && C.STAFF_SIDS.length) {
+        try {
+          const nombre = leadFields.Nombre || (leadFields['@handle IG'] ? '@' + leadFields['@handle IG'] : (handle ? '@' + handle : 'Un lead'));
+          const resumen = [
+            `${nombre} tenía visita HOY a las ${chileHora(prev)}`,
+            `se reagendó para ${fechaVisitaLegible}`,
+            biciNombre && biciNombre !== 'bici que más te guste' ? biciNombre : '',
+            telefono || leadFields.WhatsApp || '',
+          ].filter(Boolean).join(' · ');
+          for (const sid of C.STAFF_SIDS) {
+            await mcSetField(C.MC_TOKEN, sid, 'cf_reagendo_datos', resumen.slice(0, 900));
+            await mcSendFlow(C.MC_TOKEN, sid, C.FLOW_REAGENDO);
+          }
+          avisoReagendo = 'enviado';
+        } catch (e) {
+          avisoReagendo = 'error: ' + String(e && e.message || e).slice(0, 200);
+        }
+      }
+    }
+  }
+
   return reply({
     ok: true, leadId, interesId, interesCreado, biciId: biciId || null,
     biciNombre: biciNombre || null, fechaVisitaLegible,
     slot: slot || null, fechaVisita, estadoActual: fieldsLead['Estado'] || estadoActual, estadoAplicado,
+    avisoReagendo,
   });
 }
 

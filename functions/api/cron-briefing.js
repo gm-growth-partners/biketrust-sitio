@@ -48,7 +48,10 @@ const cfg = (env) => {
     rH: { Authorization: `Bearer ${READ}` },
     MC_TOKEN: env.MANYCHAT_TOKEN || '',
     FLOW_BRIEFING: env.FLOW_NS_BRIEFING || '',
-    LUIS: env.LUIS_SUBSCRIBER_ID || '',
+    // Destinatarios del briefing: ids de ManyChat separados por coma
+    // (BRIEFING_SIDS=Luis,Roberto; fallback LUIS_SUBSCRIBER_ID).
+    STAFF_SIDS: String(env.BRIEFING_SIDS || env.LUIS_SUBSCRIBER_ID || '')
+      .split(',').map(s => s.trim()).filter(Boolean),
   };
 };
 
@@ -118,15 +121,17 @@ async function run(env, url) {
   }
   const agenda = items.length ? items.join('   ') : 'sin visitas agendadas 🌱';
 
-  const mcReady = !!(C.MC_TOKEN && C.FLOW_BRIEFING && C.LUIS);
+  const mcReady = !!(C.MC_TOKEN && C.FLOW_BRIEFING && C.STAFF_SIDS.length);
   let enviado = false, error = null;
   if (!dry && mcReady) {
     try {
-      const sid = mcSid(C.LUIS);
-      const r1 = await mcPost(C.MC_TOKEN, '/fb/subscriber/setCustomFieldByName', { subscriber_id: sid, field_name: 'cf_agenda_hoy', field_value: agenda });
-      if (!r1.ok) throw new Error(`setField ${r1.status} ${await r1.text()}`);
-      const r2 = await mcPost(C.MC_TOKEN, '/fb/sending/sendFlow', { subscriber_id: sid, flow_ns: C.FLOW_BRIEFING });
-      if (!r2.ok) throw new Error(`sendFlow ${r2.status} ${await r2.text()}`);
+      for (const s of C.STAFF_SIDS) {
+        const sid = mcSid(s);
+        const r1 = await mcPost(C.MC_TOKEN, '/fb/subscriber/setCustomFieldByName', { subscriber_id: sid, field_name: 'cf_agenda_hoy', field_value: agenda });
+        if (!r1.ok) throw new Error(`setField ${r1.status} ${await r1.text()}`);
+        const r2 = await mcPost(C.MC_TOKEN, '/fb/sending/sendFlow', { subscriber_id: sid, flow_ns: C.FLOW_BRIEFING });
+        if (!r2.ok) throw new Error(`sendFlow ${r2.status} ${await r2.text()}`);
+      }
       enviado = true;
     } catch (e) { error = String(e.message || e); }
   }
