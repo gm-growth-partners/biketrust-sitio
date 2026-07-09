@@ -83,6 +83,29 @@ function parsePresupuesto(v) {
   return n;
 }
 
+// Estatura tolerante: "1,75", "1.75", "175", "175 cm" → metros. Fuera de rango
+// humano razonable (o merge tag sin resolver) → null.
+function parseAltura(v) {
+  if (v == null || v === '' || String(v).includes('{{')) return null;
+  const m = /\d+(?:[.,]\d+)?/.exec(String(v));
+  if (!m) return null;
+  let n = parseFloat(m[0].replace(',', '.'));
+  if (n > 3) n = n / 100; // vino en centímetros
+  return (n >= 1.2 && n <= 2.2) ? n : null;
+}
+
+// "1,68 a 1,78 m" / "1.65 - 1.78" / "165-178 cm" → [min, max] en metros.
+function parseRangoAltura(s) {
+  const nums = String(s || '').match(/\d+(?:[.,]\d+)?/g);
+  if (!nums || nums.length < 2) return null;
+  const vals = nums.slice(0, 2).map(x => {
+    let n = parseFloat(x.replace(',', '.'));
+    if (n > 3) n = n / 100;
+    return n;
+  }).sort((a, b) => a - b);
+  return (vals[0] >= 1.2 && vals[1] <= 2.2) ? vals : null;
+}
+
 const cfg = (env) => {
   const BASE = env.AIRTABLE_BASE || BASE_DEFAULT;
   const READ = env.AIRTABLE_TOKEN || env.AIRTABLE_WRITE_TOKEN;
@@ -125,8 +148,8 @@ function biciView(C, b) {
   };
 }
 
-// Puntúa una bici contra criterios (disciplina/motorización/presupuesto/talla).
-// Todos blandos: la talla nunca bloquea ("no sé mi talla → se confirma en la visita").
+// Puntúa una bici contra criterios (disciplina/motorización/presupuesto/altura/talla).
+// Todos blandos: nada bloquea ("no sé mi talla → se confirma en la visita").
 function scoreBici(f, crit) {
   let score = 0;
   if (crit.disciplina && norm(f.Disciplina) === norm(crit.disciplina)) score += 40;
@@ -134,6 +157,13 @@ function scoreBici(f, crit) {
   if (crit.presupuesto != null && f.Precio != null) {
     if (f.Precio <= crit.presupuesto) score += 20 - Math.min(15, (crit.presupuesto - f.Precio) / 1e6); // dentro: premia lo cercano al techo
     else score -= Math.min(25, (f.Precio - crit.presupuesto) / 1e6 * 5); // sobre presupuesto: penaliza
+  }
+  // La TALLA se asigna por estatura: si la bici declara `Rango altura` y el
+  // cliente dio su altura, dentro del rango suma y fuera penaliza (con 2 cm de
+  // tolerancia). Sin rango declarado → neutro (no castiga fichas incompletas).
+  if (crit.altura != null) {
+    const rango = parseRangoAltura(f['Rango altura']);
+    if (rango) score += (crit.altura >= rango[0] - 0.02 && crit.altura <= rango[1] + 0.02) ? 12 : -8;
   }
   if (crit.talla && norm(f.Talla) === norm(crit.talla)) score += 10;
   return score;
@@ -164,9 +194,10 @@ export async function onRequestPost({ request, env }) {
     motorizacion: data?.motorizacion ? String(data.motorizacion).trim() : '',
     disciplina: data?.disciplina ? String(data.disciplina).trim() : '',
     presupuesto: parsePresupuesto(data?.presupuesto),
+    altura: parseAltura(data?.altura),
     talla: data?.talla ? String(data.talla).trim() : '',
   };
-  const esQuiz = !modelo && !!(crit.motorizacion || crit.disciplina || crit.presupuesto != null || crit.talla);
+  const esQuiz = !modelo && !!(crit.motorizacion || crit.disciplina || crit.presupuesto != null || crit.altura != null || crit.talla);
   const origen = String(data?.origen || 'Puerta 2 (quiz)').trim();
   const canal = String(data?.canal || (esQuiz ? 'Quiz' : 'DM IG')).trim();
 
@@ -309,6 +340,7 @@ export async function onRequestPost({ request, env }) {
     ...(crit.motorizacion ? { 'Crit · motorización': crit.motorizacion } : {}),
     ...(crit.disciplina ? { 'Crit · disciplina': crit.disciplina } : {}),
     ...(crit.presupuesto != null ? { 'Crit · presupuesto': crit.presupuesto } : {}),
+    ...(crit.altura != null ? { 'Crit · altura': String(data?.altura).trim().slice(0, 20) } : {}),
     ...(crit.talla ? { 'Crit · talla': crit.talla } : {}),
   } : {};
 
