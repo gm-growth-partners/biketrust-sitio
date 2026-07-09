@@ -85,10 +85,13 @@ const cfg = (env) => {
     api: (t) => `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(t)}`,
     rH: { Authorization: `Bearer ${READ}` },
     wH: { Authorization: `Bearer ${WRITE}`, 'Content-Type': 'application/json' },
-    // Aviso a Luis (staff) — se activa solo cuando las 3 env están seteadas.
+    // Aviso al staff — se activa solo cuando token + flow + destinatarios existen.
+    // Las ofertas van a ROBERTO (decisión reunión 2026-07-08); admite varios ids
+    // separados por coma en AVISO_CONSIGNA_SIDS (fallback LUIS_SUBSCRIBER_ID).
     MC_TOKEN: env.MANYCHAT_TOKEN || '',
     FLOW_CONSIGNA: env.FLOW_NS_CONSIGNA || '',
-    LUIS_SID: env.LUIS_SUBSCRIBER_ID || '',
+    STAFF_SIDS: String(env.AVISO_CONSIGNA_SIDS || env.LUIS_SUBSCRIBER_ID || '')
+      .split(',').map(s => s.trim()).filter(Boolean),
   };
 };
 
@@ -208,7 +211,7 @@ export async function onRequestPost({ request, env }) {
   //    Requiere plantilla `nueva_consignacion` aprobada por Meta + 3 env:
   //    MANYCHAT_TOKEN · FLOW_NS_CONSIGNA (flow de 1 nodo) · LUIS_SUBSCRIBER_ID.
   let aviso = 'no_configurado';
-  if (C.MC_TOKEN && C.FLOW_CONSIGNA && C.LUIS_SID) {
+  if (C.MC_TOKEN && C.FLOW_CONSIGNA && C.STAFF_SIDS.length) {
     try {
       const resumen = [
         modelo + (anio != null ? ` ${anio}` : ''),
@@ -218,8 +221,10 @@ export async function onRequestPost({ request, env }) {
         `contacto: ${contacto || 'sin teléfono'}`,
         handle ? `IG @${handle}` : '',
       ].filter(Boolean).join(' · ');
-      await mcSetField(C.MC_TOKEN, C.LUIS_SID, 'cf_consigna_datos', resumen.slice(0, 900));
-      await mcSendFlow(C.MC_TOKEN, C.LUIS_SID, C.FLOW_CONSIGNA);
+      for (const sid of C.STAFF_SIDS) {
+        await mcSetField(C.MC_TOKEN, sid, 'cf_consigna_datos', resumen.slice(0, 900));
+        await mcSendFlow(C.MC_TOKEN, sid, C.FLOW_CONSIGNA);
+      }
       aviso = 'enviado';
     } catch (e) {
       aviso = 'error: ' + String(e && e.message || e).slice(0, 200);

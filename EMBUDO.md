@@ -164,6 +164,13 @@ Botón **«🎯 Consíganmela»**: convierte un no-match en un **ticket de búsq
 - **Cola de sourcing = tabla `Solicitudes`** (Estado `Nueva → Buscando → Conseguida → Cerrada`): el staff la trabaja desde la interfaz (cards) y crea tickets manuales por formulario en la misma tabla (`Origen=Manual`). Además de recuperar al lead, dice **qué bicis salir a conseguir**. Aviso al conseguirla: manual hoy; plantilla `reactivacion_stock` a futuro.
 - **Aviso a Luis (WhatsApp):** tras crear el ticket, manda el resumen (modelo · talla · presupuesto · notas · contacto · IG) al staff vía ManyChat (`cf_solicitud_datos` + sendFlow). **Por fases:** requiere plantilla `nueva_solicitud` (Utility) aprobada + env `FLOW_NS_SOLICITUD` + `LUIS_SUBSCRIBER_ID` (+`MANYCHAT_TOKEN`). Sin env → no-op (`aviso:"no_configurado"`); si falla, el ticket igual queda creado. Mismo patrón que el aviso de consignaciones de mc-consigna.
 
+### `mc-llamado` — `POST /api/mc-llamado` ✅ (Puerta 2 · leads de región)
+Cuando la persona **no está en Santiago**, en vez de visita se agenda una **llamada** del equipo.
+- **Body:** `{ handle?, subscriber_id?, telefono?, optin?, ciudad?, franja?, bici?, notas? }`. La bici de interés viaja como dato (`cf_hero_bici`). Ignora merge tags sin resolver.
+- **Escribe:** ticket en **`Llamados`** (`tblgApNKo9YiqPalw`: Nombre, Teléfono, Ciudad, Franja Mañana/Tarde, Bici de interés, `Estado Nueva→Llamado→Cerrada`, Origen, Fecha, link Lead) + teléfono/opt-in en el Lead. **Clave: NO escribe `Fecha visita`** (no dispara recordatorios de visita).
+- **Aviso al staff:** WhatsApp con el resumen (nombre · ciudad · bici · franja · teléfono) vía `cf_llamado_datos` + `FLOW_NS_LLAMADO`. Destinatarios: `AVISO_LLAMADO_SIDS` (ids separados por coma; fallback `LUIS_SUBSCRIBER_ID`). Plantilla `nuevo_llamado` 🟡 Meta.
+- **Multi-destinatario (2026-07-09):** los tres avisos aceptan varios ids por coma — `AVISO_CONSIGNA_SIDS` (ofertas → **Roberto**, decisión de la reunión), `AVISO_SOLICITUD_SIDS`, `AVISO_LLAMADO_SIDS`; todos con fallback a `LUIS_SUBSCRIBER_ID`.
+
 > Endpoints del canal web/venta (documentados en [`DOCUMENTACION.md`](DOCUMENTACION.md) §5): `reservar.js`, `recalcular-embudo.js`, `registrar-venta.js`.
 
 ---
