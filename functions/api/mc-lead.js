@@ -99,6 +99,29 @@ export async function onRequestPost({ request, env }) {
   });
   if (!cr.ok) return reply({ error: 'airtable_create', status: cr.status, detail: await cr.text() }, 502);
   const j = await cr.json();
+
+  // 2c) AUTO-SANACIÓN de carrera: si dos requests simultáneos leyeron "no
+  //     existe" antes de que el otro creara, quedan duplicados. Cada racer
+  //     re-consulta: si hay más de un lead con el handle, TODOS convergen al
+  //     más antiguo (createdTime, empate por id) y cada uno borra el registro
+  //     que él mismo creó si no es el ganador. Best-effort: si esto falla, el
+  //     lead creado igual es válido.
+  try {
+    const vu = `${api(LEADS)}?filterByFormula=${encodeURIComponent(formula)}&pageSize=10`;
+    const vr = await afetch(vu, { headers: rH });
+    if (vr.ok) {
+      const recs = ((await vr.json()).records || []);
+      if (recs.length > 1) {
+        recs.sort((a, b) => (a.createdTime < b.createdTime ? -1 : a.createdTime > b.createdTime ? 1 : a.id < b.id ? -1 : 1));
+        const winner = recs[0];
+        if (winner.id !== j.id) {
+          await afetch(`${api(LEADS)}/${j.id}`, { method: 'DELETE', headers: wH });
+          return reply({ ok: true, leadId: winner.id, created: false, dedup: 'race_resuelta' });
+        }
+      }
+    }
+  } catch { /* best-effort */ }
+
   return reply({ ok: true, leadId: j.id, created: true });
 }
 // Sólo POST. Pages responde 405 automáticamente a otros métodos en esta ruta.
