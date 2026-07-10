@@ -9,8 +9,9 @@
 // una variable de plantilla). Si no hay visitas → "sin visitas agendadas 🌱".
 //
 // Disparo: el worker-cron le pega en cada tick (*/15); este endpoint sólo envía
-// cuando en Chile son las 08:0x (guard chileHour==8 && chileMinute<15). Para
-// probar: ?force=1 (ignora la hora) · ?dry=1 (arma el texto pero no envía).
+// cuando en Chile son las 09:0x (hora pedida por Luis 2026-07-10; ajustable
+// con env BRIEFING_HOUR). Para probar: ?force=1 (ignora la hora) · ?dry=1
+// (arma el texto pero no envía).
 //
 // Env: AIRTABLE_TOKEN/AIRTABLE_WRITE_TOKEN (aquí sólo lee), MANYCHAT_TOKEN,
 // FLOW_NS_BRIEFING, LUIS_SUBSCRIBER_ID. Protegido por CRON_KEY. Sin credenciales
@@ -92,9 +93,11 @@ async function run(env, url) {
   const force = url.searchParams.get('force') === '1';
   const now = new Date();
 
-  // Sólo a las 08:0x de Chile (salvo ?force=1). El worker pega cada 15 min; así
-  // sale una vez al día en el tick de las 8:00.
-  if (!force && !(chileHour(now) === 8 && chileMin(now) < 15)) {
+  // Sólo a las HH:0x de Chile (salvo ?force=1) — 9:00 por pedido de Luis
+  // (2026-07-10), ajustable con env BRIEFING_HOUR sin tocar código. El worker
+  // pega cada 15 min; así sale una vez al día en el tick de la hora elegida.
+  const briefingHour = Number(env.BRIEFING_HOUR || 9);
+  if (!force && !(chileHour(now) === briefingHour && chileMin(now) < 15)) {
     return reply({ ok: true, skipped: 'not_briefing_time', chileHour: chileHour(now), chileMin: chileMin(now) });
   }
 
