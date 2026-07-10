@@ -36,6 +36,23 @@ const linkIds = (v) => (Array.isArray(v) ? v : []).map(x => (typeof x === 'strin
 const chileDate = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
 const chileHour = (d) => Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Santiago', hour: '2-digit', hour12: false }).format(d));
 const chileMin  = (d) => Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Santiago', minute: '2-digit' }).format(d));
+
+// ── Horario saludable por destinatario (hora Chile) ─────────────────────────
+// Env AVISO_HORARIOS: "sid:d1-d2@h1-h2,..." — días 0=Dom..6=Sáb. Un sid sin
+// entrada recibe siempre. Default: Luis L-S 9-20 · Roberto todos los días 8-20.
+// En el briefing esto hace que Luis NO reciba el de los domingos.
+const HORARIOS_DEFAULT = '579628082:1-6@9-20,302195575:0-6@8-20';
+function horarioOk(env, sid, now = new Date()) {
+  const entry = String(env.AVISO_HORARIOS || HORARIOS_DEFAULT)
+    .split(',').map(s => s.trim()).find(s => s.startsWith(String(sid) + ':'));
+  if (!entry) return true;
+  const m = entry.match(/:(\d)-(\d)@(\d{1,2})-(\d{1,2})$/);
+  if (!m) return true;
+  const p = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Santiago', hour: 'numeric', hour12: false, weekday: 'short' }).formatToParts(now);
+  const hora = Number(p.find(x => x.type === 'hour').value);
+  const dia = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }[p.find(x => x.type === 'weekday').value];
+  return dia >= Number(m[1]) && dia <= Number(m[2]) && hora >= Number(m[3]) && hora < Number(m[4]);
+}
 const chileHHMM = (iso) => new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(iso));
 
 const cfg = (env) => {
@@ -128,14 +145,17 @@ async function run(env, url) {
   let enviado = false, error = null;
   if (!dry && mcReady) {
     try {
+      let enviadosN = 0;
       for (const s of C.STAFF_SIDS) {
+        if (!horarioOk(env, s)) continue;   // ej: Luis no recibe el briefing los domingos
         const sid = mcSid(s);
         const r1 = await mcPost(C.MC_TOKEN, '/fb/subscriber/setCustomFieldByName', { subscriber_id: sid, field_name: 'cf_agenda_hoy', field_value: agenda });
         if (!r1.ok) throw new Error(`setField ${r1.status} ${await r1.text()}`);
         const r2 = await mcPost(C.MC_TOKEN, '/fb/sending/sendFlow', { subscriber_id: sid, flow_ns: C.FLOW_BRIEFING });
         if (!r2.ok) throw new Error(`sendFlow ${r2.status} ${await r2.text()}`);
+        enviadosN++;
       }
-      enviado = true;
+      enviado = enviadosN > 0;
     } catch (e) { error = String(e.message || e); }
   }
 

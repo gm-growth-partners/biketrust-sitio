@@ -38,6 +38,23 @@ function keyOk(env, url) {
   return need ? url.searchParams.get('key') === need : true;
 }
 
+// ── Horario saludable por destinatario (hora Chile) ─────────────────────────
+// Env AVISO_HORARIOS: "sid:d1-d2@h1-h2,..." — días 0=Dom..6=Sáb; se envía desde
+// h1:00 hasta h2:00 (exclusivo). Un sid sin entrada recibe siempre. Default:
+// Luis (579628082) L-S 9-20 · Roberto (302195575) todos los días 8-20.
+const HORARIOS_DEFAULT = '579628082:1-6@9-20,302195575:0-6@8-20';
+function horarioOk(env, sid, now = new Date()) {
+  const entry = String(env.AVISO_HORARIOS || HORARIOS_DEFAULT)
+    .split(',').map(s => s.trim()).find(s => s.startsWith(String(sid) + ':'));
+  if (!entry) return true;
+  const m = entry.match(/:(\d)-(\d)@(\d{1,2})-(\d{1,2})$/);
+  if (!m) return true;
+  const p = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Santiago', hour: 'numeric', hour12: false, weekday: 'short' }).formatToParts(now);
+  const hora = Number(p.find(x => x.type === 'hour').value);
+  const dia = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }[p.find(x => x.type === 'weekday').value];
+  return dia >= Number(m[1]) && dia <= Number(m[2]) && hora >= Number(m[3]) && hora < Number(m[4]);
+}
+
 // ── ManyChat helpers (mismo patrón que cron-recordatorios) ──────────────────
 // Para el AVISO A LUIS: setCustomFieldByName(cf_consigna_datos) + sendFlow del
 // flow de 1 nodo que envuelve la plantilla `nueva_consignacion` (Utility).
@@ -221,11 +238,14 @@ export async function onRequestPost({ request, env }) {
         `contacto: ${contacto || 'sin teléfono'}`,
         handle ? `IG @${handle}` : '',
       ].filter(Boolean).join(' · ');
+      let enviados = 0, dormidos = 0;
       for (const sid of C.STAFF_SIDS) {
+        if (!horarioOk(env, sid)) { dormidos++; continue; }
         await mcSetField(C.MC_TOKEN, sid, 'cf_consigna_datos', resumen.slice(0, 900));
         await mcSendFlow(C.MC_TOKEN, sid, C.FLOW_CONSIGNA);
+        enviados++;
       }
-      aviso = 'enviado';
+      aviso = enviados ? 'enviado' + (dormidos ? ` (${dormidos} fuera de horario)` : '') : 'fuera_de_horario';
     } catch (e) {
       aviso = 'error: ' + String(e && e.message || e).slice(0, 200);
     }
