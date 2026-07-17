@@ -2,7 +2,7 @@
 
 > Este archivo lo lee Claude Code automáticamente al iniciar sesión en este repo.
 > Es la **memoria viva del proyecto**: estado, arquitectura, errores ya cometidos (para NO repetirlos) y cómo debe trabajar Claude. **Léelo completo antes de actuar.** Idioma de trabajo: **español**.
-> Última actualización: **2026-07-09** (pre-launch; lanzamiento 2026-07-10).
+> Última actualización: **2026-07-17** (Tablero de reporte A3 desplegado y verificado).
 
 ---
 
@@ -31,6 +31,7 @@ Bike Trust vende bicicletas **Specialized usadas, premium y certificadas** (Sant
 | 🟢 **Sourcing (Puerta 2)** | Tablas **`Solicitudes`** y **`Consignaciones`** (+`Origen` Bot DM/Manual) con páginas cards, formularios manuales y automatizaciones de completado. **Oferta aceptada → la bici nace sola en Inventario (Borrador)**, verificado E2E. Avisos WhatsApp al equipo construidos (`FLOW_NS_SOLICITUD`/`FLOW_NS_CONSIGNA` definidos) — 🟡 esperan plantillas Meta. |
 | 🟢 **Venta única** | Form `/api/registrar-venta?form=1` (bici + lead agendado o walk-in + **precio efectivo** + método de pago) EN VIVO, botón en Panel de inventario. La facturación del reporte usa el precio efectivo. |
 | 🟢 **Avisos WhatsApp al staff** | EN VIVO (2026-07-09): briefing 8AM (Luis+Roberto) · nueva solicitud · nueva oferta · `encargo_recibido` al cliente. 🟡 Esperan Meta: `nuevo_llamado` y `visita_reagendada` (tickets igual se crean; se ven en pantalla). |
+| 🟢 **Tablero de reporte (Anexo A3)** | EN VIVO (2026-07-17) — app web privada **SEPARADA** (repo/proyecto Pages `biketrust-tablero`, carpeta `…/2. Fragua/tablero`). Lee ESTA misma base y calcula 19 métricas en build time; gate server-side (clave compartida) + disparador (Deploy Hook). Solo lectura. **Agregó campos + 3 automatizaciones a esta base** (ver §4). §06 verificado. Su propio `README.md` tiene el estado. |
 
 **Foco actual (2026-07-08): sistema operativo completo (captación P1+P2 + sourcing + venta única). Manual de operación entregado (`…/2. Fragua/manual_operacion_biketrust.html`). Pendiente: MC_KEY (clave generada, receta lista) · limpieza de data de prueba · FAQ real · activaciones Meta (avisos al equipo, briefing, reenganche, `encargo_recibido`) · por construir: secuencia `Conseguida`→cliente (con `reactivacion_stock` ya aprobada) y aviso de reagendo del mismo día · decisión pendiente: destinatarios de los avisos (Luis/Roberto/ambos).**
 
@@ -80,6 +81,7 @@ Bike Trust vende bicicletas **Specialized usadas, premium y certificadas** (Sant
 - **Solicitudes** (`tblHnU7eHyhlbxyGM`, tickets de búsqueda «Consíganmela»): primario `Modelo buscado`, Motorización, Disciplina, Talla, Presupuesto (currency), Notas, `Estado` (`Llamada pendiente/Buscando/Conseguida/Cerrada`), Fecha, Contacto, `Origen` (`Bot DM/Manual`), link `Lead`. La escribe `mc-waitlist` (bot) y el staff por formulario (manual). Es la cola de sourcing. **Cerrada = cuando el cliente COMPRA.**
 - **Llamados** (`tblgApNKo9YiqPalw`, tickets de llamado para región): primario `Nombre`, Teléfono, Ciudad, `Franja` (`Mañana/Tarde`), `Bici de interés` (link), `Estado` (`Llamada pendiente/Llamado/Cerrada`), Fecha, `Origen`, Notas, link `Lead`. La escribe `mc-llamado` (acepta `bici` recId o `reel` Post ID → `Reels.Bici`).
 - **Estado "Llamada pendiente"** (renombrado desde "Nueva" 2026-07-09, en Solicitudes Y Llamados): un ticket del bot nace ahí = **Luis debe llamar**; tras llamar lo mueve (Llamados → `Llamado`; Solicitudes → `Buscando`). Los endpoints escriben ese nombre literal (typecast) — NO renombrar la opción sin tocar `mc-llamado.js`/`mc-waitlist.js`.
+- **Instrumentación del Tablero A3 (2026-07-17, NO borrar):** campos agregados por el tablero de reporte — en **Solicitudes** y **Llamados**: `Creado` (`=CREATED_TIME()`), `Fecha primera llamada` (dateTime), `_ahora` (`=LAST_MODIFIED_TIME({Estado})`); en **Leads**: `Cuestionario iniciado` (checkbox). Los alimentan **3 automatizaciones** (*When record matches conditions*): sello de la 1ª llamada al salir de «Llamada pendiente» (una en Solicitudes, otra en Llamados → copian `_ahora` a `Fecha primera llamada`) y marca de `Cuestionario iniciado` al llegar a `Estado=quiz_iniciado`. Solo los usa el tablero; **no romperlos**. Para que el cuestionario cuente inicios, **ManyChat debe emitir el evento `quiz_iniciado`** (a `mc-evento`) al empezar el quiz (hoy `mc-match` salta directo a match/no-match).
 - **Rating/puntaje de certificación: escala 1 a 7** (decisión reunión 2026-07-08; bajo 4 no se recibe). El formato de carga en Ailoo está en `…/2. Fragua/Formato_descripcion_bicicletas_Ailoo.docx`.
 
 ---
@@ -97,6 +99,7 @@ Bike Trust vende bicicletas **Specialized usadas, premium y certificadas** (Sant
 9. **El form (alta) y la web NO ponen `Estado`** → entra vacío → una **automatización** ("Estado vacío → Borrador") lo marca. La automatización se hace en Airtable (no API).
 10. **Datos de prueba:** usa SIEMPRE un campo checkbox **`DEMO`** para sembrar y luego borrar test data de un golpe (filtro `DEMO=1`). Nunca dejes basura en producción.
 11. **Token pegado en chat** (el PAT). Recordar al usuario rotarlo.
+12. **`NOW()` de Airtable está CACHEADO/atrasado** — llegó a sellar una hora *anterior* al `CREATED_TIME()` del mismo registro (minutos de lag). → Inútil para sellar horas en automatizaciones. Usar **`LAST_MODIFIED_TIME({Campo})`** (hora exacta del cambio de ese campo, sí se recalcula al modificarse). La fórmula de un campo **SÍ se edita por API** (PATCH a `meta/…/fields/{id}`) sin cambiar su id, así las automatizaciones que lo referencian siguen intactas.
 
 ---
 

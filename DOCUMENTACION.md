@@ -2,7 +2,7 @@
 
 > Cómo funciona el sistema de Bike Trust de punta a punta: las partes, los flujos
 > de trabajo del staff y la arquitectura técnica. Idioma: español.
-> Última actualización: **2026-06-30**.
+> Última actualización: **2026-07-17**.
 
 Índice:
 1. [Visión general](#1-visión-general)
@@ -25,6 +25,7 @@ Bike Trust vende **bicicletas Specialized usadas, premium y certificadas** (Sant
 | **Web** | Sitio estático (catálogo + ficha por bici + guías) en Cloudflare Pages. La "capa de confianza". | 🟢 En vivo: https://biketrust-sitio.pages.dev |
 | **Backend / CRM** | La base Airtable: Inventario, Leads, Intereses, Reservas, Reels + interfaces para operar. | 🟢 Operativo |
 | **Funnel** | Instagram + ManyChat (lo que llena el CRM con leads). Captura + ficha + **agendamiento** en vivo; falta WhatsApp. Doc propio: **[`EMBUDO.md`](EMBUDO.md)**. | 🟡 Fases 1-2 en vivo |
+| **Reporte (Tablero A3)** | App web privada de **solo lectura** con 3 paneles y 19 métricas, calculadas desde esta base en build time. Repo/proyecto Pages **aparte** (`biketrust-tablero`, carpeta `…/2. Fragua/tablero`). Su propio `README.md`. | 🟢 En vivo · solo lectura |
 
 **Principio rector:** nada guarda su propia copia de los datos. El sitio se **regenera** desde Airtable en cada publicación.
 
@@ -162,7 +163,8 @@ Base Airtable `appQUgk8aeD752923` ("Biketrust Operaciones"). **No renombrar camp
 - **Reservas** — datos de la reserva web + links a Leads/Intereses.
 - **Solicitudes** — tickets de búsqueda («Consíganmela» del bot u origen manual): Modelo buscado, Motorización, Disciplina, Talla, Presupuesto, Notas, `Estado` (`Nueva/Buscando/Conseguida/Cerrada`), Fecha, Contacto, `Origen` (`Bot DM/Manual`), link `Lead`. Es la cola de sourcing del equipo.
 - **Consignaciones** — ofertas de bicicletas (rama Vender del bot u origen manual): Modelo, Año, Talla, Estado bici, Precio esperado, Contacto, Fotos, `Estado` (`Nueva/En evaluación/Compra directa/Consignación/Rechazada`), Fecha, Notas, `Origen`, link `Lead`. Al aceptarse, una automatización crea la bici en Inventario (Borrador).
-- **Metricas** — capa precalculada del reporte (una fila por dato/período, upsert por `Clave`).
+- **Metricas** — capa precalculada del reporte de Airtable (una fila por dato/período, upsert por `Clave`). *(Nota: el **Tablero A3** es un reporte aparte que NO usa esta tabla — calcula desde los registros crudos en su propio build.)*
+- **Instrumentación del Tablero A3** (2026-07-17, **no borrar**) — campos que llena el tablero de reporte vía automatizaciones: en **Solicitudes** y **Llamados** `Creado`, `Fecha primera llamada`, `_ahora`; en **Leads** `Cuestionario iniciado`. Detalle en `…/2. Fragua/tablero/README.md`.
 
 > Detalle de campos y notas técnicas finas: ver `CLAUDE.md`.
 
