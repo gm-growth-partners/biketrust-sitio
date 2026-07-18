@@ -265,14 +265,52 @@ export async function onRequestPost({ request, env }) {
 
   if (modelo) {
     // ── Modo A · modelo en texto libre ──────────────────────────────────────
+    // Matching TOLERANTE a typos (2026-07-18): además de substring, cada token
+    // de la búsqueda calza contra las palabras del modelo por prefijo o por
+    // distancia de edición ("cruz" → "crux", "quenevo" → "kenevo"). Tolerancia
+    // según largo del token: ≤3 exacto · 4-6 → 1 typo · ≥7 → 2 typos.
+    const lev = (a, b, max) => {
+      if (Math.abs(a.length - b.length) > max) return max + 1;
+      let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+      for (let i = 1; i <= a.length; i++) {
+        const cur = [i];
+        let rowMin = i;
+        for (let j = 1; j <= b.length; j++) {
+          cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+          if (cur[j] < rowMin) rowMin = cur[j];
+        }
+        if (rowMin > max) return max + 1;
+        prev = cur;
+      }
+      return prev[b.length];
+    };
+    const tol = (t) => (t.length >= 7 ? 2 : t.length >= 3 ? 1 : 0);
+    // Calidad del calce token↔palabra: exacto (1) > substring (0.9) > el token
+    // contiene la palabra (0.8, palabras ≥4 para no calzar con "evo"/"sl") >
+    // typo dentro de la tolerancia (0.7). El ranking usa la suma → un calce
+    // exacto le gana a uno con typo ("quenevo" prefiere Kenevo sobre Epic EVO).
+    const tokScore = (t, words) => {
+      let best = 0;
+      for (const w of words) {
+        let s = 0;
+        if (w === t) s = 1;
+        else if (w.includes(t)) s = t.length >= 3 ? 0.9 : 0.6;
+        else if (t.includes(w) && w.length >= 4) s = 0.8;
+        else if (lev(t, w, tol(t)) <= tol(t)) s = 0.7;
+        if (s > best) best = s;
+      }
+      return best;
+    };
     const q = norm(modelo);
     const qTokens = q.split(' ').filter(Boolean);
     const matches = (records) => records
       .map(b => {
         const txt = norm(`${b.fields?.Marca || ''} ${b.fields?.Modelo || ''}`);
+        const words = txt.split(' ').filter(Boolean);
         const sub = txt.includes(q);
-        const allTok = qTokens.every(t => txt.includes(t));
-        return { b, hit: sub || allTok, sub, cov: qTokens.filter(t => txt.includes(t)).length };
+        const allTok = qTokens.every(t => tokScore(t, words) > 0);
+        const cov = qTokens.reduce((a, t) => a + tokScore(t, words), 0);
+        return { b, hit: sub || allTok, sub, cov };
       })
       .filter(x => x.hit)
       .sort((a, b) => (b.sub - a.sub) || (b.cov - a.cov));
