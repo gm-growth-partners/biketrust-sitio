@@ -104,6 +104,47 @@ function fechaVisitaDe(fecha, hora) {
   return h ? `${f.slice(0, 10)}T${h.slice(0, 5)}:00` : `${f.slice(0, 10)}T12:00:00`;
 }
 
+const p2 = (n) => String(n).padStart(2, '0');
+
+// Interpreta lo que manda el picker de fecha/hora de ManyChat (campo `fechaHora`)
+// como HORA DE PARED de Chile. Acepta 'YYYY-MM-DD[T ]HH:MM' (con o sin segundos u
+// offset — el offset se IGNORA: vale la hora que la persona eligió en pantalla),
+// 'DD/MM/YYYY HH:MM' y 'YYYY-MM-DD' pelado (→ mediodía).
+function parseFechaHora(v) {
+  const s = String(v || '').trim();
+  if (!s || s.includes('{{')) return null; // merge tag sin resolver
+  let m = /^(\d{4})-(\d{1,2})-(\d{1,2})[T ](\d{1,2}):(\d{2})/.exec(s);
+  if (m) return `${m[1]}-${p2(m[2])}-${p2(m[3])}T${p2(m[4])}:${m[5]}:00`;
+  m = /^(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})[,T ]+(\d{1,2}):(\d{2})/.exec(s);
+  if (m) return `${m[3]}-${p2(m[2])}-${p2(m[1])}T${p2(m[4])}:${m[5]}:00`;
+  m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(s);
+  if (m) return `${m[1]}-${p2(m[2])}-${p2(m[3])}T12:00:00`;
+  return null;
+}
+
+// ── Horario de atención del showroom (hora Chile) ───────────────────────────
+// L-V 9:00–20:00 · Sáb 10:00–14:00 · Dom cerrado (definido por el negocio,
+// 2026-07-18). La última visita parte 1 h antes del cierre. Solo se valida la
+// fecha ELEGIDA por la persona (picker / texto); los slots A/B del servidor ya
+// nacen dentro del horario.
+const HORARIO = { 0: null, 1: [9, 20], 2: [9, 20], 3: [9, 20], 4: [9, 20], 5: [9, 20], 6: [10, 14] };
+const HORARIO_TXT = 'lunes a viernes de 9:00 a 20:00 y sábado de 10:00 a 14:00';
+function validarVisita(naive) {
+  const bad = (motivo, mensaje) => ({ ok: false, motivo, mensaje });
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(String(naive || ''));
+  if (!m) return bad('formato', 'No entendí la fecha 🙈 ¿Me la eliges de nuevo?');
+  const visita = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]);
+  const ahoraCL = Date.now() - 4 * 3600 * 1000; // mismo criterio -4 del resto del código
+  const dow = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay();
+  const rango = HORARIO[dow];
+  const hora = +m[4] + (+m[5]) / 60;
+  if (visita - ahoraCL < 3600 * 1000) return bad('pasado', 'Ese horario ya está muy encima ⏰ Elige uno con al menos 1 hora de anticipación.');
+  if (visita - ahoraCL > 60 * 86400 * 1000) return bad('muy_lejos', 'Uy, eso es muy adelante 📅 Elige una fecha dentro de los próximos 2 meses.');
+  if (!rango) return bad('domingo', `Los domingos descansamos 😴 Atendemos ${HORARIO_TXT}. ¿Qué otro día te acomoda?`);
+  if (hora < rango[0] || hora > rango[1] - 1) return bad('fuera_horario', `A esa hora estamos cerrados 🙈 Atendemos ${HORARIO_TXT} (última visita 1 h antes del cierre). ¿Probamos otra hora?`);
+  return { ok: true };
+}
+
 // Fecha legible en español a partir del naive `YYYY-MM-DDTHH:MM:00` (que ya es
 // hora de Chile). Se formatea en UTC para que el reloj de pared no se corra.
 // La usa la confirmación inmediata de ManyChat (cf_fecha_visita). → "sábado, 10 de julio, 11:00".
@@ -132,11 +173,15 @@ function slotsAB() {
     return { fecha, hora, fechaVisita: `${fecha}T${hora}:00` };
   };
   const nombreDia = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+  const abrevDia = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
   const A = proximo(6, '11:00'), B = proximo(5, '18:00');
   const fmt = (wd, s) => `${nombreDia[wd]} ${s.fecha.slice(8, 10)}, ${s.hora}`;
+  // labelBtn: título corto para el BOTÓN dinámico de ManyChat (límite ~20 chars
+  // de Instagram). Se mapea a cf_slot_a / cf_slot_b en la Solicitud externa.
+  const fmtBtn = (wd, s) => `📅 ${abrevDia[wd]} ${Number(s.fecha.slice(8, 10))} · ${s.hora}`;
   return [
-    { id: 'A', label: fmt(6, A), ...A },
-    { id: 'B', label: fmt(5, B), ...B },
+    { id: 'A', label: fmt(6, A), labelBtn: fmtBtn(6, A), ...A },
+    { id: 'B', label: fmt(5, B), labelBtn: fmtBtn(5, B), ...B },
   ];
 }
 
@@ -183,12 +228,21 @@ export async function onRequestPost({ request, env }) {
   const slot      = data?.slot ? String(data.slot).trim().toUpperCase() : '';
   const subId     = data?.subscriber_id ? String(data.subscriber_id).trim() : ''; // id de ManyChat, para la Fase 3
 
-  // fecha/hora explícitos mandan; si no, se resuelve por `slot` (A/B) server-side.
-  let fechaVisita = fechaVisitaDe(data?.fecha, data?.hora);
+  // fecha/hora explícitos mandan (fechaHora = picker de ManyChat, o fecha+hora
+  // legacy); si no, se resuelve por `slot` (A/B) server-side.
+  const explicita = !!(data?.fechaHora || data?.fecha);
+  let fechaVisita = parseFechaHora(data?.fechaHora) || fechaVisitaDe(data?.fecha, data?.hora);
   if (!fechaVisita && slot) fechaVisita = slotsAB().find(s => s.id === slot)?.fechaVisita || null;
 
   if (!leadIn && !handle && !subId) return reply({ error: 'missing_fields (lead, handle o subscriber_id)' }, 422);
-  if (!fechaVisita) return reply({ error: 'missing_fields (fecha [+hora] o slot A/B)' }, 422);
+  if (explicita) {
+    // Horario elegido por la persona → validar contra el horario de la tienda.
+    // Respuesta 200 con ok:false para que ManyChat pueda mapear `valido`/`mensaje`
+    // y re-abrir el picker con el motivo (un 4xx cortaría el mapeo).
+    const v = fechaVisita ? validarVisita(fechaVisita) : { ok: false, motivo: 'formato', mensaje: 'No entendí la fecha 🙈 ¿Me la eliges de nuevo?' };
+    if (!v.ok) return reply({ ok: false, valido: 'no', motivo: v.motivo, mensaje: v.mensaje, horario: HORARIO_TXT });
+  }
+  if (!fechaVisita) return reply({ error: 'missing_fields (fecha [+hora], fechaHora o slot A/B)' }, 422);
 
   const C = cfg(env);
   if (!C.READ || !C.WRITE) return reply({ error: 'not_configured' }, 503);
@@ -363,7 +417,7 @@ export async function onRequestPost({ request, env }) {
   }
 
   return reply({
-    ok: true, leadId, interesId, interesCreado, biciId: biciId || null,
+    ok: true, valido: 'si', leadId, interesId, interesCreado, biciId: biciId || null,
     biciNombre: biciNombre || null, fechaVisitaLegible,
     slot: slot || null, fechaVisita, estadoActual: fieldsLead['Estado'] || estadoActual, estadoAplicado,
     avisoReagendo,
@@ -377,5 +431,11 @@ export async function onRequestPost({ request, env }) {
 export async function onRequestGet({ request, env }) {
   const url = new URL(request.url);
   if (!keyOk(env, url)) return reply({ error: 'unauthorized' }, 401);
-  return reply({ ok: true, slots: slotsAB() });
+  const slots = slotsAB();
+  return reply({
+    ok: true, slots,
+    // Aplanado para el mapeo de respuesta de ManyChat (JSONPath simple):
+    slotA: slots[0].labelBtn, slotB: slots[1].labelBtn,
+    horario: HORARIO_TXT,
+  });
 }

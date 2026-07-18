@@ -66,6 +66,44 @@ const clean = (v, max = 200) => {
   return s.includes('{{') ? '' : s.slice(0, max);
 };
 
+const p2 = (n) => String(n).padStart(2, '0');
+const sinAcentos = (s) => String(s || '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
+
+// Día preferido para el llamado (`dia`): quick reply del bot ('lo antes posible',
+// 'hoy', 'mañana', 'lunes'…'sábado') o fecha explícita ('YYYY-MM-DD', 'DD/MM/YYYY').
+// Se resuelve a una fecha en hora Chile → campo `Llamar el` del ticket. El staff
+// no llama en domingo → un domingo se corre al lunes. Sin `dia` → campo vacío
+// (comportamiento previo: se llama lo antes posible).
+function resolverDia(v) {
+  const s = sinAcentos(clean(v, 40));
+  if (!s) return null;
+  const hoyCL = new Date(Date.now() - 4 * 3600 * 1000);
+  const mas = (n) => new Date(hoyCL.getTime() + n * 86400 * 1000);
+  const fecha = (d) => d.toISOString().slice(0, 10);
+  let out = null, m;
+  if ((m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(s))) out = `${m[1]}-${p2(m[2])}-${p2(m[3])}`;
+  else if ((m = /^(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})/.exec(s))) out = `${m[3]}-${p2(m[2])}-${p2(m[1])}`;
+  else if (/antes posible|cuanto antes|asap/.test(s) || /^hoy/.test(s)) out = fecha(hoyCL);
+  else if (/^manana/.test(s)) out = fecha(mas(1));
+  else {
+    const DIAS = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+    const idx = DIAS.findIndex(d => s.startsWith(d));
+    if (idx >= 0) out = fecha(mas((idx - hoyCL.getUTCDay() + 7) % 7)); // 0 = hoy mismo
+  }
+  if (!out) return null;
+  // domingo → lunes
+  const dow = new Date(out + 'T00:00:00Z').getUTCDay();
+  if (dow === 0) out = fecha(new Date(Date.parse(out + 'T00:00:00Z') + 86400 * 1000));
+  return out;
+}
+
+// "2026-07-21" → "lunes 21 de julio" (para el resumen del aviso al staff).
+function diaLegible(f) {
+  const d = new Date(f + 'T12:00:00Z');
+  if (isNaN(d)) return f;
+  return new Intl.DateTimeFormat('es-CL', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long' }).format(d);
+}
+
 // ── ManyChat helpers (mismo patrón que mc-consigna / cron-recordatorios) ────
 async function mcPost(token, path, body) {
   return afetch(`${MC_API}${path}`, {
@@ -130,6 +168,8 @@ export async function onRequestPost({ request, env }) {
   const biciIn = clean(data?.bici, 40);
   const reel = clean(data?.reel, 80);
   const notas = clean(data?.notas, 2000);
+  // Día preferido para el llamado (quick reply o fecha del picker) → `Llamar el`.
+  const llamarEl = resolverDia(data?.dia || data?.fechaLlamado);
 
   if (!handle && !subId) return reply({ error: 'missing_fields (handle o subscriber_id)' }, 422);
 
@@ -213,6 +253,7 @@ export async function onRequestPost({ request, env }) {
       ...(telefono ? { 'Teléfono': telefono } : {}),
       ...(ciudad ? { 'Ciudad': ciudad } : {}),
       ...(franja ? { 'Franja': franja } : {}),
+      ...(llamarEl ? { 'Llamar el': llamarEl } : {}),
       ...(biciId ? { 'Bici de interés': [biciId] } : {}),
       ...(notas ? { 'Notas': notas } : {}),
     } }),
@@ -235,7 +276,8 @@ export async function onRequestPost({ request, env }) {
         nombre,
         ciudad ? `de ${ciudad}` : '',
         biciNombre ? `interesado en ${biciNombre}` : '',
-        franja ? `llamar por la ${franja.toLowerCase()}` : '',
+        llamarEl ? `llamar el ${diaLegible(llamarEl)}` : '',
+        franja ? `por la ${franja.toLowerCase()}` : '',
         telefono || 'sin teléfono',
       ].filter(Boolean).join(' · ');
       let enviados = 0, dormidos = 0;
@@ -251,6 +293,6 @@ export async function onRequestPost({ request, env }) {
     }
   }
 
-  return reply({ ok: true, llamadoId, leadId, leadCreado, biciNombre: biciNombre || null, aviso });
+  return reply({ ok: true, llamadoId, leadId, leadCreado, biciNombre: biciNombre || null, llamarEl: llamarEl || null, llamarElLegible: llamarEl ? diaLegible(llamarEl) : null, aviso });
 }
 // Sólo POST. Pages responde 405 automáticamente a otros métodos en esta ruta.
