@@ -7,7 +7,9 @@
 >
 > Complementa a [`DOCUMENTACION.md`](DOCUMENTACION.md) (web + CRM + reportes) y a
 > [`CLAUDE.md`](CLAUDE.md) (notas técnicas finas y gotchas). Idioma: español.
-> Última actualización: **2026-07-09** (estado de lanzamiento).
+> Última actualización: **2026-07-20**.
+>
+> ⚠️ **Cambio de alcance decidido 2026-07-20:** el embudo llega **hasta el show/no-show** de la visita. El registro de la VENTA pasará a venir de **Ailoo** (ERP central) vía automatización Ailoo→Airtable, con trazabilidad por teléfono del comprador + código único de la bici (SWSS). El cierre que hoy marca el staff (fila 3 de la tabla) queda como fallback hasta que esa integración viva. Detalle: banner §2 de `CLAUDE.md`.
 
 **Leyenda de estado:** ✅ en vivo y verificado · 🔧 por construir · ⏸️ bloqueado por dependencia externa · 💡 diseñado, en fila.
 

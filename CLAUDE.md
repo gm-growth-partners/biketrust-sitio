@@ -2,7 +2,7 @@
 
 > Este archivo lo lee Claude Code automáticamente al iniciar sesión en este repo.
 > Es la **memoria viva del proyecto**: estado, arquitectura, errores ya cometidos (para NO repetirlos) y cómo debe trabajar Claude. **Léelo completo antes de actuar.** Idioma de trabajo: **español**.
-> Última actualización: **2026-07-17** (Tablero de reporte A3 desplegado y verificado).
+> Última actualización: **2026-07-20** (decisión Ailoo = ERP central; ver banner §2).
 
 ---
 
@@ -34,6 +34,12 @@ Bike Trust vende bicicletas **Specialized usadas, premium y certificadas** (Sant
 | 🟢 **Tablero de reporte (Anexo A3)** | EN VIVO (2026-07-17) — app web privada **SEPARADA** (repo/proyecto Pages `biketrust-tablero`, carpeta `…/2. Fragua/tablero`). Lee ESTA misma base y calcula 19 métricas en build time; gate server-side (clave compartida) + disparador (Deploy Hook). Solo lectura. **Agregó campos + 3 automatizaciones a esta base** (ver §4). §06 verificado. Su propio `README.md` tiene el estado. |
 
 **Foco actual (2026-07-08): sistema operativo completo (captación P1+P2 + sourcing + venta única). Manual de operación entregado (`…/2. Fragua/manual_operacion_biketrust.html`). Pendiente: MC_KEY (clave generada, receta lista) · limpieza de data de prueba · FAQ real · activaciones Meta (avisos al equipo, briefing, reenganche, `encargo_recibido`) · por construir: secuencia `Conseguida`→cliente (con `reactivacion_stock` ya aprobada) y aviso de reagendo del mismo día · decisión pendiente: destinatarios de los avisos (Luis/Roberto/ambos).**
+
+⚠️ **DECISIÓN 2026-07-20 (reunión con los dueños) — AILOO = ERP CENTRAL; el embudo se corta en show/no-show.**
+- **Ailoo** (ERP chileno donde BikeTrust factura y donde vive biketrust.cl) pasa a ser el sistema central. Se acordó pedirle a Ailoo **dos automatizaciones hacia Airtable**: (1) **alta de bici** → la bici nace en Inventario lista para publicar (requiere **campos personalizados** en el form de producto de Ailoo — talla/año/motorización/etc. como campos, NO texto libre en la descripción; es REQUISITO, no nice-to-have); (2) **venta** → la bici queda `Vendida` + llegan los datos del comprador.
+- **Trazabilidad de venta:** doble amarre — **teléfono del comprador** (pedido en tienda) ↔ `Leads.WhatsApp` (nivel persona) y **código único por unidad** (campo tipo "SWSS" de Ailoo, análogo a una patente) ↔ columna nueva `SWSS` en Inventario (nivel bici; conecta también reel→bici→venta). Cada venta se clasificará: match por teléfono / match por bici / sin rastro.
+- **Alcance del embudo = hasta show/no-show.** El staff ya NO registrará "Compró" en Airtable cuando la automatización de venta esté viva: `registrar-venta` (form, botón 💰, cascada) queda **supersedido como camino principal** (mantener de fallback hasta que Ailoo esté probado). El formato Word de descripción (`Formato_descripcion_bicicletas_Ailoo.docx`) y la replicación manual de Gabriel quedan como **puente transitorio**.
+- **Estado:** Ailoo NO tiene API pública ni webhooks documentados (sí sincroniza productos con Shopify/WooCommerce/Mercado Libre → es capacidad que ya tienen; cobran por algunas integraciones). Mensaje de requerimiento a Ailoo (contacto: "Gina") **redactado, EN PAUSA** hasta que Luis muestre el proceso real de subida/venta en Ailoo. Recepción lado nuestro = 2 Pages Functions futuras (`/api/ailoo-bici`, `/api/ailoo-venta`), patrón mc-*. Detalle completo: memoria de Claude `project_biketrust_ailoo_integracion.md`.
 
 ⚠️ **REDISEÑO 2026-07-01 — arquitectura 100% automatizada.** El embudo se automatiza de punta a punta hasta el showroom; el humano solo cierra en tienda (y escala precio). El "cerrador humano en el agendamiento" del diseño original se reemplaza por **agenda-en-el-chat + recordatorios por WhatsApp** (Instagram no deja mandar fuera de la ventana de 24h; WhatsApp con plantillas sí). **Documento autoritativo del diseño: `…/2. Fragua/ARQUITECTURA_EMBUDO.md`** (7 etapas, dependencia dura = conectar WhatsApp Business API a ManyChat). Plan operativo día a día: `…/2. Fragua/PLAN_embudo.md`.
 
