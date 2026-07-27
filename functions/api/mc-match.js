@@ -303,10 +303,16 @@ export async function onRequestPost({ request, env }) {
     };
     const q = norm(modelo);
     const qTokens = q.split(' ').filter(Boolean);
+    // Bigramas: pares de palabras adyacentes pegadas ("s works" → "sworks").
+    // El normalizador parte "S-Works" en dos palabras, así que un cliente que
+    // escribe "sworks" (o "swork" con typo) no calzaba con ninguna. Caso real:
+    // "Levo sl swork" → No-match con la Levo SL S-Works Disponible (2026-07-26).
+    const bigrams = (ws) => ws.slice(0, -1).map((w, i) => w + ws[i + 1]);
     const matches = (records) => records
       .map(b => {
         const txt = norm(`${b.fields?.Marca || ''} ${b.fields?.Modelo || ''}`);
-        const words = txt.split(' ').filter(Boolean);
+        const ws = txt.split(' ').filter(Boolean);
+        const words = ws.concat(bigrams(ws));
         const sub = txt.includes(q);
         const allTok = qTokens.every(t => tokScore(t, words) > 0);
         const cov = qTokens.reduce((a, t) => a + tokScore(t, words), 0);
