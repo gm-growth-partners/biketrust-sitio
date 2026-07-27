@@ -57,6 +57,11 @@ entregadas, **0 visitas agendadas**, 5 DMs libres varados en `nuevo`):
 Acompañan (código, no ManyChat): umbral de no-match en `mc-match` modo B (§2.2) ·
 ManyChat emite `quiz_iniciado` · hora exacta en `Llamados` · semana en curso en el tablero.
 
+**Insumos del D1 listos (2026-07-27):** [`docs/V2_DIA1_INSUMOS.md`](docs/V2_DIA1_INSUMOS.md)
+— runbook ordenado, hoja definitiva de **44** campos (conteo real; los «33/34» eran erróneos),
+las 9 entradas con sus shortcodes y bodies JSON, decisiones abiertas y verificación de cierre.
+La `MC_KEY` nueva está generada en `.dev.vars` (`MC_KEY_V2`, gitignored — nunca al repo).
+
 ## 0.7 Fe de erratas de los documentos de diseño (leer antes de montar)
 
 Del **cuaderno de montaje** (`docs/cuaderno_montaje_biketrust.html`):
