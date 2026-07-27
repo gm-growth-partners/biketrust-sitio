@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BikeTrust · Árbol de Decisiones v2 · Embudo Comprador</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --carbon: #0F0F0F;
+    --panel: #191613;
+    --panel-2: #211D18;
+    --bronce: #A88454;
+    --bronce-claro: #C9A97C;
+    --hueso: #EDE6DA;
+    --humo: #8F877B;
+    --humo-dim: #59534B;
+    --linea: rgba(237, 230, 218, 0.08);
+    --acero: #7E8891;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body { background: var(--carbon); color: var(--hueso); font-family: 'DM Sans', -apple-system, sans-serif; line-height: 1.6; font-size: 15.5px; }
+  .nav { position: sticky; top: 0; z-index: 50; background: rgba(15,15,15,0.92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--linea); }
+  .nav-inner { max-width: 1000px; margin: 0 auto; padding: 0.85rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; }
+  .nav-brand { font-weight: 700; letter-spacing: 0.5px; font-size: 15px; }
+  .nav-brand span { color: var(--bronce); }
+  .nav-links { display: flex; gap: 1.2rem; list-style: none; flex-wrap: wrap; }
+  .nav-links a { color: var(--humo); text-decoration: none; font-size: 12px; font-weight: 500; letter-spacing: 0.8px; text-transform: uppercase; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--bronce-claro); }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 0 1.5rem; }
+
+  .cover { padding: 4rem 0 2.5rem; border-bottom: 1px solid var(--linea); }
+  .eyebrow { font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: var(--bronce); font-weight: 500; margin-bottom: 1rem; }
+  .cover h1 { font-size: clamp(28px, 4.5vw, 42px); font-weight: 700; letter-spacing: -1px; line-height: 1.12; margin-bottom: 0.9rem; }
+  .cover h1 em { font-style: normal; color: var(--bronce); }
+  .cover-sub { color: var(--humo); max-width: 700px; font-size: 15.5px; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 0.6rem 1.4rem; padding: 1.4rem 0 0; align-items: center; }
+  .lg { display: flex; align-items: center; gap: 0.45rem; font-size: 12.5px; color: var(--humo); }
+  .dot-full { color: #7FA36B; font-size: 14px; font-weight: 700; }
+  .dot-half { color: var(--bronce); font-size: 16px; font-weight: 700; }
+  .dot-skip { color: var(--humo-dim); font-size: 11px; }
+
+  .chip { display: inline-block; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; font-weight: 700; border-radius: 5px; padding: 2px 8px; white-space: nowrap; vertical-align: middle; }
+  .n-bot { color: var(--acero); border: 1px solid rgba(126, 136, 145, 0.55); }
+  .n-hum { color: var(--carbon); background: var(--bronce); }
+  .n-tim { color: var(--bronce-claro); border: 1px dashed rgba(168, 132, 84, 0.8); }
+  .ph { font-family: 'DM Mono', monospace; font-size: 11px; color: #D9B778; border: 1px dashed rgba(217, 183, 120, 0.55); border-radius: 4px; padding: 1px 6px; white-space: nowrap; }
+
+  .section { padding: 3rem 0 2rem; border-bottom: 1px solid var(--linea); }
+  .section h2 { font-size: clamp(21px, 3vw, 27px); font-weight: 700; letter-spacing: -0.4px; margin-bottom: 0.4rem; }
+  .section-lead { color: var(--humo); font-size: 14.5px; max-width: 720px; margin-bottom: 1.6rem; }
+
+  .mhead { display: grid; grid-template-columns: 1.7fr repeat(4, 1fr) 0.9fr; gap: 0.5rem; padding: 0 1.1rem 0.5rem; font-size: 10.5px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--humo); font-weight: 500; }
+  .mhead div:nth-child(n+2) { text-align: center; }
+
+  details.ruta { background: var(--panel); border: 1px solid var(--linea); border-radius: 10px; margin-bottom: 0.55rem; overflow: hidden; }
+  details.ruta[open] { border-color: rgba(168, 132, 84, 0.45); }
+  summary.fila { display: grid; grid-template-columns: 1.7fr repeat(4, 1fr) 0.9fr; gap: 0.5rem; align-items: center; padding: 0.85rem 1.1rem; cursor: pointer; list-style: none; transition: background 0.2s; }
+  summary.fila::-webkit-details-marker { display: none; }
+  summary.fila:hover { background: var(--panel-2); }
+  .fila .rname { font-weight: 500; font-size: 14.5px; display: flex; align-items: center; gap: 0.55rem; }
+  .rnum { font-family: 'DM Mono', monospace; font-size: 11.5px; color: var(--bronce); }
+  .fila .cell { text-align: center; }
+  .fila .sal { text-align: center; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--bronce-claro); }
+  .caret { color: var(--humo-dim); font-size: 11px; transition: transform 0.2s; margin-left: auto; }
+  details[open] .caret { transform: rotate(90deg); }
+
+  .rama { padding: 0.4rem 1.2rem 1.3rem; border-top: 1px solid var(--linea); background: rgba(0,0,0,0.18); }
+  .rama h4 { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--bronce); font-weight: 500; margin: 1.1rem 0 0.5rem; }
+  .nodo { display: flex; gap: 0.7rem; align-items: baseline; padding: 0.42rem 0; border-bottom: 1px dashed rgba(237,230,218,0.05); font-size: 14px; }
+  .nodo:last-child { border-bottom: none; }
+  .ncode { font-family: 'DM Mono', monospace; font-size: 11.5px; color: var(--humo); min-width: 34px; }
+  .nbody { flex: 1; }
+  .nbody b { font-weight: 500; color: var(--hueso); }
+  .nbody .sub { display: block; font-size: 12.5px; color: var(--humo); margin-top: 0.15rem; }
+  .subrama { margin: 0.5rem 0 0.3rem 2.4rem; padding-left: 0.9rem; border-left: 2px solid rgba(168,132,84,0.35); }
+  .subrama .nodo { padding: 0.32rem 0; }
+
+  .doc-grid { display: grid; gap: 0.8rem; }
+  .doc-card { background: var(--panel); border: 1px solid var(--linea); border-left: 3px solid var(--bronce); border-radius: 0 10px 10px 0; padding: 1.2rem 1.4rem; }
+  .doc-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 0.15rem; }
+  .doc-card h3 code { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--bronce); font-weight: 500; margin-right: 0.5rem; }
+  .doc-hab { font-size: 12.5px; color: var(--humo); margin-bottom: 0.7rem; }
+  .doc-card ul { list-style: none; }
+  .doc-card li { font-size: 13.5px; padding: 0.18rem 0; color: var(--hueso); }
+  .doc-card li::before { content: "·"; color: var(--bronce); font-weight: 700; margin-right: 0.55rem; }
+
+  .trans-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0.8rem; }
+  .trans-card { background: var(--panel); border: 1px solid var(--linea); border-radius: 10px; padding: 1.1rem 1.3rem; }
+  .trans-card h3 { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--bronce); font-weight: 500; margin-bottom: 0.5rem; }
+  .trans-card p { font-size: 13.5px; color: var(--hueso); }
+
+  .btab tr.puerta td { text-align: left; font-size: 10.5px; letter-spacing: 2px; text-transform: uppercase; color: var(--bronce); background: rgba(168,132,84,0.06); padding: 0.55rem 0.3rem; font-weight: 700; }
+  .btab tr.link { cursor: pointer; }
+  .btab tr.link:hover td { background: rgba(168,132,84,0.05); }
+  .btab tr.futura { opacity: 0.45; }
+  .chip.v-si { color: #7FA36B; border: 1px solid rgba(127,163,107,0.6); }
+  .chip.v-par { color: var(--bronce-claro); border: 1px dashed rgba(168,132,84,0.8); }
+  .chip.v-no { color: #C0533E; border: 1px solid rgba(192,83,62,0.6); }
+  .cnode { margin: 1.1rem 0 1.4rem; }
+  .cnode-t { font-family: 'DM Mono', monospace; font-size: 11.5px; color: var(--bronce); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 0.4rem; }
+  .burbuja { background: var(--panel-2); border: 1px solid var(--linea); border-radius: 4px 14px 14px 14px; padding: 0.65rem 0.95rem; max-width: 580px; font-size: 14px; margin: 0.35rem 0; color: var(--hueso); }
+  .botonera { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.5rem 0 0.2rem; }
+  .btn-ig { border: 1px solid rgba(168,132,84,0.55); color: var(--bronce-claro); border-radius: 18px; padding: 4px 13px; font-size: 12.5px; white-space: nowrap; }
+  .arcos { font-size: 12.5px; color: var(--humo); margin-top: 0.5rem; line-height: 1.55; }
+  .arcos b { color: var(--hueso); font-weight: 500; }
+  .brief { background: rgba(168,132,84,0.08); border: 1px dashed rgba(168,132,84,0.5); border-radius: 8px; padding: 0.6rem 0.9rem; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--bronce-claro); max-width: 580px; margin: 0.35rem 0; }
+  .btab tr.rref { cursor: pointer; }
+  .btab tr.rref:hover td { background: rgba(168,132,84,0.05); }
+  .btab tr.rdet { display: none; }
+  .btab tr.rdet.open { display: table-row; }
+  .rdet-b { text-align: left; font-size: 13px; color: var(--hueso); background: rgba(0,0,0,0.2); border-left: 2px solid rgba(168,132,84,0.45); padding: 0.65rem 0.9rem; margin: 0.25rem 0 0.55rem; line-height: 1.6; }
+  .rdet-b b { color: var(--bronce-claro); font-weight: 700; }
+  .flowspec { background: var(--panel); border: 1px solid var(--linea); border-radius: 10px; padding: 1.2rem 1.4rem; margin-bottom: 1rem; }
+  .flowspec.core { border-left: 3px solid #7FA36B; }
+  .flowspec.tronco { border-left: 3px solid var(--bronce); }
+  .flowspec.transversal { border-left: 3px dashed var(--bronce); }
+  .fs-h { display: flex; align-items: baseline; gap: 0.6rem; margin-bottom: 0.2rem; flex-wrap: wrap; }
+  .fs-h h3 { font-size: 15.5px; font-weight: 700; }
+  .fs-id { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--bronce); border: 1px solid rgba(168,132,84,0.5); border-radius: 5px; padding: 1px 7px; }
+  .fs-trig { font-size: 12.5px; color: var(--humo); margin-bottom: 0.7rem; }
+  .fs-trig b { color: var(--bronce-claro); font-weight: 500; }
+  .blk { display: flex; gap: 0.55rem; align-items: baseline; padding: 0.28rem 0; font-size: 13.5px; line-height: 1.5; }
+  .blk-n { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--humo-dim); min-width: 20px; }
+  .blk-t { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; border-radius: 4px; padding: 1px 7px; white-space: nowrap; }
+  .t-txt { color: var(--acero); border: 1px solid rgba(126,136,145,0.5); }
+  .t-btn { color: var(--bronce-claro); border: 1px solid rgba(168,132,84,0.5); }
+  .t-act { color: #7FA36B; border: 1px solid rgba(127,163,107,0.5); }
+  .t-req { color: #C9A97C; border: 1px dashed rgba(217,183,120,0.7); background: rgba(217,183,120,0.06); }
+  .t-cnd { color: #B98BD0; border: 1px solid rgba(185,139,208,0.5); }
+  .t-dly { color: var(--humo); border: 1px dashed rgba(143,135,123,0.6); }
+  .t-flw { color: #C0533E; border: 1px solid rgba(192,83,62,0.5); }
+  .blk-d { flex: 1; color: var(--hueso); }
+  .blk-d b { color: var(--bronce-claro); font-weight: 500; }
+  .fs-sub { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--bronce); font-weight: 500; margin: 0.8rem 0 0.35rem; }
+  .fs-arcos { font-size: 12.5px; color: var(--humo); line-height: 1.6; }
+  .fs-arcos b { color: var(--hueso); font-weight: 500; }
+  .req-detail { background: rgba(217,183,120,0.05); border: 1px dashed rgba(217,183,120,0.4); border-radius: 6px; padding: 0.55rem 0.85rem; margin: 0.4rem 0; font-family: 'DM Mono', monospace; font-size: 11.5px; color: var(--bronce-claro); line-height: 1.65; }
+  .conv { font-size: 12.5px; color: var(--hueso); margin-top: 0.6rem; padding-top: 0.5rem; border-top: 1px dashed var(--linea); }
+  .conv b { color: #7FA36B; font-weight: 700; }
+  .footer { text-align: center; padding: 2.6rem 0 3.5rem; color: var(--humo-dim); font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; }
+
+  .metodo { border-left: 3px solid var(--humo-dim); background: var(--panel); padding: 0.9rem 1.2rem; border-radius: 0 8px 8px 0; margin-bottom: 2rem; max-width: 780px; }
+  .metodo p { font-size: 13px; color: var(--humo); }
+  .metodo b { color: var(--hueso); font-weight: 500; }
+  .bench { margin-bottom: 2.4rem; }
+  .bench h3 { font-size: 17px; font-weight: 700; margin-bottom: 0.2rem; }
+  .bench h3 span { color: var(--bronce); font-weight: 500; font-size: 12.5px; letter-spacing: 0.3px; }
+  .bench-ctx { font-size: 13.5px; color: var(--humo); max-width: 760px; margin-bottom: 0.8rem; }
+  .btab-wrap { overflow-x: auto; border: 1px solid var(--linea); border-radius: 10px; background: var(--panel); }
+  .btab { width: 100%; border-collapse: collapse; min-width: 560px; }
+  .btab th { font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--humo); font-weight: 500; text-align: center; padding: 0.6rem 0.5rem; border-bottom: 1px solid var(--linea); }
+  .btab th:first-child { text-align: left; padding-left: 1rem; }
+  .btab td { font-size: 13.5px; text-align: center; padding: 0.5rem 0.5rem; border-bottom: 1px solid rgba(237,230,218,0.05); }
+  .btab td:first-child { text-align: left; padding-left: 1rem; }
+  .btab tr:last-child td { border-bottom: none; }
+  .btab .sal { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--bronce-claro); }
+  .btab tr.firma td { background: rgba(168, 132, 84, 0.09); }
+  .btab tr.firma td:first-child { font-weight: 500; }
+  .bench-notes { font-size: 13px; color: var(--humo); margin-top: 0.7rem; max-width: 780px; }
+  .bench-notes b { color: var(--bronce-claro); font-weight: 500; }
+  .hallazgo { display: flex; gap: 0.8rem; align-items: baseline; margin-bottom: 0.9rem; max-width: 800px; }
+  .hallazgo-n { font-family: 'DM Mono', monospace; color: var(--bronce); font-size: 13px; min-width: 24px; }
+  .hallazgo p { font-size: 14px; }
+  .hallazgo b { font-weight: 500; }
+
+  @media (max-width: 720px) {
+    .mhead { display: none; }
+    summary.fila { grid-template-columns: 1fr; gap: 0.3rem; }
+    .fila .cell, .fila .sal { text-align: left; font-size: 12px; }
+    .fila .cell::before { content: attr(data-l) " "; color: var(--humo-dim); font-size: 10.5px; text-transform: uppercase; letter-spacing: 1px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="nav-brand">BIKETRUST <span>· Árbol v2.4</span></div>
+    <ul class="nav-links">
+      <li><a href="#referencia">Referencia</a></li>
+      <li><a href="#validacion">Validación</a></li>
+      <li><a href="#sistema">Sistema</a></li>
+      <li><a href="#matriz">Despliegue</a></li>
+      <li><a href="#transversal">Capa transversal</a></li>
+      <li><a href="#ingenieria">Ingeniería</a></li>
+      <li><a href="#copys">Copys</a></li>
+      <li><a href="#construccion">Construcción</a></li>
+      <li><a href="#docs">Los 6 documentos</a></li>
+      <li><a href="#auditoria">Auditoría</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="wrap">
+
+<header class="cover">
+  <div class="eyebrow">BikeTrust × GMGP · Embudo comprador · Julio 2026 · v2.4 auditado</div>
+  <h1>Árbol de Decisiones <em>v2.4</em></h1>
+  <p class="cover-sub">Las 9 rutas de entrada contra los estados del lead y las salidas compartidas. Cada fila se despliega y muestra su rama completa, nodo por nodo. Toda información operativa pendiente aparece como placeholder referenciando el documento que la debe definir: el árbol está entero, el llenado es mecánico cuando los documentos existan. El diseño no parte de cero: primero se presentan los árboles de decisión de los tres referentes del rubro, y sobre sus hallazgos, el modelo BikeTrust adaptado, validado además contra el tráfico real del propio canal: 175 conversaciones de Instagram clasificadas contra la taxonomía.</p>
+  <div class="legend">
+    <span class="lg"><span class="dot-full">✓</span> pasa por el estado</span>
+    <span class="lg"><span class="dot-half">~</span> condicional o parcial</span>
+    <span class="lg"><span class="dot-skip">✕</span> se salta</span>
+    <span class="lg"><span class="chip n-bot">Bot</span></span>
+    <span class="lg"><span class="chip n-hum">Humano</span></span>
+    <span class="lg"><span class="chip n-tim">Bot + timer</span></span>
+    <span class="lg"><span class="ph">[DOC·campo]</span>&nbsp;pendiente de documento</span>
+  </div>
+  <div class="legend" style="padding-top: 0.7rem;">
+    <span class="lg" style="color: var(--bronce-claro); font-family: 'DM Mono', monospace; font-size: 12px;">Salidas:&nbsp;</span>
+    <span class="lg">V venta ganada</span>
+    <span class="lg">N nurturing con alerta</span>
+    <span class="lg">P puente a embudo proveedor</span>
+    <span class="lg">X perdido con razón (desde cualquier estado)</span>
+  </div>
+</header>
+
+<section class="section" id="referencia">
+  <h2>Los modelos de referencia</h2>
+  <p class="section-lead">Tres empresas ya resolvieron, a escala, el problema que este árbol resuelve para BikeTrust. Sus árboles de decisión, leídos con la misma matriz de tres variables, son el peso argumental del modelo propio: primero los referentes y sus hallazgos, después nuestro modelo adaptado. Cada fila es clickeable y despliega cómo funciona esa ruta en la práctica.</p>
+
+  <div class="metodo"><p><b>Nota de método.</b> Ninguna de estas empresas publica su árbol interno. Estas matrices son ingeniería inversa desde evidencia pública. Los recorridos prácticos de cada ruta (los desplegables) fueron verificados uno por uno contra fuentes oficiales: sitios y FAQ de cada empresa, reportes a inversionistas, prensa especializada, y en el caso del Bike Finder de TPC, mystery shopping propio. Las rutas, salidas y hechos citados están documentados; lo único interpretativo es la posición exacta de cada punto en los estados (los símbolos ✓ ~ ✕), que es lectura profesional a partir de esa evidencia.</p></div>
+
+  <div class="bench">
+    <h3>CarMax · Skye <span>· web chat y SMS · el gigante omnicanal</span></h3>
+    <p class="bench-ctx">El mayor retailer de autos usados de Estados Unidos. Su asistente maneja decenas de miles de conversaciones semanales y resuelve el 51% sin intervención humana (KPI trimestral, subiendo desde 40% el año anterior); cuando escala, entrega al consultor un resumen de la conversación.</p>
+    <div class="btab-wrap"><table class="btab">
+      <thead><tr><th>Ruta de entrada</th><th>Calificación</th><th>Presentación</th><th>Compromiso</th><th>Cierre humano</th><th>Salidas</th></tr></thead>
+      <tbody>
+        <tr class="rref" onclick="togRef('d-cm1')"><td>Búsqueda de vehículo</td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-half">~</span></td><td class="sal">V · N</td></tr>
+      <tr class="rdet" id="d-cm1"><td colspan="6"><div class="rdet-b"><b>En la práctica:</b> el cliente le escribe a Skye lo que busca (“SUV automática bajo 25 mil”) → Skye responde con unidades del inventario nacional, fotos y specs → refina por presupuesto y características dentro de la conversación → empuja a guardar favoritos, calcular cuota o agendar cita. En cualquier punto puede pedir persona y pasa con resumen. Salida típica: cita agendada o alerta guardada.</div></td></tr>
+        <tr class="rref" onclick="togRef('d-cm2')"><td>Vehículo específico (detalles, comparar)</td><td><span class="dot-half">~</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-half">~</span></td><td class="sal">V · N</td></tr>
+      <tr class="rdet" id="d-cm2"><td colspan="6"><div class="rdet-b"><b>En la práctica:</b> desde la ficha del sitio o preguntando por la unidad → Skye entrega detalles, compara contra otro modelo, estima la cuota de esa unidad → ofrece cita para verla o transferencia si está en otra tienda. La ficha y el chat operan como un solo sistema.</div></td></tr>
+        <tr class="firma rref" onclick="togRef('d-cm3')"><td>Financiamiento (precalificación)</td><td><span class="dot-half">~</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td class="sal">V · N</td></tr>
+      <tr class="rdet" id="d-cm3"><td colspan="6"><div class="rdet-b"><b>En la práctica:</b> precalificación online en minutos, sin impacto duro al crédito → el cliente navega el catálogo viendo su cuota real por cada unidad → llega a la tienda con el financiamiento resuelto. Es su fuente número uno de leads, y la asistencia del consultor durante la solicitud es donde midieron que la conversión sube. El dinero como puerta de entrada, no como trámite final.</div></td></tr>
+        <tr class="rref" onclick="togRef('d-cm4')"><td>Agendar cita / test drive</td><td><span class="dot-skip">✕</span></td><td><span class="dot-half">~</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td class="sal">V · N</td></tr>
+      <tr class="rdet" id="d-cm4"><td colspan="6"><div class="rdet-b"><b>En la práctica:</b> elige tienda, día y hora en el chat o la web → confirmación y recordatorios automáticos → en tienda, prueba de manejo y la opción del test drive de 24 horas: se lleva el auto un día completo. El compromiso escala de cita a convivencia con el producto.</div></td></tr>
+        <tr class="firma rref" onclick="togRef('d-cm5')"><td>Transferencia de vehículo a mi tienda</td><td><span class="dot-skip">✕</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-half">~</span></td><td class="sal">V · N</td></tr>
+      <tr class="rdet" id="d-cm5"><td colspan="6"><div class="rdet-b"><b>En la práctica:</b> la unidad está en otra ciudad → el cliente solicita el traslado a su tienda (costo según distancia, a veces gratis) → le avisan cuando llega → agenda la visita. Su respuesta al “no está en tu sucursal”: mueven el inventario hacia la demanda, no al revés.</div></td></tr>
+        <tr class="rref" onclick="togRef('d-cm6')"><td>Vender / tasar mi auto</td><td><span class="dot-skip">✕</span></td><td><span class="dot-skip">✕</span></td><td><span class="dot-skip">✕</span></td><td><span class="dot-skip">✕</span></td><td class="sal">P</td></tr>
+      <tr class="rdet" id="d-cm6"><td colspan="6"><div class="rdet-b"><b>En la práctica:</b> ingresa patente o VIN online → oferta en 2 minutos, válida 7 días → lleva el auto a tienda → verificación y pago el mismo día. Un solo número rápido y vinculante: velocidad como propuesta de valor del lado vendedor.</div></td></tr>
+        <tr class="rref" onclick="togRef('d-cm7')"><td>Estado de cita o trámite</td><td><span class="dot-half">~</span></td><td><span class="dot-half">~</span></td><td><span class="dot-half">~</span></td><td><span class="dot-full">✓</span></td><td class="sal">V · N</td></tr>
+      <tr class="rdet" id="d-cm7"><td colspan="6"><div class="rdet-b"><b>En la práctica:</b> Skye consulta reservas, estado de una transferencia o de una solicitud de financiamiento, y reagenda directo en el chat → si el caso se sale del guion, humano con todo el contexto. La postventa conversacional descarga al call center.</div></td></tr>
+        <tr class="rref" onclick="togRef('d-cm8')"><td>Hablar con una persona</td><td><span class="dot-half">~</span></td><td><span class="dot-half">~</span></td><td><span class="dot-half">~</span></td><td><span class="dot-full">✓</span></td><td class="sal">V · N · P</td></tr>
+      <tr class="rdet" id="d-cm8"><td colspan="6"><div class="rdet-b"><b>En la práctica:</b> opción siempre visible → Skye traspasa al consultor con el resumen completo de la conversación → el cliente no repite nada. El 51% de las conversaciones se resuelve sin llegar aquí, y ese número lo reportan trimestralmente como KPI.</div></td></tr>
+      </tbody>
+    </table></div>
+    <p class="bench-notes"><b>Rutas firma:</b> el financiamiento como puerta de entrada (su herramienta online de precalificación es la fuente número uno de leads, y es el nodo donde sus pilotos midieron que el consultor humano convierte) y la transferencia de vehículos entre tiendas como respuesta al "no está aquí". El compromiso lo remata el test drive de 24 horas y la devolución de 30 días.</p>
+  </div>
+
+  <div class="bench">
+    <h3>Kavak <span>· web, sedes y mensajería · el espejo latinoamericano</span></h3>
+    <p class="bench-ctx">El referente más parecido a la realidad de BikeTrust: mismo continente, misma lógica de sede física más canal conversacional, mismo inventario de unidades únicas, certificación de más de 240 puntos como columna de confianza.</p>
+    <div class="btab-wrap"><table class="btab">
+      <thead><tr><th>Ruta de entrada</th><th>Calificación</th><th>Presentación</th><th>Compromiso</th><th>Cierre humano</th><th>Salidas</th></tr></thead>
+      <tbody>
+        <tr class="rref" onclick="togRef('d-kv1')"><td>Explorar catálogo</td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td class="sal">V · N</td></tr>
+      <tr class="rdet" id="d-kv1"><td colspan="6"><div class="rdet-b"><b>En la práctica:</b> filtros por marca, precio, año y kilometraje → ficha por unidad con fotos completas y certificación → el cliente puede seguir por la web o continuar la conversación por mensajería con un asesor. El catálogo es la calle; la conversación, la tienda.</div></td></tr>
+        <tr class="rref" onclick="togRef('d-kv2')"><td>Auto específico (ficha + botón reservar)</td><td><span class="dot-half">~</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td class="sal">V · N</td></tr>
+      <tr class="rdet" id="d-kv2"><td colspan="6"><div class="rdet-b"><b>En la práctica:</b> en la ficha de la unidad, el botón de reservar o agendar visita vive al lado del precio → cero fricción entre el interés y el compromiso → las dudas de esa unidad se resuelven por chat con asesor. La ficha es el punto de conversión, no un documento informativo.</div></td></tr>
+        <tr class="rref" onclick="togRef('d-kv3')"><td>Financiamiento (preaprobación en minutos)</td><td><span class="dot-half">~</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td class="sal">V · N</td></tr>
+      <tr class="rdet" id="d-kv3"><td colspan="6"><div class="rdet-b"><b>En la práctica:</b> preaprobación en línea en minutos, con planes propios y alianzas con financieras → la cuota aparece integrada a la ficha de cada auto → el financiamiento del usado, tradicionalmente difícil, queda resuelto dentro del mismo flujo de compra.</div></td></tr>
+        <tr class="firma rref" onclick="togRef('d-kv4')"><td>Apartar online con abono</td><td><span class="dot-skip">✕</span></td><td><span class="dot-half">~</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td class="sal">V · N</td></tr>
+      <tr class="rdet" id="d-kv4"><td colspan="6"><div class="rdet-b"><b>En la práctica:</b> un abono congela la unidad única mientras el cliente decide → si compra, se descuenta; si devuelve dentro de los 7 días, se reembolsa como parte de la devolución; si simplemente desiste, no es reembolsable (salvo que el financiamiento no se apruebe, ahí va íntegro) → urgencia legítima: la escasez es real porque cada unidad es irrepetible. La reserva es una ruta con su propio flujo, no un botón decorativo.</div></td></tr>
+        <tr class="rref" onclick="togRef('d-kv5')"><td>Agendar visita y prueba en sede</td><td><span class="dot-skip">✕</span></td><td><span class="dot-half">~</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td class="sal">V · N</td></tr>
+      <tr class="rdet" id="d-kv5"><td colspan="6"><div class="rdet-b"><b>En la práctica:</b> el cliente elige sede, día y hora → lo reciben con la unidad preparada para prueba acompañada por un experto → el cierre ocurre en la sede con el financiamiento ya conversado. El hub físico como escenario del momento humano.</div></td></tr>
+        <tr class="firma rref" onclick="togRef('d-kv6')"><td>Compra remota (7 días / 300 km)</td><td><span class="dot-half">~</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td class="sal">V · N</td></tr>
+      <tr class="rdet" id="d-kv6"><td colspan="6"><div class="rdet-b"><b>En la práctica:</b> paga online → entrega a domicilio → y la garantía de devolución de 7 días o 300 kilómetros reemplaza la prueba previa: primero compras, después pruebas, con salida garantizada. El desriesgo posterior es lo que hace posible vender sin visita.</div></td></tr>
+        <tr class="rref" onclick="togRef('d-kv7')"><td>Vende tu auto (tasador en 2 etapas, 3 ofertas)</td><td><span class="dot-skip">✕</span></td><td><span class="dot-skip">✕</span></td><td><span class="dot-skip">✕</span></td><td><span class="dot-skip">✕</span></td><td class="sal">P</td></tr>
+      <tr class="rdet" id="d-kv7"><td colspan="6"><div class="rdet-b"><b>En la práctica:</b> cotizador online con los datos del auto → precio preliminar al instante → inspección presencial agendada → tres ofertas finales (venta inmediata, consignación u otras modalidades). El patrón de dos etapas que ya diseccionamos, con su riesgo documentado: la brecha entre preliminar y final es el punto donde la confianza se quema.</div></td></tr>
+        <tr class="rref" onclick="togRef('d-kv8')"><td>Garage: sigue el valor de tu auto</td><td><span class="dot-skip">✕</span></td><td><span class="dot-skip">✕</span></td><td><span class="dot-skip">✕</span></td><td><span class="dot-skip">✕</span></td><td class="sal">N</td></tr>
+      <tr class="rdet" id="d-kv8"><td colspan="6"><div class="rdet-b"><b>En la práctica:</b> el cliente registra su auto actual → recibe actualizaciones periódicas de su valor de mercado → cuando decide venderlo, Kavak ya es su primera opción y él ya es lead de Kavak. Una ruta cuyo único destino es N, sembrando el inventario del futuro.</div></td></tr>
+      </tbody>
+    </table></div>
+    <p class="bench-notes"><b>Rutas firma:</b> el apartado con abono chico como micro-compromiso central (la reserva es una ruta, no un botón) y el desriesgo posterior que sustituye la prueba: la garantía de días y kilómetros existe para que la ruta remota pueda cerrar. Nota la última fila: una ruta cuyo único destino es N, que siembra vendedores futuros con actualizaciones de valor. Su lado vendedor es el patrón de dos etapas con tres ofertas finales: consignación, pago inmediato y parte de pago.</p>
+  </div>
+
+  <div class="bench">
+    <h3>The Pro's Closet <span>· e-commerce puro · el vertical exacto</span></h3>
+    <p class="bench-ctx">El especialista en bicicletas usadas de alta gama, sin showroom: Certified Pre-Owned con hoja de servicio visible por unidad, y el contraste estructural que muestra el costo de cerrar sin humanos.</p>
+    <div class="btab-wrap"><table class="btab">
+      <thead><tr><th>Ruta de entrada</th><th>Calificación</th><th>Presentación</th><th>Compromiso</th><th>Cierre humano</th><th>Salidas</th></tr></thead>
+      <tbody>
+        <tr class="firma rref" onclick="togRef('d-tp1')"><td>Bike Finder (quiz de matching)</td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-half">~</span></td><td class="sal">V · N</td></tr>
+      <tr class="rdet" id="d-tp1"><td colspan="6"><div class="rdet-b"><b>En la práctica (lo caminamos completo):</b> 5 preguntas: tipo de bici → estatura (traducida a talla) → presupuesto en rangos → plazo de compra → cuántas bicis tienes → gate de email y teléfono → catálogo filtrado a tu medida. Las preguntas 4 y 5 no filtran nada: puntúan al lead por urgencia y perfil. Front de valor, back de calificación, en el mismo formulario.</div></td></tr>
+        <tr class="rref" onclick="togRef('d-tp2')"><td>Catálogo / bici específica (hoja CPO)</td><td><span class="dot-half">~</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-skip">✕</span></td><td class="sal">V · N</td></tr>
+      <tr class="rdet" id="d-tp2"><td colspan="6"><div class="rdet-b"><b>En la práctica:</b> cada bici publica su hoja de inspección de 141 puntos y el detalle del servicio realizado (piezas cambiadas incluidas) → el estado deja de ser promesa y pasa a ser documento → compra directa self-service desde la ficha. La hoja CPO es su ficha técnica: el activo de confianza del modelo completo.</div></td></tr>
+        <tr class="rref" onclick="togRef('d-tp3')"><td>Saved search / alerta de stock</td><td><span class="dot-full">✓</span></td><td><span class="dot-skip">✕</span></td><td><span class="dot-skip">✕</span></td><td><span class="dot-skip">✕</span></td><td class="sal">N</td></tr>
+      <tr class="rdet" id="d-tp3"><td colspan="6"><div class="rdet-b"><b>En la práctica:</b> el cliente guarda la búsqueda (modelo, talla, rango de precio) → recibe alerta automática cuando entra una unidad que calza → la demanda insatisfecha se captura en vez de evaporarse, y le dice a la empresa qué salir a comprar. Nuestro waitlist es exactamente esto.</div></td></tr>
+        <tr class="rref" onclick="togRef('d-tp4')"><td>Ride Guides (asesor humano)</td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td class="sal">V · N</td></tr>
+      <tr class="rdet" id="d-tp4"><td colspan="6"><div class="rdet-b"><b>En la práctica:</b> asesores humanos disponibles por teléfono y correo para elegir modelo, comparar y resolver dudas → es opt-in del cliente, no un paso del flujo → el único punto humano fuerte de un sistema diseñado para cerrar solo. La excepción que confirma su apuesta self-service.</div></td></tr>
+        <tr class="firma rref" onclick="togRef('d-tp5')"><td>Compra online (devolución 30 días + buyback visible)</td><td><span class="dot-half">~</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-skip">✕</span></td><td class="sal">V · N</td></tr>
+      <tr class="rdet" id="d-tp5"><td colspan="6"><div class="rdet-b"><b>En la práctica:</b> checkout directo → devolución de 30 días sin preguntas → y el buyback garantizado visible antes de pagar: una tabla de recompra a 18 meses en la cuenta del cliente, actualizada mes a mes (crédito en tienda, o efectivo ~13% menor). Compras sabiendo cuánto te devuelven mañana; la depreciación deja de ser un miedo y pasa a ser un número.</div></td></tr>
+        <tr class="rref" onclick="togRef('d-tp6')"><td>Sell/Trade (criterios públicos, menú de precios)</td><td><span class="dot-skip">✕</span></td><td><span class="dot-skip">✕</span></td><td><span class="dot-skip">✕</span></td><td><span class="dot-skip">✕</span></td><td class="sal">P</td></tr>
+      <tr class="rdet" id="d-tp6"><td colspan="6"><div class="rdet-b"><b>En la práctica:</b> criterios de aceptación publicados (marcas admitidas, antigüedad máxima, precio de lista mínimo) → formulario con fotos → oferta según menú de precios → pago o crédito de trade-in. El filtro público hace el rechazo antes de que ocurra: nadie pierde tiempo ofreciendo lo que no se recibe. Nuestra ruta 8 es esto, versión mono-marca.</div></td></tr>
+        <tr class="rref" onclick="togRef('d-tp7')"><td>TradeUp vía tienda asociada</td><td><span class="dot-skip">✕</span></td><td><span class="dot-skip">✕</span></td><td><span class="dot-skip">✕</span></td><td><span class="dot-skip">✕</span></td><td class="sal">P</td></tr>
+      <tr class="rdet" id="d-tp7"><td colspan="6"><div class="rdet-b"><b>En la práctica:</b> la tienda física asociada recibe la bici usada del cliente en el mesón → la canaliza a TPC y el cliente recibe crédito para su compra nueva → TPC consigue inventario sin captarlo directamente. Un canal B2B de abastecimiento montado sobre tiendas de terceros.</div></td></tr>
+      </tbody>
+    </table></div>
+    <p class="bench-notes"><b>Rutas firma:</b> el quiz como puerta de matching y el buyback garantizado visible antes de comprar (valores de recompra por 18 meses, actualizados mensualmente). Y la columna de cierre humano casi vacía es una elección de modelo: cerraron self-service, y su queja número uno documentada es que el comprador queda solo con la talla. Esa es exactamente la brecha que BikeTrust puede ocupar.</p>
+  </div>
+
+  <div class="bench">
+    <h3>Síntesis <span>· lo que enseñan las tres matrices superpuestas</span></h3>
+    <div style="margin-top: 0.9rem;">
+      <div class="hallazgo"><span class="hallazgo-n">01</span><p><b>Los estados son universales; las rutas son la estrategia.</b> Los tres corren la misma columna vertebral (calificación, presentación, compromiso, cierre humano; salidas V, N, P y perdido), con rutas de entrada cortas que convergen rápido a estaciones compartidas. El esqueleto del modelo BikeTrust es el mismo que el de los tres referentes.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">02</span><p><b>Cada gigante se define por una o dos rutas firma.</b> CarMax, el financiamiento como puerta. Kavak, el apartado y el desriesgo remoto. TPC, el quiz y el buyback. La firma candidata de BikeTrust ya está en el árbol: la ficha técnica como punto de conversión más la asesoría humana de talla, la ruta que TPC dejó huérfana.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">03</span><p><b>La ruta P existe en los tres, integrada, nunca como negocio aparte.</b> La venta alimenta la compra en todos: la retoma de Kavak, el trade-in de TPC, el tasador de CarMax. La ruta 8 y el híbrido de parte de pago siguen ese mismo patrón.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">04</span><p><b>El cierre humano es una decisión de modelo, no un accidente.</b> CarMax y Kavak mantienen la columna llena (consultores y expertos en sede); TPC la vació y paga el precio en fit. BikeTrust, lead-gen a showroom con cierre presencial de 60 a 70%, pertenece a la familia de columna llena.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">05</span><p><b>Adoptar, adaptar, postergar.</b> Se adopta directo: el traspaso con resumen, la contención medida por ruta, el apartado y la alerta de stock. Se adapta: la transferencia entre tiendas de CarMax se traduce en el encargo de búsqueda guiado por la waitlist (no movemos inventario, salimos a captarlo). Se posterga: el financiamiento como puerta, hasta que exista un convenio (registrado como exploración en el índice de pagos).</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="validacion">
+  <h2>La validación con tráfico propio</h2>
+  <p class="section-lead">Los referentes sostienen el modelo por arriba; esta sección lo sostiene por abajo. El export oficial de mensajes directos de Instagram de BikeTrust, clasificado conversación por conversación contra la taxonomía de 9 rutas. Resultado central: cobertura del 96% del tráfico comercial. La taxonomía aguantó contra la demanda real.</p>
+
+  <div class="metodo"><p><b>Fuente y método.</b> Export oficial de datos de Meta: 175 conversaciones de DM entre agosto 2025 y julio 2026, 142 con mensaje de cliente, 123 comerciales tras descontar 19 de ruido (spam, mensajes personales, saludos sueltos y textos de sistema). Clasificación manual del primer mensaje entrante de cada conversación. Los comentarios de terceros en reels no vienen en el export de Meta: esa capa se validará desde ManyChat.</p></div>
+
+  <div class="btab-wrap"><table class="btab">
+    <thead><tr><th>Ruta</th><th>n</th><th>% comercial</th><th style="text-align:left">Nota</th></tr></thead>
+    <tbody>
+      <tr class="firma"><td>R2 · Bici específica</td><td>66</td><td>54%</td><td style="text-align:left">22 share puro de story o reel, 16 precio, 11 ficha, 10 disponibilidad, 4 visita, 3 vía botones del bot</td></tr>
+      <tr><td>R1 · Búsqueda</td><td>20</td><td>16%</td><td style="text-align:left">3 waitlist pedidas textualmente, 2 con presupuesto declarado</td></tr>
+      <tr><td>R8 · Vende su bici</td><td>15</td><td>12%</td><td style="text-align:left">12 directas + 3 híbridos de retoma ("me interesa la Kenevo, tengo una Levo, quiero cambiarla")</td></tr>
+      <tr><td>R7 · Ubicación y visita</td><td>8</td><td>6,5%</td><td style="text-align:left">"dónde están", "de qué parte de Chile son"</td></tr>
+      <tr><td>R3 · Precio sin contexto</td><td>5</td><td>4%</td><td style="text-align:left">"¿Precio?" suelto, sin share adjunto</td></tr>
+      <tr><td>R6 · Confianza</td><td>2</td><td>1,6%</td><td style="text-align:left">consignación y catálogo como pregunta</td></tr>
+      <tr><td>R5 · Talla y fit</td><td>1</td><td>0,8%</td><td style="text-align:left">"mido 1.66, ¿cómo me queda la 52?"</td></tr>
+      <tr><td>R4 · Envíos</td><td>1</td><td>0,8%</td><td style="text-align:left">única mención directa en este canal</td></tr>
+      <tr><td>Fuera de taxonomía</td><td>5</td><td>4%</td><td style="text-align:left">repuestos, taller, soporte de pago, interés post-compra</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="bench">
+    <h3>Speed-to-lead BikeTrust <span>· el baseline propio</span></h3>
+    <p class="bench-ctx">Sobre las 142 conversaciones con mensaje de cliente: mediana de primera respuesta de 111 minutos; 16% respondida dentro de 5 minutos; 32% dentro de 30; 12,7% sin respuesta jamás (18 conversaciones muertas, incluida una consignación ofrecida que nunca se contestó).</p>
+    <p class="bench-notes"><b>Lectura:</b> contra la curva de decaimiento de la evidencia (las probabilidades de contactar a un lead caen cerca de 100 veces entre el minuto 5 y el 30), el minuto cero automatizado es la mejora de mayor impacto disponible en todo el sistema, y ahora con el número propio para demostrarlo.</p>
+  </div>
+
+  <div class="bench">
+    <h3>Hallazgos <span>· lo que la data confirma y lo que corrige</span></h3>
+    <div style="margin-top: 0.9rem;">
+      <div class="hallazgo"><span class="hallazgo-n">01</span><p><b>La puerta dominante de R2 no es texto: es el share de la historia.</b> 37 de 142 primeros mensajes traen un share de story o reel, y 22 son solo el share, sin una palabra. La historia compartida es la declaración de intención. Las sub-intenciones tras el share dictan el contenido mínimo de la ficha; un cliente lo escribió literal: "¿Talla, precio y kilometraje? ¿Ciclos de batería?". Esa frase es la spec de la ficha técnica, dictada por el mercado.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">02</span><p><b>El flujo actual pierde leads que ya aceptaron el CTA.</b> Dos casos en la misma semana del análisis: un lead compartió un reel, preguntó el precio y tocó "Consultar", cero respuesta; otro tocó "Sí, muéstramela" y el hilo murió en un solo mensaje. El parche de resiliencia sube a prioridad cero, con evidencia.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">03</span><p><b>R8 es el doble de lo asumido, y el filtro de marca ya costó un lead.</b> El 12% del tráfico ofrece bicis, incluyendo una de marca ajena ofrecida por message_requests que quedó sin respuesta para siempre: el auto-rechazo digno la habría contestado en segundos. Los 3 híbridos de retoma confirman la rama diseñada.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">04</span><p><b>La waitlist la piden los propios clientes, textual.</b> "Busco Levo Gen 4 talla S3, por si les llega alguna" y "si les llega algo me avisan". La salida N es demanda literal sin sistema que la capture.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">05</span><p><b>El vocabulario real quedó minado.</b> Precio: "valor", "a cuánto", "cuánto pedís". Disponibilidad: "sigue disponible", "se vendió", "sigue a la venta". Ficha: "km", "batería", "ciclos", "motor", "especificaciones", "qué talle". Visita: "dónde están", "donde la puedo ver", "ubicados". Venta: "compran", "consignación", "permuta", "parte de pago". Y la gente escribe el modelo (levo, kenevo, epic 8, tarmac, sworks, vado): un diccionario de modelos desde el inventario detecta bici específica incluso sin share.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">06</span><p><b>Dos calibraciones de expectativa.</b> Envíos casi no aparece en DM de Instagram (1 caso), aunque la venta remota real ya ocurre (un pago desde regiones): la ruta se mantiene porque cuesta poco, pero su tráfico vive en otras capas. Y el volumen respira con los ads: el pico de abril y mayo (43 y 51 conversaciones) cayó a 16 en junio; a 2 o 3 conversaciones diarias en el peak, un SLA humano corto es cumplible si el bot filtra primero.</p></div>
+    </div>
+  </div>
+
+  <div class="bench">
+    <h3>Cambios aplicados al árbol <span>· Δ desde esta data</span></h3>
+    <div style="margin-top: 0.9rem;">
+      <div class="hallazgo"><span class="hallazgo-n">Δ1</span><p>El share de story o reel se declara disparador principal de R2, con extracción de la bici desde la URL compartida.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">Δ2</span><p>Diccionario de modelos del inventario como segunda capa de detección de bici específica en texto libre.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">Δ3</span><p>Las keywords de todas las rutas se reemplazan por el vocabulario minado del tráfico real.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">Δ4</span><p>La rama híbrida R2 + R8 (retoma) queda confirmada con 3 casos reales y se mantiene como rama explícita.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">Δ5</span><p>"Repuestos" entra como keyword del fallback con derivación honesta; no amerita ruta propia.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">Δ6</span><p>El parche de resiliencia (4 arcos por nodo de input + re-entrega del artefacto clave) sube a prioridad cero de construcción.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sistema">
+  <h2>El sistema V2 · puertas, rutas y salidas</h2>
+  <p class="section-lead">La vista maestra que integra todo el conocimiento del proceso: las puertas de entrada por la izquierda, los estados del lead al centro y las salidas compartidas a la derecha. La regla de oro que ordena el sistema completo: la puerta determina el contexto que trae el lead, y el contexto determina cuánto árbol se salta. Cada fila es clickeable y abre su rama detallada nodo por nodo.</p>
+
+  <div class="metodo"><p><b>El puente de la puerta Comentarios.</b> Opera con dos nodos, ambos bot: respuesta pública breve al comentario (mantiene la prueba social visible en el post) más DM automático inmediato que arrastra el payload del video. Desde ahí el lead ya está dentro de la puerta DM: si el video era de una bici específica, aterriza en R2 con la bici identificada; si era un video general de la tienda, aterriza en el quiz de R1. Las respuestas a historias no son una puerta aparte: llegan como DM con share y son el disparador dominante de R2. La puerta Web queda documentada como futura: la ficha del sitio apuntando a mensajería con payload.</p></div>
+
+  <div class="btab-wrap"><table class="btab" style="min-width: 620px;">
+    <thead><tr><th style="text-align:left">Puerta / Entrada</th><th>Router</th><th>Calificación</th><th>Presentación</th><th>Compromiso</th><th>Cierre humano</th><th>Salidas</th></tr></thead>
+    <tbody>
+      <tr class="puerta"><td colspan="7">Puerta Comentarios · reels y posts</td></tr>
+      <tr class="link" onclick="irRuta('r2')"><td>Comentario en video de bici específica</td><td><span class="dot-skip">✕</span></td><td><span class="dot-half">~</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td class="sal">V · N</td></tr>
+      <tr class="link" onclick="irRuta('r1')"><td>Comentario en video general de la tienda</td><td><span class="dot-half">~</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td class="sal">V · N</td></tr>
+      <tr class="puerta"><td colspan="7">Puerta DM · mensajes directos e historias</td></tr>
+      <tr class="link" onclick="irRuta('r2')"><td>Share de story o reel (disparador dominante)</td><td><span class="dot-skip">✕</span></td><td><span class="dot-half">~</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td class="sal">V · N</td></tr>
+      <tr class="link" onclick="irRuta('r2')"><td>Texto libre con modelo (diccionario)</td><td><span class="dot-half">~</span></td><td><span class="dot-half">~</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td class="sal">V · N</td></tr>
+      <tr class="link" onclick="irRuta('r1')"><td>Búsqueda general (quiz)</td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td class="sal">V · N</td></tr>
+      <tr class="link" onclick="irRuta('r3')"><td>Precio y pago sin contexto</td><td><span class="dot-full">✓</span></td><td><span class="dot-half">~</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td class="sal">V · N</td></tr>
+      <tr class="link" onclick="irRuta('r4')"><td>Envíos y regiones</td><td><span class="dot-full">✓</span></td><td><span class="dot-half">~</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td class="sal">V · N</td></tr>
+      <tr class="link" onclick="irRuta('r5')"><td>Talla y fit</td><td><span class="dot-full">✓</span></td><td><span class="dot-half">~</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-half">~</span></td><td><span class="dot-full">✓</span></td><td class="sal">V · N</td></tr>
+      <tr class="link" onclick="irRuta('r6')"><td>Estado y garantía</td><td><span class="dot-full">✓</span></td><td><span class="dot-skip">✕</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-half">~</span></td><td class="sal">V · N</td></tr>
+      <tr class="link" onclick="irRuta('r7')"><td>Agendar visita</td><td><span class="dot-full">✓</span></td><td><span class="dot-skip">✕</span></td><td><span class="dot-half">~</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td class="sal">V · N</td></tr>
+      <tr class="link" onclick="irRuta('r8')"><td>Vende su bici</td><td><span class="dot-full">✓</span></td><td><span class="dot-skip">✕</span></td><td><span class="dot-skip">✕</span></td><td><span class="dot-skip">✕</span></td><td><span class="dot-skip">✕</span></td><td class="sal">P</td></tr>
+      <tr class="link" onclick="irRuta('r9')"><td>Otra consulta · fallback</td><td><span class="dot-full">✓</span></td><td><span class="dot-half">~</span></td><td><span class="dot-half">~</span></td><td><span class="dot-half">~</span></td><td><span class="dot-full">✓</span></td><td class="sal">V · N · P</td></tr>
+      <tr class="puerta"><td colspan="7">Puerta Web · futura, fuera de alcance en esta fase</td></tr>
+      <tr class="futura"><td>Ficha del sitio hacia mensajería con payload</td><td><span class="dot-skip">✕</span></td><td><span class="dot-half">~</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td><span class="dot-full">✓</span></td><td class="sal">V · N</td></tr>
+    </tbody>
+  </table></div>
+  <p class="bench-notes"><b>Lectura de la columna Router:</b> las entradas con contexto propio (comentario en video de bici, share de story, ficha web) se saltan el router porque el punto de entrada ya declaró la intención; el texto libre pasa por detección de modelo o keywords; y solo lo que no matchea nada llega al menú. Salidas: V venta ganada, N nurturing con alerta, P puente al embudo proveedor; X (perdido con razón) puede ocurrir desde cualquier estado y siempre queda etiquetada.</p>
+</section>
+
+<section class="section" id="matriz">
+  <h2>El despliegue nodo por nodo</h2>
+  <p class="section-lead">El mismo esqueleto que los tres referentes, con las rutas y la firma propias de un negocio lead-gen a showroom: columna de cierre humano llena, ficha técnica como punto de conversión y asesoría de talla como diferencial. Las 9 rutas quedaron validadas contra 123 conversaciones comerciales reales, con 96% de cobertura. Click en cualquier fila para desplegar la rama completa de esa ruta.</p>
+
+  <div class="mhead"><div>Ruta de entrada</div><div>Calificación</div><div>Presentación</div><div>Compromiso</div><div>Cierre humano</div><div>Salidas</div></div>
+
+  <details class="ruta" id="r1">
+    <summary class="fila"><span class="rname"><span class="rnum">R1</span> Busco una bici <span class="caret">▶</span></span><span class="cell" data-l="Calificación"><span class="dot-full">✓</span></span><span class="cell" data-l="Presentación"><span class="dot-full">✓</span></span><span class="cell" data-l="Compromiso"><span class="dot-full">✓</span></span><span class="cell" data-l="Cierre humano"><span class="dot-full">✓</span></span><span class="sal">V · N</span></summary>
+    <div class="rama">
+      <h4>Tronco</h4>
+      <div class="nodo"><span class="ncode">1.0</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Entrada.</b> Keywords (busco, recomienda, qué tienen, para empezar) o botón del menú. Acuse inmediato e inicio del quiz.</div></div>
+      <div class="nodo"><span class="ncode">1.1</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Quiz · tipo y uso.</b> Opciones cerradas: ruta, gravel, MTB, e-bike, ciudad, no sé. Si responde "no sé": pregunta de uso en lenguaje llano (¿pavimento, cerro, mixto?) y el sistema mapea al tipo.<span class="sub">Arcos: botón · texto con intención (se parsea el tipo) · texto sin intención (reformula una vez, luego ofrece humano) · silencio (recordatorio 2 h y 24 h).</span></div></div>
+      <div class="nodo"><span class="ncode">1.2</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Quiz · estatura.</b> Estatura, y entrepierna opcional. Traduce a talla estimada.</div></div>
+      <div class="nodo"><span class="ncode">1.3</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Quiz · presupuesto.</b> Opciones cerradas calibradas al inventario real <span class="ph">[INV·rangos]</span>. Compuerta doble: bajo el piso, rama A. Rango alto: se marca lead premium y se notifica temprano al humano con brief, el quiz continúa.</div></div>
+      <div class="nodo"><span class="ncode">1.4</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Quiz · plazo.</b> Este mes, planeando, solo mirando. "Solo mirando": rama B.</div></div>
+      <div class="nodo"><span class="ncode">1.5</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Quiz · bici actual.</b> ¿Tienes bici hoy? Si menciona interés en dejarla a cuenta: tag de puente a retoma <span class="ph">[REC]</span> sin abandonar este flujo.</div></div>
+      <div class="nodo"><span class="ncode">1.6</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Matching.</b> Consulta al inventario y entrega shortlist de 2 a 3 bicis con razones explícitas (talla, presupuesto, certificación) más ficha por bici. CTA doble por bici: agendar visita (primario) o apartar <span class="ph">[APA·condiciones]</span>. Sin match: rama C.</div></div>
+      <div class="nodo"><span class="ncode">1.7</span><div class="nbody"><span class="chip n-hum">Humano</span> <b>Cierre.</b> Entra con brief (perfil del quiz, bici, score, objeción probable), nombre propio y SLA <span class="ph">[OPS·sla]</span>. Estructura pago <span class="ph">[PAG]</span>, coordina visita o envío, cierra. Fallback si nadie toma el lead: el bot ofrece agendar o apartar directo.</div></div>
+      <h4>Ramas</h4>
+      <div class="subrama">
+        <div class="nodo"><span class="ncode">A</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Bajo el piso.</b> Salida digna: honesto, con orientación de dónde le conviene buscar, y oferta de alerta si algo entra en su rango. Salida N o X (razón: presupuesto). Costo humano cero.</div></div>
+        <div class="nodo"><span class="ncode">B</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Solo mirando.</b> Sin catálogo agresivo: contenido de valor más invitación a alerta guardada. Salida N.</div></div>
+        <div class="nodo"><span class="ncode">C</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Sin match en stock.</b> Captura la spec deseada (tipo, talla, tope) para la waitlist y queda registrada como señal de sourcing. Salida N.</div></div>
+      </div>
+    </div>
+  </details>
+
+  <details class="ruta" id="r2">
+    <summary class="fila"><span class="rname"><span class="rnum">R2</span> Bici específica <span class="caret">▶</span></span><span class="cell" data-l="Calificación"><span class="dot-half">~</span></span><span class="cell" data-l="Presentación"><span class="dot-full">✓</span></span><span class="cell" data-l="Compromiso"><span class="dot-full">✓</span></span><span class="cell" data-l="Cierre humano"><span class="dot-full">✓</span></span><span class="sal">V · N</span></summary>
+    <div class="rama">
+      <h4>Tronco</h4>
+      <div class="nodo"><span class="ncode">2.0</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Entrada.</b> Share de story o reel (el disparador dominante según la data propia: la historia compartida es la declaración de intención, la bici se extrae de la URL), payload de ad o link de ficha, o texto libre con modelo detectado vía diccionario del inventario. La bici viene identificada: no hay quiz.</div></div>
+      <div class="nodo"><span class="ncode">2.1</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Verificación de disponibilidad.</b> Solicitud externa a la base sincronizada con Ailoo antes de afirmar nada. Disponible: sigue. No disponible: rama A.</div></div>
+      <div class="nodo"><span class="ncode">2.2</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Ficha y confirmación.</b> Envía la ficha técnica de la unidad y confirma disponibilidad.<span class="sub">Arcos críticos: "valor" o "precio" responde el precio de esta bici y re-entrega el link de la ficha aunque un flujo anterior haya muerto · "talla" salta al nodo 2.3 · texto sin intención: menú contextual · silencio: seguimiento a las 24 h con ángulo nuevo.</span></div></div>
+      <div class="nodo"><span class="ncode">2.3</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Micro-check de talla.</b> Pide estatura y compara contra la talla y geometría de la unidad <span class="ph">[FICHA·geometría]</span>. Calza: sigue. No calza: rama B.</div></div>
+      <div class="nodo"><span class="ncode">2.4</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Compromiso.</b> CTA doble: agendar visita (primario, con apartado opcional para asegurar la unidad <span class="ph">[APA·monto·vigencia]</span>) o, si es de región, apartar y coordinar envío <span class="ph">[ENV]</span> <span class="ph">[DEV·ventana]</span> <span class="ph">[PAG·link]</span>.</div></div>
+      <div class="nodo"><span class="ncode">2.5</span><div class="nbody"><span class="chip n-hum">Humano</span> <b>Cierre.</b> Igual que 1.7, con la bici ya definida y el brief completo.</div></div>
+      <h4>Ramas</h4>
+      <div class="subrama">
+        <div class="nodo"><span class="ncode">A</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Se vendió.</b> Honesto de entrada, y de inmediato 2 similares usando las specs de la vendida como calificación implícita, más waitlist. Convierte el click muerto en R1 con data pre-llenada. Salida N si no engancha.</div></div>
+        <div class="nodo"><span class="ncode">B</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Talla no calza.</b> Rechazo honesto ("esa te va chica") más alternativas en su talla o waitlist. Señal de caso límite (entre tallas, dudas de proporciones): escala a humano de fit, nodo 5.3.</div></div>
+      </div>
+    </div>
+  </details>
+
+  <details class="ruta" id="r3">
+    <summary class="fila"><span class="rname"><span class="rnum">R3</span> Precio y cuotas <span class="caret">▶</span></span><span class="cell" data-l="Calificación"><span class="dot-half">~</span></span><span class="cell" data-l="Presentación"><span class="dot-full">✓</span></span><span class="cell" data-l="Compromiso"><span class="dot-full">✓</span></span><span class="cell" data-l="Cierre humano"><span class="dot-full">✓</span></span><span class="sal">V · N</span></summary>
+    <div class="rama">
+      <h4>Tronco</h4>
+      <div class="nodo"><span class="ncode">3.0</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Entrada.</b> Keywords: precio, cuotas, tarjeta, transferencia, valor.</div></div>
+      <div class="nodo"><span class="ncode">3.1</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Fork de contexto.</b> ¿Hay bici en contexto (payload o mención)? Sí: responde precio de esa bici más condiciones de pago <span class="ph">[PAG·medios·cuotas]</span> con ancla en cuotas, y empalma a R2 (nodo 2.2). No: pregunta única "¿Tienes una vista o te muestro opciones?", que rutea a R2 o al quiz de R1. La ruta no es destino: es convertidor.</div></div>
+      <div class="nodo"><span class="ncode">3.2</span><div class="nbody"><span class="chip n-tim">Bot + timer</span> <b>Escalamiento por negociación.</b> Keywords descuento, rebaja, mejor precio: jamás responde el bot. Handoff a humano con brief que incluye el piso interno de esa bici <span class="ph">[REC·piso interno]</span>. Timer con fallback honesto.</div></div>
+    </div>
+  </details>
+
+  <details class="ruta" id="r4">
+    <summary class="fila"><span class="rname"><span class="rnum">R4</span> Envío a regiones <span class="caret">▶</span></span><span class="cell" data-l="Calificación"><span class="dot-half">~</span></span><span class="cell" data-l="Presentación"><span class="dot-full">✓</span></span><span class="cell" data-l="Compromiso"><span class="dot-full">✓</span></span><span class="cell" data-l="Cierre humano"><span class="dot-full">✓</span></span><span class="sal">V · N</span></summary>
+    <div class="rama">
+      <h4>Tronco</h4>
+      <div class="nodo"><span class="ncode">4.0</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Entrada.</b> Keywords: envío, despacho, nombres de ciudades y regiones.</div></div>
+      <div class="nodo"><span class="ncode">4.1</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Captura de ciudad.</b> Detecta o pregunta la ciudad y la registra: el mapa de demanda regional se construye solo.</div></div>
+      <div class="nodo"><span class="ncode">4.2</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Respuesta de política.</b> Responde con la política real: método <span class="ph">[ENV·courier]</span>, plazos <span class="ph">[ENV·plazos]</span>, costo y quién paga <span class="ph">[ENV·costos]</span>, embalaje y seguro <span class="ph">[ENV·embalaje·seguro]</span>, más el desriesgo <span class="ph">[DEV·ventana]</span>. CTA que reconvierte: "¿te muestro lo que tenemos en tu talla?" hacia R1 o R2.<span class="sub">Regla: sin política de devolución definida, esta ruta solo informa; con ella, vende. Nunca prometer plazos mejores que los del documento.</span></div></div>
+      <div class="nodo"><span class="ncode">4.3</span><div class="nbody"><span class="chip n-tim">Bot + timer</span> <b>Logística fuera de política.</b> Pregunta que el documento no cubre: handoff con timer y registro del caso para ampliar la política.</div></div>
+    </div>
+  </details>
+
+  <details class="ruta" id="r5">
+    <summary class="fila"><span class="rname"><span class="rnum">R5</span> Talla y fit <span class="caret">▶</span></span><span class="cell" data-l="Calificación"><span class="dot-half">~</span></span><span class="cell" data-l="Presentación"><span class="dot-full">✓</span></span><span class="cell" data-l="Compromiso"><span class="dot-half">~</span></span><span class="cell" data-l="Cierre humano"><span class="dot-full">✓</span></span><span class="sal">V · N</span></summary>
+    <div class="rama">
+      <h4>Tronco</h4>
+      <div class="nodo"><span class="ncode">5.0</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Entrada.</b> Keywords: talla, mido, me queda, tallaje.</div></div>
+      <div class="nodo"><span class="ncode">5.1</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Datos de fit.</b> Pide estatura y entrepierna. Entrega orientación general de talla.</div></div>
+      <div class="nodo"><span class="ncode">5.2</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Fork de contexto.</b> ¿Bici específica en contexto? Valida contra su geometría <span class="ph">[FICHA·geometría]</span> y responde con honestidad: calza, no calza, o caso límite.</div></div>
+      <div class="nodo"><span class="ncode">5.3</span><div class="nbody"><span class="chip n-tim">Bot + timer</span> <b>Escalamiento por caso límite.</b> Señales (entre tallas, proporciones atípicas, inseguridad repetida): handoff inmediato a validación experta con nombre propio, sin agotar el flujo bot. Aquí el humano es el producto.</div></div>
+      <div class="nodo"><span class="ncode">5.4</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Resolución definitiva.</b> CTA a prueba presencial como cierre natural del fit. Si existe garantía de talla <span class="ph">[DEV·garantía de talla]</span>, se promete aquí: es el arma diferencial de la ruta.</div></div>
+    </div>
+  </details>
+
+  <details class="ruta" id="r6">
+    <summary class="fila"><span class="rname"><span class="rnum">R6</span> Estado y garantía <span class="caret">▶</span></span><span class="cell" data-l="Calificación"><span class="dot-skip">✕</span></span><span class="cell" data-l="Presentación"><span class="dot-full">✓</span></span><span class="cell" data-l="Compromiso"><span class="dot-full">✓</span></span><span class="cell" data-l="Cierre humano"><span class="dot-half">~</span></span><span class="sal">V · N</span></summary>
+    <div class="rama">
+      <h4>Tronco</h4>
+      <div class="nodo"><span class="ncode">6.0</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Entrada.</b> Keywords: estado, detalles, garantía, revisada, certificada.</div></div>
+      <div class="nodo"><span class="ncode">6.1</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Fork certificación o garantía.</b> Certificación ataca el riesgo pre-compra: explica el proceso real <span class="ph">[GAR·certificación]</span> con la ficha como prueba. Garantía ataca el riesgo post-compra: cobertura, duración, proceso <span class="ph">[GAR·cobertura·proceso]</span>. Dos miedos distintos, dos mensajes distintos, cero solapamiento.</div></div>
+      <div class="nodo"><span class="ncode">6.2</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Reconversión.</b> CTA a ver y probar la bici en persona; si hay bici en contexto, su ficha adjunta.</div></div>
+      <div class="nodo"><span class="ncode">6.3</span><div class="nbody"><span class="chip n-tim">Bot + timer</span> <b>Fuera de política.</b> Pregunta que el documento no cubre: handoff con timer, y el caso se registra para ampliar el documento.</div></div>
+    </div>
+  </details>
+
+  <details class="ruta" id="r7">
+    <summary class="fila"><span class="rname"><span class="rnum">R7</span> Agendar visita <span class="caret">▶</span></span><span class="cell" data-l="Calificación"><span class="dot-skip">✕</span></span><span class="cell" data-l="Presentación"><span class="dot-half">~</span></span><span class="cell" data-l="Compromiso"><span class="dot-full">✓</span></span><span class="cell" data-l="Cierre humano"><span class="dot-full">✓</span></span><span class="sal">V · N</span></summary>
+    <div class="rama">
+      <h4>Tronco</h4>
+      <div class="nodo"><span class="ncode">7.0</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Entrada.</b> Keywords: ver la bici, probarla, dónde están, horario, dirección. El salto más agresivo del árbol: directo a compromiso.</div></div>
+      <div class="nodo"><span class="ncode">7.1</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Fork de contexto.</b> ¿Bici en contexto? Verifica disponibilidad y envía la ficha pre-visita (llega más caliente). ¿Sin bici? "¿Alguna en particular o vienes a mirar?": mirar es válido, se agenda igual.</div></div>
+      <div class="nodo"><span class="ncode">7.2</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Agenda.</b> Dirección y horarios <span class="ph">[OPS·dirección·horarios]</span>, fecha y hora, confirmación, y recordatorios automáticos el día anterior y el mismo día.</div></div>
+      <div class="nodo"><span class="ncode">7.3</span><div class="nbody"><span class="chip n-tim">Bot + timer</span> <b>Confirmación del slot.</b> Validación humana del horario si la agenda no es self-service, con timer y fallback.</div></div>
+      <div class="nodo"><span class="ncode">7.4</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Apartado pre-visita.</b> Ofrece asegurar la unidad hasta la visita <span class="ph">[APA·vigencia]</span>: en inventario único, la visita segura vale más que la visita.</div></div>
+      <div class="nodo"><span class="ncode">7.5</span><div class="nbody"><span class="chip n-hum">Humano</span> <b>Cierre presencial.</b> Fuera del bot. Registro de resultado obligatorio: ganado, o perdido con razón. Sin registro no hay data.</div></div>
+      <h4>Ramas</h4>
+      <div class="subrama">
+        <div class="nodo"><span class="ncode">A</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>No-show.</b> Reagendo automático una vez con tono liviano. Segundo no-show: salida N con alerta activa.</div></div>
+      </div>
+    </div>
+  </details>
+
+  <details class="ruta" id="r8">
+    <summary class="fila"><span class="rname"><span class="rnum">R8</span> Vende su bici <span class="caret">▶</span></span><span class="cell" data-l="Calificación"><span class="dot-skip">✕</span></span><span class="cell" data-l="Presentación"><span class="dot-skip">✕</span></span><span class="cell" data-l="Compromiso"><span class="dot-skip">✕</span></span><span class="cell" data-l="Cierre humano"><span class="dot-skip">✕</span></span><span class="sal">P</span></summary>
+    <div class="rama">
+      <h4>Tronco · filtro en cascada</h4>
+      <div class="nodo"><span class="ncode">8.0</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Entrada.</b> Keywords: vendo, compran, parte de pago, retoma.</div></div>
+      <div class="nodo"><span class="ncode">8.1</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Filtro 1 · marca.</b> ¿Es Specialized? No: rechazo digno inmediato, honesto y con orientación de dónde le irá mejor. Salida X (razón: marca). Sin ticket, sin costo humano.</div></div>
+      <div class="nodo"><span class="ncode">8.2</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Filtro 2 · lista negra.</b> Modelo contra la tabla de no recibidos <span class="ph">[REC·lista negra·criterios]</span>. Match: rechazo digno automático. Salida X (razón: modelo). La tabla es viva: cada rechazo manual nuevo la alimenta.</div></div>
+      <div class="nodo"><span class="ncode">8.3</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Captura estructurada.</b> Modelo, año, talla, fotos (mínimo <span class="ph">[REC·fotos]</span>), estado declarado, expectativa de precio opcional, y requisitos de entrada <span class="ph">[REC·documentación·serie]</span>.</div></div>
+      <div class="nodo"><span class="ncode">8.4</span><div class="nbody"><span class="chip n-tim">Bot + timer</span> <b>Ticket manual.</b> Genera el ticket y promete solo el plazo real <span class="ph">[REC·sla]</span>. Timer: si vence, aviso al lead y escalamiento interno.</div></div>
+      <div class="nodo"><span class="ncode">8.5</span><div class="nbody"><span class="chip n-hum">Humano</span> <b>Evaluación.</b> Responde con las modalidades que existan <span class="ph">[REC·modalidades]</span>. Salida P: el lead cruza al embudo proveedor.</div></div>
+      <h4>Ramas</h4>
+      <div class="subrama">
+        <div class="nodo"><span class="ncode">A</span><div class="nbody"><span class="chip n-hum">Humano</span> <b>Híbrido parte de pago.</b> Si venía comprando (cruce con R2 o R3), se mantienen ambos hilos y el humano estructura la operación completa <span class="ph">[PAG·parte de pago]</span>. La fusión de embudos más rentable del sistema.</div></div>
+      </div>
+    </div>
+  </details>
+
+  <details class="ruta" id="r9">
+    <summary class="fila"><span class="rname"><span class="rnum">R9</span> Otra consulta · fallback <span class="caret">▶</span></span><span class="cell" data-l="Calificación"><span class="dot-half">~</span></span><span class="cell" data-l="Presentación"><span class="dot-half">~</span></span><span class="cell" data-l="Compromiso"><span class="dot-half">~</span></span><span class="cell" data-l="Cierre humano"><span class="dot-full">✓</span></span><span class="sal">V · N · P</span></summary>
+    <div class="rama">
+      <h4>Tronco</h4>
+      <div class="nodo"><span class="ncode">9.0</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Default.</b> Nada matcheó: ni payload, ni keywords, ni botones.</div></div>
+      <div class="nodo"><span class="ncode">9.1</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Clasificación suave.</b> Una reformulación o el menú de rutas. Si la intención aparece, rutea a la ruta que corresponda.</div></div>
+      <div class="nodo"><span class="ncode">9.2</span><div class="nbody"><span class="chip n-tim">Bot + timer</span> <b>Válvula humana.</b> Obligatoria por doctrina: "te responde [nombre] antes de [hora]" según franja <span class="ph">[OPS·horarios·sla]</span>. Honesto siempre, encierro jamás.</div></div>
+      <div class="nodo"><span class="ncode">9.3</span><div class="nbody"><span class="chip n-bot">Bot</span> <b>Registro.</b> Tag fallback y log de la conversación: este balde es el motor de descubrimiento de intenciones nuevas, se revisa cada semana.</div></div>
+    </div>
+  </details>
+</section>
+
+<section class="section" id="transversal">
+  <h2>Capa transversal</h2>
+  <p class="section-lead">Reglas que aplican a todos los nodos de todas las rutas. No son opcionales: son requisitos de la especificación.</p>
+  <div class="trans-grid">
+    <div class="trans-card"><h3>Resiliencia a texto libre</h3><p>Todo nodo que espera input declara 4 arcos: botón esperado, texto libre con intención, texto libre sin intención, y silencio. Keywords globales (valor, precio, cuánto) responden contextualmente y re-entregan el artefacto clave (link de ficha) aunque un flujo anterior haya muerto. El sistema se auto-repara.</p></div>
+    <div class="trans-card"><h3>Escape humano</h3><p>Disponible desde cualquier punto del árbol. El bot jamás encierra: si no puede, dice quién responde y antes de qué hora, y cumple.</p></div>
+    <div class="trans-card"><h3>Cadencias de caída</h3><p>Quiz abandonado: 2 h y 24 h. Shortlist sin respuesta: 24 h con ángulo nuevo, nunca el mismo mensaje. Apartado impago: aviso pre-expiración. Visita: recordatorios día anterior y mismo día. Máximo 3 toques por estado, luego salida N con alerta activa.</p></div>
+    <div class="trans-card"><h3>Instrumentación</h3><p>Cada transición es un tag con timestamp. Estados: nuevo, ruteado, calificado, interesado, comprometido, en cierre, salida. KPIs: distribución por ruta, % de fallback, conversión por camino, tiempos de respuesta humana contra SLA. Revisión semanal.</p></div>
+    <div class="trans-card"><h3>Promesas</h3><p>El bot solo promete lo que está escrito en los 6 documentos. Lo que no está escrito, no existe para el bot: escala a humano y el caso se registra para ampliar el documento.</p></div>
+    <div class="trans-card"><h3>Traspaso con brief</h3><p>Ningún handoff llega vacío: perfil, bici en contexto, presupuesto, urgencia, objeción probable, y piso interno cuando aplica. El humano entra con nombre propio.</p></div>
+  </div>
+</section>
+
+<section class="section" id="ingenieria">
+  <h2>Ingeniería del embudo · capacidades, bordes y el cruce ManyChat</h2>
+  <p class="section-lead">El aterrizaje técnico del sistema, en el orden del proceso: qué debe poder hacer (capacidades), qué lo rompe (condiciones de borde), la hoja de requerimientos consolidada con prioridades, y el veredicto de cada requerimiento contra la plataforma real. Verificado contra la documentación vigente de ManyChat.</p>
+
+  <div class="bench">
+    <h3>Mapa de capacidades <span>· qué debe poder hacer el sistema</span></h3>
+    <div style="margin-top: 0.9rem;">
+      <div class="hallazgo"><span class="hallazgo-n">C1</span><p><b>Detección y ruteo.</b> Triggers de comentario (post o reel, específico o cualquiera) con respuesta pública más DM con payload; trigger de respuesta a historias; keywords con el vocabulario minado; diccionario de modelos para texto libre; menú de rutas; fallback instrumentado.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">C2</span><p><b>Contexto persistente.</b> Campos por lead: puerta de origen, bici en contexto, talla, presupuesto, ciudad, score, motivo de escalamiento; tags con timestamp en cada transición de estado.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">C3</span><p><b>Inventario en vivo.</b> Consulta de disponibilidad, precio y geometría por unidad contra la base sincronizada con Ailoo, antes de afirmar cualquier cosa; envío de la ficha correcta según el payload.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">C4</span><p><b>Lógica y compuertas.</b> Ramas por campos; filtros de marca, lista negra y piso de presupuesto; los 4 arcos (botón, texto con intención, texto sin intención, silencio) en todo nodo que espere input.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">C5</span><p><b>Traspaso humano.</b> Handoff a bandeja humana con el brief visible en el perfil del lead, notificación al responsable, SLA con timer y fallback automático si nadie lo toma.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">C6</span><p><b>Tiempo y cadencias.</b> Retrasos y recordatorios (2 h y 24 h de quiz, visita, expiración de apartado) respetando las ventanas de la plataforma; re-enganche fuera de ventana por el canal que sí lo permita.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">C7</span><p><b>Compromiso.</b> Agenda de visita con confirmación y recordatorios; link de apartado y pago; captura estructurada de la ruta 8 con fotos.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">C8</span><p><b>Medición.</b> Log de transiciones a planilla, contención por ruta, distribución por puerta, motivo de escalamiento, y el ritual semanal del fallback.</p></div>
+    </div>
+  </div>
+
+  <div class="bench">
+    <h3>Condiciones de borde <span>· lo que rompe flujos, con su regla</span></h3>
+    <div style="margin-top: 0.9rem;">
+      <div class="hallazgo"><span class="hallazgo-n">B01</span><p><b>Bici vendida entre el click y el mensaje.</b> Rama "se vendió" con dos similares y waitlist; la fuente de verdad es la base sincronizada, nunca el ad.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">B02</span><p><b>Texto libre donde se esperaba botón.</b> El incidente documentado (dos leads perdidos en una semana). Regla: 4 arcos en todo nodo de input, keywords globales de precio, y re-entrega del artefacto clave aunque el flujo anterior haya muerto.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">B03</span><p><b>Ventana de 24 horas de Instagram.</b> Fuera de ella no se puede enviar nada: toda cadencia mayor a 24 horas muere en IG. Regla: cadencias comprimidas y migración temprana a WhatsApp.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">B04</span><p><b>Historia caducada.</b> El share puede apuntar a una story que ya no existe; si el mapeo story-bici no se registró al publicar, se pierde. Regla: arco de confirmación con las últimas bicis publicadas.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">B05</span><p><b>Doble puerta simultánea.</b> El lead comenta y escribe DM a la vez: un solo hilo, gana el contexto más específico, cero respuestas duplicadas.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">B06</span><p><b>Hilo retomado semanas después.</b> "¿Sigue disponible?" sobre contexto viejo: re-verificar bici y estado, nunca asumir el contexto anterior.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">B07</span><p><b>Dos leads calientes por la misma unidad.</b> Un apartado por bici, lista de espera para el segundo, y honestidad de estado en ambos hilos.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">B08</span><p><b>Humano ausente en el SLA.</b> Fallback automático: reoferta de agenda o apartado y escalamiento interno. Ningún lead caliente muere esperando a una persona.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">B09</span><p><b>Audios y notas de voz.</b> El bot no transcribe: respuesta honesta pidiendo texto o escalando a humano.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">B10</span><p><b>Ráfaga de mensajes.</b> Cinco mensajes seguidos reciben una respuesta al conjunto, no cinco respuestas.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">B11</span><p><b>Extranjeros y moneda.</b> Pasó en la data (precio en dólares): respuesta estándar en CLP, humano si insiste.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">B12</span><p><b>Spam, bots entrantes y message_requests.</b> El spam se cierra en silencio sin gastar humano ni contaminar métricas. Y verificar en construcción si los hilos en solicitudes de mensaje disparan automatización antes de aceptarse: en la data, una consignación ofrecida murió ahí sin que nadie la viera.</p></div>
+    </div>
+  </div>
+
+  <div class="bench">
+    <h3>Hoja de requerimientos <span>· consolidada y priorizada</span></h3>
+    <div class="btab-wrap" style="margin-top: 0.9rem;"><table class="btab" style="min-width: 600px;">
+      <thead><tr><th>REQ</th><th style="text-align:left">Requerimiento</th><th>Prioridad</th><th style="text-align:left">Se construye con</th></tr></thead>
+      <tbody>
+        <tr><td>01</td><td style="text-align:left">Respuesta automática en minuto cero, 24/7, en ambas puertas</td><td>P0</td><td style="text-align:left">Nativo</td></tr>
+        <tr><td>02</td><td style="text-align:left">4 arcos en todo nodo de input + keywords globales de precio con re-entrega de ficha</td><td>P0</td><td style="text-align:left">Nativo (diseño de flujo)</td></tr>
+        <tr><td>03</td><td style="text-align:left">Router por keywords con vocabulario minado + menú + fallback instrumentado</td><td>P0</td><td style="text-align:left">Nativo</td></tr>
+        <tr><td>04</td><td style="text-align:left">Puerta comentarios: respuesta pública variada + DM con payload del video</td><td>P0</td><td style="text-align:left">Nativo</td></tr>
+        <tr><td>05</td><td style="text-align:left">Puerta historias: trigger de respuesta con identificación de la bici</td><td>P0</td><td style="text-align:left">Nativo + proceso de publicación</td></tr>
+        <tr><td>06</td><td style="text-align:left">Verificación de disponibilidad, precio y geometría antes de afirmar</td><td>P0</td><td style="text-align:left">External Request a base Ailoo</td></tr>
+        <tr><td>07</td><td style="text-align:left">Handoff humano con brief + SLA con timer y fallback</td><td>P0</td><td style="text-align:left">Live Chat + campos y delays</td></tr>
+        <tr><td>08</td><td style="text-align:left">Tags y log de transiciones con timestamp; contención por ruta</td><td>P0</td><td style="text-align:left">Nativo + Google Sheets</td></tr>
+        <tr><td>09</td><td style="text-align:left">Quiz de calificación R1 con compuertas de presupuesto</td><td>P1</td><td style="text-align:left">Nativo</td></tr>
+        <tr><td>10</td><td style="text-align:left">Diccionario de modelos para texto libre</td><td>P1</td><td style="text-align:left">Keywords + External Request</td></tr>
+        <tr><td>11</td><td style="text-align:left">Cadencias de caída dentro de ventana + no-show y reagendo</td><td>P1</td><td style="text-align:left">Nativo (delays y condiciones)</td></tr>
+        <tr><td>12</td><td style="text-align:left">Migración temprana a WhatsApp con opt-in para nurturing largo y waitlist</td><td>P1</td><td style="text-align:left">Nativo (canal WA ya operativo)</td></tr>
+        <tr><td>13</td><td style="text-align:left">Agenda de visita con confirmación y recordatorios</td><td>P1</td><td style="text-align:left">Nativo</td></tr>
+        <tr><td>14</td><td style="text-align:left">Ruta 8: filtro de marca, lista negra, captura y ticket con SLA</td><td>P1</td><td style="text-align:left">Nativo + tabla en base [REC]</td></tr>
+        <tr><td>15</td><td style="text-align:left">Captura de ciudad y registro de demanda (waitlist como señal)</td><td>P1</td><td style="text-align:left">Nativo + Sheets</td></tr>
+        <tr><td>16</td><td style="text-align:left">Apartado con link de pago y expiración</td><td>P2</td><td style="text-align:left">Link externo [APA][PAG]</td></tr>
+        <tr><td>17</td><td style="text-align:left">Notificación proactiva de waitlist al entrar stock</td><td>P2</td><td style="text-align:left">API sendFlow, solo vía WhatsApp</td></tr>
+        <tr><td>18</td><td style="text-align:left">Score premium con notificación temprana al humano</td><td>P2</td><td style="text-align:left">Nativo (condiciones + Live Chat)</td></tr>
+      </tbody>
+    </table></div>
+    <p class="bench-notes"><b>Lectura:</b> nada en P0 depende de los documentos de los dueños. El embudo v2.0 showroom es construible hoy; REQ-16 y la profundidad de la ruta de envíos esperan los docs.</p>
+  </div>
+
+  <div class="bench">
+    <h3>El cruce con ManyChat <span>· veredicto por capacidad</span></h3>
+    <div style="margin-top: 0.9rem;">
+      <div class="hallazgo"><span class="chip v-si">Nativo</span><p><b>Se construye directo.</b> Triggers de comentario en post o reel (específico o cualquiera) con variaciones de respuesta pública y DM privado; trigger de respuesta a historias y de menciones; keywords, menús, botones y quick replies; campos ilimitados, tags, condiciones y delays; Live Chat para el traspaso humano; integración con Google Sheets. Una restricción estructural compartida por toda la industria: no existe el DM en frío, todo parte de una acción del lead.</p></div>
+      <div class="hallazgo"><span class="chip v-par">Integración</span><p><b>Se resuelve con External Request (Pro, ya contratado) o proceso.</b> La verificación de inventario, precio y geometría va contra la base sincronizada con Ailoo, con timeout de ~10 segundos que exige una API rápida y respuesta mapeada a campos. La identificación de bici en historias tiene una restricción dura de plataforma: el trigger de historia específica solo permite elegir historias de las últimas 24 horas, una por trigger; nace entonces un proceso operativo de publicación: cada story de bici se registra al publicarse (trigger del día o keyword de modelo en el CTA), y las respuestas a historias caducadas caen al arco de confirmación. El timer de SLA humano no existe nativo ("si nadie respondió en X minutos"): se arma con delay, un campo que el humano marca al tomar el lead, y una condición. Y la clasificación IA del fallback tiene integración nativa con OpenAI, semilla del futuro agente sobre los 6 documentos.</p></div>
+      <div class="hallazgo"><span class="chip v-no">Límite</span><p><b>Límites duros, con su decisión de diseño.</b> La ventana de 24 horas de Instagram es política de Meta, no de ManyChat: fuera de ella no se envía nada, ni recordatorios ni avisos de waitlist, y el DM en frío es imposible. Decisión estructural: las cadencias de IG se comprimen dentro de la ventana, y el opt-in temprano a WhatsApp ("¿te paso la ficha por WhatsApp?") deja el nurturing largo, la waitlist y todo re-enganche en el canal que sí permite reabrir con plantillas. Esto convierte a REQ-12 de conveniencia en arquitectura. Los audios no se transcriben nativo (arco honesto; la transcripción llega con la fase del agente IA), el pago no se procesa dentro de ManyChat (link externo más confirmación), y el formato de IG manda mensajes cortos: la convención vigente de 2 burbujas y 3 botones de 20 caracteres se mantiene, con menús en dos niveles cuando falten botones.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="copys">
+  <h2>Copys de construcción · rutas P0</h2>
+  <p class="section-lead">La arquitectura convertida en palabras: el texto literal de cada mensaje, listo para copiar a ManyChat. Convenciones: máximo 2 burbujas y 3 botones de hasta 20 caracteres por mensaje; {campo} es variable del sistema; [DOC·campo] es placeholder que espera documento de dueños; las cadencias van a 2 y 22 horas (no 24) para operar siempre dentro de la ventana de Instagram; los emojis siguen la convención del bot ya existente.</p>
+
+  <div class="bench">
+    <h3>Flujo 0 · Parche de resiliencia <span>· keywords globales de precio · corre independiente de todo</span></h3>
+    <p class="bench-ctx">Disparador: el mensaje contiene "valor", "precio", "cuánto", "cuanto", "q valor", "a cuánto", "cuánto sale" o "cuánto pedís". Es la automatización que habría salvado los dos leads perdidos la semana del análisis: responde y re-entrega la ficha aunque cualquier otro flujo haya muerto.</p>
+    <div class="cnode">
+      <div class="cnode-t">0.1 · Con bici en contexto ({bici} conocida por payload, share o diccionario)</div>
+      <div class="burbuja">¡Buena! La {bici} está publicada en {precio} 🚴 Dame un segundo y te confirmo que siga disponible.</div>
+      <div class="burbuja">Acá va la ficha completa, con talla, kms, batería y estado certificado: {link_ficha} ¿Qué te tinca?</div>
+      <div class="botonera"><span class="btn-ig">📅 Agendar visita</span><span class="btn-ig">📏 ¿Me quedará?</span><span class="btn-ig">💬 Otra consulta</span></div>
+      <div class="arcos"><b>Arcos:</b> botón → su flujo · texto con otro modelo → re-resuelve contra el diccionario y repite este nodo · texto sin intención → menú contextual · silencio → seguimiento a las 22 h con ángulo nuevo (nodo 2.5), <b>solo si ya hubo tap</b> (R2). <div class="arcos" style="margin-top:0.6rem"><b>Corrección C3 (implementada, modo B):</b> el nodo dice "publicada en" y no afirma stock, porque este parche corre por keyword sin pasar por verificación, y el spoke R2 sí verifica antes de hablar. Dos nodos no pueden prometer distinto sobre el mismo hecho. <b>Upgrade C3-A (P0, bloqueado por Ailoo):</b> cuando exista el request de disponibilidad, este nodo lo invoca antes del primer mensaje y recupera el "¡Sigue disponible!" del 2.2. Hasta entonces, el modo B es la única versión honesta.</div></div>
+    </div>
+    <div class="cnode">
+      <div class="cnode-t">0.2 · Sin contexto (“¿Precio?” suelto, el caso de la data)</div>
+      <div class="burbuja">¡Hola! 🙌 ¿De cuál bici quieres el precio? Dime el modelo y te lo paso al tiro.</div>
+      <div class="burbuja">Si la viste hace poco, capaz sea una de estas 👇</div>
+      <div class="botonera"><span class="btn-ig">{bici_1}</span><span class="btn-ig">{bici_2}</span><span class="btn-ig">🔍 Es otra bici</span></div>
+      <div class="arcos"><b>Arcos:</b> botón de bici → nodo 0.1 de esa bici · <b>"Es otra bici" → 0.3</b> · texto con modelo → diccionario → 0.1 · texto sin match → 0.3 · sin intención → menú principal · silencio → nada (aún no hay contexto que perseguir).
+      <div class="arcos" style="margin-top:0.6rem"><b>Corrección C1:</b> la pregunta manda y las últimas bajan a red de rescate. Son dos y no tres porque el tercer botón es la salida de quien guardó un post viejo: sin ese botón, el que no ve su bici queda obligado a escribir texto libre, que por R2 no abre la ventana ni lo da de alta como contacto. El sistema deja de asumir recencia y pasa a preguntarla. <b>Nota técnica:</b> las dos últimas llegan por External Request a la base.</div></div>
+    </div>
+    <div class="cnode">
+      <div class="cnode-t">0.3 · Captura de modelo (fallback del diccionario, nodo nuevo)</div>
+      <div class="burbuja">Escríbeme el modelo como lo recuerdes (Levo, Tarmac, Epic, Vado...) y yo la busco 🔎</div>
+      <div class="arcos"><b>Arcos:</b> texto que matchea el diccionario → <span class="blk-t t-flw">→Flujo</span> Spoke R2 con {bici} cargada · <b>texto que NO matchea (segundo intento) → válvula humana 4.3 con el texto crudo en el brief y tag "modelo_no_reconocido"</b> · sin intención → menú principal.
+      <div class="arcos" style="margin-top:0.6rem"><b>Correcciones C1 y M10:</b> este nodo es el fallback explícito que faltaba. Nunca se pregunta el modelo dos veces sin salida: al segundo intento fallido entra humano. Cada tag "modelo_no_reconocido" alimenta el diccionario en el ritual semanal, así que el balde de fallos es el motor de mejora, no un desagüe.</div></div>
+    </div>
+  </div>
+
+  <div class="bench">
+    <h3>Flujo 1 · Puerta comentarios <span>· respuesta pública + DM con payload</span></h3>
+    <div class="cnode">
+      <div class="cnode-t">1.0 · Respuesta pública al comentario (3 variaciones rotadas por ManyChat)</div>
+      <div class="burbuja">Variación A: “¡Te escribimos por DM! 📩” · Variación B: “Info completa en tu DM 👀” · Variación C: “Revisa tus mensajes 🙌”</div>
+      <div class="arcos"><b>Regla:</b> corta y sin datos duros; el precio y la ficha viven en el DM, la prueba social vive en el post.</div>
+    </div>
+    <div class="cnode">
+      <div class="cnode-t">1.1 · DM si el video es de una bici específica (payload = {bici})</div>
+      <div class="burbuja">¡Hola! Vimos tu comentario en la {bici} 🚴 ¿Te la muestro con todos los detalles?</div>
+      <div class="botonera"><span class="btn-ig">👀 Sí, muéstramela</span><span class="btn-ig">📏 ¿Y en mi talla?</span><span class="btn-ig">💬 Otra consulta</span></div>
+      <div class="arcos"><b>Arcos:</b> muéstramela → verificación de disponibilidad y nodo 2.2 · talla → nodo 2.3 · otra consulta → submenú · texto “precio/valor” → Flujo 0.1 con esta bici · sin intención → una reformulación y menú · silencio → recordatorio a las 22 h: “¿Seguimos? La {bici} sigue disponible 👇” con los mismos botones. El botón “Sí, muéstramela” se conserva del bot existente: la data muestra que la gente ya lo usa.</div>
+    </div>
+    <div class="cnode">
+      <div class="cnode-t">1.2 · DM si el video es general de la tienda</div>
+      <div class="burbuja">¡Hola! Gracias por comentar 🙌 Somos BikeTrust: Specialized usadas, certificadas y con garantía.</div>
+      <div class="burbuja">¿Qué andas buscando?</div>
+      <div class="botonera"><span class="btn-ig">🚲 Busco una bici</span><span class="btn-ig">💰 Vender mi bici</span><span class="btn-ig">💬 Otra consulta</span></div>
+      <div class="arcos"><b>Arcos:</b> busco → quiz R1 · vender → filtros R8 · otra consulta → submenú · <b>texto con modelo → diccionario → <span class="blk-t t-flw">→Flujo</span> Spoke R2</b> (verificación y ficha) · texto con modelo sin match → 0.3 · silencio → nada.<div class="arcos" style="margin-top:0.6rem"><b>Corrección C4:</b> antes este arco caía al parche de precio, que abre disparando un precio que la persona no pidió. Quien nombra un modelo pide la bici, no la tarifa. R2 igual entrega el precio, pero después de verificar y dentro de la ficha, que es donde el precio persuade en vez de asustar. El parche de precio queda reservado a su disparador real: las keywords de valor.</div></div>
+    </div>
+  </div>
+
+  <div class="bench">
+    <h3>Flujo 2 · Puerta historias <span>· story reply, el disparador dominante</span></h3>
+    <div class="cnode">
+      <div class="cnode-t">2.A · Historia registrada (proceso de publicación: story → {bici})</div>
+      <div class="burbuja">Pasa directo a verificación de disponibilidad y al nodo 2.2, sin preguntar nada: el share ya declaró la bici.</div>
+    </div>
+    <div class="cnode">
+      <div class="cnode-t">2.B · Historia caducada o sin registro (borde B04)</div>
+      <div class="burbuja">¡Hola! 🙌 ¿Cuál bici viste? Dime el modelo y te la busco al tiro.</div>
+      <div class="burbuja">Si fue de las de estos días, capaz sea una de estas 👇</div>
+      <div class="botonera"><span class="btn-ig">{bici_1}</span><span class="btn-ig">{bici_2}</span><span class="btn-ig">🔍 Es otra bici</span></div>
+      <div class="arcos"><b>Arcos:</b> botón de bici → 2.1 (verificación) y 2.2 · <b>"Es otra bici" → 0.3</b> · texto con modelo → diccionario → 2.1 · texto sin match → 0.3 · sin intención → menú · silencio → nada.
+      <div class="arcos" style="margin-top:0.6rem"><b>Corrección C2:</b> mismo patrón que C1, en la puerta dominante. El nodo existe precisamente porque la historia caducó (R7: el trigger solo abarca las últimas 24 h), así que ofrecer las últimas publicadas re-impone la recencia que este nodo ya asumió rota. Preguntar y dar salida es lo coherente.</div></div>
+    </div>
+  </div>
+
+  <div class="bench">
+    <h3>Flujo 3 · Ruta 2, el núcleo <span>· 54% del tráfico comercial</span></h3>
+    <div class="cnode">
+      <div class="cnode-t">2.1 · Verificación de disponibilidad (External Request, interno)</div>
+      <div class="burbuja">Dame un segundo, te confirmo que siga disponible ✅</div>
+      <div class="arcos"><b>Lógica:</b> disponible → 2.2 · vendida → Rama A · error o timeout de la consulta → “Estoy confirmando el stock, te escribo en unos minutos 🙏” y alerta interna al humano (la promesa nunca excede al sistema).</div>
+    </div>
+    <div class="cnode">
+      <div class="cnode-t">2.2 · Ficha y confirmación (el punto de conversión)</div>
+      <div class="burbuja">¡Sigue disponible! 🚴 {modelo} · talla {talla} · {precio}</div>
+      <div class="burbuja">Ficha completa con fotos, kms, batería y estado certificado: {link_ficha} ¿Qué te tinca?</div>
+      <div class="botonera"><span class="btn-ig">📅 Agendar visita</span><span class="btn-ig">📏 ¿Me quedará?</span><span class="btn-ig">💬 Otra consulta</span></div>
+      <div class="arcos"><b>Arcos:</b> visita → 2.4 · talla → 2.3 · otra consulta → submenú · “precio/valor” → responde precio y re-envía link (Flujo 0) · sin intención → menú contextual · silencio → 2.5 a las 22 h.</div>
+    </div>
+    <div class="cnode">
+      <div class="cnode-t">2.3 · Micro-check de talla</div>
+      <div class="burbuja">Fácil de resolver 📏 ¿Cuánto mides? (ej: 1.75)</div>
+      <div class="burbuja">Y si la sabes, tu entrepierna en cm (parado, del suelo a la ingle). Con las dos la talla se acierta mucho mejor 🙌</div>
+      <div class="arcos"><b>Arcos:</b> {estatura} + {entrepierna} → compara contra [FICHA·geometría]: calza → “¡Perfecto! Para {estatura}, la talla {talla} te queda bien 👌” y botones de 2.2 · no calza → Rama B · entre tallas, dudas repetidas <b>o entrepierna no entregada en caso límite</b> → handoff de fit (Flujo 5) · texto sin número → una reformulación → handoff · silencio → 2.5.
+      <div class="arcos" style="margin-top:0.6rem"><b>Corrección M7:</b> el spoke R5 del plano ya pedía estatura y entrepierna; este copy pedía solo estatura y los dos convivían. Queda alineado al plano. La entrepierna es opcional y no bloquea: si no la entregan, el bot resuelve con estatura y escala al humano en el caso límite, que es exactamente donde el juicio humano vale (regla 3 de la doctrina: talla y fit son nodo humano obligatorio).</div></div>
+    </div>
+    <div class="cnode">
+      <div class="cnode-t">2.4 · Compromiso: <span class="blk-t t-flw">→Flujo</span> TRONCO (copy literal del tronco, no un nodo aparte)</div>
+      <div class="burbuja">La mejor forma de asegurarla es verla y probarla en persona 🤝 ¿Cómo prefieres seguir?</div>
+      <div class="botonera"><span class="btn-ig">📅 Visita en tienda</span><span class="btn-ig">📞 Que me llamen</span><span class="btn-ig">🔒 Apartarla</span></div>
+      <div class="arcos"><b>Rama visita:</b> "Estamos en [OPS·dirección], [OPS·horarios]. ¿Cuándo te acomoda pasar?" → captura día y franja → "¡Listo! {nombre} te confirma antes de [OPS·sla] 🙌" · <b>Rama llamada:</b> captura ventana horaria → misma confirmación · <b>Rama apartado:</b> oculta hasta que exista [APA]. Cerrando cualquiera de las tres: Set Field {estado}=comprometido, {bici_objetivo}, {via_cierre} + Add Tag por vía + timestamp, y <span class="blk-t t-flw">→Flujo</span> Handoff con temporizador. · silencio → 2.5.
+      <div class="arcos" style="margin-top:0.6rem"><b>Corrección C5:</b> este nodo y el tronco del plano de construcción eran dos versiones de la misma convergencia, escritas en momentos distintos y con botoneras distintas ("esta semana / próxima semana" contra "visita / llamada / apartado"). Convivían y se pisaban. Queda una sola: manda el tronco, porque es la pieza completa (tres vías, set fields, tags, timestamp y handoff), y este 2.4 pasa a ser su copy literal. En ManyChat es <b>un</b> flujo invocado con Start Another Flow, nunca duplicado dentro de cada spoke. <b>Nota:</b> "esta semana / próxima semana" se conserva como captura dentro de la rama visita, que es donde esa pregunta tiene sentido; la agenda con calendario completo sigue siendo P1.</div></div>
+    </div>
+    <div class="cnode">
+      <div class="cnode-t">2.5 · Cadencia de caída (22 h, ángulo nuevo, nunca repetir)</div>
+      <div class="burbuja">¿Quedó alguna duda de la {bici}? Si quieres, la vemos juntos: te agendo una visita sin compromiso 📅</div>
+      <div class="botonera"><span class="btn-ig">📅 Agendar visita</span><span class="btn-ig">🧍 Hablar con alguien</span><span class="btn-ig">🔕 No por ahora</span></div>
+      <div class="arcos"><b>Arcos:</b> no por ahora → “¡Todo bien! 🙌 ¿Te aviso si baja de precio o llega algo similar? Pásame tu WhatsApp y te mantengo al tanto” → salida N con opt-in · silencio → salida N pasiva con tag. Máximo un toque: es el único seguimiento dentro de ventana.</div>
+    </div>
+    <div class="cnode">
+      <div class="cnode-t">Rama A · Se vendió (clicks tardíos de ads y reels)</div>
+      <div class="burbuja">Esa {bici} voló 🥲 se vendió hace poquito. Pero mira, tengo estas parecidas ahora mismo:</div>
+      <div class="burbuja">{2_similares: modelo · talla · precio}</div>
+      <div class="botonera"><span class="btn-ig">{similar_1}</span><span class="btn-ig">{similar_2}</span><span class="btn-ig">🔔 Avísame si llega</span></div>
+      <div class="arcos"><b>Arcos:</b> similar → 2.1 y 2.2 de esa bici · avísame → “¡Anotado! Te aviso apenas entre una {modelo} 🙌 Ojo: Instagram solo me deja escribirte por 24 h, ¿me dejas tu WhatsApp para avisarte aunque pasen semanas?” → waitlist + opt-in WA (REQ-12) · silencio → N con tag de demanda.<div class="arcos" style="margin-top:0.6rem"><b>Corrección M11 (cero resultados):</b> si el request de similares devuelve vacío, el nodo NO muestra botonera muerta. Copy alterno: "Esa {bici} voló 🥲 y ahora mismo no tengo una parecida. ¿Te aviso apenas entre una? Déjame tu WhatsApp y te escribo aunque pasen semanas" + botón único 🔔 Avísame → waitlist con opt-in WA. Cero resultados es waitlist, nunca callejón.</div></div>
+    </div>
+    <div class="cnode">
+      <div class="cnode-t">Rama B · La talla no calza (rechazo honesto, patrón TPC)</div>
+      <div class="burbuja">Te voy a ser honesto: esa es talla {talla} y para {estatura} te va {chica_o_grande} 😕 No te la recomiendo.</div>
+      <div class="burbuja">En tu talla tengo estas ahora:</div>
+      <div class="botonera"><span class="btn-ig">{alt_1}</span><span class="btn-ig">{alt_2}</span><span class="btn-ig">🔔 Avísame si llega</span></div>
+      <div class="arcos"><b>Arcos:</b> igual que Rama A, incluida la rama de cero resultados: si no hay nada en su talla, el copy lo dice y ofrece waitlist con opt-in a WhatsApp, tagueando {talla_demandada} como señal de sourcing. La honestidad de talla es la firma de la casa: vende confianza hoy y evita devoluciones mañana.</div>
+    </div>
+  </div>
+
+  <div class="bench">
+    <h3>Flujo 4 · Router, menú y fallback <span>· el minuto cero cuando nada matchea</span></h3>
+    <div class="cnode">
+      <div class="cnode-t">4.1 · Menú de bienvenida (default reply, declara alcance según NN/g)</div>
+      <div class="burbuja">¡Hola! Somos BikeTrust 🚴 Specialized usadas, certificadas y con garantía. Te ayudo al tiro:</div>
+      <div class="botonera"><span class="btn-ig">🚲 Busco una bici</span><span class="btn-ig">💰 Vender mi bici</span><span class="btn-ig">💬 Otra consulta</span></div>
+      <div class="arcos"><b>Arcos:</b> botones → sus rutas · texto con intención en cualquier momento → su ruta (keywords minadas) · segundo mensaje sin match → 4.3 directo.</div>
+    </div>
+    <div class="cnode">
+      <div class="cnode-t">4.2 · Submenú de consultas (dos niveles, sin callejones)</div>
+      <div class="burbuja">¿Sobre qué es tu consulta?</div>
+      <div class="botonera"><span class="btn-ig">📍 Visita y ubicación</span><span class="btn-ig">🛡️ Garantía y estado</span><span class="btn-ig">➕ Otro tema</span></div>
+      <div class="arcos"><b>Segundo nivel tras "Otro tema":</b> 🚚 Envíos · 💳 Pagos y cuotas · 🧍 Hablar con alguien. Dos niveles porque la convención son 3 botones por mensaje y las intenciones informativas son cuatro.
+      <div class="arcos" style="margin-top:0.6rem"><b>Arcos:</b> visita → 4.2b (visita sin bici) · garantía → spoke Garantía · envíos → spoke Envíos · pagos → spoke Pagos · humano → 4.3 · <b>texto libre en cualquier punto → clasificador de intención</b>, que es la salida real para lo que no está en el menú.</div>
+      <div class="arcos" style="margin-top:0.6rem"><b>Corrección M8:</b> antes, quien entraba por envíos o pagos y caía acá no tenía botón que le calzara ni ruta de vuelta: callejón. Ahora todo spoke informativo es alcanzable desde el menú y todo texto libre vuelve al clasificador. <b>Corrección M9:</b> el botón de garantía deja de apuntar a "mensajes ya construidos" (referencia difusa) y apunta al spoke Garantía, cuyo contenido son tres slots definidos: qué cubre y por cuánto tiempo <span class="ph">[GAR·cobertura]</span>, qué significa certificada y qué se revisó <span class="ph">[GAR·certificación]</span>, y cómo se activa <span class="ph">[GAR·proceso]</span>. La estructura queda cerrada; el texto lo escriben los dueños. Fuera de esos tres slots, la pregunta va a handoff y se registra para ampliar el documento.</div></div>
+    </div>
+    <div class="cnode">
+      <div class="cnode-t">4.2b · Visita sin bici declarada (copy separado, nodo nuevo)</div>
+      <div class="burbuja">¡Claro que sí! Puedes venir a ver el showroom sin compromiso 🙌 Estamos en [OPS·dirección], [OPS·horarios].</div>
+      <div class="burbuja">Para tenerte algo listo cuando llegues, ¿ya sabes qué bici buscas o te ayudamos a elegir?</div>
+      <div class="botonera"><span class="btn-ig">🎯 Sé lo que busco</span><span class="btn-ig">🧭 Ayúdenme a elegir</span><span class="btn-ig">👀 Solo quiero mirar</span></div>
+      <div class="arcos"><b>Arcos:</b> sé lo que busco → 0.3 (captura de modelo) → R2 · ayúdenme → quiz · solo mirar → confirma visita, Set Field {estado}=visita_exploratoria, tag "sin_bici" y <span class="blk-t t-flw">→Flujo</span> Handoff con temporizador.
+      <div class="arcos" style="margin-top:0.6rem"><b>Corrección M17:</b> el tronco asume {bici} definida y su copy confirma bici y valor, así que invocarlo sin bici producía un mensaje roto. Este nodo es la variante honesta: agenda igual (mirar es válido y convierte en showroom), pero no finge saber qué viene a ver, e intenta el puente una sola vez sin cobrar peaje.</div></div>
+    </div>
+    <div class="cnode">
+      <div class="cnode-t">4.3 · Válvula humana (siempre disponible, siempre honesta)</div>
+      <div class="burbuja">¡Te leo! Escríbeme tu consulta y te responde {nombre} antes de {hora_franja} 🙌</div>
+      <div class="arcos"><b>Variante fuera de horario:</b> “El equipo entra a las [OPS·apertura] ☀️ {nombre} te responde a primera hora, apenas llegue.” · Todo mensaje aquí lleva tag fallback y va al log: este balde es el motor de descubrimiento de intenciones del ritual semanal.</div>
+    </div>
+  </div>
+
+  <div class="bench">
+    <h3>Flujo 5 · Handoff humano <span>· brief, SLA y fallback</span></h3>
+    <div class="cnode">
+      <div class="cnode-t">5.1 · Mensaje al cliente en el traspaso</div>
+      <div class="burbuja">Te va a atender {nombre} 👋 Ya le pasé toda tu info para que no tengas que repetir nada. Te escribe en los próximos {sla_min} minutos.</div>
+      <div class="arcos"><b>Regla doctrinal:</b> el humano entra con nombre propio; el bot jamás finge ser persona.</div>
+    </div>
+    <div class="cnode">
+      <div class="cnode-t">5.2 · El brief interno (nota visible en Live Chat / campos del lead)</div>
+      <div class="brief">Puerta: {puerta} · Bici: {bici} · Talla est.: {talla} · Presup.: {presupuesto} · Ciudad: {ciudad} · Motivo de escalamiento: {motivo_handoff} · Último msj: “{ultimo_mensaje}”</div>
+      <div class="arcos"><b>El timer se detiene solo:</b> con "Pause automations during conversations" activo, basta con que el humano responda desde el Inbox o la app móvil de ManyChat para que el bot quede pausado y el fallback se auto-cancele. No hay campo manual que marcar.
+      <div class="arcos" style="margin-top:0.6rem"><b>Corrección M13:</b> salen {score} y {objeción probable}. Ninguna lógica de v2.0 los calcula, así que llegaban vacíos o inventados y le enseñaban a Luis a desconfiar del brief. Entra {motivo_handoff}, que sí lo escribe el nodo que invoca el escalamiento. Un brief con cinco campos ciertos vale más que uno con siete y dos mentiras. Scoring es candidato a v2.1, cuando haya data de cierre por camino. <b>Corrección M18:</b> el campo manual "tomado" contradecía a R4, dependía de que Luis se acordara de marcarlo y no soportaba el caso más común (responder y olvidarse). El auto-pause nativo es la fuente de verdad; el tag {tomado} queda solo como respaldo opcional de diagnóstico.</div></div>
+    </div>
+    <div class="cnode">
+      <div class="cnode-t">5.3 · Fallback si el SLA vence (delay {sla_min} + condición tomado = no)</div>
+      <div class="burbuja">Se nos está demorando {nombre} 🙏 Para no hacerte esperar: ¿te agendo derechamente la visita y lo conversan en persona?</div>
+      <div class="botonera"><span class="btn-ig">📅 Agendar visita</span><span class="btn-ig">⏳ Espero nomás</span><span class="btn-ig">💬 Otra consulta</span></div>
+      <div class="arcos"><b>Arcos:</b> visita → tronco · <b>espero → segundo temporizador</b> · otra consulta → submenú. Ningún lead caliente muere esperando a una persona: es la regla 5 de la doctrina hecha copy.<div class="arcos" style="margin-top:0.6rem"><b>Corrección M15:</b> "espero nomás" era una salida sin reloj: el lead aceptaba esperar y el sistema dejaba de contar, que es justo la forma elegante de perderlo en silencio. Ahora arma un <span class="blk-t t-dly">Delay</span> de 90 min (segundo timer), y al vencer escala a un segundo responsable con tag "sla_vencido_2" y avisa al cliente sin excusas: "Perdona la espera 🙏 te dejo agendada la visita para que no dependas de un mensaje, y {nombre} igual te escribe" + botón al tronco. Máximo dos timers: el tercero sería acoso. Si el segundo vence también, salida N con opt-in a WhatsApp y alerta al ritual semanal.</div></div>
+    </div>
+  </div>
+
+    <div class="bench">
+    <h3>Flujo 6 · Opt-out y cierre limpio <span>· obligatorio, nativo, nunca improvisado</span></h3>
+    <div class="cnode">
+      <div class="cnode-t">6.1 · Baja voluntaria (keywords nativas de ManyChat)</div>
+      <p class="bench-ctx">Disparador: "no me escribas más", "no me molesten", "para", "stop", "baja", "unsubscribe", "sacame", "sácame". Regla de ManyChat aplicable: se monta como Keyword rule dedicada (R5: 10 keywords por regla alcanzan de sobra) con la acción nativa de Unsubscribe, no como flujo casero.</p>
+      <div class="burbuja">Listo, no te escribo más 🙌 Si algún día quieres retomar, respóndeme por acá y lo reactivamos. Que estés bien.</div>
+      <div class="arcos"><b>Acciones:</b> Unsubscribe nativo + Add Tag "opt_out" + Set Field {estado}=baja + timestamp. Se cancelan cadencias pendientes (2.5, waitlist, timers de handoff). Salida X con razón "baja voluntaria", que es una salida digna y no una pérdida a investigar.
+      <div class="arcos" style="margin-top:0.6rem"><b>Corrección M19:</b> sin opt-out explícito, el único modo de que alguien pare los mensajes era denunciar la cuenta, que castiga el dominio de envío y ensucia la señal de calidad ante Meta. Además, quien pide la baja y sigue recibiendo cadencias es el caso que convierte una molestia en un reporte de spam. Una salida limpia protege el activo (R8).</div></div>
+    </div>
+  </div>
+
+  <p class="bench-notes"><b>Estado:</b> todos los botones verificados bajo 20 caracteres, incluidos los nuevos ("🔍 Es otra bici", "➕ Otro tema", "👀 Solo quiero mirar"). Placeholders pendientes de dueños: [OPS·dirección], [OPS·horarios], [OPS·apertura], [OPS·sla] y {nombre} del responsable por franja; <span class="ph">[GAR·cobertura]</span>, <span class="ph">[GAR·certificación]</span> y <span class="ph">[GAR·proceso]</span> para el submenú de garantía; [FICHA·geometría] pendiente del campo en la base; el botón de apartado entra con [APA]. <b>Nodos nuevos en v2.4:</b> 0.3 (captura de modelo), 4.2b (visita sin bici) y 6.1 (opt-out). Todo lo demás es copiar, pegar y conectar.</p>
+</section>
+
+<section class="section" id="construccion">
+  <h2>Plano de construcción · ManyChat, bloque por bloque</h2>
+  <p class="section-lead">La capa más profunda: cada flujo con su trigger, su secuencia de bloques por tipo, sus solicitudes externas con detalle técnico, sus cuatro arcos y sus placeholders. Arquitectura hub-and-spoke: un clasificador de intención rutea a cada spoke, los spokes resuelven su asunto, y todos los caminos comerciales convergen en el tronco de agendamiento. El quiz ya está construido; el resto es este plano.</p>
+
+  <div class="metodo"><p><b>Cómo leer este plano.</b> Los tipos de bloque siguen la nomenclatura de ManyChat: <span class="blk-t t-txt">Texto</span> mensaje, <span class="blk-t t-btn">Botones</span> opciones tap, <span class="blk-t t-cnd">Condición</span> ramificación por campo, <span class="blk-t t-act">Acción</span> set field o add tag, <span class="blk-t t-req">Request</span> solicitud externa, <span class="blk-t t-dly">Delay</span> espera, <span class="blk-t t-flw">→Flujo</span> Start Another Flow. Convenciones: {campo} es variable del sistema; [DOC·x] espera documento de dueños. Donde la interfaz de ManyChat pueda haber cambiado el nombre exacto de un bloque, va marcado para confirmar en pantalla al montar, en vez de afirmar con falsa seguridad.</p></div>
+
+  <div class="bench">
+    <h3>Inventario de flujos <span>· cómo se llaman entre sí</span></h3>
+    <p class="bench-ctx">El sistema no es un flujo gigante: son flujos chicos que se invocan con <span class="blk-t t-flw">→Flujo</span>. Esto permite mantener, medir y reutilizar cada pieza por separado (principio de gobernanza del Conversation-Driven Development). Tres capas: <b>clasificador</b> (varias automatizaciones de entrada) → <b>spokes</b> (un flujo por intención) → <b>tronco</b> (un flujo de agendamiento que todos invocan), más dos componentes transversales reutilizables: el <b>puente</b> y el <b>handoff a Luis</b>.</p>
+  </div>
+
+  <div class="bench">
+    <h3>Reglas técnicas verificadas <span>· los límites duros de ManyChat que condicionan el montaje</span></h3>
+    <div style="margin-top: 0.9rem;">
+      <div class="hallazgo"><span class="hallazgo-n">R1</span><p><b>Ventana de 24 h de Instagram (Meta).</b> Solo se escribe dentro de las 24 h desde la última interacción del lead. Toda cadencia con <span class="blk-t t-dly">Delay</span> debe ser menor a 24 h (por eso 22 h); más allá, no se entrega. Nurturing largo y waitlist migran a WhatsApp con opt-in temprano.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">R2</span><p><b>El opt-in se abre con un tap, no con texto.</b> La ventana de 24 h y el alta como contacto solo ocurren cuando el lead toca un <span class="blk-t t-btn">Botón</span> o Quick Reply de continuación de flujo. Un DM de puro texto no la abre; un botón "abrir web" tampoco cuenta. Todo primer DM (sobre todo el de comentario) lleva botón tappable. <b>Corolario operativo (v2.4):</b> todo arco de silencio anterior al primer tap es <b>inentregable</b>. Si el lead nunca tocó un botón, el <span class="blk-t t-dly">Delay</span> de 22 h no se entrega y el seguimiento no existe, aunque el flujo lo dibuje. Por eso los nodos 0.2, 0.3, 1.2 y 2.B declaran "silencio → nada" en vez de prometer una cadencia fantasma, y por eso el primer mensaje de cada puerta siempre ofrece un tap. Medir bien esto importa: un arco fantasma infla la sensación de cobertura y esconde fuga real.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">R3</span><p><b>Solicitudes externas: 10 s exactos, inamovibles.</b> Timeout de 10 s (única excepción openai.com). Solo JSON, mapeo por JSONPath en Response Mapping. No se ramifica por código de error: si falla o expira, el campo queda vacío y se bifurca con <span class="blk-t t-cnd">Condición</span> "si {campo} está vacío". La API de Ailoo debe responder rápido y con campos limpios. Función Pro.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">R4</span><p><b>El humano responde por el Inbox de ManyChat, jamás por Instagram directo.</b> El auto-pause del bot solo se dispara si el agente contesta desde el Inbox o la app móvil de ManyChat. Si Luis responde por Instagram o Meta Business Suite, ManyChat no se entera y el bot sigue encima. Regla no negociable: Luis instala la app de ManyChat. Pro incluye 3 asientos de Live Chat (máximo en Pro).</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">R5</span><p><b>Keywords: 10 por regla, no en total.</b> En Pro se crean varias reglas (una por spoke), cada una con hasta 10 sinónimos del vocabulario minado. Si un mensaje trae varias, gana la primera de la lista.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">R6</span><p><b>Intención (AI Intents) requiere el add-on Manychat AI.</b> 29 USD/mes sobre Pro, o incluido en Elite (confirmar en la cuenta). Es un clasificador que rutea a un flujo, no responde solo. En español conviene 2-3 formulaciones por intención, sin solaparse. Orden: keywords primero, intención después.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">R7</span><p><b>Historias: trigger propio, efímero.</b> Story Reply dispara solo con respuestas o reacciones (no likes). Seleccionar una historia puntual solo abarca las de las últimas 24 h, una por trigger: el camino confiable no es adivinar la bici sino el arco de confirmación ("¿cuál viste?"). Admite retraso de hasta 10 min.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">R8</span><p><b>Anti-spam.</b> 200 DMs automáticos por hora por cuenta (lo excede y pausa 1 h); irrelevante al volumen actual. Conviene un <span class="blk-t t-dly">Delay</span> corto en el DM disparado por comentario: Instagram ha marcado como spam las respuestas masivas instantáneas.</p></div>
+    </div>
+  </div>
+
+  <div class="flowspec transversal">
+    <div class="fs-h"><span class="fs-id">CAPA 1</span><h3>El clasificador de entrada</h3></div>
+    <div class="fs-trig">No es un flujo: es un conjunto de automatizaciones de entrada, cada una con su trigger, que terminan en <span class="blk-t t-flw">→Flujo</span> al spoke correcto. Orden de prioridad: lo más específico primero.</div>
+    <div class="fs-sub">Automatizaciones de entrada · DM</div>
+      <div class="blk"><span class="blk-n">A</span><span class="blk-t t-act">Trigger</span><span class="blk-d"><b>Payload de anuncio / ref</b> (click-to-IG desde ad de bici específica) → <span class="blk-t t-flw">→Flujo</span> Bici específica con {bici} ya cargada.</span></div>
+      <div class="blk"><span class="blk-n">B</span><span class="blk-t t-act">Trigger</span><span class="blk-d"><b>Respuesta a historia</b> (Story Reply trigger) → <span class="blk-t t-flw">→Flujo</span> Bici específica. La historia registrada mapea a {bici}; caducada → arco de confirmación.</span></div>
+      <div class="blk"><span class="blk-n">C</span><span class="blk-t t-act">Trigger</span><span class="blk-d"><b>Intención reconocida</b> (User sends a message → Recognize intention). Una automatización por intención, sin solaparse, fórmula USER+verbo+ABOUT+ITEM: "user ASKS about DELIVERY" → envíos; "user ASKS about PAYMENT" → pagos; "user ASKS about WARRANTY" → garantía; "user ASKS about SIZE" → talla; "user ASKS about LOCATION" → ubicación; "user WANTS to BUY a bike" → búsqueda; "user WANTS to SELL a bike" → vende.</span></div>
+      <div class="blk"><span class="blk-n">D</span><span class="blk-t t-btn">Trigger</span><span class="blk-d"><b>Keywords de refuerzo</b> (hasta 10, para términos deterministas ya minados): "valor/precio" → parche de precio; "vendo/permuta" → vende; nombres de modelo (levo, kenevo, epic, tarmac, sworks, vado) → Bici específica vía diccionario.</span></div>
+      <div class="blk"><span class="blk-n">D2</span><span class="blk-t t-btn">Trigger</span><span class="blk-d"><b>Keywords de baja</b> (regla dedicada, prioridad máxima, se evalúa antes que todo lo demás): "no me escribas", "no me molesten", "stop", "para", "baja", "sacame", "sácame", "unsubscribe" → <span class="blk-t t-flw">→Flujo</span> Opt-out (6.1) con acción nativa <b>Unsubscribe</b>. Cancela cadencias y timers pendientes. Salida X con razón "baja voluntaria".</span></div>
+      <div class="blk"><span class="blk-n">E</span><span class="blk-t t-dly">Trigger</span><span class="blk-d"><b>Default Reply</b> (todo lo que no matcheó) → <span class="blk-t t-flw">→Flujo</span> Fallback. Es la red final, nunca se deja al lead sin respuesta.</span></div>
+    <div class="fs-sub">Automatizaciones de entrada · Comentarios</div>
+      <div class="blk"><span class="blk-n">F</span><span class="blk-t t-act">Trigger</span><span class="blk-d"><b>Comentario en post/reel</b> (específico o cualquiera) → respuesta pública variada (rotar 3) + <span class="blk-t t-dly">Delay</span> corto anti-spam + <span class="blk-t t-act">Acción</span> Private Reply (DM) <b>con botón tappable</b> (R2). No se clasifica aquí: el comentario solo puentea al DM, donde vive Intention Recognition.</span></div>
+    <div class="fs-arcos"><b>Nota de arquitectura:</b> el comentario en video de bici específica carga {bici} en el DM; el comentario en video general abre el menú. Toda la inteligencia de ruteo vive en el DM, nunca en el comentario.</div>
+  </div>
+
+  <div class="flowspec tronco">
+    <div class="fs-h"><span class="fs-id">CAPA 3</span><h3>El tronco · agendamiento</h3></div>
+    <div class="fs-trig">Trigger: <b>invocado por <span class="blk-t t-flw">→Flujo</span></b> desde cualquier spoke comercial, siempre con {bici} ya definida (venga de bici específica, del quiz o de similares). Es el punto de convergencia de todo el sistema. <b>Fuente única (corrección C5):</b> este flujo es la ÚNICA versión del agendamiento. El nodo 2.4 de los copys es su texto literal, no un nodo paralelo. Se monta una vez y se invoca con Start Another Flow desde cada spoke; jamás se copia dentro de un spoke, porque dos copias divergen a la primera edición. Excepción declarada: el nodo 4.2b (visita sin bici declarada), que no puede usar este tronco porque el paso 1 confirma bici y valor.</div>
+      <div class="blk"><span class="blk-n">1</span><span class="blk-t t-txt">Texto</span><span class="blk-d">Confirma la bici y el valor, re-adjunta {link_ficha}. Puente al cierre: "La mejor forma de asegurarla es verla o que te llamemos 🤝".</span></div>
+      <div class="blk"><span class="blk-n">2</span><span class="blk-t t-btn">Botones</span><span class="blk-d">Tres salidas de agendamiento: <b>📅 Visita en tienda</b> · <b>📞 Que me llamen</b> · <b>🔒 Apartarla</b> [APA].</span></div>
+      <div class="blk"><span class="blk-n">3</span><span class="blk-t t-cnd">Condición</span><span class="blk-d">Según elección → rama visita / rama llamada / rama apartado.</span></div>
+      <div class="blk"><span class="blk-n">4a</span><span class="blk-t t-txt">Texto</span><span class="blk-d"><b>Rama visita:</b> dirección y horarios [OPS·dirección·horarios] → captura día/hora preferidos → confirma.</span></div>
+      <div class="blk"><span class="blk-n">4b</span><span class="blk-t t-txt">Texto</span><span class="blk-d"><b>Rama llamada:</b> captura ventana horaria preferida y confirma que {nombre} llamará antes de [OPS·sla].</span></div>
+      <div class="blk"><span class="blk-n">4c</span><span class="blk-t t-txt">Texto</span><span class="blk-d"><b>Rama apartado:</b> [APA·monto·vigencia] + link de pago [PAG·link]. Pendiente de documento; hasta entonces, oculto.</span></div>
+      <div class="blk"><span class="blk-n">5</span><span class="blk-t t-act">Acción</span><span class="blk-d">Set Field {estado}=comprometido, {bici_objetivo}, {via_cierre}; Add Tag por vía. Timestamp de la transición.</span></div>
+      <div class="blk"><span class="blk-n">6</span><span class="blk-t t-flw">→Flujo</span><span class="blk-d"><b>Handoff a Luis con temporizador, siempre, en las tres ramas.</b> Incluye rama visita y rama llamada, no solo los casos "calientes". Brief completo para el cierre humano.</span></div>
+      <div class="blk"><span class="blk-n">6b</span><span class="blk-t t-dly">Delay</span><span class="blk-d"><b>Corrección M14:</b> antes, quien elegía día y franja recibía "te confirmamos" y salía del sistema: si Luis no confirmaba, nadie contaba el tiempo y el lead moría creyendo que tenía visita agendada. Ahora toda cita entra al handoff con SLA <span class="ph">[OPS·sla]</span> y su fallback. Una cita sin confirmar no es una cita: es un lead esperando de pie.</span></div>
+    <div class="conv"><b>Convergencia:</b> este es el destino final de las rutas 1, 2, 3, 4, 5, 6 y 7. Salida esperada: V (venta) o, si no cuaja, N con alerta.</div>
+  </div>
+
+  <div class="flowspec transversal">
+    <div class="fs-h"><span class="fs-id">PUENTE</span><h3>Bloque puente reutilizable</h3></div>
+    <div class="fs-trig">Trigger: <b>invocado</b> al final de cada spoke informativo (envíos, pagos, garantía, ubicación) cuando el lead no tiene bici declarada. Un solo flujo que todas las ramas informativas llaman.</div>
+      <div class="blk"><span class="blk-n">1</span><span class="blk-t t-txt">Texto</span><span class="blk-d">Pregunta puente estándar: "¿Ya sabes qué bici buscas o te ayudamos a elegir?"</span></div>
+      <div class="blk"><span class="blk-n">2</span><span class="blk-t t-btn">Botones</span><span class="blk-d"><b>🎯 Sé lo que busco</b> · <b>🧭 Ayúdenme a elegir</b>.</span></div>
+      <div class="blk"><span class="blk-n">3</span><span class="blk-t t-cnd">Condición</span><span class="blk-d">Sé lo que busco → pide modelo → diccionario → <span class="blk-t t-flw">→Flujo</span> Bici específica. Ayúdenme a elegir → <span class="blk-t t-flw">→Flujo</span> Quiz.</span></div>
+    <div class="conv"><b>Convergencia:</b> ambas ramas terminan produciendo {bici} y cayendo al tronco. El puente nunca es peaje: quien ya sabe, salta el quiz.</div>
+  </div>
+
+  <div class="flowspec transversal">
+    <div class="fs-h"><span class="fs-id">DICCIONARIO</span><h3>Modelos · normalizador de entrada</h3></div>
+    <div class="fs-trig">Trigger: <b>invocado</b> por cualquier nodo que reciba texto donde pueda venir un modelo (0.2, 0.3, 1.2, 2.B, puente, keywords de entrada). Componente transversal único: una sola tabla, un solo criterio.</div>
+      <div class="blk"><span class="blk-n">1</span><span class="blk-t t-act">Acción</span><span class="blk-d"><b>Normaliza:</b> minúsculas, sin tildes, sin signos, colapsa espacios. "S-Works", "sworks" y "s works" son la misma entrada.</span></div>
+      <div class="blk"><span class="blk-n">2</span><span class="blk-t t-cnd">Condición</span><span class="blk-d"><b>Familias (raíz + variantes minadas de la data real):</b> levo (turbo levo, levo sl, levo comp) · kenevo · stumpjumper (stumpy, sj) · epic (epic 8, epic evo) · tarmac (tarmac sl7, sl8) · roubaix · allez · vado (turbo vado, vado sl) · como · tero · creo · rockhopper · chisel · diverge · enduro · demo. Modificadores que NO son modelo pero afinan: sworks (gama), comp, expert, pro, sl, evo, carbon, alloy.</span></div>
+      <div class="blk"><span class="blk-n">3</span><span class="blk-t t-cnd">Condición</span><span class="blk-d"><b>Match único</b> → Set Field {bici} y <span class="blk-t t-flw">→Flujo</span> Spoke R2. <b>Match múltiple</b> (dice "levo" y hay tres en stock) → muestra las coincidencias como botones antes de verificar, nunca elige por el lead. <b>Sin match</b> → nodo 0.3, y al segundo fallo, válvula humana con el texto crudo y tag "modelo_no_reconocido".</span></div>
+    <div class="conv"><b>Corrección M6:</b> el diccionario existía como mención suelta en tres nodos y como lista de 6 keywords en el trigger D. Una pregunta por modelo puntual que no matcheara caía al quiz, que es exactamente el peaje que la arquitectura promete no cobrar (quien sabe qué busca no hace quiz). Acá queda como componente con criterio explícito, familias completas y regla de ambigüedad. <b>Nota de mantención:</b> la tabla se revisa en el ritual semanal contra los tags "modelo_no_reconocido"; es el único componente del sistema que se espera que crezca solo.</div>
+  </div>
+
+  <div class="flowspec transversal">
+    <div class="fs-h"><span class="fs-id">HANDOFF</span><h3>Aviso a Luis · gestión humana</h3></div>
+    <div class="fs-trig">Trigger: <b>invocado</b> por cualquier nodo que requiera humano (negociación, talla límite, lead premium, apartado, cierre, o petición explícita). Componente transversal único.</div>
+      <div class="blk"><span class="blk-n">1</span><span class="blk-t t-act">Acción</span><span class="blk-d">Set Field {brief} = {puerta} · {bici} · talla {talla} · ${presupuesto} · {ciudad} · motivo {motivo_handoff} · último: "{ultimo_msj}". Add Tag "handoff" + motivo. <b>(M13: fuera {score} y {objeción}, que ninguna lógica de v2.0 calcula. Un brief con campos ciertos se lee; uno con campos vacíos se ignora, y un brief ignorado degrada todo el handoff.)</b></span></div>
+      <div class="blk"><span class="blk-n">2</span><span class="blk-t t-act">Acción</span><span class="blk-d"><b>Notificar y asignar a Luis:</b> acciones nativas <b>Notify assignees</b> + <b>Assign conversation</b> (a Luis) + <b>Pause automations</b>. Llega a su Inbox / app móvil de ManyChat. (R4: solo sirve si responde por ahí.)</span></div>
+      <div class="blk"><span class="blk-n">3</span><span class="blk-t t-txt">Texto</span><span class="blk-d">Al cliente: "Te va a atender {nombre} 👋 ya le pasé toda tu info, te escribe en {sla_min} min." El humano entra con nombre propio.</span></div>
+      <div class="blk"><span class="blk-n">4</span><span class="blk-t t-dly">Delay</span><span class="blk-d">Smart Delay {sla_min} minutos (el timer que ManyChat no tiene nativo se fabrica así).</span></div>
+      <div class="blk"><span class="blk-n">5</span><span class="blk-t t-cnd">Condición</span><span class="blk-d">¿Luis ya respondió? Con "Pause automations during conversations" activo, si contestó por el Inbox el bot quedó pausado y este fallback se auto-cancela. Si no → paso 6. (Respaldo opcional: tag {tomado}.)</span></div>
+      <div class="blk"><span class="blk-n">6</span><span class="blk-t t-txt">Texto</span><span class="blk-d">Fallback: "Se está demorando 🙏 ¿te agendo la visita directo?" + botones → tronco. Ningún lead caliente muere esperando (regla 5 de la doctrina).</span></div>
+      <div class="blk"><span class="blk-n">7</span><span class="blk-t t-dly">Delay</span><span class="blk-d"><b>Segundo temporizador (M15):</b> si el lead elige "espero nomás", <span class="blk-t t-dly">Delay</span> 90 min. Al vencer: Add Tag "sla_vencido_2", notifica a un <b>segundo responsable</b> (no al mismo que ya falló) y mensaje sin excusas al cliente + botón al tronco. Máximo dos timers: el tercero es acoso. Si el segundo vence, salida N con opt-in a WhatsApp e informe al ritual semanal.</span></div>
+    <div class="conv"><b>Nota:</b> este componente hace medible el SLA humano. Cada invocación tag-uea el motivo de escalamiento, insumo del ritual semanal.</div>
+  </div>
+
+  <div class="flowspec">
+    <div class="fs-h"><span class="fs-id">QUIZ</span><h3>El quiz (construido) + el matching que falta</h3></div>
+    <div class="fs-trig">Trigger: <b>invocado</b> desde búsqueda general, desde el puente (ayúdenme a elegir) y desde la rama "se vendió". Las 4 preguntas ya existen en ManyChat.</div>
+      <div class="blk"><span class="blk-n">1-4</span><span class="blk-t t-btn">Botones</span><span class="blk-d"><b>Ya construido:</b> motor (eléctrica/muscular) → uso (MTB/ruta/urbana) → presupuesto (≤$2M/≤$4M/sin límite) → estatura (rangos). Cada una guarda a su custom field. Arco de silencio nativo ya presente.</span></div>
+      <div class="blk"><span class="blk-n">5</span><span class="blk-t t-act">Acción</span><span class="blk-d">Set Field consolidando {q_motor},{q_uso},{q_presupuesto},{q_talla} como parámetros de consulta.</span></div>
+      <div class="blk"><span class="blk-n">6</span><span class="blk-t t-req">Request</span><span class="blk-d"><b>EL PASO QUE FALTA · matching contra inventario.</b> Sin esto el quiz pregunta pero no entrega.</span></div>
+      <div class="req-detail">POST {base_inventario_ailoo}/match<br>body: { motor:{q_motor}, uso:{q_uso}, presupuesto_max:{q_presupuesto}, talla:{q_talla} }<br>respuesta → JSONPath a {bici_1..3}: modelo, precio, talla, link_ficha<br>timeout 10s exacto · fallback por Condición sobre {bici_1} vacío: 0 resultados → rama "sin match" (waitlist + sourcing); error o timeout → "te confirmo opciones en unos minutos" + aviso a Luis</div>
+      <div class="blk"><span class="blk-n">7</span><span class="blk-t t-cnd">Condición</span><span class="blk-d">¿Hubo match? Sí → muestra 1 a 3 bicis con razón (talla, presupuesto, certificación). No → waitlist + opt-in WhatsApp.</span></div>
+      <div class="blk"><span class="blk-n">8</span><span class="blk-t t-btn">Botones</span><span class="blk-d">Una bici por botón → selección carga {bici} → <span class="blk-t t-flw">→Flujo</span> tronco.</span></div>
+    <div class="conv"><b>Convergencia:</b> al tronco con {bici} elegida. <b>Ajuste de copy pendiente:</b> el mensaje #11 dice "la ideal" (una); si se muestran 2-3, ajustar a "las ideales".</div>
+  </div>
+
+  <div class="flowspec core">
+    <div class="fs-h"><span class="fs-id">SPOKE · R2</span><h3>Bici específica <span style="font-weight:400;color:var(--humo);font-size:12px">· 54% del tráfico</span></h3></div>
+    <div class="fs-trig">Trigger: <b>invocado</b> desde clasificador (payload, historia, comentario de bici, keyword de modelo, o rama "sé lo que busco"). {bici} llega cargada.</div>
+      <div class="blk"><span class="blk-n">1</span><span class="blk-t t-req">Request</span><span class="blk-d"><b>Verificación de disponibilidad</b> antes de afirmar nada.</span></div>
+      <div class="req-detail">GET {base_inventario_ailoo}/bici/{bici_id}<br>respuesta → {disponible}, {precio}, {talla}, {geometria}, {link_ficha}<br>timeout 10s exacto · fallback por Condición sobre {disponible} vacío → "estoy confirmando el stock, te escribo en minutos" + aviso a Luis</div>
+      <div class="blk"><span class="blk-n">2</span><span class="blk-t t-cnd">Condición</span><span class="blk-d">{disponible}=sí → paso 3. No → rama "se vendió" (2 similares vía request + waitlist).</span></div>
+      <div class="blk"><span class="blk-n">3</span><span class="blk-t t-txt">Texto</span><span class="blk-d">Ficha y confirmación: "¡Sigue disponible! 🚴 {modelo} · {talla} · {precio}" + {link_ficha}.</span></div>
+      <div class="blk"><span class="blk-n">4</span><span class="blk-t t-btn">Botones</span><span class="blk-d"><b>📅 Agendar</b> · <b>📏 ¿Me quedará?</b> · <b>💬 Otra consulta</b>.</span></div>
+      <div class="blk"><span class="blk-n">5</span><span class="blk-t t-cnd">Condición</span><span class="blk-d">Agendar → tronco. Talla → micro-check (pide estatura, compara {geometria}). Otra → submenú.</span></div>
+    <div class="fs-sub">Los 4 arcos (nodo 3-4)</div>
+    <div class="fs-arcos"><b>Botón:</b> su rama. · <b>Texto con intención</b> ("valor"): parche de precio re-adjunta ficha. · <b>Texto sin intención:</b> menú contextual. · <b>Silencio:</b> <span class="blk-t t-dly">Delay</span> 22 h → seguimiento con ángulo nuevo, luego N.</div>
+    <div class="conv"><b>Convergencia:</b> al <b>tronco</b> (agendar). Camino corto y dominante: no pasa por el quiz.</div>
+  </div>
+
+  <div class="flowspec">
+    <div class="fs-h"><span class="fs-id">SPOKE · informativos</span><h3>Envíos · Pagos · Garantía · Ubicación</h3></div>
+    <div class="fs-trig">Trigger: <b>invocado</b> por intención reconocida. Los cuatro comparten el mismo patrón de tres pasos: resuelve info → puente → convergencia.</div>
+      <div class="blk"><span class="blk-n">1</span><span class="blk-t t-txt">Texto</span><span class="blk-d"><b>Resuelve la info</b> desde el documento correspondiente. Envíos: [ENV·courier·plazos·costos]. Pagos: [PAG·medios·cuotas], ancla en cuotas, nunca negocia. Garantía: [GAR·cobertura·certificación]. Ubicación: [OPS·dirección·horarios].</span></div>
+      <div class="blk"><span class="blk-n">2</span><span class="blk-t t-flw">→Flujo</span><span class="blk-d"><b>→Flujo Puente</b> (¿sabes qué buscas o te ayudamos a elegir?). El mismo bloque reutilizable para los cuatro.</span></div>
+    <div class="fs-sub">Excepciones por rama</div>
+    <div class="fs-arcos"><b>Pagos:</b> keyword "descuento/rebaja" NO la responde el bot → <span class="blk-t t-flw">→Flujo</span> Handoff con {piso_interno} [REC]. · <b>Garantía y envíos:</b> pregunta fuera del documento → <span class="blk-t t-flw">→Flujo</span> Handoff + registro para ampliar el doc. · <b>Ubicación:</b> puede empujar directo a "📅 ¿la vienes a ver?" (visita como cierre natural).</div>
+    <div class="conv"><b>Convergencia:</b> vía puente → modelo → <b>tronco</b>. La info resuelve y reconduce; nunca termina en sí misma.</div>
+  </div>
+
+  <div class="flowspec">
+    <div class="fs-h"><span class="fs-id">SPOKE · R5</span><h3>Talla y fit</h3></div>
+    <div class="fs-trig">Trigger: intención de talla reconocida.</div>
+      <div class="blk"><span class="blk-n">1</span><span class="blk-t t-txt">Texto</span><span class="blk-d">Pide estatura y entrepierna. Orientación general de talla.</span></div>
+      <div class="blk"><span class="blk-n">2</span><span class="blk-t t-cnd">Condición</span><span class="blk-d">¿Hay {bici} en contexto? Sí → compara {geometria} y responde calza / no calza / límite. No → orientación + puente.</span></div>
+      <div class="blk"><span class="blk-n">3</span><span class="blk-t t-cnd">Condición</span><span class="blk-d"><b>Caso límite</b> (entre tallas, dudas repetidas) → <span class="blk-t t-flw">→Flujo</span> Handoff de fit. Aquí el humano es el producto (experimento Marketing Science).</span></div>
+    <div class="conv"><b>Convergencia:</b> resuelto el fit → <b>tronco</b> (agendar). Si [DEV·garantía de talla] existe, se promete aquí como diferencial.</div>
+  </div>
+
+  <div class="flowspec">
+    <div class="fs-h"><span class="fs-id">SPOKE · R8</span><h3>Vende su bici <span style="font-weight:400;color:var(--humo);font-size:12px">· no converge · sale por P</span></h3></div>
+    <div class="fs-trig">Trigger: intención de venta reconocida o keyword (vendo, permuta, parte de pago).</div>
+      <div class="blk"><span class="blk-n">1</span><span class="blk-t t-cnd">Condición</span><span class="blk-d"><b>Filtro 1 · marca:</b> ¿es Specialized? No → rechazo digno inmediato con orientación. Salida X.</span></div>
+      <div class="blk"><span class="blk-n">2</span><span class="blk-t t-req">Request</span><span class="blk-d"><b>Filtro 2 · lista negra</b> contra [REC·lista negra].</span></div>
+      <div class="req-detail">GET {base}/lista_negra?modelo={modelo}&anio={anio}<br>respuesta → {rechazar} bool + {motivo}<br>match → rechazo digno automático. Salida X. La tabla aprende: cada rechazo manual la alimenta.</div>
+      <div class="blk"><span class="blk-n">3</span><span class="blk-t t-txt">Texto/Input</span><span class="blk-d">Captura estructurada: modelo, año, talla, fotos (mín [REC·fotos]), estado, expectativa de precio, serie [REC·serie].</span></div>
+      <div class="blk"><span class="blk-n">4</span><span class="blk-t t-flw">→Flujo</span><span class="blk-d">Handoff a Luis con SLA [REC·sla] (ticket manual). Timer y fallback incluidos.</span></div>
+    <div class="conv"><b>Salida P:</b> cruza al embudo proveedor. NO converge al tronco de compra. Excepción: si venía comprando (híbrido parte de pago), el humano mantiene ambos hilos.</div>
+  </div>
+
+  <div class="flowspec">
+    <div class="fs-h"><span class="fs-id">SPOKE · R9</span><h3>Fallback</h3></div>
+    <div class="fs-trig">Trigger: Default Reply (nada matcheó).</div>
+      <div class="blk"><span class="blk-n">1</span><span class="blk-t t-txt">Texto</span><span class="blk-d">Menú de bienvenida que declara alcance (NN/g): "Somos BikeTrust 🚴..." + botones 🚲 Busco / 💰 Vendo / 💬 Otra.</span></div>
+      <div class="blk"><span class="blk-n">2</span><span class="blk-t t-cnd">Condición</span><span class="blk-d">Botón → su ruta. Segundo mensaje sin match → válvula humana.</span></div>
+      <div class="blk"><span class="blk-n">3</span><span class="blk-t t-flw">→Flujo</span><span class="blk-d">Válvula humana honesta: "{nombre} te responde antes de {hora}" + Add Tag "fallback" + log. Motor del ritual semanal.</span></div>
+    <div class="conv"><b>Convergencia:</b> si el lead revela intención, entra a su spoke. Si no, sale honesto con humano en camino.</div>
+  </div>
+
+  <div class="bench">
+    <h3>Contrato de datos con Ailoo <span>· los cuatro requests, especificados · esto es lo que se le pide a Luis</span></h3>
+    <p class="bench-ctx">Los cuatro comparten las mismas reglas duras de R3: timeout de 10 s exactos e inamovibles, solo JSON, mapeo por JSONPath en Response Mapping, y nada de ramificar por código de error (si falla o expira, el campo queda vacío y se bifurca con <span class="blk-t t-cnd">Condición</span> sobre campo vacío). Los arreglos son delicados: se piden aplanados, con índices fijos, nunca anidados. Esta tabla es el documento que va al correo de Ailoo: define qué necesita el sistema, no cómo esté hecha la base hoy.</p>
+    <div style="margin-top: 0.9rem;">
+      <div class="hallazgo"><span class="hallazgo-n">Q1</span><p><b>Disponibilidad</b> (spoke R2, el corazón). <span class="req-detail" style="display:block">GET {base}/bici/{bici_id}<br>respuesta → {disponible} bool, {precio}, {talla}, {geometria}, {link_ficha}<br>vacío → "estoy confirmando el stock, te escribo en minutos" + aviso a Luis</span></p></div>
+      <div class="hallazgo"><span class="hallazgo-n">Q2</span><p><b>Matching del quiz</b> (el paso que falta). <span class="req-detail" style="display:block">POST {base}/match · body: motor, uso, presupuesto_max, talla<br>respuesta → {bici_1..3} aplanados: modelo, precio, talla, link_ficha<br>{bici_1} vacío → 0 resultados: waitlist + opt-in WA · error: aviso a Luis</span></p></div>
+      <div class="hallazgo"><span class="hallazgo-n">Q3</span><p><b>Similares</b> (rama "se vendió"). Hoy el copy promete 2 similares sin que exista el request. <span class="req-detail" style="display:block">GET {base}/similares?bici_id={bici_id}&limite=2<br>criterio de similitud, en orden: mismo uso (MTB/ruta/urbana) → mismo motor (eléctrica/muscular) → precio dentro de ±25% → misma talla si existe<br>respuesta → {similar_1..2}: modelo, precio, talla, link_ficha<br>{similar_1} vacío → rama de cero resultados (M11): waitlist con opt-in WA, nunca botonera muerta</span></p></div>
+      <div class="hallazgo"><span class="hallazgo-n">Q4</span><p><b>Alternativas por talla</b> (Rama B, la talla no calza). Mismo caso: prometido, no definido. <span class="req-detail" style="display:block">GET {base}/por_talla?talla={talla_correcta}&uso={q_uso}&limite=2<br>respuesta → {alt_1..2}: modelo, precio, talla, link_ficha<br>{alt_1} vacío → waitlist con {talla_demandada} tagueada como señal de sourcing</span></p></div>
+    </div>
+    <p class="bench-notes"><b>Corrección M12:</b> Q3 y Q4 estaban prometidos en el copy y ausentes de la ingeniería, que es la forma más cara de fallar: el sistema ofrece algo que no puede entregar y el error aparece recién en producción, frente al lead. Quedan especificados con su criterio de similitud y su comportamiento en vacío. <b>Estado:</b> los cuatro son P0 y ninguno se puede construir sin acceso de lectura a la API. Hasta que exista, el sistema opera en modo degradado declarado y no promete nada que no pueda cumplir (regla 5 de la doctrina).</p>
+  </div>
+
+  <div class="bench">
+    <h3>Orden de construcción P0 <span>· qué montar primero para lanzar esta semana</span></h3>
+    <div style="margin-top: 0.9rem;">
+      <div class="hallazgo"><span class="hallazgo-n">1</span><p><b>El parche de precio</b> (keywords globales, re-adjunta ficha). Arregla lo que se rompe hoy en producción. Independiente de todo.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">2</span><p><b>El request de disponibilidad</b> contra la base Ailoo. Es el corazón: sin él ni R2 ni el quiz entregan bici. Coordinar con Luis la integración.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">3</span><p><b>El tronco de agendamiento</b> + el componente de handoff a Luis. Todo converge aquí; se monta una vez.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">4</span><p><b>Spoke R2 completo</b> (bici específica) con sus 4 arcos. El 54% del tráfico.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">5</span><p><b>El request de matching del quiz</b> (paso 6) + enganche del quiz ya construido al tronco.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">6</span><p><b>El clasificador de intención</b> (una intención por spoke) + comentarios que puentean a DM + Default Reply.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">7</span><p><b>Spokes informativos + puente</b> y <b>R8</b> con sus filtros. Lo demás ya escala solo.</p></div>
+    </div>
+    <p class="bench-notes"><b>Nada aquí depende de los 6 documentos para su estructura:</b> los placeholders [DOC·x] se rellenan cuando lleguen, pero el esqueleto se monta ya. La única dependencia dura de P0 es la integración con Ailoo (pasos 2 y 5), que corre por Luis.</p><p class="bench-notes" style="margin-top:0.9rem"><b>Modo degradado declarado (v2.4).</b> El sistema puede entrar a producción sin Ailoo, con menos capacidad y sin mentir en ningún nodo: el parche de precio dice "publicada en" en vez de afirmar stock, la rama "se vendió" ofrece waitlist en vez de similares, el quiz cierra en waitlist en vez de entregar bicis, y el micro-check de talla escala al humano en vez de comparar geometría. Cuando llegue el acceso a la API, cada uno de esos cuatro nodos activa su versión completa sin rediseñar nada: los flujos ya están montados y solo se enciende el <span class="blk-t t-req">Request</span> y su condición de vacío. La regla que gobierna la transición es siempre la misma: la promesa del front nunca excede la capacidad del back.</p>
+  </div>
+</section>
+
+<section class="section" id="docs">
+  <h2>Los 6 documentos</h2>
+  <p class="section-lead">Los redactan los dueños: ellos saben cómo opera BikeTrust, nosotros no. Esto es el índice de contenidos exigido por el árbol: cada punto listado corresponde a uno o más placeholders de arriba. Cuando un documento existe, sus placeholders se llenan y esa parte del árbol se enciende. Formato libre, en sus palabras; con casos borde y excepciones incluidos, porque esos textos alimentan las automatizaciones de hoy y al agente de IA de mañana.</p>
+  <div class="doc-grid">
+    <div class="doc-card"><h3><code>ENV</code>Política de Envíos y Despacho</h3><div class="doc-hab">Enciende la ruta 4 completa y el cierre remoto de la ruta 2.</div><ul>
+      <li>A qué zonas se despacha y a cuáles no.</li>
+      <li>Método o courier utilizado, y por qué ese.</li>
+      <li>Costos por zona y quién los paga.</li>
+      <li>Plazos de entrega reales por zona (los que se cumplen, no los mejores).</li>
+      <li>Cómo se embala, quién embala, y si tiene costo.</li>
+      <li>Seguro del envío y quién responde si llega dañada.</li>
+      <li>Condición de pago previa al despacho.</li>
+      <li>Retiro en tienda: dirección y horarios exactos.</li>
+    </ul></div>
+    <div class="doc-card"><h3><code>DEV</code>Política de Devoluciones y Cambios</h3><div class="doc-hab">El habilitador estructural de la venta sin prueba presencial. Sin este documento, a regiones solo se informa.</div><ul>
+      <li>Si existe o no devolución sin causa, y bajo qué lógica.</li>
+      <li>Plazo, y si aplica a compra presencial, remota o ambas.</li>
+      <li>Condiciones de estado para aceptarla.</li>
+      <li>Quién paga el retorno.</li>
+      <li>Medio y plazo del reembolso.</li>
+      <li>Si se ofrece cambio por otra bici y cómo se manejan diferencias de precio.</li>
+      <li>Si existe garantía de talla (si la talla no queda, qué pasa).</li>
+      <li>El piso legal de retracto en venta a distancia, verificado con su asesor.</li>
+    </ul></div>
+    <div class="doc-card"><h3><code>PAG</code>Política de Pagos</h3><div class="doc-hab">Enciende la ruta 3 y el ancla de cuotas en todos los mensajes de precio.</div><ul>
+      <li>Medios de pago aceptados hoy, todos.</li>
+      <li>Cuotas: máximo, cuáles con interés y cuáles sin.</li>
+      <li>Si existe link de pago a distancia y cuál.</li>
+      <li>Si existen descuentos (contado, transferencia) y su regla; el bot nunca los comunica, pero el humano necesita saberlos.</li>
+      <li>Si se acepta bici en parte de pago y bajo qué condiciones.</li>
+      <li>Anticipos o señas para compras en proceso.</li>
+    </ul></div>
+    <div class="doc-card"><h3><code>GAR</code>Política de Garantía y Certificación</h3><div class="doc-hab">Enciende la ruta 6: los dos mensajes de confianza, pre y post compra.</div><ul>
+      <li>En qué consiste exactamente la certificación: qué se revisa, cuántos puntos, quién la ejecuta.</li>
+      <li>Cobertura de la garantía: duración, qué cubre, qué excluye.</li>
+      <li>Si existe extensión de la garantía: cómo se activa y qué cuesta.</li>
+      <li>Requisitos para mantenerla vigente (mantenciones, dónde).</li>
+      <li>Proceso de reclamo: canal, plazos de respuesta, qué pasa mientras.</li>
+      <li>Si es transferible al revender la bici.</li>
+      <li>E-bikes: qué se diagnostica de motor y batería y qué se informa.</li>
+    </ul></div>
+    <div class="doc-card"><h3><code>APA</code>Política de Apartado</h3><div class="doc-hab">Enciende el nodo de compromiso: asegura la unidad antes de la visita y habilita el cierre remoto.</div><ul>
+      <li>Si existe apartado con abono.</li>
+      <li>Monto (fijo o porcentaje) y medio de pago a distancia.</li>
+      <li>Vigencia antes de liberar la bici.</li>
+      <li>Si es reembolsable, no, o parcial.</li>
+      <li>Si se descuenta del precio final.</li>
+      <li>Si aplica también para asegurar la bici antes de una visita.</li>
+      <li>Qué pasa con el segundo interesado en una bici ya apartada.</li>
+    </ul></div>
+    <div class="doc-card"><h3><code>REC</code>Política de Recepción y Retoma</h3><div class="doc-hab">Enciende la ruta 8 y el brief de negociación del humano. Parte de esto ya lo definió Luis: solo Specialized, evaluación por ticket manual, y una lista negra por escribir.</div><ul>
+      <li>Regla de marca y si admite alguna excepción.</li>
+      <li>Lista negra de modelos que nunca se reciben, con el criterio detrás de cada exclusión (para que el filtro aprenda).</li>
+      <li>Requisitos de entrada: años, documentación de origen, número de serie verificable.</li>
+      <li>Datos que debe capturar el ticket y cantidad mínima de fotos.</li>
+      <li>Plazo real de evaluación del ticket y quién evalúa.</li>
+      <li>Modalidades ofrecidas al vendedor: compra directa, consignación, parte de pago.</li>
+      <li>Estructura de consignación y pisos de precio por bici (solo versión interna, jamás al cliente).</li>
+      <li>Si se comunica rango preliminar antes de inspección o solo precio final después de verla.</li>
+    </ul></div>
+  </div>
+</section>
+
+<section class="section" id="auditoria">
+  <h2>Auditoría v2.4 · los 18 hallazgos, cerrados</h2>
+  <p class="section-lead">El sistema se recorrió nodo por nodo buscando cinco clases de error: que asuma en vez de preguntar, callejones sin salida, promesas sin respaldo operativo, leads que se pierden en silencio, y colisiones entre flujos. Salieron 18 hallazgos (5 críticos y 13 menores) más una omisión estructural (el opt-out). Los 19 quedan resueltos en este documento. Esta sección es el registro de qué cambió, por qué, y qué sigue bloqueado por terceros: se lee de arriba abajo antes de montar en ManyChat, y sirve de checklist de verificación una vez montado.</p>
+
+  <div class="metodo"><p><b>Dos estados, y la diferencia importa.</b> <span class="chip v-si">Cerrado</span> significa resuelto por completo en el diseño: el copy, el ruteo y la lógica están escritos y se pueden montar hoy. <span class="chip v-par">Parcial</span> significa que la decisión está tomada y escrita, pero la capacidad completa depende de un tercero, así que el nodo opera mientras tanto en una versión honesta y degradada. Ningún hallazgo queda abierto. Lo que no se puede construir todavía está declarado, con dueño y con su ruta de activación, que es distinto de estar pendiente.</p></div>
+
+  <div class="bench">
+    <h3>Los 5 críticos <span>· los que cambiaban el comportamiento del sistema</span></h3>
+    <div style="margin-top: 0.9rem;">
+      <div class="hallazgo"><span class="hallazgo-n">C1</span><p><b>Nodo 0.2 asumía recencia.</b> <span class="chip v-si">Cerrado</span><br>Ofrecía las 3 últimas bicis a quien preguntaba "¿precio?" sin contexto, cuando esa persona pudo haber guardado un post de hace meses. Ahora manda la pregunta, quedan 2 últimas como red de rescate y entra un tercer botón de escape ("🔍 Es otra bici") hacia el nodo 0.3. El detalle que lo hacía grave: por R2 la ventana solo se abre con un tap, así que sin botón de escape el lead sin match quedaba obligado a texto libre, es decir, al peor camino disponible.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">C2</span><p><b>Nodo 2.B repetía el error en la puerta dominante.</b> <span class="chip v-si">Cerrado</span><br>Preguntaba "¿cuál viste?" y contestaba con las últimas publicadas, re-imponiendo la recencia que el propio nodo ya daba por rota (existe porque la historia caducó, R7). Misma corrección, en la puerta que más tráfico recibe.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">C3</span><p><b>Nodo 0.1 afirmaba precio y disponibilidad sin verificar.</b> <span class="chip v-par">Parcial</span><br>Contradecía al spoke R2, que sí verifica antes de hablar, y a la regla doctrinal de que la promesa nunca excede al sistema. Dos nodos no pueden prometer distinto sobre el mismo hecho. Implementado en modo B: el copy dice "está publicada en {precio}, déjame confirmar que siga disponible", que es honesto y no depende de nadie. El modo A (verificar antes del primer mensaje) queda escrito y marcado como upgrade P0, bloqueado por el acceso a la API de Ailoo.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">C4</span><p><b>Nodo 1.2 ruteaba los modelos al parche de precio.</b> <span class="chip v-si">Cerrado</span><br>Quien escribía el nombre de una bici recibía como primera respuesta un precio que no había pedido. Ahora va al spoke R2 (verificación y ficha), que igual entrega el precio, pero dentro de la ficha y después de verificar, que es donde el precio persuade en vez de asustar. El parche de precio vuelve a su disparador real: las keywords de valor.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">C5</span><p><b>El nodo 2.4 y el tronco eran dos versiones de la misma convergencia.</b> <span class="chip v-si">Cerrado</span><br>Escritas en momentos distintos, con botoneras distintas, conviviendo y pisándose. Manda el tronco, que es la pieza completa (tres vías, set fields, tags, timestamp y handoff), y el 2.4 pasa a ser su copy literal. En ManyChat es un solo flujo invocado con Start Another Flow: dos copias divergen a la primera edición. Excepción declarada y con copy propio: el nodo 4.2b, visita sin bici declarada, que no puede usar el tronco porque su paso 1 confirma bici y valor.</p></div>
+    </div>
+  </div>
+
+  <div class="bench">
+    <h3>Los 13 menores y la omisión estructural <span>· aplicados sin discusión, según lo acordado</span></h3>
+    <div style="margin-top: 0.9rem;">
+      <div class="hallazgo"><span class="hallazgo-n">M6</span><p><b>Diccionario de modelos.</b> <span class="chip v-si">Cerrado</span> Pasa de mención suelta en tres nodos a componente transversal con normalización, familias completas minadas de la data real, regla de ambigüedad (match múltiple muestra opciones, nunca elige por el lead) y mantención por ritual semanal. Una pregunta por modelo puntual ya no puede caer al quiz.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">M7</span><p><b>Micro-check de talla.</b> <span class="chip v-si">Cerrado</span> El copy pedía solo estatura y el plano pedía estatura y entrepierna: quedan alineados al plano. La entrepierna es opcional y no bloquea; en el caso límite escala al humano, que es donde el juicio vale (regla 3).</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">M8</span><p><b>Submenú 4.2 sin salida.</b> <span class="chip v-si">Cerrado</span> Quien entraba por envíos o pagos no tenía botón que le calzara. Ahora son dos niveles (la convención de 3 botones lo exige), todo spoke informativo es alcanzable, y todo texto libre vuelve al clasificador.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">M9</span><p><b>Contenido de garantía indefinido.</b> <span class="chip v-par">Parcial</span> El botón apuntaba a "mensajes ya construidos", una referencia difusa. Queda definida la estructura en tres slots (cobertura, certificación, proceso) y la regla de que lo que caiga fuera va a handoff y se registra para ampliar el documento. El texto lo escriben los dueños.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">M10</span><p><b>Sin fallback cuando el diccionario no reconoce.</b> <span class="chip v-si">Cerrado</span> Nace el nodo 0.3: captura de modelo, y al segundo intento fallido, válvula humana con el texto crudo y tag "modelo_no_reconocido", que alimenta el diccionario. El balde de fallos pasa a ser el motor de mejora.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">M11</span><p><b>Ramas A y B con cero resultados eran callejón.</b> <span class="chip v-si">Cerrado</span> Si no hay similares ni alternativas en su talla, el copy lo dice y ofrece waitlist con opt-in a WhatsApp, tagueando la demanda como señal de sourcing. Nunca botonera muerta.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">M12</span><p><b>Requests de similares y por talla prometidos sin definir.</b> <span class="chip v-par">Parcial</span> La forma más cara de fallar: el copy ofrecía algo que la ingeniería no contemplaba, y el error habría aparecido en producción frente al lead. Quedan especificados como Q3 y Q4 en el contrato de datos, con criterio de similitud y comportamiento en vacío. Construirlos depende del acceso a la API.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">M13</span><p><b>Campos fantasma en el brief a Luis.</b> <span class="chip v-si">Cerrado</span> Salen {score} y {objeción probable}, que ninguna lógica de v2.0 calcula: llegaban vacíos y le enseñaban a Luis a desconfiar del brief. Entra {motivo_handoff}, que sí lo escribe el nodo que escala. Scoring queda como candidato a v2.1, cuando haya data de cierre por camino.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">M14</span><p><b>Agendamientos sin temporizador.</b> <span class="chip v-si">Cerrado</span> Quien elegía día y franja recibía "te confirmamos" y salía del sistema: si Luis no confirmaba, nadie contaba el tiempo. Ahora toda cita entra al handoff con SLA y fallback, en las tres ramas. Una cita sin confirmar no es una cita.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">M15</span><p><b>"Espero nomás" era una salida sin reloj.</b> <span class="chip v-si">Cerrado</span> El lead aceptaba esperar y el sistema dejaba de contar, que es la forma elegante de perderlo. Entra un segundo temporizador de 90 min que escala a un responsable distinto del que ya falló. Máximo dos: el tercero sería acoso.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">M16</span><p><b>Arcos de silencio inentregables.</b> <span class="chip v-si">Cerrado</span> Por R2, si el lead nunca tocó un botón, el delay de 22 h no se entrega y el seguimiento no existe, aunque el flujo lo dibuje. Queda marcado como corolario de R2 y honesto en cada nodo. Un arco fantasma infla la sensación de cobertura y esconde fuga real.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">M17</span><p><b>Visita sin bici declarada rompía el tronco.</b> <span class="chip v-si">Cerrado</span> El tronco asume {bici} y confirma bici y valor, así que invocarlo sin bici producía un mensaje roto. Nace el 4.2b: agenda igual (mirar es válido y convierte en showroom), no finge saber qué viene a ver, e intenta el puente una sola vez sin cobrar peaje.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">M18</span><p><b>Campo manual "tomado" contra el auto-pause nativo.</b> <span class="chip v-si">Cerrado</span> Dependía de que Luis se acordara de marcarlo y contradecía a R4. El auto-pause es la fuente de verdad: basta con que responda desde el Inbox o la app. El tag queda solo como respaldo de diagnóstico.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">M19</span><p><b>No existía opt-out.</b> <span class="chip v-si">Cerrado</span> El único modo de parar los mensajes era denunciar la cuenta, que castiga el dominio de envío y ensucia la señal ante Meta. Entra el flujo 6.1 con Unsubscribe nativo, cancelación de cadencias y timers, y salida X con razón "baja voluntaria", que es digna y no una pérdida a investigar.</p></div>
+    </div>
+  </div>
+
+  <div class="bench">
+    <h3>Lo que sigue bloqueado <span>· con dueño y con ruta de activación</span></h3>
+    <p class="bench-ctx">Tres de los diecinueve no se cierran escribiendo, porque dependen de terceros. Están decididos y escritos; lo que falta es insumo ajeno. Ninguno impide lanzar, porque cada uno tiene su versión degradada honesta.</p>
+    <div style="margin-top: 0.9rem;">
+      <div class="hallazgo"><span class="hallazgo-n">1</span><p><b>C3 modo A y los cuatro requests (Q1 a Q4).</b> Dueño: <b>Luis</b>, vía acceso de lectura a la API de Ailoo. Mientras no exista: el parche de precio no afirma stock, la rama "se vendió" ofrece waitlist en vez de similares, el quiz cierra en waitlist en vez de entregar bicis, y el micro-check escala al humano en vez de comparar geometría. Activación: encender el <span class="blk-t t-req">Request</span> y su condición de vacío en flujos ya montados, sin rediseño.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">2</span><p><b>M9, contenido de garantía.</b> Dueño: <b>los dueños de BikeTrust</b>, vía los 6 documentos. Mientras no exista: el spoke responde lo que sí está definido y manda a handoff lo demás, registrando cada pregunta para ampliar el documento. Activación: rellenar tres slots.</p></div>
+      <div class="hallazgo"><span class="hallazgo-n">3</span><p><b>Add-on de AI y app de ManyChat.</b> Dueño: <b>Gabriel</b> (confirmar si el plan incluye Manychat AI, R6) y <b>Luis</b> (instalar la app, sin la cual el auto-pause de R4 no se dispara y todo el handoff se degrada). Mientras no exista el add-on: el clasificador opera solo con keywords, que cubre lo determinista y pierde lo ambiguo.</p></div>
+    </div>
+    <p class="bench-notes"><b>Qué significa "listo para producción" acá.</b> No que toda capacidad esté construida, sino que ningún nodo prometa más de lo que el sistema puede cumplir. Con los 19 hallazgos resueltos y el modo degradado declarado, el árbol se puede montar y abrir esta semana: entrará con menos capacidad que la versión completa y sin un solo punto donde el lead reciba una promesa que el back no sostiene. Cuando lleguen la API y los documentos, la capacidad sube sin tocar la arquitectura.</p>
+  </div>
+</section>
+
+<div class="footer">BikeTrust × GMGP · Árbol de Decisiones v2.4 · Embudo Comprador · Julio 2026</div>
+
+</div>
+<script>
+function togRef(id) {
+  var r = document.getElementById(id);
+  if (r) r.classList.toggle('open');
+}
+function irRuta(id) {
+  var d = document.getElementById(id);
+  if (!d) return;
+  d.open = true;
+  d.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+</script>
+</body>
+</html>

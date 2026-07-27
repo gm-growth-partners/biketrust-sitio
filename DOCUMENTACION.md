@@ -2,7 +2,7 @@
 
 > Cómo funciona el sistema de Bike Trust de punta a punta: las partes, los flujos
 > de trabajo del staff y la arquitectura técnica. Idioma: español.
-> Última actualización: **2026-07-17**.
+> Última actualización: **2026-07-27** (parche de estado; reescritura completa programada post-V2).
 
 Índice:
 1. [Visión general](#1-visión-general)
@@ -24,7 +24,7 @@ Bike Trust vende **bicicletas Specialized usadas, premium y certificadas** (Sant
 |---|---|---|
 | **Web** | Sitio estático (catálogo + ficha por bici + guías) en Cloudflare Pages. La "capa de confianza". | 🟢 En vivo: https://biketrust-sitio.pages.dev |
 | **Backend / CRM** | La base Airtable: Inventario, Leads, Intereses, Reservas, Reels + interfaces para operar. | 🟢 Operativo |
-| **Funnel** | Instagram + ManyChat (lo que llena el CRM con leads). Captura + ficha + **agendamiento** en vivo; falta WhatsApp. Doc propio: **[`EMBUDO.md`](EMBUDO.md)**. | 🟡 Fases 1-2 en vivo |
+| **Funnel** | Instagram + ManyChat (lo que llena el CRM con leads). V1 completa EN VIVO (P1+P2+WhatsApp, lanzada 2026-07-10; S30 = 31 leads reales). Capa conversacional **en reconstrucción V2** (intención + convergencia en agenda). Docs: **[`EMBUDO.md`](EMBUDO.md)** + **[`MANYCHAT_REBUILD.md`](MANYCHAT_REBUILD.md)**. | 🟢 V1 en vivo · 🔧 V2 |
 | **Reporte (Tablero A3)** | App web privada de **solo lectura** con 3 paneles y 19 métricas, calculadas desde esta base en build time. Repo/proyecto Pages **aparte** (`biketrust-tablero`, carpeta `…/2. Fragua/tablero`). Su propio `README.md`. | 🟢 En vivo · solo lectura |
 
 **Principio rector:** nada guarda su propia copia de los datos. El sitio se **regenera** desde Airtable en cada publicación.
@@ -52,7 +52,7 @@ El alta está pensada en **dos momentos**, porque recibir la bici y dejarla list
 
 ### 2.2 Registrar una venta (formulario único)
 
-Cuando un cliente compra, **una sola acción** deja sincronizadas las tres señales de venta (antes se desincronizaban → "facturación sin cierres"). **El camino estándar es el formulario de venta** (botón **"💰 Registrar venta"** en el Panel de inventario → abre `/api/registrar-venta?form=1`):
+Cuando un cliente compra, **una sola acción** deja sincronizadas las tres señales de venta (antes se desincronizaban → "facturación sin cierres"). ⚠️ **Desde la decisión Ailoo (2026-07-20) este camino es el fallback transitorio**: el embudo se corta en show/no-show y la venta llegará desde Ailoo (ERP central) vía integración futura. Mientras esa integración no viva, el formulario de venta sigue siendo el camino operativo (botón **"💰 Registrar venta"** en el Panel de inventario → abre `/api/registrar-venta?form=1`):
 
 1. Elegir la **bici vendida** (lista de Disponibles/Reservadas con precio).
 2. **¿Venía agendado?** → **Sí**: elegir el lead en la lista. · **No (walk-in)**: escribir nombre + teléfono (se crea el lead con `Canal origen = Tienda`).
@@ -161,7 +161,7 @@ Base Airtable `appQUgk8aeD752923` ("Biketrust Operaciones"). **No renombrar camp
 - **Leads** (la persona) — primario `Lead` (fórmula nombre/email). `Estado` = máquina de 13 estados. `Canal origen`, `Temperatura`, WhatsApp, Email, `Fecha primer contacto`/`última interacción`/`visita`/`cierre`, banderas de embudo, `Valor potencial` (rollup), **`Bici comprada`** (link a Inventario para la venta), **`Registrar venta`** (botón), `RecID`.
 - **Intereses** (lead ↔ bici) — `Origen`, `Resultado` (`Ficha entregada/Match/No-match/Agendó/Cerró`), links Lead/Bici/Reservas, `Precio Bici` (lookup).
 - **Reservas** — datos de la reserva web + links a Leads/Intereses.
-- **Solicitudes** — tickets de búsqueda («Consíganmela» del bot u origen manual): Modelo buscado, Motorización, Disciplina, Talla, Presupuesto, Notas, `Estado` (`Nueva/Buscando/Conseguida/Cerrada`), Fecha, Contacto, `Origen` (`Bot DM/Manual`), link `Lead`. Es la cola de sourcing del equipo.
+- **Solicitudes** — tickets de búsqueda («Consíganmela» del bot u origen manual): Modelo buscado, Motorización, Disciplina, Talla, Presupuesto, Notas, `Estado` (`Llamada pendiente/Buscando/Conseguida/Cerrada` — NO renombrar `Llamada pendiente` sin tocar `mc-waitlist.js`/`mc-llamado.js`), Fecha, Contacto, `Origen` (`Bot DM/Manual`), link `Lead`. Es la cola de sourcing del equipo.
 - **Consignaciones** — ofertas de bicicletas (rama Vender del bot u origen manual): Modelo, Año, Talla, Estado bici, Precio esperado, Contacto, Fotos, `Estado` (`Nueva/En evaluación/Compra directa/Consignación/Rechazada`), Fecha, Notas, `Origen`, link `Lead`. Al aceptarse, una automatización crea la bici en Inventario (Borrador).
 - **Metricas** — capa precalculada del reporte de Airtable (una fila por dato/período, upsert por `Clave`). *(Nota: el **Tablero A3** es un reporte aparte que NO usa esta tabla — calcula desde los registros crudos en su propio build.)*
 - **Instrumentación del Tablero A3** (2026-07-17, **no borrar**) — campos que llena el tablero de reporte vía automatizaciones: en **Solicitudes** y **Llamados** `Creado`, `Fecha primera llamada`, `_ahora`; en **Leads** `Cuestionario iniciado`. Detalle en `…/2. Fragua/tablero/README.md`.
@@ -173,7 +173,7 @@ Base Airtable `appQUgk8aeD752923` ("Biketrust Operaciones"). **No renombrar camp
 ## 7. Mantenimiento
 
 - **Publicar cambios de datos:** cada deployment relee Airtable. Para reflejar cambios: Cloudflare Pages → Deployments → **⋯ → Retry deployment** (~1–2 min). Un `push` al repo también republica solo.
-- **Antes de producción:** limpiar los datos **DEMO** (filtro `DEMO=1` en Leads/Intereses) y **rotar el PAT** de Airtable (se pegó alguna vez en un chat).
+- ~~Limpiar los datos DEMO~~ ✅ hecho 2026-07-27 (17 registros de prueba eliminados, base 100% real). Pendientes reales: **rotar el PAT** de Airtable (se pegó alguna vez en un chat) y **rotar `MC_KEY`** (D1 de la V2).
 - **Verificar `git rev-parse --show-toplevel`** antes de commitear: `C:\Users\Gabriel` es accidentalmente un repo git; este proyecto es un repo anidado propio.
 - **Fotos nuevas:** subirlas a `Fotos galería` de la bici (el build las descarga y hostea solo).
 
@@ -186,6 +186,6 @@ Base Airtable `appQUgk8aeD752923` ("Biketrust Operaciones"). **No renombrar camp
 3. **Fotos/datos de Vado SL y Tarmac SL7** (no estaban en el sitio antiguo).
 4. **Limpieza pre-producción** — datos DEMO + rotar PAT.
 5. **Decisión Borrador sí/no** — a conversar con los dueños (recomendado mantenerlo, ver §2.1).
-6. **Funnel ManyChat** — Puerta 1 + agendamiento **en vivo**; pendiente WhatsApp (confirmación/recordatorios), briefing diario, Puerta 2 (quiz), reenganche. **Roadmap y estado detallado en [`EMBUDO.md`](EMBUDO.md).**
+6. **Funnel ManyChat** — V1 completa en vivo (P1 + P2 + WhatsApp + briefing, lanzada 2026-07-10). **Pendiente real: la reconstrucción V2** (intención + convergencia en agenda, plan de 3 días) + mejoras chicas de código (umbral no-match del quiz, `quiz_iniciado`, hora exacta en Llamados). **Diseño y plan en [`MANYCHAT_REBUILD.md`](MANYCHAT_REBUILD.md); estado del embudo en [`EMBUDO.md`](EMBUDO.md).**
 
 **Contrato que ManyChat deberá cumplir** (o el reporte se rompe): cada lead nace con `Fecha primer contacto`, avanza `Estado` por valores canónicos, usa `Canal origen` canónico y deduplica por `@handle`.

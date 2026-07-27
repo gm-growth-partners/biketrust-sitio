@@ -7,7 +7,15 @@
 >
 > Complementa a [`DOCUMENTACION.md`](DOCUMENTACION.md) (web + CRM + reportes) y a
 > [`CLAUDE.md`](CLAUDE.md) (notas técnicas finas y gotchas). Idioma: español.
-> Última actualización: **2026-07-20**.
+> Última actualización: **2026-07-27**.
+>
+> ⚠️ **V2 EN CURSO (decidida 2026-07-24, pivotada 2026-07-27):** la capa ManyChat descrita
+> en §4 y §10 es la **V1, en retiro**. Se reconstruye desde cero con **reconocimiento de
+> intención** (sin menú de botones) y **convergencia única en agenda**: la ubicación decide
+> (Santiago → visita vía `mc-agenda` · región → llamada vía `mc-llamado`). El backend de
+> este documento (§5 endpoints, §3 estados, §6 reels, §7 contrato) queda **intacto y sigue
+> vigente**. Doc autoritativo de la V2: [`MANYCHAT_REBUILD.md`](MANYCHAT_REBUILD.md) +
+> especificación de montaje en [`docs/cuaderno_montaje_biketrust.html`](docs/cuaderno_montaje_biketrust.html).
 >
 > ⚠️ **Cambio de alcance decidido 2026-07-20:** el embudo llega **hasta el show/no-show** de la visita. El registro de la VENTA pasará a venir de **Ailoo** (ERP central) vía automatización Ailoo→Airtable, con trazabilidad por teléfono del comprador + código único de la bici (SWSS). El cierre que hoy marca el staff (fila 3 de la tabla) queda como fallback hasta que esa integración viva. Detalle: banner §2 de `CLAUDE.md`.
 
@@ -28,7 +36,7 @@
 | 6 | **Puerta 2 — router del DM + quiz + encargos + consignación** | ✅ **EN VIVO y probado E2E**: router + 3 rutas de compra + «Consíganmela» (ticket + aviso staff + `encargo_recibido` al cliente, todo EN VIVO) + Vender (→ `Consignaciones` + aviso a Roberto EN VIVO). Quiz recomienda por **estatura**. FAQ temporal |
 | 7 | **Región (ambas puertas)** — "¿Estás en Santiago?" → ticket de llamado | ✅ **EN VIVO y probado (2026-07-09)** en P1 (vía `reel`) y P2 (vía `cf_hero_bici`). Aviso al staff 🟡 Meta (`nuevo_llamado`); mientras, pantalla 📞 Llamados |
 
-**Estado (2026-07-07):** el **embudo base (Puerta 1 comentario → showroom) está EN VIVO y verificado de punta a punta** con una corrida real (lead pasó captura→agenda→confirmación, todo escrito en Airtable, incl. `visita_confirmada`). Pendiente de Meta (relojes corriendo): plantillas del briefing, reenganche y la confirmación v2 (con Reagendar). Sigue: **Puerta 2 (DM) — en rediseño**.
+**Estado (2026-07-27):** el sistema completo operó su **primera semana con tráfico real (S30: 31 leads, 27 fichas/recomendaciones entregadas, 0 visitas agendadas, 1 llamado de región)**. El backend está verificado y sano; la capa conversacional V1 capturó bien pero **no convirtió a agenda** y dejó 5 DMs libres varados en `nuevo` — por eso se reconstruye (V2, plan de 3 días en `MANYCHAT_REBUILD.md`). `mc-match` modo A corregido 2026-07-27 (bigramas: tolera «S-Works» pegado/con typo).
 
 ---
 
@@ -49,8 +57,8 @@ La psicología de venta se conserva pero la entrega el bot: **escasez real** ("�
 | Puerta | Qué es | Rutea a | Estado |
 |---|---|---|---|
 | **1 · Comentario en reel/post** | Modelo conocido: el reel es de una bici específica | Ficha de esa bici → agenda | ✅ |
-| **2 · DM directo** | Router con 3 botones (ver §10) | Ficha / Quiz / Waitlist | 💡 |
-| **3 · Respuesta a historia** | Cae en el **mismo** router del DM | igual que Puerta 2 | 💡 |
+| **2 · DM directo** | V1: router con 3 botones (§10, en retiro) → **V2: reconocimiento de intención, sin menú** | 4 rutas → agenda | ✅ V1 en vivo · 🔧 V2 |
+| **3 · Respuesta a historia** | Cae en la **misma** clasificación del DM | igual que Puerta 2 | 🔧 V2 |
 | **4 · Link en bio → sitio web** | Reserva desde la ficha web | Reserva (`reservar.js`) | ✅ (canal web) |
 | **5 · Ads click-to-DM / menciones** | Si algún día pautan | flujo específico por `ref` | 💡 futuro |
 
@@ -250,18 +258,27 @@ Todas en idioma **Spanish (MEX)**, sin encabezado, footer opcional `Bike Trust �
 
 ---
 
-## 9. Briefing diario al staff 🔧
+## 9. Briefing diario al staff ✅ EN VIVO (2026-07-09)
 
-Cada mañana a una hora fija, un mensaje al celular del staff (y opcionalmente al dueño) con las **visitas de HOY**: nombre/@handle · bici de interés · horario.
+Cada mañana a las 8AM, un mensaje al celular de Luis + Roberto (`BRIEFING_SIDS`) con las **visitas de HOY**: nombre/@handle · bici de interés · horario. Probado con `?force=1`.
 
-- **Mecanismo:** segundo Cron de Cloudflare que lee `Leads` con `Fecha visita = hoy` y envía el resumen por WhatsApp.
+- **Mecanismo:** Cron de Cloudflare que lee `Leads` con `Fecha visita = hoy` y envía el resumen por WhatsApp.
 - **Nota:** un mensaje automático **no** puede salir del WhatsApp personal de nadie; sale del número del sistema/Bike Trust hacia el staff. Mismo contenido, 100% automático.
 
 ---
 
-## 10. Puerta 2 — Embudo de entrada por DM (diseño completo) 🔧
+## 10. Puerta 2 — Embudo de entrada por DM (diseño V1 — SUPERSEDIDO por la V2) ⚠️
 
-Entrada: **DM directo** o **respuesta a historia** → ambos caen en el **Router**. Diseño autoritativo (2026-07-07). Reusa todo lo de Puerta 1 (mc-lead/mc-evento/mc-agenda) y agrega el router + `mc-match` + consignación.
+> ⚠️ **Este capítulo describe la V1 construida y en retiro.** Se construyó, operó la semana 30
+> y demostró el límite del menú: 5 DMs libres quedaron varados en `nuevo` sin ruta. El diseño
+> vigente (V2) elimina el router de botones: **reconocimiento de intención** con 4 rutas
+> (modelo específico · asesoría/elegir · vender · pregunta general), **toda ruta converge en
+> una agenda** y la **ubicación decide** (Santiago → visita · región → llamada). También muere
+> el «Te conecto con una persona» como fallback: el humano entra en la visita o la llamada
+> agendada, no como handoff del chat. Ver `MANYCHAT_REBUILD.md` y `docs/cuaderno_montaje_biketrust.html`.
+> Los endpoints de este capítulo (mc-match, mc-consigna, mc-waitlist) siguen 100% vigentes.
+
+Entrada: **DM directo** o **respuesta a historia** → ambos caen en el **Router**. Diseño autoritativo V1 (2026-07-07). Reusa todo lo de Puerta 1 (mc-lead/mc-evento/mc-agenda) y agrega el router + `mc-match` + consignación.
 
 ### Router (bienvenida)
 Mensaje: *"¡Hola! 👋 Soy el asistente de Bike Trust. ¿En qué te ayudo?"* → **3 botones**: `🚴 Comprar` · `💰 Vender mi bici` · `💬 Consultar`. Capa de **AI/keywords** encima: si escriben libre, clasifica la intención y rutea; si no entiende → muestra el menú. Fallback final: *"Te conecto con una persona"* (asigna humano).
@@ -304,10 +321,11 @@ Cuando una bici se vende, en vez de pausar su reel, `mc-evento` devuelve si sigu
 
 1. **Fase 1 — Puerta 1** (captura + ficha + califica): `mc-lead` + `mc-evento` + flujo ManyChat. ✅ **En vivo.**
 2. **Fase 2 — Agenda**: `mc-agenda` + selector de horario. ✅ **En vivo y probado con usuario real.**
-3. **Fase 3 — WhatsApp**: canal + plantillas + confirmación + motor de recordatorios (48h/8am) → mata el no-show. ✅ **En vivo y autónomo (2026-07-07).** Motor `cron-recordatorios` + worker cron `*/15`. Pendiente fino: registrar `visita_confirmada` (falta botón en la plantilla).
-4. **Fase base final — Briefing diario a Luis** (8 AM, visitas del día). 🔧 **Próxima pieza.**
-5. **Fase 4 — Puerta 2**: router del DM + quiz (`mc-match`) + waitlist + reenganche de sueltos. 💡
-6. **Fase 5 — Go-live**: test integral + limpiar datos DEMO + conectar dominio.
+3. **Fase 3 — WhatsApp**: canal + plantillas + confirmación + motor de recordatorios (48h/8am) → mata el no-show. ✅ **En vivo y autónomo.** Motor `cron-recordatorios` + worker cron `*/15`. La confirmación con botón «Sí confirmo» registra `visita_confirmada` (verificado E2E).
+4. **Briefing diario al staff** (8 AM, visitas del día). ✅ **EN VIVO (2026-07-09).**
+5. **Fase 4 — Puerta 2**: router del DM + quiz (`mc-match`) + waitlist. ✅ **Construida y lanzada (2026-07-10)**; reenganche de sueltos 🟡 activación post-launch.
+6. **Fase 5 — Go-live**: ✅ lanzado 2026-07-10; datos de prueba limpiados 2026-07-27. Pendiente menor: conectar dominio `biketrust.cl`.
+7. **Fase 6 — V2 de la capa conversacional** (vigente, plan de 3 días): intención + convergencia en agenda. 🔧 **EN CURSO** — ver `MANYCHAT_REBUILD.md`.
 
 ---
 

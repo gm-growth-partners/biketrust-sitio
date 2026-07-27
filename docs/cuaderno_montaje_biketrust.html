@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cuaderno de Montaje · BikeTrust ManyChat v3</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --carbon:#080808; --panel:#101010; --panel2:#151515; --line:#242424; --line2:#333;
+  --verde:#3EC95A; --verde-dim:#1d5c2a; --verde-bg:rgba(62,201,90,.09);
+  --ambar:#E0A82E; --ambar-bg:rgba(224,168,46,.10);
+  --rojo:#E05A45; --rojo-bg:rgba(224,90,69,.10);
+  --txt:#EDEDEA; --txt2:#A2A29C; --txt3:#6E6E68;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--carbon);color:var(--txt);font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+
+nav{position:sticky;top:0;z-index:50;background:rgba(8,8,8,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;gap:6px;align-items:center;overflow-x:auto;height:52px;scrollbar-width:none}
+nav .wrap::-webkit-scrollbar{display:none}
+nav a{color:var(--txt3);text-decoration:none;font-size:12.5px;letter-spacing:.02em;padding:6px 11px;border-radius:6px;white-space:nowrap;transition:.15s}
+nav a:hover{color:var(--txt);background:var(--panel2)}
+nav .brand{color:var(--verde);font-weight:700;font-size:12.5px;letter-spacing:.08em;padding-right:14px;border-right:1px solid var(--line);margin-right:8px}
+
+header.cover{padding:96px 0 72px;border-bottom:1px solid var(--line);position:relative;overflow:hidden}
+header.cover::before{content:'';position:absolute;top:-160px;left:50%;transform:translateX(-50%);width:620px;height:320px;background:radial-gradient(ellipse at center,rgba(62,201,90,.16),transparent 70%);pointer-events:none}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.22em;color:var(--verde);text-transform:uppercase;margin-bottom:22px}
+h1{font-family:'Fraunces',serif;font-size:clamp(38px,6vw,62px);line-height:1.04;font-weight:600;margin:0 0 20px;letter-spacing:-.02em}
+.lede{font-size:18px;color:var(--txt2);max-width:660px;line-height:1.6}
+.meta{display:flex;gap:28px;flex-wrap:wrap;margin-top:36px;font-family:var(--mono);font-size:11.5px;color:var(--txt3);letter-spacing:.04em}
+.meta b{color:var(--txt2);font-weight:500}
+
+section{padding:68px 0;border-bottom:1px solid var(--line)}
+h2{font-family:'Fraunces',serif;font-size:32px;font-weight:600;margin:0 0 10px;letter-spacing:-.01em}
+.sub{color:var(--txt2);margin:0 0 34px;max-width:720px}
+h3{font-size:17px;font-weight:700;margin:38px 0 12px;letter-spacing:-.01em}
+h4{font-size:14px;font-weight:700;margin:24px 0 8px;color:var(--txt2)}
+p{margin:0 0 14px}
+code{font-family:var(--mono);font-size:12.5px;background:var(--panel2);border:1px solid var(--line);padding:1px 6px;border-radius:4px;color:var(--verde)}
+
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13.5px}
+th{text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--txt3);font-weight:500;padding:0 12px 10px;border-bottom:1px solid var(--line2)}
+td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--txt2)}
+td:first-child,th:first-child{padding-left:0}
+td strong{color:var(--txt);font-weight:500}
+
+.pill{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:4px;white-space:nowrap}
+.p-v{background:var(--verde-bg);color:var(--verde);border:1px solid var(--verde-dim)}
+.p-a{background:var(--ambar-bg);color:var(--ambar);border:1px solid rgba(224,168,46,.3)}
+.p-r{background:var(--rojo-bg);color:var(--rojo);border:1px solid rgba(224,90,69,.3)}
+.p-n{background:var(--panel2);color:var(--txt3);border:1px solid var(--line2)}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px 24px;margin:16px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:18px 0}
+
+.note{border-left:2px solid var(--verde);background:var(--verde-bg);padding:14px 18px;border-radius:0 8px 8px 0;margin:18px 0;font-size:14px}
+.warn{border-left:2px solid var(--ambar);background:var(--ambar-bg);padding:14px 18px;border-radius:0 8px 8px 0;margin:18px 0;font-size:14px}
+.stop{border-left:2px solid var(--rojo);background:var(--rojo-bg);padding:14px 18px;border-radius:0 8px 8px 0;margin:18px 0;font-size:14px}
+.note b,.warn b,.stop b{font-weight:700}
+
+details.flow{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin:12px 0;overflow:hidden}
+details.flow[open]{border-color:var(--line2)}
+details.flow>summary{cursor:pointer;padding:16px 22px;list-style:none;display:flex;align-items:center;gap:14px;flex-wrap:wrap;transition:.15s}
+details.flow>summary::-webkit-details-marker{display:none}
+details.flow>summary:hover{background:var(--panel2)}
+.fname{font-family:var(--mono);font-size:13px;color:var(--verde);font-weight:500;letter-spacing:.02em}
+.fdesc{color:var(--txt2);font-size:13.5px;flex:1;min-width:180px}
+.fbody{padding:4px 22px 24px;border-top:1px solid var(--line)}
+.chev{color:var(--txt3);font-size:11px;font-family:var(--mono)}
+
+.blocks{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:14px}
+.blocks th{padding-bottom:8px}
+.blocks td{padding:12px 12px 12px 0;border-bottom:1px solid var(--line)}
+.blocks td:nth-child(1){width:34px;font-family:var(--mono);font-size:11.5px;color:var(--txt3);padding-right:0}
+.blocks td:nth-child(2){width:112px}
+.btype{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--txt3);border:1px solid var(--line2);padding:2px 7px;border-radius:4px;white-space:nowrap}
+.copy{background:var(--panel2);border:1px solid var(--line);border-left:2px solid var(--verde-dim);border-radius:0 6px 6px 0;padding:10px 14px;margin:6px 0;font-size:13.5px;color:var(--txt);white-space:pre-wrap}
+.btns{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0 2px}
+.btn{font-size:12.5px;border:1px solid var(--line2);border-radius:20px;padding:4px 13px;color:var(--txt2);background:var(--panel2)}
+.btn i{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--txt3);margin-left:5px}
+pre{font-family:var(--mono);font-size:12px;line-height:1.6;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;margin:10px 0;color:var(--txt2)}
+pre b{color:var(--verde);font-weight:500}
+.slot{background:rgba(224,168,46,.12);border:1px dashed rgba(224,168,46,.45);border-radius:4px;padding:1px 7px;font-family:var(--mono);font-size:11.5px;color:var(--ambar)}
+
+ol.steps{counter-reset:s;list-style:none;padding:0;margin:18px 0}
+ol.steps li{counter-increment:s;position:relative;padding-left:44px;margin-bottom:18px;color:var(--txt2)}
+ol.steps li::before{content:counter(s,decimal-leading-zero);position:absolute;left:0;top:0;font-family:var(--mono);font-size:11.5px;color:var(--verde);border:1px solid var(--verde-dim);border-radius:5px;padding:2px 7px}
+ol.steps b{color:var(--txt)}
+
+footer{padding:56px 0 80px;color:var(--txt3);font-size:13px}
+@media(max-width:720px){.wrap{padding:0 18px}h1{font-size:34px}section{padding:48px 0}}
+</style>
+</head>
+<body>
+
+<nav><div class="wrap">
+<span class="brand">CUADERNO v3</span>
+<a href="#antes">Antes de borrar</a>
+<a href="#esquema">Esquema</a>
+<a href="#limites">Límites duros</a>
+<a href="#patrones">Patrones</a>
+<a href="#entradas">Entradas</a>
+<a href="#flujos">Flujos</a>
+<a href="#bordes">Bordes</a>
+<a href="#orden">Orden de montaje</a>
+<a href="#verificar">Verificar</a>
+</div></nav>
+
+<header class="cover"><div class="wrap">
+<div class="eyebrow">GM Growth Partners · Bike Trust</div>
+<h1>Cuaderno de<br>Montaje</h1>
+<p class="lede">Reconstrucción completa de la capa ManyChat sobre el backend vivo. Cada flujo con sus bloques numerados, el texto literal de cada mensaje, el JSON de cada solicitud externa y el conteo contra el techo de 30 bloques.</p>
+<div class="meta">
+<span><b>Alcance</b> · capa de presentación</span>
+<span><b>Backend</b> · intacto</span>
+<span><b>Flujos</b> · 22</span>
+<span><b>Campos</b> · 34</span>
+</div>
+</div></header>
+
+<section id="antes"><div class="wrap">
+<h2>Antes de borrar</h2>
+<p class="sub">Lo único de este cuaderno que, si se ignora, rompe producción en silencio. No es una lista de buenas prácticas: son dependencias duras del backend contra la capa que estás por eliminar.</p>
+
+<h3>Los cinco campos que el backend escribe por string</h3>
+<p>El motor los escribe vía <code>setCustomFieldByName</code>. Si el campo no existe con el nombre literal, la llamada lanza error, el mensaje no sale, y el fallo queda en un JSON que nadie mira. Se recrean idénticos, sin mayúsculas distintas, sin acentos, sin guiones cambiados.</p>
+<table>
+<tr><th>Campo</th><th>Lo escribe</th><th>Para qué</th></tr>
+<tr><td><code>cf_bici</code></td><td>cron-recordatorios</td><td>Variable {{1}} de las plantillas WhatsApp</td></tr>
+<tr><td><code>cf_fecha_visita</code></td><td>cron-recordatorios</td><td>Variable {{2}}, fecha legible</td></tr>
+<tr><td><code>cf_consigna_datos</code></td><td>mc-consigna</td><td>Resumen de la oferta al staff</td></tr>
+<tr><td><code>cf_solicitud_datos</code></td><td>mc-waitlist</td><td>Resumen del ticket de búsqueda</td></tr>
+<tr><td><code>cf_llamado_datos</code></td><td>mc-llamado</td><td>Resumen del llamado de región</td></tr>
+</table>
+
+<h3>Los nueve envoltorios que no se tocan</h3>
+<p>Son flujos que envuelven plantillas de WhatsApp aprobadas por Meta. Sus namespaces están en variables de entorno de Cloudflare. Si se recrean, el <code>flow_ns</code> cambia y hay que actualizar cada variable a mano — y re-aprobar con Meta cuesta días.</p>
+<div class="stop"><b>No borrar, no duplicar, no renombrar:</b> los flujos detrás de <code>FLOW_NS_48H</code>, <code>FLOW_NS_8AM</code>, <code>FLOW_NS_2H</code>, <code>FLOW_NS_CONSIGNA</code>, <code>FLOW_NS_SOLICITUD</code>, <code>FLOW_NS_LLAMADO</code>, <code>FLOW_NS_REAGENDO</code>, <code>FLOW_NS_NOSHOW</code>, <code>FLOW_NS_SUELTO</code>.</div>
+
+<h3>Lo que sobrevive solo</h3>
+<p>Los subscriber id son contactos, no flujos: sobreviven al borrado. También sobreviven <code>Leads.MC subscriber id</code> en Airtable y las plantillas aprobadas.</p>
+
+<h3>Al terminar</h3>
+<ol class="steps">
+<li><b>Rotar <code>MC_KEY</code></b> y actualizar el <code>?key=</code> de todas las solicitudes externas del cuaderno. Quedó expuesta en un transcript y el repositorio documenta contra qué sirve.</li>
+<li><b>Correr <code>cron-recordatorios</code> con <code>?dry=1</code></b> y confirmar que el JSON no trae <code>errors</code>.</li>
+<li><b>Emitir un <code>quiz_iniciado</code> de prueba</b> y verificar que <code>Cuestionario iniciado</code> se marca en Leads. Sin eso el tablero sigue ciego al abandono del quiz.</li>
+</ol>
+</div></section>
+
+<section id="esquema"><div class="wrap">
+<h2>Esquema compartido</h2>
+<p class="sub">Se cierra antes de crear un solo flujo. Campos, tags y nombres: si esto se mueve después, se mueve en veintidós lugares.</p>
+
+<h3>Campos personalizados · 34, todos tipo texto</h3>
+<table>
+<tr><th>Grupo</th><th>Campos</th></tr>
+<tr><td><strong>A · Obligatorios backend</strong><br><span style="color:var(--txt3);font-size:12.5px">nombre literal, no negociable</span></td><td><code>cf_bici</code> <code>cf_fecha_visita</code> <code>cf_consigna_datos</code> <code>cf_solicitud_datos</code> <code>cf_llamado_datos</code></td></tr>
+<tr><td><strong>B · Identidad</strong></td><td><code>cf_lead_id</code> <code>cf_estado_aplicado</code> <code>cf_telefono</code></td></tr>
+<tr><td><strong>C · Bici recomendada</strong><br><span style="color:var(--txt3);font-size:12.5px">calzan 1:1 con la respuesta plana</span></td><td><code>cf_hero_bici</code> <code>cf_hero_modelo</code> <code>cf_hero_precio</code> <code>cf_hero_talla</code> <code>cf_hero_ficha</code> <code>cf_hero_foto</code> <code>cf_alt_bici</code> <code>cf_alt_modelo</code> <code>cf_alt_precio</code> <code>cf_alt_ficha</code> <code>cf_otras_texto</code> <code>cf_match</code> <code>cf_modelo_buscado</code></td></tr>
+<tr><td><strong>D · Quiz</strong></td><td><code>cf_q_disciplina</code> <code>cf_q_presupuesto</code> <code>cf_q_altura</code></td></tr>
+<tr><td><strong>E · Texto libre</strong></td><td><code>cf_modelo_texto</code></td></tr>
+<tr><td><strong>F · Región</strong></td><td><code>cf_ciudad</code> <code>cf_franja</code></td></tr>
+<tr><td><strong>G · Consignación</strong></td><td><code>cf_v_modelo</code> <code>cf_v_anio</code> <code>cf_v_talla</code> <code>cf_v_estado</code> <code>cf_v_precio</code> <code>cf_v_fotos</code></td></tr>
+<tr><td><strong>H · Tickets devueltos</strong></td><td><code>cf_solicitud_id</code> <code>cf_llamado_id</code> <code>cf_consigna_id</code></td></tr>
+<tr><td><strong>I · Control</strong> <span class="pill p-v">nuevo</span></td><td><code>cf_no_texto_intentos</code></td></tr>
+</table>
+
+<div class="stop"><b>El grupo C se borra al inicio de cada corrida.</b> El mapeo de respuesta no limpia campos con valores vacíos, así que sin ese borrado se arrastra la bici del lead anterior y le muestras a alguien la unidad de otra persona. Va como acción de "borrar valor" en la misma caja de acciones, inmediatamente antes de cada <code>mc-match</code>. Es la falla más silenciosa del sistema.</div>
+
+<div class="note"><b>Cambio v3:</b> <code>cf_q_motor</code> sale del esquema — el quiz baja a tres preguntas. Entra <code>cf_no_texto_intentos</code>, que sostiene la regla de dos golpes para audios e imágenes.</div>
+
+<h3>Tags</h3>
+<p>Cada transición estampa un tag. Son el insumo del ritual semanal y de la instrumentación del tablero.</p>
+<table>
+<tr><th>Familia</th><th>Tags</th></tr>
+<tr><td>Ruteo</td><td><code>intencion_modelo</code> <code>intencion_vender</code> <code>intencion_envios</code> <code>intencion_pagos</code> <code>intencion_garantia</code> <code>intencion_ubicacion</code> <code>fallback</code></td></tr>
+<tr><td>Estado</td><td><code>quiz_iniciado</code> <code>quiz_abandonado</code> <code>match_ok</code> <code>no_match</code> <code>agendado</code> <code>llamado_pedido</code></td></tr>
+<tr><td>Escalamiento</td><td><code>handoff</code> <code>handoff_descuento</code> <code>handoff_fuera_doc</code> <code>handoff_audio</code> <code>handoff_cancela</code></td></tr>
+<tr><td>Cierre</td><td><code>baja_voluntaria</code> <code>spam</code> <code>otra_marca</code> <code>modelo_rechazado</code></td></tr>
+<tr><td>Diagnóstico</td><td><code>request_vacio</code> <code>modelo_no_reconocido</code> <code>fuera_horario</code></td></tr>
+</table>
+
+<h3>Inventario de flujos · 22</h3>
+<p>Tres capas. Las entradas son diminutas —un trigger y un salto—; toda la sustancia vive en los spokes; los componentes se invocan desde todos lados y se editan en un solo lugar.</p>
+<div class="grid">
+<div class="card"><h4 style="margin-top:0">Entradas · 9</h4><p style="font-size:13px;color:var(--txt2);margin:0">ENT-comentario · ENT-historia · ENT-modelo · ENT-vender · ENT-envios · ENT-pagos · ENT-garantia · ENT-ubicacion · ENT-default</p></div>
+<div class="card"><h4 style="margin-top:0">Spokes · 9</h4><p style="font-size:13px;color:var(--txt2);margin:0">SPK-modelo · SPK-desambigua · SPK-quiz · TRONCO-agenda · SPK-region · SPK-waitlist · SPK-vender · SPK-info (×4) · ROUTER</p></div>
+<div class="card"><h4 style="margin-top:0">Componentes · 4</h4><p style="font-size:13px;color:var(--txt2);margin:0">PUENTE · HANDOFF · OPT-OUT · NO-TEXTO<br><span style="color:var(--txt3)">más CANCELA, que cuelga de plantilla</span></p></div>
+</div>
+<p style="color:var(--txt3);font-size:13px">Los cuatro informativos comparten una sola hoja porque son el mismo patrón con distinto documento. Las dos keywords deterministas viven dentro de OPT-OUT y HANDOFF, no como automatización aparte.</p>
+</div></section>
+
+<section id="limites"><div class="wrap">
+<h2>Límites duros</h2>
+<p class="sub">Las restricciones de plataforma que condicionan cada hoja. No son advertencias: son las razones por las que los flujos tienen la forma que tienen.</p>
+<table>
+<tr><th>#</th><th>Límite</th><th>Consecuencia de diseño</th></tr>
+<tr><td><strong>L1</strong></td><td>Ventana de 24 h de Instagram</td><td>Nada diferido sale por IG. Confirmación y recordatorios van por plantilla de WhatsApp, siempre.</td></tr>
+<tr><td><strong>L2</strong></td><td>El opt-in se abre con un tap, no con texto</td><td>Todo primer DM lleva botón de flujo. Un botón "abrir URL" no cuenta. Sin tap previo, un delay no se entrega — no se dibujan cadencias fantasma.</td></tr>
+<tr><td><strong>L3</strong></td><td>Respuesta privada a comentario es terminal</td><td>Instagram no deja encadenar. El hilo solo sigue si toca un botón de flujo.</td></tr>
+<tr><td><strong>L4</strong></td><td>Máximo 3 botones por mensaje en IG</td><td>Menús en dos niveles cuando falten. Quick replies llegan a ~11 pero no se mezclan con botones.</td></tr>
+<tr><td><strong>L5</strong></td><td>30 bloques sin pausa por automatización</td><td>Se pausa sola al excederlo. Bloque sin pausa = sin botón ni Smart Delay. Cada hoja lleva su conteo.</td></tr>
+<tr><td><strong>L6</strong></td><td>Timeout de solicitud externa: 10 s exactos</td><td>Nunca se ramifica por código de error. Si falla o expira, el campo queda vacío y se bifurca por condición sobre campo vacío.</td></tr>
+<tr><td><strong>L7</strong></td><td>El mapeo de respuesta no limpia vacíos</td><td>Borrado explícito del grupo C antes de cada <code>mc-match</code>.</td></tr>
+<tr><td><strong>L8</strong></td><td>No hay variable confiable del Post ID comentado</td><td>Una automatización por reel. El dato vive en Airtable, no en ManyChat.</td></tr>
+<tr><td><strong>L9</strong></td><td>Enfriamiento ~24 h del trigger de comentario</td><td>Un contacto no re-dispara el mismo post. Para probar, cuenta virgen.</td></tr>
+<tr><td><strong>L10</strong></td><td>El auto-pause solo lo dispara el Inbox</td><td>Si Luis responde por Instagram o Business Suite, el bot sigue encima. Regla no negociable: instala la app de ManyChat.</td></tr>
+<tr><td><strong>L11</strong></td><td>Instagram no comparte el teléfono</td><td>No hay autofill. Se escribe a mano en el celular: es el nodo de mayor caída del embudo y merece el mejor copy del sistema.</td></tr>
+<tr><td><strong>L12</strong></td><td>El bot no ve imágenes ni oye audios</td><td>No finge. Acusa recibo y bifurca, o escala.</td></tr>
+</table>
+</div></section>
+
+<section id="patrones"><div class="wrap">
+<h2>Patrones compartidos</h2>
+<p class="sub">Lo que se repite vive acá, una sola vez. Las hojas de flujo los referencian por nombre. Si el primer montaje enseña que algo estaba mal, se corrige un patrón y no veintidós hojas.</p>
+
+<h3>P1 · Toda solicitud externa</h3>
+<p>Forma idéntica en las siete. Se copia y solo cambian ruta y cuerpo.</p>
+<pre>Método   <b>POST</b>
+URL      https://[dominio]/api/<b>[endpoint]</b>?key=<b>{{MC_KEY}}</b>
+Headers  Content-Type: application/json
+Timeout  10 s · no configurable
+Body     JSON, siempre con identidad:
+         "handle": "{{Nombre de usuario}}"
+         "subscriber_id": "{{ID de contacto}}"</pre>
+<p><strong>Mapeo de respuesta:</strong> siempre a los campos planos de primer nivel. Nunca rutas anidadas — la interfaz no siempre las lee bien.</p>
+<p><strong>Bifurcación posterior, obligatoria:</strong> el bloque siguiente es una condición sobre el campo clave vacío. Ese único camino cubre timeout, 401 por llave rotada, 502 de Airtable y respuesta malformada. No se ramifica por código.</p>
+<div class="copy">Estoy confirmando eso con el equipo 🙌 te escribo en unos minutos con la respuesta exacta.</div>
+<p style="font-size:13px;color:var(--txt3)">Copy estándar de request vacío. Add Tag <code>request_vacio</code> + salto a HANDOFF. Nunca se muestra un error técnico.</p>
+
+<h3>P2 · Los cuatro arcos</h3>
+<p>Todo nodo que espera input declara sus cuatro salidas. Sin excepción.</p>
+<table>
+<tr><th>Arco</th><th>Qué hace</th></tr>
+<tr><td><strong>Botón</strong></td><td>Su rama. El camino esperado.</td></tr>
+<tr><td><strong>Texto con intención</strong></td><td>Solo si el nodo cerró en botones: el contacto queda en reposo y la escalera de entrada lo re-rutea sola.</td></tr>
+<tr><td><strong>Texto sin intención</strong></td><td>Default Reply → ROUTER.</td></tr>
+<tr><td><strong>Silencio</strong></td><td>Si hubo tap previo, Smart Delay 22 h con ángulo nuevo. Si no hubo tap, <strong>no se dibuja nada</strong> (L2).</td></tr>
+</table>
+<div class="warn"><b>La regla que decide todo:</b> un nodo que cierra en <strong>botones</strong> deja al contacto en reposo y puede cambiar de tema. Un nodo que cierra en <strong>recopilación de datos</strong> lo retiene y la escalera no corre. Se usa recopilación solo cuando el dato es imprescindible para continuar, y siempre con NO-TEXTO colgando de la rama inválida.</div>
+
+<h3>P3 · Guarda de horario</h3>
+<p>Condición reutilizable en todo nodo que prometa tiempo humano. Sin ella, el bot promete a las 2 AM que alguien responde en quince minutos, y eso quema la confianza en el primer contacto.</p>
+<div class="copy">Dentro de horario — {nombre} te responde en un rato 👋 ya le pasé toda tu info.</div>
+<div class="copy">Fuera de horario — Te responde {nombre} a primera hora de mañana 👋 ya le dejé toda tu info anotada.</div>
+<p style="font-size:13px;color:var(--txt3)">Horario de atención: <span class="slot">[OPS · horario]</span>. Los avisos al staff ya tienen su propia guarda server-side; esta es la del mensaje al cliente.</p>
+</div></section>
+<section id="entradas"><div class="wrap">
+<h2>Entradas</h2>
+<p class="sub">Nueve automatizaciones diminutas. Cada una es un trigger y un salto. Ninguna contiene lógica: toda la inteligencia de ruteo vive en los spokes, para que cambiar un copy no obligue a tocar nueve entradas.</p>
+<div class="warn"><b>El orden importa.</b> Las dos primeras se evalúan antes que cualquier intención. Si alguien pide la baja, eso se decide con una palabra, nunca con un clasificador probabilístico.</div>
+<table>
+<tr><th>#</th><th>Trigger</th><th>Configuración</th><th>Salta a</th></tr>
+<tr><td><strong>1</strong></td><td>Keyword · baja</td><td>Contiene: stop · baja · no me escribas · no me molesten · sácame · sacame · unsubscribe</td><td><code>OPT-OUT</code></td></tr>
+<tr><td><strong>2</strong></td><td>Keyword · humano</td><td>Contiene: asesor · vendedor · hablar con alguien · persona real · humano</td><td><code>HANDOFF</code></td></tr>
+<tr><td><strong>3</strong></td><td>Intención</td><td>"user is looking for or wants to buy a bicycle"</td><td><code>SPK-modelo</code></td></tr>
+<tr><td><strong>4</strong></td><td>Intención</td><td>"user wants to sell or consign their own bicycle"</td><td><code>SPK-vender</code></td></tr>
+<tr><td><strong>5</strong></td><td>Intención</td><td>"user asks about shipping or delivery to their city"</td><td><code>SPK-info</code> · ENV</td></tr>
+<tr><td><strong>6</strong></td><td>Intención</td><td>"user asks about payment methods or installments"</td><td><code>SPK-info</code> · PAG</td></tr>
+<tr><td><strong>7</strong></td><td>Intención</td><td>"user asks about warranty or bike certification"</td><td><code>SPK-info</code> · GAR</td></tr>
+<tr><td><strong>8</strong></td><td>Intención</td><td>"user asks where the store is or opening hours"</td><td><code>SPK-info</code> · OPS</td></tr>
+<tr><td><strong>9</strong></td><td>Default Reply</td><td>Todo lo que no matcheó</td><td><code>ROUTER</code></td></tr>
+</table>
+<div class="note"><b>Ninguna intención menciona precio.</b> El precio no es una intención: es un modificador. Siempre es el precio <em>de algo</em> — de una bici, del envío, de las cuotas. Definirlo como intención propia es lo que hacía chocar "¿cuánto sale el envío?" contra dos reglas a la vez.</div>
+
+<h3>Entradas que no son DM</h3>
+<details class="flow"><summary><span class="fname">ENT-comentario</span><span class="fdesc">Comentario en reel · una automatización por post</span><span class="pill p-n">4 bloques</span><span class="chev">▾</span></summary>
+<div class="fbody">
+<p>Se duplica por cada reel nuevo. Lo único que cambia: el post del trigger, el <code>reel</code> en los cuerpos, y el slug de la ficha.</p>
+<table class="blocks">
+<tr><td>1</td><td><span class="btype">Request</span></td><td><code>mc-lead</code> · body <code>{ "handle": "{{Nombre de usuario}}", "canal": "Comentario IG" }</code><br><span style="color:var(--txt3);font-size:12.5px">Va primero. Si corre después de mc-match, el lead nace como Quiz y se pierde la atribución al reel.</span></td></tr>
+<tr><td>2</td><td><span class="btype">Request</span></td><td><code>mc-evento</code> · body incluye <code>"origen": "Puerta 1 (reel/comentario)"</code>, <code>"reel": "[Post ID]"</code></td></tr>
+<tr><td>3</td><td><span class="btype">Delay</span></td><td>3 segundos. Instagram ha marcado como spam las respuestas masivas instantáneas.</td></tr>
+<tr><td>4</td><td><span class="btype">Texto</span></td><td>Respuesta pública, rotar entre tres para no parecer robot:
+<div class="copy">te la mando por interno 🚴</div>
+<div class="copy">ahí va toda la info al DM 👀</div>
+<div class="copy">te escribo por privado con los detalles 🙌</div>
+Más respuesta privada con <strong>botón de flujo</strong>, nunca URL (L3):
+<div class="copy">¡Hola! 👋 Vi tu comentario en el reel. Te muestro la ficha completa de esa bici 🚴</div>
+<div class="btns"><span class="btn">👀 Sí, muéstramela<i>→ SPK-modelo</i></span></div>
+</td></tr>
+</table>
+</div></details>
+
+<details class="flow"><summary><span class="fname">ENT-historia</span><span class="fdesc">Respuesta a historia · disparador dominante</span><span class="pill p-n">2 bloques</span><span class="chev">▾</span></summary>
+<div class="fbody">
+<p>Trigger de Story Reply. Dispara con respuestas y reacciones, no con likes. Seleccionar una historia puntual solo abarca las últimas 24 h.</p>
+<table class="blocks">
+<tr><td>1</td><td><span class="btype">Acción</span></td><td>Set <code>cf_modelo_texto</code> = texto de la respuesta · Add Tag <code>intencion_modelo</code></td></tr>
+<tr><td>2</td><td><span class="btype">→Flujo</span></td><td><code>SPK-modelo</code>. El texto crudo va a <code>mc-match</code>; si no trae modelo, el spoke pregunta.</td></tr>
+</table>
+<p style="font-size:13px;color:var(--txt3)">No se intenta adivinar la bici desde el ID de la historia: caduca en 24 h y el mapeo se pierde. El camino confiable es preguntar.</p>
+</div></details>
+</div></section>
+
+<section id="flujos"><div class="wrap">
+<h2>Hojas de flujo</h2>
+<p class="sub">Cada bloque con su tipo exacto y su contenido literal. Los botones van con el conteo de caracteres. Lo que está en <span class="slot">[slot]</span> se rellena cuando lleguen los seis documentos y la lista de modelos.</p>
+
+<details class="flow" open><summary><span class="fname">SPK-modelo</span><span class="fdesc">Bici específica · 54% del tráfico comercial</span><span class="pill p-n">7 bloques</span><span class="pill p-v">→ tronco</span><span class="chev">▾</span></summary>
+<div class="fbody">
+<table class="blocks">
+<tr><td>1</td><td><span class="btype">Acción</span></td><td><strong>Borrar valor</strong> de los 13 campos del grupo C. Misma caja de acciones, antes del request. Sin esto se arrastra la bici del lead anterior.</td></tr>
+<tr><td>2</td><td><span class="btype">Condición</span></td><td>¿<code>cf_modelo_texto</code> tiene valor? · <strong>Sí</strong> → bloque 4 · <strong>No</strong> → bloque 3</td></tr>
+<tr><td>3</td><td><span class="btype">Datos</span></td><td>Solo si no venía el modelo. Reintentos en 1.
+<div class="copy">¿Cuál andas buscando? 🚴 Dime el modelo y te digo al toque si la tengo.</div>
+Guarda en <code>cf_modelo_texto</code>. Rama inválida → <code>NO-TEXTO</code>.</td></tr>
+<tr><td>4</td><td><span class="btype">Request</span></td><td><code>POST /api/mc-match?key=</code>
+<pre>{ "handle": "{{Nombre de usuario}}",
+  "subscriber_id": "{{ID de contacto}}",
+  "modelo": "{{cf_modelo_texto}}" }</pre>
+Mapeo plano → <code>heroModelo</code> <code>heroPrecio</code> <code>heroTalla</code> <code>heroFicha</code> <code>heroBici</code> <code>heroFoto</code> <code>altModelo</code> <code>altPrecio</code> <code>altFicha</code> <code>altBici</code> <code>otrasTexto</code> <code>match</code> <code>modeloBuscado</code>
+<span style="color:var(--txt3);font-size:12.5px">No normalices el texto antes de mandarlo: el endpoint tolera typos con Levenshtein por token.</span></td></tr>
+<tr><td>5</td><td><span class="btype">Condición</span></td><td>Cuatro salidas, evaluadas en orden:<br>
+<strong>a.</strong> <code>cf_otras_texto</code> no vacío → <code>SPK-desambigua</code><br>
+<strong>b.</strong> <code>cf_hero_modelo</code> no vacío → bloque 6<br>
+<strong>c.</strong> <code>cf_alt_modelo</code> no vacío → bloque 7 (se vendió, hay alternativa)<br>
+<strong>d.</strong> todo vacío → ¿<code>cf_modelo_buscado</code> tiene valor? Sí → <code>SPK-waitlist</code> · No → P1, request vacío → <code>HANDOFF</code></td></tr>
+<tr><td>6</td><td><span class="btype">Texto</span></td><td>Disponible. Dos burbujas.
+<div class="copy">¡Sí, la tengo! 🚴 {{cf_hero_modelo}} · talla {{cf_hero_talla}} · {{cf_hero_precio}}</div>
+<div class="copy">Acá está la ficha completa con las fotos y el detalle de la revisión 👇
+{{cf_hero_ficha}}</div>
+<div class="btns"><span class="btn">📅 Quiero verla<i>13</i></span><span class="btn">📏 ¿Me quedará?<i>15</i></span><span class="btn">💬 Otra consulta<i>15</i></span></div>
+Verla → <code>TRONCO-agenda</code> · Talla → micro-check de estatura · Otra → <code>ROUTER</code></td></tr>
+<tr><td>7</td><td><span class="btype">Texto</span></td><td>Se vendió, hay alternativa. <strong>Nunca se dice "no tengo" a secas.</strong>
+<div class="copy">Esa se vendió hace poco 😕 pero tengo una que apunta a lo mismo:</div>
+<div class="copy">{{cf_alt_modelo}} · {{cf_alt_precio}}
+{{cf_alt_ficha}}</div>
+<div class="btns"><span class="btn">📅 Quiero verla<i>13</i></span><span class="btn">🎯 Consíganme la otra<i>19</i></span></div>
+Consíganme → <code>SPK-waitlist</code></td></tr>
+</table>
+<div class="note"><b>Salidas:</b> tronco · desambiguación · waitlist · handoff. Ninguna termina en silencio.</div>
+</div></details>
+
+<details class="flow"><summary><span class="fname">SPK-desambigua</span><span class="fdesc">Varias coincidencias · sin botones dinámicos</span><span class="pill p-n">3 bloques</span><span class="chev">▾</span></summary>
+<div class="fbody">
+<p>Cuando alguien dice "levo" y hay tres. El endpoint devuelve <code>otrasTexto</code> ya formateado para pegar: ManyChat no necesita generar botones dinámicos, que no soporta bien.</p>
+<table class="blocks">
+<tr><td>1</td><td><span class="btype">Texto</span></td><td><div class="copy">Tengo varias que calzan con eso 👀 ¿cuál te tinca?
+
+{{cf_otras_texto}}</div></td></tr>
+<tr><td>2</td><td><span class="btype">Datos</span></td><td><div class="copy">Escríbeme el nombre completo de la que quieres ver.</div>Guarda en <code>cf_modelo_texto</code>. Reintentos en 1. Inválido → <code>NO-TEXTO</code>.</td></tr>
+<tr><td>3</td><td><span class="btype">→Flujo</span></td><td><code>SPK-modelo</code>. Vuelve a entrar con el texto afinado. El borrado del grupo C corre de nuevo, así que no hay arrastre.</td></tr>
+</table>
+<div class="warn"><b>Nunca elegir por el lead.</b> Si hay tres Levo y el bot escoge una, la conversación siguiente se construye sobre una unidad que la persona no eligió.</div>
+</div></details>
+
+<details class="flow"><summary><span class="fname">SPK-quiz</span><span class="fdesc">Ayúdame a elegir · tres preguntas</span><span class="pill p-n">8 bloques</span><span class="pill p-v">→ tronco</span><span class="chev">▾</span></summary>
+<div class="fbody">
+<div class="stop"><b>Hallazgo de producción que gobierna esta hoja.</b> En modo quiz <code>mc-match</code> devuelve siempre un hero si hay al menos una bici Disponible. No hay umbral de score: toma la primera del ranking aunque el puntaje sea negativo. Alguien que pide ruta bajo $3M midiendo 1,60 m recibe igual una MTB talla L de varios millones. <strong>El copy no afirma calce y la salida honesta va siempre visible</strong>, no escondida en una rama que nunca ocurre.</div>
+<table class="blocks">
+<tr><td>1</td><td><span class="btype">Request</span></td><td><code>mc-evento</code> con <code>"estado": "quiz_iniciado"</code>. <strong>Bloque nuevo.</strong> Sin él el tablero no puede medir abandono del quiz — el campo existe y la automatización de Airtable lo espera, pero nadie lo escribe.</td></tr>
+<tr><td>2</td><td><span class="btype">Acción</span></td><td>Borrar valor del grupo C · Add Tag <code>quiz_iniciado</code></td></tr>
+<tr><td>3</td><td><span class="btype">Botones</span></td><td><div class="copy">Perfecto, te ayudo a encontrarla 🚴 Tres preguntas cortas.
+
+Primero: ¿para dónde la quieres?</div>
+<div class="btns"><span class="btn">⛰️ Montaña<i>10</i></span><span class="btn">🛣️ Ruta<i>7</i></span><span class="btn">🏙️ Ciudad<i>9</i></span></div>
+Guarda en <code>cf_q_disciplina</code></td></tr>
+<tr><td>4</td><td><span class="btype">Botones</span></td><td><div class="copy">¿En qué rango andas pensando?</div>
+<div class="btns"><span class="btn">Hasta $2M<i>9</i></span><span class="btn">Hasta $4M<i>9</i></span><span class="btn">Sin límite<i>10</i></span></div>
+Guarda en <code>cf_q_presupuesto</code>. El endpoint tolera el formato con signo y puntos.</td></tr>
+<tr><td>5</td><td><span class="btype">Datos</span></td><td><div class="copy">Última: ¿cuánto mides? 📏 Con eso te digo la talla justa.</div>
+Guarda en <code>cf_q_altura</code>. Tolera "1,75", "1.75", "175", "175 cm". Fuera de 1,2–2,2 entra como vacío y no filtra — no rompe. Reintentos en 1, rama inválida → <code>NO-TEXTO</code>.</td></tr>
+<tr><td>6</td><td><span class="btype">Request</span></td><td><code>POST /api/mc-match?key=</code>
+<pre>{ "handle": "{{Nombre de usuario}}",
+  "subscriber_id": "{{ID de contacto}}",
+  "disciplina": "{{cf_q_disciplina}}",
+  "presupuesto": "{{cf_q_presupuesto}}",
+  "altura": "{{cf_q_altura}}" }</pre>
+<span style="color:var(--txt3);font-size:12.5px">La talla no se manda: la asigna el endpoint cruzando altura contra Rango altura de cada bici.</span></td></tr>
+<tr><td>7</td><td><span class="btype">Condición</span></td><td><code>cf_hero_modelo</code> vacío → bloque 8 (waitlist real, inventario sin Disponibles) · con valor → recomendación</td></tr>
+<tr><td>8</td><td><span class="btype">Texto</span></td><td>Recomendación. <strong>Fíjate en lo que no dice.</strong>
+<div class="copy">De lo que tengo en stock ahora, la que más se acerca a lo tuyo es esta 👇</div>
+<div class="copy">{{cf_hero_modelo}} · talla {{cf_hero_talla}} · {{cf_hero_precio}}
+{{cf_hero_ficha}}</div>
+<div class="btns"><span class="btn">📅 Quiero verla<i>13</i></span><span class="btn">🎯 No es lo que busco<i>19</i></span></div>
+No es lo que busco → <code>SPK-waitlist</code>, siempre visible</td></tr>
+</table>
+<div class="note"><b>Por qué tres y no cuatro:</b> la motorización sale del quiz. El scoring pesa disciplina +40 y presupuesto hasta −25; motorización aporta +30 pero sobre un catálogo donde no discrimina lo suficiente para justificar un punto de caída más.</div>
+</div></details>
+</div></section>
+<div class="wrap">
+<details class="flow" open><summary><span class="fname">TRONCO-agenda</span><span class="fdesc">Donde converge todo · secuencia invertida</span><span class="pill p-n">9 bloques</span><span class="pill p-v">salida principal</span><span class="chev">▾</span></summary>
+<div class="fbody">
+<div class="note"><b>Los tres cambios de v3, y por qué.</b> El horario va antes que el teléfono, porque elegir "sábado 11:00" es psicológicamente el sí y pedir el dato caro antes del compromiso lo convierte en peaje. La pregunta "¿estás en Santiago?" desaparece, reemplazada por una elección entre dos cosas buenas. Y el teléfono se pide nombrando su uso real, que además es lo que literalmente hace el cron.</div>
+<table class="blocks">
+<tr><td>1</td><td><span class="btype">Texto</span></td><td>Confirma qué se está agendando y re-adjunta la ficha.
+<div class="copy">Dale 🙌 vamos a coordinar para que la veas y la pruebes.</div>
+<div class="copy">{{cf_hero_modelo}} · {{cf_hero_precio}}
+{{cf_hero_ficha}}</div>
+<span style="color:var(--txt3);font-size:12.5px">Si <code>cf_hero_modelo</code> viene vacío (visita sin bici declarada), se omite la segunda burbuja y el copy dice "para que veas las que tenemos".</span></td></tr>
+<tr><td>2</td><td><span class="btype">Botones</span></td><td><strong>Reemplaza "¿estás en Santiago?".</strong> Dos opciones, ninguna es un rechazo.
+<div class="copy">Estamos en <span class="slot">[OPS · dirección]</span>. ¿Cómo te acomoda más?</div>
+<div class="btns"><span class="btn">🏬 Voy a la tienda<i>17</i></span><span class="btn">📞 Que me llamen<i>15</i></span></div>
+Llamen → <code>SPK-region</code> · Tienda → bloque 3
+<span style="color:var(--txt3);font-size:12.5px">La dirección aparece antes de la elección: la persona de región se auto-selecciona sabiendo por qué, sin que nadie le diga que está fuera.</span></td></tr>
+<tr><td>3</td><td><span class="btype">Request</span></td><td><code>GET /api/mc-agenda?key=</code> · sin body. Mapeo → <code>slotA</code>, <code>slotB</code>, <code>horario</code>.
+<span style="color:var(--txt3);font-size:12.5px">Los labels vienen resueltos del servidor. Los botones de horario no se editan nunca, ni cuando cambien las fechas.</span></td></tr>
+<tr><td>4</td><td><span class="btype">Botones</span></td><td><div class="copy">¿Cuándo te acomoda pasar? 📅</div>
+<div class="btns"><span class="btn">{{slotA}}<i>dinámico</i></span><span class="btn">{{slotB}}<i>dinámico</i></span><span class="btn">🗓️ Otro horario<i>14</i></span></div>
+A → set <code>slot=A</code> · B → set <code>slot=B</code> · Otro → bloque 5</td></tr>
+<tr><td>5</td><td><span class="btype">Datos</span></td><td><strong>Capacidad que ya existía y no se estaba usando.</strong> El endpoint acepta fecha y hora explícitas y trae validador completo.
+<div class="copy">Dime qué día y hora te sirve y lo reviso 📅
+Atendemos {{horario}}.</div>
+Guarda en <code>cf_fecha_libre</code>. Reintentos en 1 → <code>NO-TEXTO</code>.</td></tr>
+<tr><td>6</td><td><span class="btype">Datos</span></td><td><strong>El nodo de mayor caída del embudo.</strong> Instagram no autocompleta: se escribe a mano en el celular.
+<div class="copy">¡Listo! 🙌 ¿A qué número te mando la confirmación y el recordatorio?</div>
+Tipo teléfono · <strong>Guardar como ID de WhatsApp = ON</strong> · guarda también en <code>cf_telefono</code> · reintentos en 1.
+<span style="color:var(--txt3);font-size:12.5px">El framing no es cosmético: nombra el uso real del dato, que es exactamente lo que hace el cron, y con eso el opt-in que escribe el endpoint queda efectivamente consentido en vez de asumido.</span></td></tr>
+<tr><td>7</td><td><span class="btype">Request</span></td><td><code>POST /api/mc-agenda?key=</code>
+<pre>{ "handle": "{{Nombre de usuario}}",
+  "subscriber_id": "{{ID de contacto}}",
+  "slot": "{{cf_slot}}",
+  "fechaHora": "{{cf_fecha_libre}}",
+  "telefono": "{{cf_telefono}}",
+  "optin": true,
+  "bici": "{{cf_hero_bici}}" }</pre>
+Mapeo → <code>valido</code> <code>motivo</code> <code>mensaje</code> <code>fechaVisitaLegible</code> <code>biciNombre</code>
+<span style="color:var(--txt3);font-size:12.5px">Si va <code>slot</code>, <code>fechaHora</code> queda vacío y viceversa. La fecha explícita manda sobre el slot.</span></td></tr>
+<tr><td>8</td><td><span class="btype">Condición</span></td><td>Sobre <code>cf_valido</code>:<br>
+<strong><code>si</code></strong> → bloque 9<br>
+<strong><code>no</code></strong> → muestra <code>{{cf_mensaje}}</code> tal cual y vuelve al bloque 4. Los cinco motivos ya traen su texto redactado desde el servidor: <code>formato</code> · <code>pasado</code> · <code>muy_lejos</code> · <code>domingo</code> · <code>fuera_horario</code><br>
+<strong>vacío</strong> → P1, request vacío → <code>HANDOFF</code></td></tr>
+<tr><td>9</td><td><span class="btype">Texto</span></td><td><div class="copy">¡Quedaste agendado! 🚴 Te esperamos el {{cf_fecha_visita_legible}} en <span class="slot">[OPS · dirección]</span>.
+
+Te llega la confirmación por WhatsApp al toque 📲</div>
+Add Tag <code>agendado</code>. Nodo final de WhatsApp con la plantilla <code>confirmacion_visita</code>, que va fuera de la ventana de 24 h.</td></tr>
+</table>
+<div class="note"><b>Después de este flujo el sistema sigue solo:</b> cron cada 15 min → recordatorio 48 h → recordatorio 8 AM → show o no-show. Sin intervención humana hasta la tienda.</div>
+<p style="font-size:13px;color:var(--txt3)"><b>Conteo:</b> 9 bloques, cuatro de ellos con pausa (botones o datos). Muy por debajo del techo de 30.</p>
+</div></details>
+
+<details class="flow"><summary><span class="fname">SPK-region</span><span class="fdesc">Que me llamen · sin decirle a nadie que está fuera</span><span class="pill p-n">5 bloques</span><span class="pill p-a">ticket + aviso</span><span class="chev">▾</span></summary>
+<div class="fbody">
+<table class="blocks">
+<tr><td>1</td><td><span class="btype">Texto</span></td><td><div class="copy">Perfecto, te llamamos 📞 Así resolvemos todo por teléfono y coordinamos el envío si te decides.</div></td></tr>
+<tr><td>2</td><td><span class="btype">Datos</span></td><td><div class="copy">¿Desde qué ciudad me escribes?</div>Guarda en <code>cf_ciudad</code>. Acá la ciudad ya no es filtro, es logística obvia.</td></tr>
+<tr><td>3</td><td><span class="btype">Botones</span></td><td><div class="copy">¿Cuándo te pillamos mejor?</div>
+<div class="btns"><span class="btn">☀️ En la mañana<i>15</i></span><span class="btn">🌆 En la tarde<i>14</i></span></div>
+Guarda en <code>cf_franja</code></td></tr>
+<tr><td>4</td><td><span class="btype">Datos</span></td><td><div class="copy">¿A qué número te llamamos? 📱</div>
+Tipo teléfono · Guardar como ID de WhatsApp = ON · <code>cf_telefono</code> · reintentos en 1.
+<span style="color:var(--txt3);font-size:12.5px">Va en su propio nodo, nunca apilado con la pregunta anterior: las preguntas en ráfaga se pierden en Instagram.</span></td></tr>
+<tr><td>5</td><td><span class="btype">Request</span></td><td><code>POST /api/mc-llamado?key=</code>
+<pre>{ "handle": "{{Nombre de usuario}}",
+  "subscriber_id": "{{ID de contacto}}",
+  "telefono": "{{cf_telefono}}", "optin": true,
+  "ciudad": "{{cf_ciudad}}", "franja": "{{cf_franja}}",
+  "bici": "{{cf_hero_bici}}" }</pre>
+Luego:
+<div class="copy">¡Listo! 🙌 Te llamamos {{cf_franja}}. Cualquier cosa me escribes por acá.</div>
+Add Tag <code>llamado_pedido</code>. El endpoint crea el ticket en Llamados y avisa al staff por WhatsApp.
+<div class="warn" style="margin-top:10px"><b>No escribe <code>Fecha visita</code>.</b> Por eso no dispara recordatorios de visita — que sería prometerle una visita a alguien que no puede venir.</div></td></tr>
+</table>
+</div></details>
+
+<details class="flow"><summary><span class="fname">SPK-waitlist</span><span class="fdesc">Consíganmela · el no-match que no muere</span><span class="pill p-n">4 bloques</span><span class="pill p-a">ticket + aviso</span><span class="chev">▾</span></summary>
+<div class="fbody">
+<table class="blocks">
+<tr><td>1</td><td><span class="btype">Texto</span></td><td><div class="copy">Te la busco 🎯 Trabajamos con red de proveedores y nos llegan unidades toda la semana.</div></td></tr>
+<tr><td>2</td><td><span class="btype">Datos</span></td><td><div class="copy">Cuéntame qué estás buscando exactamente: modelo, talla si la sabes, y hasta cuánto.</div>Guarda en <code>cf_modelo_buscado</code>. Reintentos en 1.</td></tr>
+<tr><td>3</td><td><span class="btype">Datos</span></td><td><div class="copy">¿A qué número te aviso apenas la consiga? 📱</div>Tipo teléfono · ID de WhatsApp = ON · <code>cf_telefono</code></td></tr>
+<tr><td>4</td><td><span class="btype">Request</span></td><td><code>POST /api/mc-waitlist?key=</code> con <code>modelo</code>, <code>talla</code>, <code>presupuesto</code>, <code>disciplina</code>, <code>telefono</code>, <code>optin</code>.
+<div class="copy">¡Anotado! 🙌 Apenas llegue algo que calce, te escribo por WhatsApp.</div>
+Crea el ticket en Solicitudes con estado <code>Llamada pendiente</code> y avisa al staff.
+<span style="color:var(--txt3);font-size:12.5px">El aviso de "conseguida" al cliente todavía es manual. La plantilla <code>reactivacion_stock</code> ya está aprobada — es la secuencia pendiente más barata de todo el sistema.</span></td></tr>
+</table>
+</div></details>
+
+<details class="flow"><summary><span class="fname">SPK-vender</span><span class="fdesc">Consignación · filtro en cascada antes de gastar humano</span><span class="pill p-n">8 bloques</span><span class="pill p-r">salida P</span><span class="chev">▾</span></summary>
+<div class="fbody">
+<p>Los dos filtros viven acá y no en el backend: <code>mc-consigna</code> no filtra, crea el registro con lo que reciba. Filtrar en ManyChat es lo que deja la cola pre-limpia.</p>
+<table class="blocks">
+<tr><td>1</td><td><span class="btype">Botones</span></td><td><strong>Filtro 1 · marca.</strong>
+<div class="copy">Buenísimo 🙌 Trabajamos solo con Specialized, para poder certificar cada bici. ¿La tuya es Specialized?</div>
+<div class="btns"><span class="btn">✅ Sí, Specialized<i>16</i></span><span class="btn">❌ Es otra marca<i>15</i></span></div></td></tr>
+<tr><td>2</td><td><span class="btype">Texto</span></td><td>Rechazo digno. Termina limpio, sin registro, sin gastar a nadie.
+<div class="copy">Ah, entonces no es lo nuestro 🙏 Nos especializamos solo en Specialized certificadas.
+
+Si en algún momento buscas una, acá estamos 🚴</div>
+Add Tag <code>otra_marca</code>. Fin en reposo.</td></tr>
+<tr><td>3</td><td><span class="btype">Datos</span></td><td><div class="copy">¿Qué modelo es y de qué año?</div>Guarda en <code>cf_v_modelo</code> y <code>cf_v_anio</code></td></tr>
+<tr><td>4</td><td><span class="btype">Condición</span></td><td><strong>Filtro 2 · modelo.</strong> <code>cf_v_modelo</code> contiene alguno de: <span class="slot">[REC · lista de modelos no recibidos]</span> → bloque 5 · si no → bloque 6
+<span style="color:var(--txt3);font-size:12.5px">La lista la entrega Luis con los seis documentos. Hasta entonces la condición se monta vacía y todo pasa al bloque 6.</span></td></tr>
+<tr><td>5</td><td><span class="btype">Texto</span></td><td><div class="copy">Ese modelo en particular no lo estamos recibiendo ahora 🙏 Nos pasa que hay unidades que cuesta mucho colocar.
+
+Gracias igual por pensar en nosotros 🚴</div>
+Add Tag <code>modelo_rechazado</code>. Fin en reposo.</td></tr>
+<tr><td>6</td><td><span class="btype">Datos</span></td><td><div class="copy">¿Talla y en qué estado está? Cuéntame lo bueno y lo malo, mientras más claro mejor.</div><code>cf_v_talla</code>, <code>cf_v_estado</code></td></tr>
+<tr><td>7</td><td><span class="btype">Datos</span></td><td><div class="copy">Mándame 3 o 4 fotos 📸 y dime en cuánto la estás pensando.</div><code>cf_v_fotos</code>, <code>cf_v_precio</code>. Tipo imagen: acá la foto sí es el input esperado.</td></tr>
+<tr><td>8</td><td><span class="btype">Request</span></td><td><code>POST /api/mc-consigna?key=</code> con modelo, anio, talla, estadoBici, precio, fotos, contacto.
+<div class="copy">¡Listo! 🙌 Ya le pasé todo al equipo. Te contactan para revisarla y conversar el precio.</div>
+El endpoint crea el registro en Consignaciones y avisa por WhatsApp.
+<div class="warn" style="margin-top:10px"><b>Decisión abierta:</b> la variable de entorno apunta a Roberto, pero Luis dice que las ofertas las revisa él. Confirmar destinatario antes del go-live.</div></td></tr>
+</table>
+<p style="font-size:13px;color:var(--txt3)">Salida P. No converge a compra. Si venía comprando y también vende, el humano mantiene los dos hilos.</p>
+</div></details>
+
+<details class="flow"><summary><span class="fname">SPK-info</span><span class="fdesc">Envíos · pagos · garantía · ubicación · una hoja, cuatro instancias</span><span class="pill p-n">4 bloques</span><span class="pill p-v">→ puente</span><span class="chev">▾</span></summary>
+<div class="fbody">
+<p>Mismo esqueleto para los cuatro. Solo cambia el documento del bloque 2 y las excepciones del bloque 3.</p>
+<table class="blocks">
+<tr><td>1</td><td><span class="btype">Acción</span></td><td>Add Tag de la intención · si el mensaje traía un modelo, set <code>cf_modelo_texto</code> antes de responder. <strong>El contexto viaja como dato, no como decisión de ruteo.</strong></td></tr>
+<tr><td>2</td><td><span class="btype">Texto</span></td><td>Responde la pregunta exacta desde su documento. Dos burbujas máximo.
+<div class="copy">ENV — <span class="slot">[ENV · courier · plazos · costos]</span></div>
+<div class="copy">PAG — <span class="slot">[PAG · medios · cuotas]</span> · ancla en cuotas, nunca negocia</div>
+<div class="copy">GAR — <span class="slot">[GAR · cobertura · certificación]</span></div>
+<div class="copy">OPS — Estamos en <span class="slot">[OPS · dirección]</span>, <span class="slot">[OPS · horario]</span>.</div></td></tr>
+<tr><td>3</td><td><span class="btype">Condición</span></td><td>Excepciones por rama, antes del puente:<br>
+<strong>Pagos</strong> · pide descuento o rebaja → el bot no negocia → <code>HANDOFF</code> con tag <code>handoff_descuento</code><br>
+<strong>Envíos</strong> · es de región → ofrece <code>SPK-region</code><br>
+<strong>Garantía y envíos</strong> · pregunta fuera del documento → <code>HANDOFF</code> con tag <code>handoff_fuera_doc</code> y registro para ampliar el doc<br>
+<strong>Ubicación</strong> · empuja directo a visita, que es su cierre natural</td></tr>
+<tr><td>4</td><td><span class="btype">→Flujo</span></td><td><code>PUENTE</code></td></tr>
+</table>
+<div class="warn"><b>La regla de las promesas.</b> El bot solo dice lo que está escrito en los seis documentos. Lo que no está, no existe para el bot: escala y el caso se registra para ampliar el documento. Un bot que improvisa una política de devolución sobre una bici de tres millones es un pasivo, no un activo.</div>
+</div></details>
+
+<h3>Componentes</h3>
+
+<details class="flow"><summary><span class="fname">PUENTE</span><span class="fdesc">Reconduce sin cobrar peaje</span><span class="pill p-n">2 bloques</span><span class="chev">▾</span></summary>
+<div class="fbody">
+<table class="blocks">
+<tr><td>1</td><td><span class="btype">Condición</span></td><td>¿<code>cf_modelo_texto</code> tiene valor?
+<div class="copy">Con valor — ¿Te muestro cómo está la {{cf_modelo_texto}}? 👀</div>
+<div class="btns"><span class="btn">👀 Sí, muéstramela<i>17</i></span><span class="btn">🔍 Ver otras<i>11</i></span></div>
+<div class="copy">Sin valor — ¿Ya sabes cuál buscas o te ayudo a elegir?</div>
+<div class="btns"><span class="btn">🎯 Sé cuál quiero<i>16</i></span><span class="btn">🧭 Ayúdame a elegir<i>19</i></span></div></td></tr>
+<tr><td>2</td><td><span class="btype">Condición</span></td><td>Muéstramela o sé cuál quiero → <code>SPK-modelo</code> · Ver otras o ayúdame → <code>SPK-quiz</code></td></tr>
+</table>
+<p style="font-size:13px;color:var(--txt3)">Quien ya sabe qué busca salta el quiz. El puente nunca es peaje.</p>
+</div></details>
+
+<details class="flow"><summary><span class="fname">HANDOFF</span><span class="fdesc">Traspaso humano con guarda de horario</span><span class="pill p-n">4 bloques</span><span class="pill p-a">humano</span><span class="chev">▾</span></summary>
+<div class="fbody">
+<table class="blocks">
+<tr><td>1</td><td><span class="btype">Acción</span></td><td>Set <code>cf_brief</code> = origen · bici · talla · presupuesto · ciudad · motivo · último mensaje. Add Tag <code>handoff</code> + el tag del motivo.
+<span style="color:var(--txt3);font-size:12.5px">Solo campos que alguna lógica realmente calcula. Un brief con campos vacíos enseña a desconfiar del brief.</span></td></tr>
+<tr><td>2</td><td><span class="btype">Acción</span></td><td>Notificar a los asignados · Asignar conversación a Luis · <strong>Pausar automatizaciones</strong>.</td></tr>
+<tr><td>3</td><td><span class="btype">Condición</span></td><td><strong>Guarda de horario (P3).</strong> Dentro de <span class="slot">[OPS · horario]</span> → bloque 4a · fuera → 4b</td></tr>
+<tr><td>4</td><td><span class="btype">Texto</span></td><td><div class="copy">4a — Te va a atender {nombre} 👋 ya le pasé toda tu info, te escribe en un rato.</div>
+<div class="copy">4b — Te responde {nombre} a primera hora de mañana 👋 ya le dejé toda tu info anotada.</div>
+Add Tag <code>fuera_horario</code> en el caso b.</td></tr>
+</table>
+<div class="stop"><b>Sin la app de ManyChat instalada, este componente no funciona.</b> El auto-pause solo se dispara si Luis responde desde el Inbox o la app móvil. Si contesta por Instagram o Business Suite, ManyChat no se entera y el bot le sigue escribiendo encima al lead.</div>
+</div></details>
+
+<details class="flow"><summary><span class="fname">NO-TEXTO</span><span class="fdesc">Foto, audio, video · regla de dos golpes</span><span class="pill p-n">5 bloques</span><span class="chev">▾</span></summary>
+<div class="fbody">
+<table class="blocks">
+<tr><td>1</td><td><span class="btype">Condición</span></td><td><code>cf_no_texto_intentos</code> ≥ 1 → bloque 5 · si no → suma 1 y sigue</td></tr>
+<tr><td>2</td><td><span class="btype">Condición</span></td><td>¿Es imagen o es audio/video?</td></tr>
+<tr><td>3</td><td><span class="btype">Botones</span></td><td>Imagen en reposo. <strong>El bot no ve, pero una foto acá significa casi siempre una de dos cosas.</strong>
+<div class="copy">No alcanzo a ver bien la foto 🙈 ¿es tu bici y la quieres vender, o buscas una parecida?</div>
+<div class="btns"><span class="btn">💰 Es mía, la vendo<i>17</i></span><span class="btn">🔍 Busco una así<i>15</i></span></div>
+Vendo → <code>SPK-vender</code> · Busco → <code>SPK-quiz</code></td></tr>
+<tr><td>4</td><td><span class="btype">Botones</span></td><td>Audio o video.
+<div class="copy">Todavía no puedo escuchar audios 🙈 ¿me lo escribes cortito y te respondo al toque?</div>
+<div class="btns"><span class="btn">🚲 Busco una bici<i>16</i></span><span class="btn">💬 Otra consulta<i>15</i></span></div></td></tr>
+<tr><td>5</td><td><span class="btype">→Flujo</span></td><td><strong>Segundo golpe.</strong> Si insiste con audio o imagen, probablemente no puede o no quiere escribir. → <code>HANDOFF</code> con tag <code>handoff_audio</code>. No se pide una tercera vez.</td></tr>
+</table>
+</div></details>
+
+<details class="flow"><summary><span class="fname">OPT-OUT</span><span class="fdesc">Baja digna · prioridad máxima</span><span class="pill p-n">2 bloques</span><span class="pill p-r">salida X</span><span class="chev">▾</span></summary>
+<div class="fbody">
+<table class="blocks">
+<tr><td>1</td><td><span class="btype">Texto</span></td><td><div class="copy">Listo, no te escribo más 🙌 Si en algún momento quieres retomar, me mandas un mensaje y seguimos.</div></td></tr>
+<tr><td>2</td><td><span class="btype">Acción</span></td><td>Acción nativa <strong>Unsubscribe</strong> · Add Tag <code>baja_voluntaria</code>. Cancela cadencias y timers pendientes.</td></tr>
+</table>
+<p style="font-size:13px;color:var(--txt3)">Sin esto, la única forma de parar los mensajes es denunciar la cuenta — que castiga el dominio de envío y ensucia la señal ante Meta. Una baja voluntaria es una salida digna, no una pérdida a investigar.</p>
+</div></details>
+
+<details class="flow"><summary><span class="fname">CANCELA</span><span class="fdesc">Cancelación de visita · el único nodo con paso manual</span><span class="pill p-n">3 bloques</span><span class="pill p-a">humano</span><span class="chev">▾</span></summary>
+<div class="fbody">
+<div class="stop"><b>Hueco de backend, declarado.</b> Limpiar <code>Fecha visita</code> no lo puede hacer ManyChat: no hay endpoint para eso y la máquina de estados de <code>mc-evento</code> no tiene un estado "cancelado" entre sus trece. Sin limpiarlo, el cron le sigue mandando recordatorios a alguien que ya avisó que no va — peor que no tener recordatorios. La versión sin tocar backend es handoff con tag; Luis limpia el campo en Airtable. Un endpoint pequeño lo automatiza más adelante.</div>
+<table class="blocks">
+<tr><td>1</td><td><span class="btype">Texto</span></td><td>Se llega acá por texto tipo "no voy a poder", o desde la plantilla de confirmación.
+<div class="copy">Sin problema, gracias por avisar 🙌 Te saco de la agenda.</div></td></tr>
+<tr><td>2</td><td><span class="btype">Botones</span></td><td><div class="copy">¿Quieres que la dejemos para más adelante?</div>
+<div class="btns"><span class="btn">📅 Sí, reagendar<i>15</i></span><span class="btn">👍 Después te aviso<i>18</i></span></div>
+Reagendar → <code>TRONCO-agenda</code> bloque 4</td></tr>
+<tr><td>3</td><td><span class="btype">→Flujo</span></td><td><code>HANDOFF</code> con tag <code>handoff_cancela</code>. El brief dice explícitamente: <em>limpiar Fecha visita en Airtable</em>. Es la única acción manual obligatoria de todo el sistema.</td></tr>
+</table>
+</div></details>
+
+<details class="flow"><summary><span class="fname">ROUTER</span><span class="fdesc">Default Reply · la red final</span><span class="pill p-n">3 bloques</span><span class="chev">▾</span></summary>
+<div class="fbody">
+<table class="blocks">
+<tr><td>1</td><td><span class="btype">Texto</span></td><td>Declara alcance en vez de saludar en vacío.
+<div class="copy">¡Hola! 👋 Somos Bike Trust, vendemos Specialized usadas certificadas 🚴 ¿En qué te ayudo?</div>
+<div class="btns"><span class="btn">🚲 Busco una bici<i>16</i></span><span class="btn">💰 Vendo la mía<i>14</i></span><span class="btn">💬 Otra consulta<i>15</i></span></div></td></tr>
+<tr><td>2</td><td><span class="btype">Condición</span></td><td>Busco → <code>PUENTE</code> · Vendo → <code>SPK-vender</code> · Otra → menú de FAQ en segundo nivel (L4)</td></tr>
+<tr><td>3</td><td><span class="btype">Condición</span></td><td>Segundo mensaje sin match → <code>HANDOFF</code> con tag <code>fallback</code> y el texto crudo en el brief. <strong>Motor del ritual semanal:</strong> cada fallback es una intención que falta o un copy que confunde.</td></tr>
+</table>
+</div></details>
+</div></section>
+<section id="bordes"><div class="wrap">
+<h2>Matriz de bordes</h2>
+<p class="sub">Cada caso con el nodo que lo resuelve. Si un borde no tiene nodo, es un hueco declarado, no un olvido.</p>
+
+<h3>Lo que llega y no es texto</h3>
+<table>
+<tr><th>Caso</th><th>Regla</th><th>Nodo</th></tr>
+<tr><td>Foto en la rama de venta</td><td>Es el input esperado. Sigue el flujo.</td><td><code>SPK-vender</code> 7</td></tr>
+<tr><td>Foto en reposo</td><td>Acusa recibo y bifurca: ¿la vendes o buscas una así?</td><td><code>NO-TEXTO</code> 3</td></tr>
+<tr><td>Audio o video, primera vez</td><td>Honesto, pide texto, ofrece rutas</td><td><code>NO-TEXTO</code> 4</td></tr>
+<tr><td>Audio o video, segunda vez</td><td>Regla de dos golpes → humano</td><td><code>NO-TEXTO</code> 5</td></tr>
+<tr><td>Sticker o GIF</td><td>Sin intención → Default Reply</td><td><code>ROUTER</code></td></tr>
+<tr><td>Emoji tras respuesta completa</td><td>Es cierre social. Acuse corto, queda en reposo. No relanzar el menú.</td><td>regla de copy</td></tr>
+<tr><td>Emoji sin contexto previo</td><td>Menú</td><td><code>ROUTER</code></td></tr>
+<tr><td>Ubicación compartida</td><td>Suele significar "¿queda cerca?"</td><td><code>SPK-info</code> OPS</td></tr>
+<tr><td>Share de post o historia</td><td>No es borde, es puerta</td><td><code>ENT-historia</code></td></tr>
+</table>
+
+<h3>Comportamiento</h3>
+<table>
+<tr><th>Caso</th><th>Regla</th><th>Nodo</th></tr>
+<tr><td>Toca un botón de hace tres días</td><td>Todo flujo que dependa de <code>cf_hero_bici</code> valida que no esté vacío antes de usarlo; si lo está, re-consulta</td><td><code>SPK-modelo</code> 2</td></tr>
+<tr><td>Hilo retomado semanas después</td><td>Nunca asumir contexto viejo. Re-consulta <code>mc-match</code>; si no hay modelo, pregunta</td><td><code>SPK-modelo</code></td></tr>
+<tr><td>Comenta y manda DM a la vez</td><td>Un solo hilo, gana el contexto más específico, cero duplicados</td><td>L9 + reposo</td></tr>
+<tr><td>Dos leads por la misma bici</td><td>El sistema no reserva. Ninguno recibe promesa de exclusividad; ambos agendan</td><td>regla de copy</td></tr>
+<tr><td>Escribe en inglés</td><td>La intención no matchea → menú en español</td><td><code>ROUTER</code></td></tr>
+<tr><td>Insulta o es agresivo</td><td>Cierre digno, tag, sin gastar humano</td><td><code>OPT-OUT</code> variante</td></tr>
+<tr><td>Spam o bot entrante</td><td>Cierre en silencio, tag <code>spam</code>, excluido del reporte</td><td>tag</td></tr>
+<tr><td>Pregunta por otra marca</td><td>Rechazo digno con orientación. No es lead</td><td><code>SPK-vender</code> 2</td></tr>
+<tr><td>Precio en dólares</td><td>Respuesta estándar en CLP; si insiste, humano</td><td><code>SPK-info</code> PAG</td></tr>
+</table>
+
+<h3>Datos que no calzan</h3>
+<table>
+<tr><th>Caso</th><th>Regla</th></tr>
+<tr><td>Teléfono mal escrito</td><td>Validación nativa. <strong>Reintentos en 1, no 3</strong> — tres rebotes es una pared. Al fallar → <code>NO-TEXTO</code></td></tr>
+<tr><td>Teléfono extranjero</td><td>Se acepta y se guarda. La rama de llamado no exige número chileno</td></tr>
+<tr><td>Altura rara</td><td>Tolera "1,75" "1.75" "175" "175 cm". Fuera de 1,2–2,2 entra vacío y no filtra</td></tr>
+<tr><td>Presupuesto en palabras</td><td>"Sin límite" y "barato" entran vacíos. No rompen, tampoco discriminan</td></tr>
+<tr><td>Merge tag sin resolver</td><td>Los endpoints ya ignoran <code>{{...}}</code> en todo campo de texto</td></tr>
+<tr><td>Modelo inexistente</td><td><code>no_match</code> → waitlist. Nunca botonera muerta</td></tr>
+</table>
+
+<h3>Fallas técnicas</h3>
+<table>
+<tr><th>Caso</th><th>Regla</th></tr>
+<tr><td>Timeout de 10 s</td><td>Campo vacío → condición sobre vacío. Nunca ramificar por código de error</td></tr>
+<tr><td>401 por llave rotada</td><td>Se comporta igual que timeout. Mismo fallback, sin nodo extra</td></tr>
+<tr><td>429 de Airtable</td><td>Los endpoints ya reintentan. Transparente para ManyChat</td></tr>
+<tr><td>Campos hero pegados</td><td>Borrado explícito del grupo C antes de cada <code>mc-match</code></td></tr>
+<tr><td>Ventana de 24 h cerrada</td><td>Nada sale por IG. Todo lo diferido va por plantilla</td></tr>
+<tr><td>Delay sin tap previo</td><td>No se entrega. No se dibujan cadencias fantasma</td></tr>
+<tr><td>30 bloques</td><td>Se pausa sola. Conteo por hoja; si se pasa, se parte con →Flujo</td></tr>
+</table>
+
+<h3>Tiempo y estado del negocio</h3>
+<table>
+<tr><th>Caso</th><th>Regla</th><th>Nodo</th></tr>
+<tr><td>Cancela la visita</td><td>Handoff con instrucción de limpiar <code>Fecha visita</code>. Hueco de backend declarado</td><td><code>CANCELA</code></td></tr>
+<tr><td>Escribe fuera de horario</td><td>El copy no promete minutos que nadie va a cumplir</td><td><code>HANDOFF</code> 3</td></tr>
+<tr><td>Bici vendida entre click y mensaje</td><td>La fuente de verdad es Airtable, nunca el reel</td><td><code>SPK-modelo</code> 7</td></tr>
+<tr><td>Inventario Disponible vacío</td><td>Único caso de <code>no_match</code> real en quiz</td><td><code>SPK-quiz</code> 7</td></tr>
+<tr><td>Domingo o fuera de horario al agendar</td><td>El validador ya responde con su texto</td><td><code>TRONCO</code> 8</td></tr>
+</table>
+</div></section>
+
+<section id="orden"><div class="wrap">
+<h2>Orden de montaje</h2>
+<p class="sub">El camino del dinero primero. Cada etapa termina en algo probable con un lead real, no en un avance parcial que solo se puede mirar.</p>
+<ol class="steps">
+<li><b>Esquema completo.</b> Los 34 campos con su string literal, los tags, y los 22 flujos creados como cascarones vacíos con su nombre definitivo. Nada más. Esto sirve para que los <code>→Flujo</code> tengan a dónde apuntar desde el primer bloque que escribas.</li>
+<li><b>Los tres componentes transversales.</b> <code>HANDOFF</code>, <code>NO-TEXTO</code> y <code>OPT-OUT</code>. Se montan antes que todo lo demás porque medio sistema los invoca, y porque un flujo que apunta a un componente vacío falla en silencio.</li>
+<li><b>El slice vertical.</b> <code>SPK-modelo</code> → <code>TRONCO-agenda</code> → <code>SPK-region</code> → plantilla de confirmación. Es el 54% del tráfico y toca todos los mecanismos del sistema: request con mapeo plano, validador con cinco motivos, ticket con aviso al staff, y plantilla fuera de la ventana de 24 h.</li>
+<li><b>Corrida real, con cuenta virgen.</b> No sintética: un lead de verdad, de punta a punta, verificando en Airtable que se escribieron Lead, Interés, Fecha visita y opt-in. Acá es donde el cuaderno se corrige, y por eso va antes de escribir el resto.</li>
+<li><b>Puerta 2 completa.</b> <code>SPK-quiz</code>, <code>SPK-desambigua</code>, <code>SPK-waitlist</code>, <code>PUENTE</code>, <code>ROUTER</code>. Todos son variaciones de patrones que la etapa 4 ya validó.</li>
+<li><b>Entradas.</b> Las nueve automatizaciones de trigger, en el orden de la escalera. Las dos keywords deterministas primero.</li>
+<li><b>Informativos y venta.</b> Las cuatro instancias de <code>SPK-info</code> más <code>SPK-vender</code>. Dependen de los seis documentos para su contenido, pero su esqueleto se monta antes y los slots se rellenan.</li>
+<li><b>Cierre.</b> <code>CANCELA</code>, rotación de <code>MC_KEY</code>, corrida de <code>cron-recordatorios</code> con <code>?dry=1</code>, y verificación de que <code>quiz_iniciado</code> llega al tablero.</li>
+</ol>
+<div class="note"><b>Nada de esto depende de los seis documentos para su estructura.</b> Los slots se rellenan cuando lleguen; el esqueleto se monta ya. La única dependencia dura es la lista de modelos no recibidos, y hasta que exista la condición del filtro 2 se monta vacía y todo pasa.</div>
+</div></section>
+
+<section id="verificar"><div class="wrap">
+<h2>Verificar en pantalla</h2>
+<p class="sub">Tres cosas de las que dependen reglas duras y que no vale la pena afirmar sin verlas. Cada una va con las dos ramas ya escritas, para que el cuaderno sirva cualquiera sea la respuesta.</p>
+
+<div class="card">
+<h4 style="margin-top:0">1 · Ráfaga de mensajes</h4>
+<p style="margin-bottom:8px">Si alguien manda cinco mensajes seguidos, ¿se disparan cinco flujos o ManyChat encola?</p>
+<p style="margin:0;color:var(--txt2);font-size:14px"><b>Si dispara cinco</b> → hace falta un tag de guarda con expiración corta al inicio de cada spoke: si el tag existe, el flujo se corta sin responder. <b>Si encola o descarta</b> → no se toca nada y la matriz de bordes lo registra como resuelto por plataforma.</p>
+</div>
+
+<div class="card">
+<h4 style="margin-top:0">2 · Nombre exacto del campo de último input</h4>
+<p style="margin-bottom:8px">De él depende que el modelo puntual salte el peaje: el trigger de intención captura el texto y se lo pasa a <code>mc-match</code> sin volver a preguntar.</p>
+<p style="margin:0;color:var(--txt2);font-size:14px"><b>Si existe sobre trigger de intención</b> → el bloque 2 de <code>SPK-modelo</code> salta directo al request. <b>Si no está disponible</b> → el bloque 3 pregunta siempre. Un paso más, funciona igual, y la hoja ya tiene los dos caminos escritos.</p>
+</div>
+
+<div class="card">
+<h4 style="margin-top:0">3 · Condición de hora del día</h4>
+<p style="margin-bottom:8px">Para la guarda de horario del <code>HANDOFF</code>.</p>
+<p style="margin:0;color:var(--txt2);font-size:14px"><b>Si existe como condición nativa</b> → se usa directo. <b>Si no</b> → se resuelve con un campo que un cron actualice, o el copy se ajusta a una versión que sea verdadera a cualquier hora: "te responde {nombre} apenas esté disponible".</p>
+</div>
+
+<h3>Lo que queda pendiente de terceros</h3>
+<table>
+<tr><th>Qué falta</th><th>Quién</th><th>Mientras tanto</th></tr>
+<tr><td>Los seis documentos · ENV DEV PAG GAR APA REC</td><td>Bike Trust</td><td>Los slots quedan marcados. El esqueleto se monta igual</td></tr>
+<tr><td>Lista de modelos no recibidos</td><td>Luis</td><td>Condición del filtro 2 montada vacía; todo pasa al bloque siguiente</td></tr>
+<tr><td>Destinatario de avisos de oferta</td><td>Luis o Roberto</td><td>Queda como está; se confirma antes del go-live</td></tr>
+<tr><td>App de ManyChat instalada</td><td>Luis</td><td>Sin ella el <code>HANDOFF</code> se degrada entero</td></tr>
+<tr><td>Confirmar que el plan Pro trae la IA</td><td>Gabriel</td><td>Si no la trae, las seis intenciones bajan a keywords y el resto del cuaderno no cambia</td></tr>
+</table>
+</div></section>
+
+<footer><div class="wrap">
+<p>GM Growth Partners · Cuaderno de Montaje v3 · La capa de presentación se reconstruye, el backend queda intacto.</p>
+<p style="color:var(--txt3);font-size:12.5px">La promesa del front nunca excede la capacidad del back.</p>
+</div></footer>
+
+</body>
+</html>

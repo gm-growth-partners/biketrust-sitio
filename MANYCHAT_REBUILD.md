@@ -24,6 +24,60 @@ verificado E2E y no tiene deuda que justifique tocarlo.
 
 ---
 
+## 0.5 ⚠️ PIVOTE DE DISEÑO (2026-07-27) — intención en vez de menú
+
+Decisión de Gabriel tras la primera semana con tráfico real (S30: 31 leads, 27 fichas
+entregadas, **0 visitas agendadas**, 5 DMs libres varados en `nuevo`):
+
+1. **Sin menú de bienvenida.** La persona escribe como habla; el bot **reconoce la
+   intención** del mensaje y rutea directo. **4 rutas**: modelo específico · asesoría/elegir
+   (quiz) · vender su bici · pregunta general.
+2. **Toda ruta converge en una agenda.** La conversación no termina en información,
+   termina en una fecha. La **ubicación decide el cierre**: Santiago → visita
+   (`mc-agenda`) · región → llamada del equipo (`mc-llamado`). Esto aplica también a
+   la ruta *vender* (tasación con fecha) y a *pregunta general*.
+3. **Sin handoff humano en el chat.** Muere el «te conecto con una persona» como
+   salida de diseño; el humano entra en la visita o la llamada agendada. (Puede quedar
+   una válvula mínima de escalamiento para bordes, sin promesas de tiempo de respuesta.)
+
+**Especificación de montaje:** [`docs/cuaderno_montaje_biketrust.html`](docs/cuaderno_montaje_biketrust.html)
+(hojas de flujo bloque a bloque, copys, JSON de cada solicitud externa, esquema de campos).
+**Investigación de respaldo:** [`docs/biketrust_arbol_decisiones_v2_4.html`](docs/biketrust_arbol_decisiones_v2_4.html)
+(benchmark CarMax/Kavak/TPC + validación contra 175 DMs reales + bordes B01–B12).
+**Ambos se leen con la fe de erratas del §0.7** — tienen ideas previas al pivote.
+
+## 0.6 Plan de implementación — 3 días
+
+| Día | Qué | Detalle |
+|---|---|---|
+| **D1 · Cimientos** | demoler + fundar | Checklist §1 completo (hoy no hay visitas agendadas en ventana → vía libre) · recrear los 33–34 custom fields (los 5 literales del §1.1 primero) · **rotar `MC_KEY` AL INICIO** y montar toda solicitud externa ya con la llave nueva · entradas: 6 automatizaciones de reel (cada una enviando su **shortcode** en `reel`), DM directo, historias, keywords de baja, default reply |
+| **D2 · La conversación** | intención + rutas | Clasificador de intención (**verificar ANTES que el plan de ManyChat incluya AI Intents; si no, re-decidir, no degradar en silencio**) · 4 rutas · convergencia única de agenda con fork por ubicación · FAQ · opt-out |
+| **D3 · Pruebas y salida** | E2E + go-live | Viaje completo real por cada intención (comentario y DM) · verificar cada escritura en Airtable y tablero (§7 de `EMBUDO.md` como criterio de aceptación) · `cron-recordatorios?dry=1` sin errores · salida en vivo + monitoreo |
+
+Acompañan (código, no ManyChat): umbral de no-match en `mc-match` modo B (§2.2) ·
+ManyChat emite `quiz_iniciado` · hora exacta en `Llamados` · semana en curso en el tablero.
+
+## 0.7 Fe de erratas de los documentos de diseño (leer antes de montar)
+
+Del **cuaderno de montaje** (`docs/cuaderno_montaje_biketrust.html`):
+- **SPK-vender NO converge** («ya le pasé todo al equipo») → en V2 vender también agenda (visita de tasación o llamada según ubicación).
+- **HANDOFF con asignación a Luis** → reducirlo a válvula mínima de borde, sin promesas de tiempos.
+- Sus **6 intenciones informativas** (envíos/pagos/garantía/ubicación) viven agrupadas bajo la ruta *pregunta general* del pivote (pueden ser sub-clasificación interna).
+- «Rotar MC_KEY al terminar» → se rota **al inicio** (D1).
+- Dice «Levenshtein por token» → el matching real ya es **por bigramas** (2026-07-27).
+- Inventario declara 22 flujos / 34 campos → **cuadrar contra lo montado** en D1 (las entradas de comentario son 6, una por reel vivo).
+- SPK-quiz bloques 7/8: numeración de saltos con error — revisar al montar.
+
+Del **árbol v2.4** (`docs/biketrust_arbol_decisiones_v2_4.html`) — además del desfase del §6:
+- «Base sincronizada con Ailoo» como contrato de datos → el contrato vigente es **Airtable vía las Pages Functions** (Ailoo es integración futura).
+- «EL PASO QUE FALTA: matching» → el matching **existe y está verificado**; lo fino es el umbral de no-match.
+- «Modo degradado por Ailoo» → eliminado; sobrevive solo el principio «la promesa del front nunca excede la capacidad del back».
+- Menú de bienvenida de 3 botones + handoff con SLA y brief → supersedidos por el pivote (§0.5).
+- Tres salidas de agendamiento (visita/llamada/**apartado**) → convergencia por ubicación; el apartado queda como idea futura.
+- **Lo que SÍ se rescata tal cual:** los 4 arcos por nodo de input, «cero resultados nunca es callejón», el fallback instrumentado (`modelo_no_reconocido` + revisión semanal), la captura temprana de ubicación, los bordes B01–B12, el vocabulario minado del tráfico real y el opt-out evaluado antes que todo.
+
+---
+
 ## 1. ⚠️ CHECKLIST OBLIGATORIO ANTES DE BORRAR
 
 Esto es lo único de este documento que, si se ignora, rompe producción **en silencio**.
@@ -177,29 +231,32 @@ sin ese borrado se arrastra la bici del lead anterior. Ya está documentado como
 
 ---
 
-## 4. Inventario de automatizaciones a construir (16)
+## 4. Inventario de automatizaciones a construir (actualizado al pivote §0.5)
 
-**Entradas (triggers)**
+> El detalle bloque a bloque vive en `docs/cuaderno_montaje_biketrust.html` (con la fe
+> de erratas del §0.7). Este es el esqueleto:
 
-1. Comentario en reel (una por post; ManyChat no expone el Post ID comentado)
-2. DM directo → router
-3. Respuesta a historia → router
-4. Keywords de baja → opt-out
-5. Default reply → fallback
+**Entradas (triggers) — diminutas, sin lógica**
 
-**Contenido**
+1. Comentario en reel ×6 (una por post vivo; cada una manda su **shortcode** en `reel` — ManyChat no expone el Post ID comentado)
+2. DM directo → clasificador de intención
+3. Respuesta a historia → mismo clasificador
+4. Keywords de baja → opt-out (evaluadas ANTES que todo)
+5. Default reply → fallback instrumentado (tag `modelo_no_reconocido` + revisión semanal)
 
-6. Router de bienvenida
-7. Modelo específico (`mc-match` modo A)
-8. Desambiguación multi-opción (usa `otrasTexto`, sin botones dinámicos)
-9. Quiz (`mc-match` modo B)
-10. Ficha y recomendación
-11. Tronco de agendamiento (región → teléfono → slot → `mc-agenda`)
-12. Rama región (`mc-llamado`)
-13. Consíganmela (`mc-waitlist`)
-14. Vender (`mc-consigna`)
-15. FAQ
-16. Opt-out
+**Rutas (spokes) — la sustancia**
+
+6. ~~Router de bienvenida con menú~~ → **Clasificador de intención** (4 rutas; el precio NO es intención, es modificador)
+7. Modelo específico (`mc-match` modo A, bigramas)
+8. Desambiguación multi-opción (usa `otrasTexto`, sin botones dinámicos; nunca elegir por el lead)
+9. Asesoría/elegir = quiz (`mc-match` modo B; emite `quiz_iniciado` al partir)
+10. Ficha y recomendación (borrar grupo C de campos ANTES de cada mc-match)
+11. **Convergencia de agenda** (única, invocada por todas las rutas): ubicación → Santiago `mc-agenda` · región `mc-llamado`
+12. Vender (`mc-consigna`) → **también converge en agenda** (tasación con fecha)
+13. Consíganmela (`mc-waitlist`) — «cero resultados nunca es callejón»
+14. Pregunta general (FAQ; sub-clasifica envíos/pagos/garantía/ubicación) → cierra ofreciendo agenda
+15. Opt-out
+16. Válvula mínima de escalamiento (bordes; sin promesas de tiempo)
 
 **Envoltorios de plantilla WhatsApp:** no se rehacen (§1.2).
 
