@@ -194,26 +194,48 @@ Meta del dueño: **20–30 % de los leads entregan teléfono** (semana 30 = 3 %)
    `Salida` (la API no agrega opciones a un select), el Kanban de Luis y la pantalla de
    Solicitudes, más las 2 plantillas nuevas de WhatsApp (`region_gestionando`,
    `llamada_no_contestada`).
-4. **Crear en Cloudflare las 5 env de flujo del V2** — ninguna otra función del repo las lee,
-   o sea que hoy no existen. Cada una es el *namespace* del flujo de ManyChat que manda la
-   plantilla, así que **no se pueden crear hasta armar el flujo** (Cloudflare tampoco acepta
-   variables vacías, y ponerles un relleno es PEOR que dejarlas fuera: con un valor falso el
-   código intenta enviar y devuelve un error opaco de ManyChat, en vez del `falta_env:X`
-   explícito). Se crean a medida que salga cada flujo, y **hay que redesplegar** después.
+4. **Env de Cloudflare — 2 faltan para el V2, 3 llevan flujos apagados.**
+   *(Auditado 2026-07-28 contra el panel real. ⚠️ No deducir qué env existen leyendo el
+   código: varias las creó el V1 y ninguna función nueva las referencia.)*
 
-   | Env | Salida / disparador | Plantilla |
+   Cada `FLOW_NS_*` es el **namespace del flujo de ManyChat**, así que la env no se puede
+   crear antes que el flujo. Cloudflare no acepta variables vacías y **ponerles un relleno es
+   PEOR que dejarlas fuera**: con un valor falso el código da la env por buena, intenta
+   enviar y devuelve un error opaco de ManyChat en vez del `falta_env:X` explícito.
+   **Toda env nueva exige redesplegar** — no aplican al deploy en curso.
+
+   **Bloquean el lanzamiento V2** (esperan que se arme el flujo en ManyChat):
+
+   | Env | Se dispara con | Plantilla |
    |---|---|---|
-   | `FLOW_NS_CONFIRMACION` | Kanban → Visita agendada | confirmación de visita |
    | `FLOW_NS_REGION` | Kanban → Coordinación región | `region_gestionando` (por crear) |
-   | `FLOW_NS_ENCARGO` | Kanban → Encargo de búsqueda | `encargo_recibido` |
    | `FLOW_NS_NO_CONTESTA` | Kanban → No contestado | `llamada_no_contestada` (por crear) |
-   | `FLOW_NS_BUSCANDO` | `cron-sourcing` (Solicitud → Buscando) | aviso a Roberto/Alfonso |
 
    **Mientras falten, el sistema NO se rompe:** `salida-llamado` escribe igual el opt-in, la
    fecha de visita, el estado del lead, el ticket de `Solicitudes` y el `Estado` del ticket —
    lo único que no sale es el WhatsApp. Y **no estampa `Aviso salida enviado`**, así que el
    caso queda reintentable: al crear la env y redesplegar, basta sacar la tarjeta de la
    columna y volver a ponerla para que el mensaje salga.
+
+   **Código vivo con el flujo apagado** (el endpoint corre, encuentra los leads y no manda
+   nada; devuelve `no_configurado`, no error). Es deuda del V1, no una regresión — pero en el
+   V2 son justo los rescates donde se fuga el lead:
+
+   | Env | Endpoint | Mensaje que hoy NO sale |
+   |---|---|---|
+   | `FLOW_NS_2H` | `cron-recordatorios` | recordatorio 2 h antes de la visita (48h y 8am sí salen) |
+   | `FLOW_NS_NOSHOW` | `cron-reenganche` | rescate del que no llegó a la visita |
+   | `FLOW_NS_SUELTO` | `cron-reenganche` | reenganche del lead suelto (>3 días) |
+
+   ⚠️ **`FLOW_NS_BUSCANDO` y `FLOW_NS_SOLICITUD` apuntan al MISMO flujo**
+   (`content20260708161806_786788`). O sea que cuando un encargo pasa a `Buscando`,
+   `cron-sourcing` le manda al staff el aviso de «nueva solicitud», no el de «pasó a
+   búsqueda». No revienta nada, pero el mensaje es el equivocado: hay que crear el flujo
+   propio y apuntar la env ahí.
+
+   *Sin fallback y por eso inofensivas:* `AIRTABLE_BASE`, los `AIRTABLE_*_TABLE`,
+   `BRIEFING_HOUR` y `SITE_URL` no están seteadas pero todas tienen valor por defecto en el
+   código. `SITE_URL` se setea recién al conectar el dominio (punto 6).
 5. **Confirmar que Luis tiene asiento con permiso de edición** en Airtable. Bloqueante.
 
 **Deuda anterior que sigue viva:**
