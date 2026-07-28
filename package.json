@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
-    "test": "node test/salida-llamado.mjs && node test/mc-evento-bici.mjs && node test/mc-match-modelo.mjs && node test/promesa-llamada.mjs"
+    "test": "node test/salida-llamado.mjs && node test/mc-evento-bici.mjs && node test/mc-match-modelo.mjs && node test/promesa-llamada.mjs && node test/avisos-horario.mjs"
   },
   "engines": {
     "node": ">=18"

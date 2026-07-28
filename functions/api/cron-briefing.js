@@ -37,21 +37,33 @@ const chileDate = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/S
 const chileHour = (d) => Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Santiago', hour: '2-digit', hour12: false }).format(d));
 const chileMin  = (d) => Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Santiago', minute: '2-digit' }).format(d));
 
-// ── Horario saludable por destinatario (hora Chile) ─────────────────────────
-// Env AVISO_HORARIOS: "sid:d1-d2@h1-h2,..." — días 0=Dom..6=Sáb. Un sid sin
-// entrada recibe siempre. Default: Luis L-S 9-20 · Roberto todos los días 8-20.
-// En el briefing esto hace que Luis NO reciba el de los domingos.
-const HORARIOS_DEFAULT = '579628082:1-6@9-20,302195575:0-6@8-20';
-function horarioOk(env, sid, now = new Date()) {
+// ── Horarios de aviso por destinatario ───────────────────────────────────────
+// ⚠️ ESTE HELPER ESTÁ DUPLICADO en `mc-llamado.js`. Si cambias uno, cambia el otro.
+//
+// Formato de `AVISO_HORARIOS`: `sid:DIAS@desde-hasta`, separados por coma.
+//   DIAS = dígitos de los días en que SÍ se avisa (0=domingo … 6=sábado).
+//   También acepta el formato antiguo `D-D@H-H` (rango contiguo) por compatibilidad.
+//
+// Cobertura real del negocio (2026-07-27):
+//   Luis    → lunes, miércoles, jueves, viernes, sábado  (NO martes ni domingo)
+//   Roberto → todos los días, y además cubre el martes
+// La ventana empieza a la hora del briefing: antes de eso el aviso inmediato no
+// hace falta porque el briefing matutino ya lista la cola completa del día.
+const HORARIOS_DEFAULT = '579628082:13456@9-20,302195575:0123456@9-20';
+// `ignorarHora` lo usa el briefing: SU hora la gobierna BRIEFING_HOUR, y aplicarle
+// además esta ventana lo bloquearía a sí mismo si alguien lo mueve a las 8:00.
+function horarioOk(env, sid, now = new Date(), ignorarHora = false) {
   const entry = String(env.AVISO_HORARIOS || HORARIOS_DEFAULT)
     .split(',').map(s => s.trim()).find(s => s.startsWith(String(sid) + ':'));
   if (!entry) return true;
-  const m = entry.match(/:(\d)-(\d)@(\d{1,2})-(\d{1,2})$/);
+  const m = /^([\d-]+)@(\d{1,2})-(\d{1,2})$/.exec(entry.slice(entry.indexOf(':') + 1));
   if (!m) return true;
   const p = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Santiago', hour: 'numeric', hour12: false, weekday: 'short' }).formatToParts(now);
   const hora = Number(p.find(x => x.type === 'hour').value);
   const dia = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }[p.find(x => x.type === 'weekday').value];
-  return dia >= Number(m[1]) && dia <= Number(m[2]) && hora >= Number(m[3]) && hora < Number(m[4]);
+  if (!ignorarHora && (hora < Number(m[2]) || hora >= Number(m[3]))) return false;
+  if (m[1].includes('-')) { const [a, b] = m[1].split('-').map(Number); return dia >= a && dia <= b; }
+  return m[1].includes(String(dia));
 }
 const chileHHMM = (iso) => new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(iso));
 
@@ -139,7 +151,36 @@ async function run(env, url) {
     const tel = f['WhatsApp'] || 's/tel';
     items.push(`(${i + 1}) ${hora} · ${nombre} · ${bici} · ${tel}`);
   }
-  const agenda = items.length ? items.join('   ') : 'sin visitas agendadas 🌱';
+  const visitas = items.length ? items.join('   ') : 'sin visitas 🌱';
+
+  // ── La COLA DE LLAMADOS va PRIMERO ────────────────────────────────────────
+  // Es lo único accionable a primera hora y lo que el embudo V2 produce todo el
+  // día. Además es la red que atrapa los leads que entraron fuera de horario:
+  // esos no dispararon aviso inmediato, así que el briefing es la ÚNICA forma de
+  // que alguien se entere de ellos. Sin esto, un lead del domingo se pierde.
+  let llamados = 'sin llamados pendientes';
+  try {
+    const lu = `${C.api('Llamados')}?pageSize=25&filterByFormula=${encodeURIComponent(`{Estado}='Llamada pendiente'`)}`;
+    const lr = await afetch(lu, { headers: C.rH });
+    if (lr.ok) {
+      const recs = (await lr.json()).records || [];
+      // Más viejo primero: el que lleva más esperando es el que más se enfría.
+      recs.sort((a, b) => String(a.createdTime).localeCompare(String(b.createdTime)));
+      if (recs.length) {
+        const lineas = recs.slice(0, 12).map((r, i) => {
+          const f = r.fields || {};
+          const espera = Math.round((Date.now() - new Date(r.createdTime).getTime()) / 3600000);
+          const desde = espera >= 24 ? `${Math.round(espera / 24)}d` : `${espera}h`;
+          return `(${i + 1}) ${f['Nombre'] || 'sin nombre'} · ${f['Teléfono'] || 's/tel'} · esperando ${desde}`;
+        });
+        const resto = recs.length > 12 ? `  (+${recs.length - 12} más)` : '';
+        llamados = `${recs.length} pendiente${recs.length > 1 ? 's' : ''}: ${lineas.join('   ')}${resto}`;
+      }
+    }
+  } catch { /* best-effort: si falla, el briefing igual sale con las visitas */ }
+
+  // Todo en UNA línea: WhatsApp no permite saltos dentro de una variable de plantilla.
+  const agenda = `📞 LLAMADOS · ${llamados}   ||   📅 VISITAS DE HOY · ${visitas}`.slice(0, 900);
 
   const mcReady = !!(C.MC_TOKEN && C.FLOW_BRIEFING && C.STAFF_SIDS.length);
   let enviado = false, error = null;
@@ -147,7 +188,7 @@ async function run(env, url) {
     try {
       let enviadosN = 0;
       for (const s of C.STAFF_SIDS) {
-        if (!horarioOk(env, s)) continue;   // ej: Luis no recibe el briefing los domingos
+        if (!horarioOk(env, s, now, true)) continue;   // Luis no recibe el briefing los martes ni domingos
         const sid = mcSid(s);
         const r1 = await mcPost(C.MC_TOKEN, '/fb/subscriber/setCustomFieldByName', { subscriber_id: sid, field_name: 'cf_agenda_hoy', field_value: agenda });
         if (!r1.ok) throw new Error(`setField ${r1.status} ${await r1.text()}`);

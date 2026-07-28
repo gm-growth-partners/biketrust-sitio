@@ -38,9 +38,11 @@ check(p(6, 12), 'en los próximos minutos', 'sábado 12:00 · abierto (cierra 15
 // Antes de abrir, día hábil
 check(p(1, 8),  'hoy a partir de las 10:00', 'lunes 08:00 · antes de abrir');
 
-// EL CASO DEL MARTES LIBRE: lunes en la noche salta al miércoles
-check(p(1, 21), 'el miércoles a partir de las 10:00', 'lunes 21:00 · martes libre → miércoles');
-check(p(2, 14), 'mañana a partir de las 10:00', 'martes 14:00 · día libre → mañana');
+// EL MARTES LO CUBRE ROBERTO → el lead del lunes noche NO espera al miércoles.
+// Este es el caso que motivó la decisión: eran 5 leads reales de la semana 30
+// esperando 38 horas. Con la cobertura de Roberto, esperan ~13.
+check(p(1, 21), 'mañana a partir de las 10:00', 'lunes 21:00 · Roberto cubre el martes → mañana');
+check(p(2, 14), 'en los próximos minutos', 'martes 14:00 · Roberto está atendiendo');
 
 // EL CASO DEL FIN DE SEMANA: sábado tarde salta al lunes
 check(p(6, 16), 'el lunes a partir de las 10:00', 'sábado 16:00 · ya cerró (15) → lunes');

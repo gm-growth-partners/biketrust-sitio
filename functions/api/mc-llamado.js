@@ -43,21 +43,33 @@ function keyOk(env, url) {
   return need ? url.searchParams.get('key') === need : true;
 }
 
-// ── Horario saludable por destinatario (hora Chile) ─────────────────────────
-// Env AVISO_HORARIOS: "sid:d1-d2@h1-h2,..." — días 0=Dom..6=Sáb; se envía desde
-// h1:00 hasta h2:00 (exclusivo). Un sid sin entrada recibe siempre. Default:
-// Luis (579628082) L-S 9-20 · Roberto (302195575) todos los días 8-20.
-const HORARIOS_DEFAULT = '579628082:1-6@9-20,302195575:0-6@8-20';
-function horarioOk(env, sid, now = new Date()) {
+// ── Horarios de aviso por destinatario ───────────────────────────────────────
+// ⚠️ ESTE HELPER ESTÁ DUPLICADO en `cron-briefing.js`. Si cambias uno, cambia el otro.
+//
+// Formato de `AVISO_HORARIOS`: `sid:DIAS@desde-hasta`, separados por coma.
+//   DIAS = dígitos de los días en que SÍ se avisa (0=domingo … 6=sábado).
+//   También acepta el formato antiguo `D-D@H-H` (rango contiguo) por compatibilidad.
+//
+// Cobertura real del negocio (2026-07-27):
+//   Luis    → lunes, miércoles, jueves, viernes, sábado  (NO martes ni domingo)
+//   Roberto → todos los días, y además cubre el martes
+// La ventana empieza a la hora del briefing: antes de eso el aviso inmediato no
+// hace falta porque el briefing matutino ya lista la cola completa del día.
+const HORARIOS_DEFAULT = '579628082:13456@9-20,302195575:0123456@9-20';
+// `ignorarHora` lo usa el briefing: SU hora la gobierna BRIEFING_HOUR, y aplicarle
+// además esta ventana lo bloquearía a sí mismo si alguien lo mueve a las 8:00.
+function horarioOk(env, sid, now = new Date(), ignorarHora = false) {
   const entry = String(env.AVISO_HORARIOS || HORARIOS_DEFAULT)
     .split(',').map(s => s.trim()).find(s => s.startsWith(String(sid) + ':'));
   if (!entry) return true;
-  const m = entry.match(/:(\d)-(\d)@(\d{1,2})-(\d{1,2})$/);
+  const m = /^([\d-]+)@(\d{1,2})-(\d{1,2})$/.exec(entry.slice(entry.indexOf(':') + 1));
   if (!m) return true;
   const p = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Santiago', hour: 'numeric', hour12: false, weekday: 'short' }).formatToParts(now);
   const hora = Number(p.find(x => x.type === 'hour').value);
   const dia = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }[p.find(x => x.type === 'weekday').value];
-  return dia >= Number(m[1]) && dia <= Number(m[2]) && hora >= Number(m[3]) && hora < Number(m[4]);
+  if (!ignorarHora && (hora < Number(m[2]) || hora >= Number(m[3]))) return false;
+  if (m[1].includes('-')) { const [a, b] = m[1].split('-').map(Number); return dia >= a && dia <= b; }
+  return m[1].includes(String(dia));
 }
 
 // ── Horario del especialista y promesa de llamada ────────────────────────────
@@ -68,9 +80,16 @@ function horarioOk(env, sid, now = new Date()) {
 // no tocar código ni los flujos de ManyChat.
 //
 // Formato de `HORARIO_ESPECIALISTA`: bloques `dia@desde-hasta` separados por `|`.
-// Día: 0=domingo … 6=sábado. Un día ausente = no se trabaja ese día.
-// Default = horario real de Luis al 2026-07-27 (martes y domingo libres).
-const HORARIO_DEFAULT = '1@10-20|3@10-20|4@10-20|5@10-20|6@10-15';
+// Día: 0=domingo … 6=sábado. Un día ausente = nadie atiende ese día.
+//
+// ⚠️ Este es el horario del NEGOCIO, no el de una persona: lo que importa para la
+// promesa es si ALGUIEN va a llamar, no quién. Al 2026-07-27 la cobertura es
+// Luis de lunes a sábado salvo el martes, y **Roberto cubre el martes** — por eso
+// el martes está abierto acá aunque Luis no trabaje (y por eso un lead del lunes
+// por la noche se llama el martes, no el miércoles).
+// Domingo cerrado: nadie declaró cobertura. Si Roberto también atiende domingos,
+// agregar `|0@10-20` a la env y la promesa se ajusta sola.
+const HORARIO_DEFAULT = '1@10-20|2@10-20|3@10-20|4@10-20|5@10-20|6@10-15';
 const DIAS_SEMANA = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 
 function parseHorario(env) {
