@@ -194,8 +194,26 @@ Meta del dueño: **20–30 % de los leads entregan teléfono** (semana 30 = 3 %)
    `Salida` (la API no agrega opciones a un select), el Kanban de Luis y la pantalla de
    Solicitudes, más las 2 plantillas nuevas de WhatsApp (`region_gestionando`,
    `llamada_no_contestada`).
-4. **Que `salida-llamado` cree el registro en `Solicitudes`** cuando la salida es Encargo —
-   sin eso el encargo muere en el Kanban y nunca llega a la cola de sourcing.
+4. **Crear en Cloudflare las 5 env de flujo del V2** — ninguna otra función del repo las lee,
+   o sea que hoy no existen. Cada una es el *namespace* del flujo de ManyChat que manda la
+   plantilla, así que **no se pueden crear hasta armar el flujo** (Cloudflare tampoco acepta
+   variables vacías, y ponerles un relleno es PEOR que dejarlas fuera: con un valor falso el
+   código intenta enviar y devuelve un error opaco de ManyChat, en vez del `falta_env:X`
+   explícito). Se crean a medida que salga cada flujo, y **hay que redesplegar** después.
+
+   | Env | Salida / disparador | Plantilla |
+   |---|---|---|
+   | `FLOW_NS_CONFIRMACION` | Kanban → Visita agendada | confirmación de visita |
+   | `FLOW_NS_REGION` | Kanban → Coordinación región | `region_gestionando` (por crear) |
+   | `FLOW_NS_ENCARGO` | Kanban → Encargo de búsqueda | `encargo_recibido` |
+   | `FLOW_NS_NO_CONTESTA` | Kanban → No contestado | `llamada_no_contestada` (por crear) |
+   | `FLOW_NS_BUSCANDO` | `cron-sourcing` (Solicitud → Buscando) | aviso a Roberto/Alfonso |
+
+   **Mientras falten, el sistema NO se rompe:** `salida-llamado` escribe igual el opt-in, la
+   fecha de visita, el estado del lead, el ticket de `Solicitudes` y el `Estado` del ticket —
+   lo único que no sale es el WhatsApp. Y **no estampa `Aviso salida enviado`**, así que el
+   caso queda reintentable: al crear la env y redesplegar, basta sacar la tarjeta de la
+   columna y volver a ponerla para que el mensaje salga.
 5. **Confirmar que Luis tiene asiento con permiso de edición** en Airtable. Bloqueante.
 
 **Deuda anterior que sigue viva:**
