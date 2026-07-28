@@ -18,6 +18,50 @@
 **Solo faltan 2 plantillas nuevas.** Meta las aprueba normalmente en minutos (hasta 24 h),
 así que enviándolas hoy llegan al miércoles.
 
+## 1-bis · Las 2 plantillas al STAFF que hay que rehacer
+
+Ambas quedaron con texto fijo que el V2 dejó obsoleto. **No se arreglan metiendo
+contenido en el custom field: el problema está en la parte fija.**
+
+### `nuevo_llamado` — la frase manda a mirar algo que ya no existe
+```
+📞 Llamado pendiente: {cf_llamado_datos}. Contacta a la persona en la franja indicada.
+```
+❌ **En V2 no hay franja.** Al lead no se le pregunta cuándo prefiere que lo llamen: deja su
+número y se le llama lo antes posible dentro del horario. La frase manda a Luis a buscar un
+dato que el ticket no tiene.
+
+✅ Reemplazo propuesto (`nuevo_llamado_v2`, **Utility**):
+```
+📞 Nuevo llamado pendiente: {{1}}
+
+Llámalo lo antes posible — la persona pidió que la contactaran.
+```
+
+### `briefing_diario` — el título ya no describe el contenido
+```
+☀️ Buenos días. Visitas de HOY en Bike Trust: {cf_agenda_hoy}
+
+Gracias.
+```
+❌ El briefing ahora abre con la **cola de llamados pendientes** (lo accionable a primera
+hora, y la única red que atrapa los leads que entraron fuera de horario). Un mensaje
+titulado «Visitas de HOY» que arranca listando llamados se lee mal.
+
+✅ Reemplazo propuesto (`briefing_diario_v2`, **Utility**) — título neutro que no vuelve a
+quedar obsoleto cuando cambie el contenido:
+```
+☀️ Buenos días. Tu resumen de hoy en Bike Trust:
+
+{{1}}
+```
+
+> **Hacer v2 y no editar las actuales.** Editar el texto manda la plantilla a revisión y
+> **mientras está en revisión no se puede usar**: si se edita `briefing_diario` esta noche,
+> mañana a las 9:00 puede no salir nada. Con una v2 el sistema sigue funcionando con la
+> vieja y se cambia la variable `FLOW_NS_*` cuando la nueva esté aprobada. Cero interrupción.
+> Es el mismo patrón que ya usaron con `confirmacion_visita` → `confirmacion_visita_v2`.
+
 ## 2 · Plantillas que NO hay que botar (siguen sirviendo)
 
 Nacieron del diseño viejo pero calzan igual con el nuevo:

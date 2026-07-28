@@ -366,16 +366,26 @@ export async function onRequestPost({ request, env }) {
   const llamadoId = (await lr.json()).id;
 
   // 4) AVISO AL STAFF por WhatsApp (best-effort; el ticket ya quedó creado).
+  // La promesa se calcula UNA vez y se usa en dos lados: en el resumen que le
+  // llega al staff y en la respuesta que ManyChat imprime al lead. Así los dos
+  // ven exactamente el mismo compromiso.
+  const pl = promesaLlamada(env);
+
   let aviso = 'no_configurado';
   if (C.MC_TOKEN && C.FLOW_LLAMADO && C.STAFF_SIDS.length) {
     try {
+      // ⚠️ En V2 NO hay franja horaria: al lead no se le pregunta cuándo prefiere
+      // que lo llamen — deja su número y se le llama lo antes posible dentro del
+      // horario. Por eso el resumen NO la incluye. La plantilla `nuevo_llamado`
+      // todavía cierra con «contacta en la franja indicada»: esa frase quedó
+      // obsoleta y hay que reemplazarla (ver docs/V2_SALIDAS_LLAMADA.md).
+      // `llamarEl` sobrevive solo para tickets creados a mano por el staff.
       const resumen = [
         nombre,
         ciudad ? `de ${ciudad}` : '',
         biciNombre ? `interesado en ${biciNombre}` : '',
-        llamarEl ? `llamar el ${diaLegible(llamarEl)}` : '',
-        franja ? `por la ${franja.toLowerCase()}` : '',
         telefono || 'sin teléfono',
+        ...(llamarEl ? [`pidió que lo llamen el ${diaLegible(llamarEl)}`] : []),
       ].filter(Boolean).join(' · ');
       let enviados = 0, dormidos = 0;
       for (const sid of C.STAFF_SIDS) {
@@ -393,7 +403,6 @@ export async function onRequestPost({ request, env }) {
   // `promesaLlamada` va lista para que ManyChat la imprima en la confirmación:
   //   «Luis te llama {{promesaLlamada}} desde el +56 9 XXXX XXXX.»
   // Nunca promete lo que el horario no permite. Se ajusta con HORARIO_ESPECIALISTA.
-  const pl = promesaLlamada(env);
   return reply({ ok: true, llamadoId, leadId, leadCreado, biciNombre: biciNombre || null, llamarEl: llamarEl || null, llamarElLegible: llamarEl ? diaLegible(llamarEl) : null, aviso, promesaLlamada: pl.promesa, dentroDeHorario: pl.abierto });
 }
 // Sólo POST. Pages responde 405 automáticamente a otros métodos en esta ruta.
