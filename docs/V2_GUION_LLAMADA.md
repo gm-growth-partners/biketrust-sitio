@@ -82,12 +82,19 @@ Cuando dicen «lo voy a pensar», «te aviso», «lo converso en la casa»:
 En Chile el no casi nunca se dice de frente. Sin esta pregunta, la cola se llena de fantasmas.
 La respuesta va textual a `Notas`.
 
-## Al colgar · 60 segundos, sin excepción
+## Al colgar · dos pasos, en este orden
 
-1. Marcar la **`Salida`** ← esto dispara el mensaje automático.
-2. Completar `Ciudad`, `Estatura`, `Permiso WhatsApp`, `Próximo paso`.
-3. Si es visita: **`Fecha y hora de visita`** — sin eso no salen los recordatorios.
-4. Subir `Intentos` en 1.
+**Durante la llamada, lo mínimo:** `Ciudad` · `Permiso WhatsApp` · `Notas`.
+Nada más — no llenar formularios mientras la persona habla.
+
+**1 · Clasificar (5 segundos).** Arrastrar la tarjeta a su columna. Eso ya avanza el estado
+y, cuando corresponde, dispara el mensaje.
+
+**2 · Completar, en la pantalla del caso:**
+- **Visita** → la fecha y hora, y las 1 a 3 bicis a preparar. **La confirmación al cliente
+  sale cuando pones la fecha**, no antes: sin fecha no hay nada que confirmar.
+- **Encargo** → el ticket ya nació en Solicitudes; ahí van modelo, talla, presupuesto y uso.
+- **Región** → la coordinación del despacho.
 
 > **Un ticket sin próximo paso con fecha no está cerrado.**
 

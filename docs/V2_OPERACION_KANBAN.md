@@ -84,6 +84,37 @@ y el dedup de `mc-llamado`.
 
 **Regla de oro: Luis toca UN campo.** Todo lo demás lo deriva el sistema.
 
+## 2-bis · El principio que ordena todo: CLASIFICAR ≠ COMPLETAR
+
+**El primer Kanban es solo para identificar el tipo de petición y mover la tarjeta.**
+Nada de formularios en medio de una llamada: mientras Luis habla, lo único que hace es
+decidir a qué columna va. El detalle se completa después, **en la pantalla de cada caso**.
+
+```
+LLAMADA  →  Kanban de Llamados        →  pantalla del caso
+            (¿qué tipo de petición?)      (completar lo que corresponda)
+
+🏬 Visita   → vista «Visitas»      → fecha y hora · las 1-3 bicis a preparar
+📍 Región   → vista «Región»       → coordinación del despacho
+🔎 Encargo  → tabla `Solicitudes`  → modelo · talla · presupuesto · uso
+↩️ No contestó → vuelve a la cola  → (nada que completar)
+✖️ Sin interés → cerrado           → el motivo, en Notas
+```
+
+Las tres primeras son **vistas filtradas de la misma tabla** por el campo `Salida` — no son
+tablas nuevas. Así el ciclo de vida de la llamada vive en un solo lugar y cada pantalla
+muestra solo los campos que ese caso necesita.
+
+### La consecuencia que hubo que resolver
+Si Luis clasifica una visita **antes** de acordar la fecha, no hay nada que confirmarle al
+cliente todavía. El endpoint lo maneja así: **clasifica, sincroniza el estado y NO sella**.
+Cuando Luis completa «Fecha y hora de visita» en la vista de Visitas, el mismo endpoint corre
+de nuevo y **ahí sí sale la confirmación** con los recordatorios enganchados.
+
+> El costo es que la confirmación puede salir unos minutos después de colgar, en vez de al
+> instante. A cambio, Luis no llena formularios mientras la persona le habla — que es donde
+> se pierden los datos y se enfrían las llamadas. Es el intercambio correcto.
+
 ## 3 · Qué ve en cada tarjeta
 
 **Al frente, sin abrir** (para decidir a quién llamar primero):
@@ -94,9 +125,13 @@ y el dedup de `mc-llamado`.
 
 > `Estado bici` es la guarda contra el peor error posible: ofrecer una unidad ya vendida.
 
-**Al abrirla — lo editable, en este orden** (es el orden del guion de la llamada):
-`Ciudad` → `Estatura (cm)` → `Fecha y hora de visita` → `Permiso WhatsApp` →
-`Próximo paso` → `Intentos` → `Notas`
+**Al abrirla — lo MÍNIMO editable durante la llamada.** Solo lo que sirve para clasificar y
+lo que no se puede recuperar después:
+`Ciudad` (decide visita vs región) · `Permiso WhatsApp` (el consentimiento, se pide y se
+marca en el momento) · `Notas` (lo que se dijo) · `Intentos`
+
+Todo lo demás va en la pantalla del caso: la fecha y las bicis en Visitas, el detalle del
+encargo en Solicitudes.
 
 ## 4 · La cadena completa hasta la otra pantalla
 

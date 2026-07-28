@@ -154,6 +154,17 @@ const check = (ok, msg, extra) => { console.log((ok ? 'OK   ' : 'FALLO') + ' · 
   check(calls.patchLead?.['MC bici'] === 'Levo SL S-Works', 'visita sin selección: cae a la bici del reel', calls.patchLead);
 }
 
+// 12-quater · Clasificar ≠ completar: visita sin fecha queda clasificada y NO sella
+{
+  const { out, calls } = await run(
+    { Salida: 'Visita agendada', 'Permiso WhatsApp': true, Lead: ['recL'], Estado: 'Llamada pendiente' },
+    { ...LEAD_BASE });
+  check(out.accion === 'clasificado_sin_fecha', 'visita sin fecha: queda clasificada', out);
+  check(calls.sendFlow.length === 0, 'visita sin fecha: NO confirma (no hay qué confirmar)', calls.sendFlow);
+  check(!calls.patchTicket?.['Aviso salida enviado'], 'visita sin fecha: NO sella → confirmará al poner la fecha', calls.patchTicket);
+  check(calls.patchTicket?.['Estado'] === 'Llamado', 'visita sin fecha: igual sincroniza el Estado', calls.patchTicket);
+}
+
 // 13 · Encargo → nace el ticket de búsqueda y queda enlazado (cierra el circuito)
 {
   const { out, calls } = await run(
@@ -188,5 +199,5 @@ const check = (ok, msg, extra) => { console.log((ok ? 'OK   ' : 'FALLO') + ' · 
   check(calls.nuevaSolicitud === null, 'visita: no toca la cola de sourcing', calls.nuevaSolicitud);
 }
 
-console.log(fail === 0 ? `\nTODAS OK (${35} aserciones)` : `\n${fail} FALLOS`);
+console.log(fail === 0 ? `\nTODAS OK (${39} aserciones)` : `\n${fail} FALLOS`);
 process.exit(fail === 0 ? 0 : 1);

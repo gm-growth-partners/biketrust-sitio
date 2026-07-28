@@ -106,6 +106,25 @@ export async function onRequestPost({ request, env }) {
   // 2) IDEMPOTENCIA. Sin esto, cada corrección del ticket dispara otro WhatsApp.
   if (t['Aviso salida enviado']) return reply({ ok: true, accion: 'ya_enviado', salida });
 
+  // 2b) CLASIFICAR ≠ COMPLETAR. El Kanban de Luis es para mover la tarjeta al
+  //     tipo de petición, no para llenar formularios en medio de una llamada. El
+  //     detalle se completa después, en la pantalla de cada caso.
+  //     Consecuencia: una visita recién clasificada puede no tener fecha todavía.
+  //     No se puede confirmar una visita sin fecha, así que acá NO se manda nada
+  //     y —clave— NO se sella: cuando Luis ponga la fecha, este mismo endpoint
+  //     corre de nuevo y ahí sí sale la confirmación. El ticket queda clasificado
+  //     y visible en su columna mientras tanto.
+  if (cfg.copiaVisita && !t['Fecha y hora de visita']) {
+    if (cfg.estadoTicket && t['Estado'] !== cfg.estadoTicket) {
+      await afetch(`${api('Llamados')}/${llamadoId}`, {
+        method: 'PATCH', headers: wH,
+        body: JSON.stringify({ typecast: true, fields: { 'Estado': cfg.estadoTicket } }),
+      });
+    }
+    return reply({ ok: true, salida, accion: 'clasificado_sin_fecha',
+      nota: 'La visita quedó clasificada. La confirmación sale cuando se complete «Fecha y hora de visita».' });
+  }
+
   const leadId = linkId(t['Lead']);
   if (!leadId) return reply({ ok: true, accion: 'sin_lead', salida });
 
