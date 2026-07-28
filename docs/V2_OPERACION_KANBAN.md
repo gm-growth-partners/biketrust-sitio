@@ -221,14 +221,29 @@ ocultar las tarjetas cerradas hace más de 14 días (Sin interés, y las de Visi
 ya resueltas). El histórico completo sigue en la tabla y en el tablero; la pantalla de Luis
 es para **trabajar**, no para archivar.
 
-## 7 · Qué falta para montarlo
+## 7 · Estado del montaje
+
+### ✅ Construido y publicado (2026-07-27)
+
+**Interfaz nueva: «Operación Llamadas (V2)»** (`pbd7YcOJ8UjakvxgK`) — separada de `Control`
+y de `Pipeline CRM`, que quedaron intactas.
+
+| Pantalla | Qué es |
+|---|---|
+| **1 · Llamadas** | El Kanban por `Salida`, ordenado del más antiguo primero. Muestra el brief completo en la tarjeta: teléfono, bici, **espera en minutos**, puntaje, rango de altura, precio y si sigue disponible |
+| **2 · Visitas — completar** | Filtrada por `Salida = Visita agendada`. Acá va **la fecha y hora** (que dispara la confirmación) y **las bicis a preparar** |
+| **3 · Región — coordinar** | Filtrada por `Salida = Coordinación región`. Ciudad, bici, precio y próximo paso |
+| **4 · Búsquedas — completar** | Kanban de `Solicitudes` por estado. Acá se completa modelo, talla, presupuesto, motorización y disciplina |
+
+También quedaron creadas las opciones **`Llamada pendiente`** y **`No contestado`** del campo
+`Salida` (vía escritura con `typecast`, que es la única forma de crear opciones por API).
+
+### Falta
 
 | # | Qué | Dónde |
 |---|---|---|
-| 1 | Agregar **`Llamada pendiente`** y **`No contestado`** a las opciones de `Salida` | Airtable, a mano (la API no agrega opciones) |
-| 2 | Crear la página Kanban sobre `Llamados`, agrupada por `Salida` | Se puede crear por API |
-| 3 | ~~Que `salida-llamado` cree el registro en `Solicitudes`~~ | ✅ **hecho 2026-07-27** (probado) |
-| 4 | ~~Que `salida-llamado` sincronice `Estado`~~ | ✅ **hecho 2026-07-27** (probado) |
-| 5 | Crear la pantalla de **Solicitudes** (cola de sourcing) | Se puede crear por API |
-| 6 | Confirmar que **Luis tiene asiento con permiso de edición** | Airtable — **bloqueante** |
-| 7 | Compartir la interfaz en lectura con Roberto y Alfonso | Airtable |
+| 1 | **Confirmar que Luis tiene asiento con permiso de edición** | Airtable — **bloqueante: sin esto abre el Kanban en modo lectura y no puede arrastrar nada** |
+| 2 | Compartir la interfaz en **lectura** con Roberto y Alfonso | Airtable |
+| 3 | Borrar la opción **«Solo información»** de `Salida` (quedó de una versión anterior; 7 columnas es demasiado para un Kanban usable) | Airtable, a mano — la API no borra opciones |
+| 4 | Ocultar el campo **`Permiso WhatsApp`** de las vistas (quedó obsoleto, no lo lee nadie) | Airtable |
+| 5 | Conectar la automatización `Salida` cambia → `POST /api/salida-llamado` | Airtable, a mano — la API no crea automatizaciones |
