@@ -130,6 +130,27 @@ export async function onRequestPost({ request, env }) {
     upd['Recordatorio 48h'] = null;
     upd['Recordatorio 8am'] = null;
     upd['Recordatorio 2h'] = null;
+
+    // Las bicis que Luis va a PREPARAR (máx 3). Se escriben como texto en
+    // `MC bici` del Lead, que es el campo que ya leen el briefing (`biciDe`) y
+    // los recordatorios (`cf_bici`). Así una sola escritura alimenta las dos
+    // cosas y nadie tiene que mantener dos listas.
+    const bicis = (Array.isArray(t['Bicis para la visita']) ? t['Bicis para la visita'] : [])
+      .map(x => (typeof x === 'string' ? x : x?.id)).filter(Boolean).slice(0, 3);
+    const nombres = [];
+    for (const id of bicis) {
+      const br = await afetch(`${api('Inventario')}/${id}`, { headers: rH });
+      if (br.ok) { const bf = (await br.json()).fields || {}; if (bf.Modelo || bf.Etiqueta) nombres.push(bf.Modelo || bf.Etiqueta); }
+    }
+    // Si Luis no eligió ninguna, cae a la bici del reel: siempre hay algo que preparar.
+    if (!nombres.length) {
+      const bId = linkId(t['Bici de interés']);
+      if (bId) {
+        const br = await afetch(`${api('Inventario')}/${bId}`, { headers: rH });
+        if (br.ok) { const bf = (await br.json()).fields || {}; if (bf.Modelo || bf.Etiqueta) nombres.push(bf.Modelo || bf.Etiqueta); }
+      }
+    }
+    if (nombres.length) upd['MC bici'] = nombres.join(' · ').slice(0, 200);
   }
 
   //   3c) Estado del lead, con guarda: nunca retroceder un lead ya avanzado.

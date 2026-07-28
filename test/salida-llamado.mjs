@@ -136,6 +136,24 @@ const check = (ok, msg, extra) => { console.log((ok ? 'OK   ' : 'FALLO') + ' · 
   check(out.mensaje === 'enviado', 'usa MANYCHAT_TOKEN (no MC_TOKEN, que no existe en Cloudflare)', out);
 }
 
+// 12-bis · Visita: las bicis a preparar se copian al Lead (máx 3) para el briefing
+{
+  const { calls } = await run(
+    { Salida: 'Visita agendada', 'Permiso WhatsApp': true, Lead: ['recL'],
+      'Fecha y hora de visita': '2026-07-30T18:30:00.000Z',
+      'Bicis para la visita': ['recB1', 'recB2'] }, { ...LEAD_BASE });
+  check(calls.patchLead?.['MC bici'] === 'Levo SL S-Works · Levo SL S-Works',
+    'visita: copia las bicis a preparar al Lead', calls.patchLead);
+}
+// 12-ter · Si Luis no eligió ninguna, cae a la bici del reel (siempre hay algo que preparar)
+{
+  const { calls } = await run(
+    { Salida: 'Visita agendada', 'Permiso WhatsApp': true, Lead: ['recL'],
+      'Fecha y hora de visita': '2026-07-30T18:30:00.000Z',
+      'Bici de interés': ['recB'] }, { ...LEAD_BASE });
+  check(calls.patchLead?.['MC bici'] === 'Levo SL S-Works', 'visita sin selección: cae a la bici del reel', calls.patchLead);
+}
+
 // 13 · Encargo → nace el ticket de búsqueda y queda enlazado (cierra el circuito)
 {
   const { out, calls } = await run(
@@ -170,5 +188,5 @@ const check = (ok, msg, extra) => { console.log((ok ? 'OK   ' : 'FALLO') + ' · 
   check(calls.nuevaSolicitud === null, 'visita: no toca la cola de sourcing', calls.nuevaSolicitud);
 }
 
-console.log(fail === 0 ? `\nTODAS OK (${33} aserciones)` : `\n${fail} FALLOS`);
+console.log(fail === 0 ? `\nTODAS OK (${35} aserciones)` : `\n${fail} FALLOS`);
 process.exit(fail === 0 ? 0 : 1);

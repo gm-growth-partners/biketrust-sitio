@@ -35,6 +35,38 @@ columna y sale por una de las cinco siguientes, según cómo haya terminado la l
 | **↩️ No contestado** | No se pudo hablar | Mensaje de rescate · **el ticket sigue abierto**: es la bandeja de reintentos, no un cierre |
 | **✖️ Sin interés** | Habló y no va a avanzar | Nada. Se anota el motivo real en `Notas` |
 
+### La regla que decide la salida (y evita el error más común)
+
+Lo que decide NO es dónde vive la persona: es **si tenemos o no la bici que quiere**.
+
+```
+¿Tenemos la bici que quiere?
+├── NO  →  🔎 ENCARGO DE BÚSQUEDA          (viva donde viva)
+└── SÍ  →  ¿de dónde es?
+          ├── Santiago  →  🏬 VISITA AGENDADA
+          └── región    →  📍 COORDINACIÓN REGIÓN
+```
+
+**Un lead de región que busca algo que no tenemos NO es una coordinación de región: es un
+encargo de búsqueda.** «Región» solo aplica cuando hay una unidad concreta del inventario que
+coordinar y despachar. Si no hay bici, no hay nada que coordinar todavía — lo que hay es algo
+que salir a buscar, y eso vive en la cola de sourcing. La región queda anotada en `Ciudad` y
+viaja a las notas del encargo, para que al conseguirla ya se sepa que hay despacho de por medio.
+
+### Las bicis que Luis prepara para la visita
+
+`Bici de interés` es **la del reel** (por dónde entró) y la pone el bot.
+**`Bicis para la visita`** es **lo que Luis va a tener listo** cuando la persona llegue: de 1
+a 3 modelos, elegidos en la llamada. Casi nunca son lo mismo — alguien entra por la Levo y en
+la conversación aparece que también le sirve la Epic.
+
+Al marcar `Visita agendada`, esos modelos se copian al Lead y con eso **salen solos en el
+briefing de la mañana y en los recordatorios de WhatsApp**, sin que nadie mantenga dos listas.
+Si Luis no elige ninguna, cae a la bici del reel: siempre hay algo que preparar.
+
+> El tope de 3 es de criterio, no técnico: más de tres bicis en la vitrina deja de ser una
+> visita preparada y pasa a ser un recorrido. Airtable no lo limita solo.
+
 > ⚠️ **`Llamada pendiente` tiene que ser una opción de `Salida`**, no solo de `Estado`.
 > Hoy el campo `Salida` no la tiene y hay que agregarla a mano (la API no agrega opciones a
 > un select existente). Sin eso las tarjetas nuevas nacen sin columna.
@@ -94,6 +126,38 @@ ticket. Si lo deja vacío el encargo igual nace, marcado como `(por confirmar co
 
 El link `Solicitud` del ticket es a la vez trazabilidad y **guarda anti-duplicado**: mientras
 esté vacío un reintento vuelve a crear el ticket; una vez escrito, nunca más.
+
+## 4-bis · Qué pasa DESPUÉS de cada salida (el sistema de tickets)
+
+Hay **tres tablas** y cada una es una cola distinta. Un lead puede pasar por más de una.
+
+| Tabla | Qué es | Quién la abre | Cuándo se cierra |
+|---|---|---|---|
+| **`Llamados`** | La cola de llamadas. **Es el Kanban de Luis.** Todo lead que entrega su teléfono entra acá. | El bot (`mc-llamado`) | Al marcar una salida (salvo `No contestado`, que vuelve a la cola) |
+| **`Solicitudes`** | La cola de **sourcing**: qué hay que salir a buscar. | `salida-llamado` al marcar Encargo, o el staff a mano | Cuando la bici se consigue y el cliente decide |
+| **`Consignaciones`** | Bicis que **nos ofrecen**. Otra línea del negocio, no toca este flujo. | `mc-consigna` | Al aceptar o rechazar |
+
+### El recorrido completo, salida por salida
+
+**🏬 Visita agendada** → se escribe `Fecha visita` y el estado en el **Lead**, y con eso se
+enciende solo todo lo que ya existía: confirmación inmediata, recordatorio 48 h y recordatorio
+de la mañana. Las bicis a preparar salen en el briefing. El ticket se cierra.
+*El disparador de toda esa cadena es el cambio de estado que hace Luis* — exactamente el
+modelo que planteaste: el bot ya no agenda nada, la cadena arranca desde el registro humano.
+
+**📍 Coordinación región** → mensaje de gestión al cliente. El ticket queda abierto hasta
+coordinar el despacho de **una unidad concreta** (si no hay unidad, es un encargo).
+
+**🔎 Encargo de búsqueda** → **nace un registro en `Solicitudes`** enlazado al ticket y al
+Lead. Nace **casi vacío a propósito**: solo con lo que se sabe (qué busca, teléfono, ciudad,
+estatura y las notas de la llamada). Luis lo completa —talla, presupuesto, motorización,
+disciplina— **durante la misma llamada o al colgar**, porque esa información sale conversando,
+no de un formulario. De ahí en adelante corre solo: `Buscando` → aviso a Roberto y Alfonso →
+cuando entra la bici, `reactivacion_stock` al cliente.
+
+**↩️ No contestado** → mensaje de rescate y **el ticket vuelve a la cola**. No es un cierre.
+
+**✖️ Sin interés** → cierra sin mandar nada. El motivo real va en `Notas`.
 
 ## 5 · La vista de los dueños
 
