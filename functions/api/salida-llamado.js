@@ -148,6 +148,48 @@ export async function onRequestPost({ request, env }) {
   });
   if (!lp.ok) return reply({ error: 'airtable_lead_update', status: lp.status, detail: await lp.text() }, 502);
 
+  // 3d) ENCARGO → nace el ticket en `Solicitudes` (la cola de sourcing).
+  //     Es el eslabón que conecta la llamada con la otra pantalla: sin esto el
+  //     encargo muere en el Kanban de Luis y Roberto nunca se entera de qué hay
+  //     que salir a buscar. De acá en adelante el ciclo sigue solo:
+  //     Solicitudes → `Buscando` → cron-sourcing avisa a los dueños → cuando la
+  //     bici entra, `reactivacion_stock` al cliente.
+  //
+  //     Guarda contra duplicados: el link `Solicitud` del ticket. Si ya tiene
+  //     valor no se crea otro, aunque el endpoint se dispare de nuevo (Luis
+  //     corrige algo, la automatización reintenta, etc.).
+  let solicitudId = null;
+  if (salida === 'Encargo de búsqueda' && !linkId(t['Solicitud'])) {
+    const modelo = String(t['Modelo buscado'] || '').trim();
+    const notas = [
+      `Nace de la llamada de ${t['Nombre'] || 'un lead'}.`,
+      t['Ciudad'] ? `Ciudad: ${t['Ciudad']}.` : '',
+      t['Estatura (cm)'] ? `Estatura: ${t['Estatura (cm)']} cm.` : '',
+      t['Notas'] || '',
+    ].filter(Boolean).join(' ');
+
+    const sr = await afetch(api('Solicitudes'), {
+      method: 'POST', headers: wH,
+      body: JSON.stringify({ typecast: true, fields: {
+        // Si Luis no escribió el modelo, el ticket igual nace: es mejor una cola
+        // con un ticket incompleto que un encargo perdido. Queda visible que
+        // falta el dato y se completa llamando de vuelta.
+        'Modelo buscado': modelo || '(por confirmar con el cliente)',
+        'Estado': 'Llamada pendiente',
+        'Origen': 'Manual',
+        'Fecha': today,
+        'Lead': [leadId],
+        ...(t['Teléfono'] ? { 'Contacto': t['Teléfono'] } : {}),
+        ...(notas ? { 'Notas': notas.slice(0, 2000) } : {}),
+      } }),
+    });
+    if (sr.ok) {
+      solicitudId = (await sr.json()).id;
+    }
+    // Si falla, no se aborta: el mensaje al cliente igual debe salir. El campo
+    // `Solicitud` queda vacío y el próximo disparo lo reintenta.
+  }
+
   // 4) EL MENSAJE. Best-effort: si falla, el lead ya quedó bien escrito y la
   //    respuesta dice por qué — el error NO muere en silencio.
   const MC_TOKEN = env.MANYCHAT_TOKEN || env.MC_TOKEN || '';
@@ -190,6 +232,9 @@ export async function onRequestPost({ request, env }) {
   const updTicket = {};
   if (cfg.estadoTicket && t['Estado'] !== cfg.estadoTicket) updTicket['Estado'] = cfg.estadoTicket;
   if (mensaje === 'enviado' || mensaje === 'sin_mensaje_por_diseño') updTicket['Aviso salida enviado'] = now;
+  // El link cierra el circuito y a la vez es la guarda: mientras esté vacío, un
+  // reintento vuelve a crear el ticket de búsqueda; una vez escrito, nunca más.
+  if (solicitudId) updTicket['Solicitud'] = [solicitudId];
   if (Object.keys(updTicket).length) {
     await afetch(`${api('Llamados')}/${llamadoId}`, {
       method: 'PATCH', headers: wH,
@@ -201,6 +246,7 @@ export async function onRequestPost({ request, env }) {
     permisoPropagado: upd['Opt-in WhatsApp'] === true,
     visitaCopiada: !!upd['Fecha visita'],
     estadoLead: upd['Estado'] || null,
-    estadoTicket: updTicket['Estado'] || null });
+    estadoTicket: updTicket['Estado'] || null,
+    solicitudCreada: solicitudId });
 }
 // Sólo POST.

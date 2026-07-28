@@ -85,9 +85,15 @@ cron-sourcing avisa por WhatsApp a Roberto y Alfonso
 cuando la bici entra → `reactivacion_stock` al cliente
 ```
 
-⚠️ **Falta construir el primer eslabón:** hoy `salida-llamado` manda el mensaje pero **no crea
-el registro en `Solicitudes`**. Sin eso el encargo muere en el Kanban y nunca llega a la cola
-de sourcing. Es el único cambio de código que este rediseño agrega.
+✅ **La cadena está completa (2026-07-27).** `salida-llamado` crea el registro en `Solicitudes`
+con lo que Luis anotó, lo enlaza de vuelta al ticket y lo deja en la cola de sourcing.
+
+**Lo que Luis tiene que llenar** al marcar esta salida: el campo **`Modelo buscado`** del
+ticket. Si lo deja vacío el encargo igual nace, marcado como `(por confirmar con el cliente)`
+— es mejor una cola con un ticket incompleto que un encargo perdido.
+
+El link `Solicitud` del ticket es a la vez trazabilidad y **guarda anti-duplicado**: mientras
+esté vacío un reintento vuelve a crear el ticket; una vez escrito, nunca más.
 
 ## 5 · La vista de los dueños
 
@@ -117,7 +123,7 @@ es para **trabajar**, no para archivar.
 |---|---|---|
 | 1 | Agregar **`Llamada pendiente`** y **`No contestado`** a las opciones de `Salida` | Airtable, a mano (la API no agrega opciones) |
 | 2 | Crear la página Kanban sobre `Llamados`, agrupada por `Salida` | Se puede crear por API |
-| 3 | Que `salida-llamado` **cree el registro en `Solicitudes`** cuando la salida es Encargo | Código — **pendiente** |
+| 3 | ~~Que `salida-llamado` cree el registro en `Solicitudes`~~ | ✅ **hecho 2026-07-27** (probado) |
 | 4 | ~~Que `salida-llamado` sincronice `Estado`~~ | ✅ **hecho 2026-07-27** (probado) |
 | 5 | Crear la pantalla de **Solicitudes** (cola de sourcing) | Se puede crear por API |
 | 6 | Confirmar que **Luis tiene asiento con permiso de edición** | Airtable — **bloqueante** |

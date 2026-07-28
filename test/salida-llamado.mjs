@@ -13,10 +13,11 @@ const ENV = {
 };
 
 function mockFetch({ ticket, lead }) {
-  const calls = { patchLead: null, patchTicket: null, sendFlow: [], setField: [] };
+  const calls = { patchLead: null, patchTicket: null, sendFlow: [], setField: [], nuevaSolicitud: null };
   globalThis.fetch = async (url, opts = {}) => {
     const u = String(url), m = opts.method || 'GET';
     const body = opts.body ? JSON.parse(opts.body) : null;
+    if (u.includes('/Solicitudes') && m === 'POST') { calls.nuevaSolicitud = body.fields; return new Response(JSON.stringify({ id: 'recSOLI' }), { status: 200 }); }
     if (u.includes('/Llamados/') && m === 'GET') return new Response(JSON.stringify({ fields: ticket }), { status: 200 });
     if (u.includes('/Leads/') && m === 'GET')    return new Response(JSON.stringify({ fields: lead }), { status: 200 });
     if (u.includes('/Inventario/') && m === 'GET') return new Response(JSON.stringify({ fields: { Modelo: 'Levo SL S-Works' } }), { status: 200 });
@@ -135,5 +136,39 @@ const check = (ok, msg, extra) => { console.log((ok ? 'OK   ' : 'FALLO') + ' · 
   check(out.mensaje === 'enviado', 'usa MANYCHAT_TOKEN (no MC_TOKEN, que no existe en Cloudflare)', out);
 }
 
-console.log(fail === 0 ? `\nTODAS OK (${23} aserciones)` : `\n${fail} FALLOS`);
+// 13 · Encargo → nace el ticket de búsqueda y queda enlazado (cierra el circuito)
+{
+  const { out, calls } = await run(
+    { Salida: 'Encargo de búsqueda', 'Permiso WhatsApp': true, Lead: ['recL'],
+      'Modelo buscado': 'Levo SL2 talla S3', 'Teléfono': '+56912345678',
+      Ciudad: 'Ñuñoa', 'Estatura (cm)': 178, Notas: 'Busca hasta $6M' },
+    { ...LEAD_BASE });
+  check(!!calls.nuevaSolicitud, 'encargo: CREA el ticket en Solicitudes', out);
+  check(calls.nuevaSolicitud?.['Modelo buscado'] === 'Levo SL2 talla S3', 'encargo: copia qué busca', calls.nuevaSolicitud);
+  check(calls.nuevaSolicitud?.['Contacto'] === '+56912345678', 'encargo: copia el teléfono', calls.nuevaSolicitud);
+  check(calls.nuevaSolicitud?.['Estado'] === 'Llamada pendiente', 'encargo: entra a la cola de sourcing', calls.nuevaSolicitud);
+  check(/Ñuñoa/.test(calls.nuevaSolicitud?.['Notas'] || ''), 'encargo: arrastra ciudad y contexto a las notas', calls.nuevaSolicitud);
+  check(calls.patchTicket?.['Solicitud']?.[0] === 'recSOLI', 'encargo: enlaza el ticket de vuelta', calls.patchTicket);
+  check(out.solicitudCreada === 'recSOLI', 'encargo: lo reporta en la respuesta', out);
+}
+// 14 · Guarda anti-duplicado: si ya tiene Solicitud, no crea otra
+{
+  const { calls } = await run(
+    { Salida: 'Encargo de búsqueda', 'Permiso WhatsApp': true, Lead: ['recL'],
+      'Modelo buscado': 'Epic 8', Solicitud: ['recYA'] }, { ...LEAD_BASE });
+  check(calls.nuevaSolicitud === null, 'encargo repetido: NO crea una segunda solicitud', calls.nuevaSolicitud);
+}
+// 15 · Sin modelo escrito, el ticket igual nace (mejor incompleto que perdido)
+{
+  const { calls } = await run(
+    { Salida: 'Encargo de búsqueda', 'Permiso WhatsApp': true, Lead: ['recL'] }, { ...LEAD_BASE });
+  check(calls.nuevaSolicitud?.['Modelo buscado'] === '(por confirmar con el cliente)', 'encargo sin modelo: nace igual, marcado', calls.nuevaSolicitud);
+}
+// 16 · Las otras salidas NO crean solicitud
+{
+  const { calls } = await run({ Salida: 'Visita agendada', 'Permiso WhatsApp': true, Lead: ['recL'] }, { ...LEAD_BASE });
+  check(calls.nuevaSolicitud === null, 'visita: no toca la cola de sourcing', calls.nuevaSolicitud);
+}
+
+console.log(fail === 0 ? `\nTODAS OK (${33} aserciones)` : `\n${fail} FALLOS`);
 process.exit(fail === 0 ? 0 : 1);
