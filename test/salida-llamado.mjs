@@ -179,6 +179,28 @@ const check = (ok, msg, extra) => { console.log((ok ? 'OK   ' : 'FALLO') + ' · 
   check(/Ñuñoa/.test(calls.nuevaSolicitud?.['Notas'] || ''), 'encargo: arrastra ciudad y contexto a las notas', calls.nuevaSolicitud);
   check(calls.patchTicket?.['Solicitud']?.[0] === 'recSOLI', 'encargo: enlaza el ticket de vuelta', calls.patchTicket);
   check(out.solicitudCreada === 'recSOLI', 'encargo: lo reporta en la respuesta', out);
+  // El mensaje debe nombrar lo que la persona BUSCA, no la bici del reel: en un
+  // encargo justamente NO tenemos esa unidad. Decirle «te avisamos cuando llegue
+  // la Levo» a quien pidió una Epic es el peor error posible en este mensaje.
+  const gm = (n) => calls.setField.find(f => f.field_name === n)?.field_value;
+  check(gm('cf_modelo') === 'Levo SL2 talla S3', 'encargo: cf_modelo = lo que BUSCA', calls.setField);
+  check(gm('cf_bici') === 'Levo SL2 talla S3', 'encargo: cf_bici va con el mismo valor', calls.setField);
+}
+// 13-bis · En un encargo SIN modelo anotado, el copy no queda cojo
+{
+  const { calls } = await run(
+    { Salida: 'Encargo de búsqueda', Lead: ['recL'], 'Teléfono': '+56911111111',
+      'Bici de interés': ['recB'] }, { ...LEAD_BASE });
+  const gm = (n) => calls.setField.find(f => f.field_name === n)?.field_value;
+  check(gm('cf_modelo') === 'la bici que buscas', 'encargo sin modelo: fallback legible, NO la bici del reel', calls.setField);
+}
+// 13-ter · En visita SÍ manda la bici del reel (no hay «modelo buscado»)
+{
+  const { calls } = await run(
+    { Salida: 'Visita agendada', Lead: ['recL'], 'Teléfono': '+56911111111',
+      'Fecha y hora de visita': '2026-07-30T18:30:00.000Z', 'Bici de interés': ['recB'] }, { ...LEAD_BASE });
+  const gm = (n) => calls.setField.find(f => f.field_name === n)?.field_value;
+  check(gm('cf_modelo') === 'Levo SL S-Works', 'visita: cf_modelo = la bici real', calls.setField);
 }
 // 14 · Guarda anti-duplicado: si ya tiene Solicitud, no crea otra
 {
@@ -199,5 +221,5 @@ const check = (ok, msg, extra) => { console.log((ok ? 'OK   ' : 'FALLO') + ' · 
   check(calls.nuevaSolicitud === null, 'visita: no toca la cola de sourcing', calls.nuevaSolicitud);
 }
 
-console.log(fail === 0 ? `\nTODAS OK (${39} aserciones)` : `\n${fail} FALLOS`);
+console.log(fail === 0 ? `\nTODAS OK (${43} aserciones)` : `\n${fail} FALLOS`);
 process.exit(fail === 0 ? 0 : 1);

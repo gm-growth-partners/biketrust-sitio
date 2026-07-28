@@ -252,15 +252,28 @@ export async function onRequestPost({ request, env }) {
     mensaje = 'sin_subscriber_id';
   } else {
     try {
-      // La plantilla imprime cf_bici; se puebla antes de disparar el flujo.
-      // El link devuelve ids, no nombres → hay que leer la bici para el modelo.
-      let biciNombre = '';
-      const biciId = linkId(t['Bici de interés']);
-      if (biciId) {
-        const br = await afetch(`${api('Inventario')}/${biciId}`, { headers: rH });
-        if (br.ok) { const bf = (await br.json()).fields || {}; biciNombre = bf.Modelo || bf.Etiqueta || ''; }
+      // Las plantillas imprimen el modelo con nombres distintos: las de visita
+      // usan {cf_bici} y `encargo_recibido` usa {cf_modelo}. Se escriben LOS DOS
+      // con el mismo valor para que cada plantilla encuentre el suyo.
+      //
+      // ⚠️ QUÉ modelo va NO es lo mismo en todas las salidas. En un encargo la
+      // persona quiere algo que NO tenemos: nombrar la bici del reel sería
+      // escribirle «te avisamos cuando llegue la Levo» cuando pidió una Epic.
+      // Por eso el encargo usa `Modelo buscado` y el resto la bici de interés.
+      let modelo = '';
+      if (salida === 'Encargo de búsqueda') {
+        modelo = String(t['Modelo buscado'] || '').trim();
+      } else {
+        // El link devuelve ids, no nombres → hay que leer la bici para el modelo.
+        const biciId = linkId(t['Bici de interés']);
+        if (biciId) {
+          const br = await afetch(`${api('Inventario')}/${biciId}`, { headers: rH });
+          if (br.ok) { const bf = (await br.json()).fields || {}; modelo = bf.Modelo || bf.Etiqueta || ''; }
+        }
       }
-      await mcSetField(MC_TOKEN, sid, 'cf_bici', (biciNombre || 'tu bici').slice(0, 200));
+      const modeloTxt = (modelo || 'la bici que buscas').slice(0, 200);
+      await mcSetField(MC_TOKEN, sid, 'cf_bici', modeloTxt);
+      await mcSetField(MC_TOKEN, sid, 'cf_modelo', modeloTxt);
       if (cfg.copiaVisita && t['Fecha y hora de visita']) {
         await mcSetField(MC_TOKEN, sid, 'cf_fecha_visita', String(t['Fecha y hora de visita']).slice(0, 60));
       }
