@@ -1,24 +1,57 @@
 # CLAUDE.md — Bike Trust · Guía de sistema y trabajo
 
 > Este archivo lo lee Claude Code automáticamente al iniciar sesión en este repo.
-> Es la **memoria viva del proyecto**: estado, arquitectura, errores ya cometidos (para NO repetirlos) y cómo debe trabajar Claude. **Léelo completo antes de actuar.** Idioma de trabajo: **español**.
-> Última actualización: **2026-07-20** (decisión Ailoo = ERP central; ver banner §2).
+> Es la **memoria viva del proyecto**. Idioma de trabajo: **español**.
+> Última actualización: **2026-07-27** (rediseño V2: el embudo apunta a la llamada).
+
+## 🧭 EMPIEZA ACÁ
+
+**El sistema está a mitad de un rediseño (V2).** Antes de tocar nada, ubícate:
+
+| Si necesitas… | Lee |
+|---|---|
+| **Entender qué pasó y por qué** (decisiones ya tomadas — no re-discutirlas) | [`CHANGELOG.md`](CHANGELOG.md) ← **partir por acá** |
+| El estado de cada pieza y qué falta | §2 de este archivo |
+| **El diseño V2** (qué se está construyendo ahora) | [`MANYCHAT_REBUILD.md`](MANYCHAT_REBUILD.md) §0.5–0.7 |
+| La pantalla de Luis (Kanban) | [`docs/V2_OPERACION_KANBAN.md`](docs/V2_OPERACION_KANBAN.md) |
+| El copy exacto de la puerta de comentarios | [`docs/V2_PLANTILLA_COMENTARIOS.md`](docs/V2_PLANTILLA_COMENTARIOS.md) |
+| El copy de la puerta de DM + anti-bucle | [`docs/V2_PLANTILLA_DM.md`](docs/V2_PLANTILLA_DM.md) |
+| Qué mensaje sale en cada salida de la llamada | [`docs/V2_SALIDAS_LLAMADA.md`](docs/V2_SALIDAS_LLAMADA.md) |
+| Qué dice Luis por teléfono | [`docs/V2_GUION_LLAMADA.md`](docs/V2_GUION_LLAMADA.md) |
+| Modelo de datos, endpoints, gotchas | §3–§5 de este archivo |
+| Cómo trabajar este repo (expectativas del usuario) | §7 de este archivo |
+| El embudo V1 (**histórico** — la capa conversacional está en retiro) | [`EMBUDO.md`](EMBUDO.md) |
+
+> ⚠️ **`EMBUDO.md` §4 y §10 describen la capa ManyChat V1, que se está reemplazando.**
+> Sus contratos de endpoints (§5), la máquina de estados (§3) y la operación por reel (§6)
+> **siguen vigentes**. El resto se lee como histórico.
 
 ---
 
 ## 1. Qué es el sistema
 
-Bike Trust vende bicicletas **Specialized usadas, premium y certificadas** (Santiago, Chile). El sistema V1 tiene 3 frentes:
+Bike Trust vende bicicletas **Specialized usadas, premium y certificadas** (Santiago, Chile).
 
 - **Web** (capa de confianza): sitio estático generado desde Airtable, en Cloudflare Pages.
-- **Backend / CRM** (la "espina"): **Airtable es la única fuente de verdad**. Inventario, Leads, Intereses, Reservas, Reels.
-- **Funnel** (Instagram + ManyChat): V1 EN VIVO desde 2026-07-10 (P1+P2+WhatsApp; S30 = 31 leads reales). Capa conversacional **en reconstrucción V2** — intención en vez de menú, toda ruta converge en agenda (ver `MANYCHAT_REBUILD.md` §0.5–0.7). Es lo que llena el CRM.
+- **Backend / CRM** (la "espina"): **Airtable es la única fuente de verdad**. Inventario, Leads, Intereses, Reservas, Reels, Llamados, Solicitudes, Consignaciones.
+- **Funnel** (Instagram + ManyChat): V1 EN VIVO desde 2026-07-10. **Capa conversacional en reconstrucción (V2)**.
+- **Tablero de reporte**: app separada (repo `biketrust-tablero`), solo lectura.
 
 **Principio rector:** todo lee/escribe en Airtable. Nada guarda su propia copia.
 
+**El embudo V2 en una línea:**
+```
+comentario/DM → el bot entrega valor (puntaje · estado honesto · ahorro)
+              → pide el TELÉFONO  → ticket → aviso a Luis
+              → Luis llama y arrastra la tarjeta a una de 5 salidas
+              → sale el mensaje automático que corresponde
+```
+El objetivo del bot es **el teléfono**, no la visita. La visita la cierra Luis en la llamada.
+Meta del dueño: **20–30 % de los leads entregan teléfono** (semana 30 = 3 %).
+
 ---
 
-## 2. Estado actual (2026-07-07)
+## 2. Estado actual (2026-07-27)
 
 | Frente | Estado |
 |---|---|
@@ -53,7 +86,7 @@ Bike Trust vende bicicletas **Specialized usadas, premium y certificadas** (Sant
 
 ## 3. Arquitectura y datos técnicos
 
-- **Repo:** github.com/gm-growth-partners/biketrust-sitio (rama `main`, auto-deploy on push). Carpeta local: `C:\Users\Gabriel\Desktop\GM Growth Partners\Clientes\2. biketrust.cl\Estrategia\2. Fragua\github` (ojo: la carpeta cliente es **`2. biketrust.cl`** con prefijo numérico).
+- **Repo:** github.com/gm-growth-partners/biketrust-sitio (rama `main`, auto-deploy on push). El repo hermano del tablero es `biketrust-tablero`, y en disco vive como carpeta gemela de esta.
 - **Build:** `build.mjs` (Node, sin dependencias, `fetch` nativo). Lee la vista **Disponibles** de **Inventario** y genera `/dist` (catálogo + ficha por bici + ficha técnica imprimible + SEO).
 - **Airtable:** base `appQUgk8aeD752923` ("Biketrust Operaciones").
 - **Pages Functions** (lado servidor; leen con `AIRTABLE_TOKEN`, escriben con `AIRTABLE_WRITE_TOKEN`):
@@ -67,6 +100,8 @@ Bike Trust vende bicicletas **Specialized usadas, premium y certificadas** (Sant
   - `functions/api/mc-waitlist.js` — **Puerta 2 (Consíganmela)**: crea el **ticket de búsqueda** en `Solicitudes` (modelo/talla/presupuesto/notas, Estado=Nueva, Origen=Bot DM, link Lead) + teléfono/opt-in en el Lead + marca `Encargo`=✓ en el Interés No-match + aviso al staff (por fases). POST. Verificado E2E. Protegida por env opcional `MC_KEY`.
   - `functions/api/mc-llamado.js` — **Puerta 2 (región)**: ticket de LLAMADO en tabla `Llamados` para leads fuera de Santiago (ciudad/franja/bici de interés/teléfono). **NO escribe `Fecha visita`** (no dispara recordatorios). Aviso al staff por fases. POST. Verificado E2E.
   - **Avisos al staff multi-destinatario (todos por fases hasta que Meta apruebe):** `AVISO_CONSIGNA_SIDS` / `AVISO_SOLICITUD_SIDS` / `AVISO_LLAMADO_SIDS` / `AVISO_REAGENDO_SIDS` / `BRIEFING_SIDS` = ids de ManyChat separados por coma, fallback `LUIS_SUBSCRIBER_ID`. Luis=`579628082` · Roberto=`302195575`. mc-agenda además avisa el **reagendo del mismo día** (`FLOW_NS_REAGENDO`).
+  - `functions/api/salida-llamado.js` — **motor de POST-LLAMADA (V2)**. Lo dispara Airtable cuando Luis mueve la tarjeta en el Kanban. Hace tres cosas que antes no hacía nadie: (1) **propaga el permiso** del ticket al Lead — los crons filtran por `Leads.Opt-in WhatsApp`, así que sin este puente el motor de recordatorios devuelve 0 **sin dar error**; (2) **copia la visita agendada por teléfono** a `Leads.Fecha visita` y limpia los sellos de recordatorio; (3) dispara la plantilla que corresponde a la salida, con sello de idempotencia. POST, protegido por `MC_KEY`.
+  - `functions/api/cron-sourcing.js` — barrido que avisa a Roberto y Alfonso los encargos que pasan a `Buscando`. **Es un cron, NO una automatización de Airtable** (esas son limitadas y se pagan). Lo llama el worker cada 15 min.
   - **Gotcha API (nuevo):** el GET de **un registro único** (`/Tabla/{recId}`) **NO acepta `?fields[]=`** (da 422); eso solo va en el endpoint de LISTADO. Leer el registro completo.
 - **Tokens (SOLO env, NUNCA en repo):** `AIRTABLE_TOKEN` (read) y `AIRTABLE_WRITE_TOKEN` (write) en Cloudflare. Para que Claude trabaje datos/esquema por API hay un **PAT en `.dev.vars`** (gitignored) como `AIRTABLE_PAT`. **El PAT se pegó una vez en el chat — conviene rotarlo.**
 
@@ -79,13 +114,19 @@ Bike Trust vende bicicletas **Specialized usadas, premium y certificadas** (Sant
 ## 4. Modelo de datos (lo esencial — NO renombrar campos sin avisar; alimentan web y funnel)
 
 - **Inventario** (la bici): primario `Etiqueta` (fórmula Marca+Modelo+Talla). `Estado` (single select): `Borrador · En reacondicionamiento · Disponible · Reservada · Vendida` (solo `Disponible` se publica). Campos de ficha: Marca, Modelo, Año, Motorización, Disciplina, Talla, Precio, Precio nuevo, Puntaje certificación, Diag·(km/batería/ciclos), Specs clave, Geometría, Estado honesto, Por qué amarla, Rango altura, Material cuadro, Referencia, **Fotos galería** (campo único de fotos). Counts (rollup): Interesados, Recibió ficha, Agendaron, Cerraron. `Fecha venta`. ⚠️ Inventario **NO** tiene campo `DEMO` (solo Leads/Intereses lo tienen) — las bicis de prueba se siembran y borran **por id**.
+- **Etapa «teléfono» del embudo V2 (2026-07-27):** en **Leads**, `Fecha teléfono` (dateTime, la sella `mc-llamado` UNA sola vez) + `Llegó a teléfono` (fórmula 1/0 derivada de esa fecha, **no del Estado**, para que no pueda retroceder). Es la **métrica #1 del negocio** y la lee el tablero.
 - **Leads** (la persona): **primario `Lead`** = fórmula `IF({Nombre},{Nombre},IF({Email},{Email},IF({@handle IG},"@"&{@handle IG},"Sin nombre")))`. `Estado` = máquina de 13 estados (`nuevo → ficha_entregada / quiz_iniciado → quiz_abandonado / match_entregado / no_match → visita_agendada → visita_confirmada → no_show / visitó → cerró`; terminales `muerto`, `descartado`). `Canal origen` (opciones reales: `Comentario IG`/`DM IG`/`Quiz`/`Messenger`/`WhatsApp`/`Web`/`Tienda` — `WhatsApp` es opción colada, limpiar manual), **`@handle IG`** (usuario IG sin @, identificador de dedup del funnel — lo usan `mc-lead`/`mc-evento`), `Temperatura`, `WhatsApp`, `Email`, fechas (`Fecha primer contacto`, `Fecha última interacción`, **`Fecha visita`** dateTime, **`Fecha cierre`**), flags 1/0 (`Llegó a ficha/agendó/confirmó/visitó/cerró`), `¿Suelto?` (fórmula reenganche >3 días), `Valor potencial` (rollup SUM), `RecID` (RECORD_ID()), **`Bici comprada`** (link a Inventario, single — la bici que se llevó), **`Registrar venta`** (botón Open URL → `/api/registrar-venta`), links Intereses/Reservas, `DEMO`.
 - **Intereses** (lead↔bici): primario `Interés ID` (autonumber). `Origen` (Puerta 1/Puerta 2/Web (ficha)), `Resultado` (Ficha entregada/Match/No-match/Agendó/Cerró), links Lead/Bici/Reel/Reservas, `Precio Bici` (lookup Bici→Precio), `DEMO`.
 - **Reservas**: campos que escribe la web (Nombre, Email, Teléfono, Fecha, Hora, Modelos, Modelos Slug, **Bici IDs**, Origen=Web, Estado=Nueva) + links Leads/Intereses.
 - **Reels** (`tbloabbormHNCAWv1`, mapa Post ID → bici): primario `Post ID Instagram` (el **shortcode** de la URL, ej. `DbCLcpEB4aT` de `instagram.com/p/DbCLcpEB4aT/`), `Palabra clave` (la que el caption pide comentar; es el título que muestra el tablero), `Tipo` (`Ficha-modelo`/`Marca-autoridad`/`General`), `Fecha publicación`, link `Bici`, link inverso `Intereses`. La leen `mc-evento` y `mc-llamado` para resolver la bici del reel comentado. **6 filas al 2026-07-27** — `DbCLcpEB4aT` Epic 8 Pro · `DZ1O3ViO2Qz` Levo 4G S-Works · `Dad9A_zJy0D` Levo SL2 S-Works · `DbQjdNLBmnv` Creo (Creo SL S-Works) · `DbEh9fBI9Np` SL (Levo SL S-Works) · `DbJy7ynB5T4` Ruta (VS Tarmac/Creo, **sin `Bici` a propósito**: deriva al quiz, y enlazar una bici haría que `mc-evento` la forzara). ⚠️ Una fila acá **no basta**: ManyChat no expone el Post ID comentado, así que cada post necesita su propia automatización mandando su shortcode en `reel` (ver `EMBUDO.md` §6). Sin eso el Interés nace sin `Reel` y el tablero no lo atribuye a ningún video.
 - **Consignaciones** (`tblQTsCHnf8ebO2T1`, rama Vender de Puerta 2): Modelo, Año, Talla, Estado bici, Precio esperado, Contacto, Fotos, `Estado` (`Nueva/En evaluación/Aceptada/Rechazada`), Fecha, Notas, link `Lead`. La escribe `mc-consigna`.
 - **Solicitudes** (`tblHnU7eHyhlbxyGM`, tickets de búsqueda «Consíganmela»): primario `Modelo buscado`, Motorización, Disciplina, Talla, Presupuesto (currency), Notas, `Estado` (`Llamada pendiente/Buscando/Conseguida/Cerrada`), Fecha, Contacto, `Origen` (`Bot DM/Manual`), link `Lead`. La escribe `mc-waitlist` (bot) y el staff por formulario (manual). Es la cola de sourcing. **Cerrada = cuando el cliente COMPRA.**
-- **Llamados** (`tblgApNKo9YiqPalw`, tickets de llamado para región): primario `Nombre`, Teléfono, Ciudad, `Franja` (`Mañana/Tarde`), `Bici de interés` (link), `Estado` (`Llamada pendiente/Llamado/Cerrada`), Fecha, `Origen`, Notas, link `Lead`. La escribe `mc-llamado` (acepta `bici` recId o `reel` Post ID → `Reels.Bici`).
+- **Llamados** (`tblgApNKo9YiqPalw`) — ⚠️ **con el V2 dejó de ser «tickets de región» y pasó a ser LA COLA CENTRAL del embudo**: todo lead que entrega su teléfono cae acá. Es la pantalla donde trabaja Luis (Kanban por `Salida`).
+  - **Identidad:** primario `Nombre`, `Teléfono`, `Ciudad`, `Bici de interés` (link), `Lead` (link), `Notas`, `Origen`, `Fecha`, `Franja`, `Llamar el`.
+  - **El brief de la llamada** (lookups automáticos vía `Bici de interés`): `Puntaje` · `Rango altura bici` · `Precio bici` · `Estado bici`. Luis no los llena: se pueblan solos.
+  - **Lo que registra Luis:** **`Salida`** (el campo que gobierna el Kanban y dispara los mensajes) · `Estatura (cm)` · `Permiso WhatsApp` (⚠️ el consentimiento: sin esto marcado NO se le escribe) · `Fecha y hora de visita` · `Próximo paso` · `Intentos`.
+  - **Instrumentación:** `Creado`, `Fecha primera llamada`, `_ahora`, **`Espera (min)`** (minutos exactos entre ticket y primera llamada — la métrica de velocidad), **`Aviso salida enviado`** (sello de idempotencia del mensaje automático).
+  - La escribe `mc-llamado` (acepta `bici` recId o `reel` Post ID → `Reels.Bici`) y la lee/actualiza `salida-llamado`.
 - **Estado "Llamada pendiente"** (renombrado desde "Nueva" 2026-07-09, en Solicitudes Y Llamados): un ticket del bot nace ahí = **Luis debe llamar**; tras llamar lo mueve (Llamados → `Llamado`; Solicitudes → `Buscando`). Los endpoints escriben ese nombre literal (typecast) — NO renombrar la opción sin tocar `mc-llamado.js`/`mc-waitlist.js`.
 - **Instrumentación del Tablero A3 (2026-07-17, NO borrar):** campos agregados por el tablero de reporte — en **Solicitudes** y **Llamados**: `Creado` (`=CREATED_TIME()`), `Fecha primera llamada` (dateTime), `_ahora` (`=LAST_MODIFIED_TIME({Estado})`); en **Leads**: `Cuestionario iniciado` (checkbox). Los alimentan **3 automatizaciones** (*When record matches conditions*): sello de la 1ª llamada al salir de «Llamada pendiente» (una en Solicitudes, otra en Llamados → copian `_ahora` a `Fecha primera llamada`) y marca de `Cuestionario iniciado` al llegar a `Estado=quiz_iniciado`. Solo los usa el tablero; **no romperlos**. Para que el cuestionario cuente inicios, **ManyChat debe emitir el evento `quiz_iniciado`** (a `mc-evento`) al empezar el quiz (hoy `mc-match` salta directo a match/no-match).
 - **Rating/puntaje de certificación: escala 1 a 7** (decisión reunión 2026-07-08; bajo 4 no se recibe). El formato de carga en Ailoo está en `…/2. Fragua/Formato_descripcion_bicicletas_Ailoo.docx`.
@@ -95,7 +136,13 @@ Bike Trust vende bicicletas **Specialized usadas, premium y certificadas** (Sant
 ## 5. ⚠️ ERRORES COMETIDOS Y LECCIONES (NO repetir)
 
 1. **Omni (IA de Airtable) es POCO confiable.** Se sobre-complica: agrega gráficos/páginas/filtros que NO se pidieron, **finge** lógica condicional (escribe la descripción pero no aplica la condición real), pierde páginas de formulario, duplica páginas, agrupa por el campo equivocado. → **Dale prompts pequeños, de una sola acción a la vez; verifica después de cada uno; para lógica condicional / visibilidad de campos / orden, hazlo o guíalo MANUAL.** No confíes en que Omni acertó: pide captura y revisa.
-2. **El API de Airtable NO crea lookup ni rollup** (`UNSUPPORTED_FIELD_TYPE_FOR_CREATE`), **no cambia el tipo** de un campo, **no borra** campos, **no agrega/quita opciones de select** (solo `typecast:true` crea opciones al escribir un registro), y **no toca Interfaces/Form views/Automatizaciones**. → Eso es Omni o manual. (Ver sección 7.)
+2. **Qué puede y qué no puede el API de Airtable** — ⚠️ CORREGIDO 2026-07-27, la versión vieja de esta nota era falsa y costó tiempo:
+   - ✅ **SÍ crea** campos `multipleLookupValues` (lookup), `rollup`, `formula`, `count`, selects, fechas, checkboxes… (verificado creando 15 campos).
+   - ✅ **SÍ crea páginas de interfaz** (`create_page`) y las publica. No hay que armarlas a mano.
+   - ✅ **SÍ edita la fórmula** de un campo existente (PATCH sin cambiar su id → las automatizaciones que lo referencian siguen intactas).
+   - ❌ **NO agrega ni quita opciones a un select existente** (solo `typecast:true` crea opciones al escribir un registro).
+   - ❌ **NO borra campos** ni cambia el tipo de uno existente.
+   - ❌ **NO toca Automatizaciones** (eso sigue siendo manual u Omni).
 3. **Cloudflare bloquea scripts (error 1010/403).** Pegarle a la función en vivo (`/api/reservar`) desde python/curl da 403 por bot. → **Manda header `User-Agent` de navegador** (Mozilla/5.0…).
 4. **Nombres de campo EXACTOS importan — verifica antes de diagnosticar.** Falsos diagnósticos por mismatches: `Reservas` (plural, no `Reserva`), `Precio Bici` (B mayúscula), `' Valor potencial'` (espacio inicial). → Lee el esquema real por API (`meta/bases/.../tables`) y usa el nombre literal antes de concluir que "algo falla".
 5. **Repo git anidado accidental:** `C:\Users\Gabriel` es un repo git por error; `biketrust-sitio` es repo propio anidado. → **Verifica `git rev-parse --show-toplevel` antes de commitear.**
@@ -135,17 +182,30 @@ Bike Trust vende bicicletas **Specialized usadas, premium y certificadas** (Sant
 
 ## 8. Pendientes / próximos pasos
 
-**0. FOCO ACTUAL (2026-07-01, pedido de los dueños): cerrar el embudo ManyChat al 100%, todo lo demás en segundo plano.**
-   - Día 3 (contrato + `/api/mc-lead` + `/api/mc-evento`) ✅ CERRADO, ver `PLAN_embudo.md`.
-   - **Siguiente: Día 4 — Puerta 1.** En ManyChat (ya conectado a IG/Meta Business): trigger de comentario/DM en un reel "Ficha-modelo" → responde por DM con la ficha (imagen+link de la bici) → **External Request** POST a `/api/mc-lead` (`handle`, `canal="Comentario IG"` o `"DM IG"`) y luego a `/api/mc-evento` (`lead` o `handle`, `estado="ficha_entregada"`, `origen="Puerta 1 (reel/comentario)"`, `resultado="Ficha entregada"`, `reel`=Post ID Instagram del reel comentado — el endpoint resuelve la bici solo vía `Reels.Bici`). Registro en `Reels` por cada reel real (Post ID + Tipo + link a la bici): ✅ hecho para los 6 posts con automatización (2026-07-27). **Falta**: armar el flujo visual en ManyChat y, sobre todo, que **cada automatización nueva mande su `reel`** — al 2026-07-27, los 26 Intereses de Puerta 1 tienen `Reel` (los 3 restantes son de Puerta 2, donde no aplica): 13 de ellos nacieron huérfanos y se recuperaron **leyendo los comentarios públicos de cada post** (Epic 13 · Levo SL 9 · Creo 3 · Levo 4G 1). La revisión destapó además 5 comentaristas interesados que no están en el CRM — fueron respondidos a mano en los comentarios (confirmado por Gabriel para @klaudioggavilan), pero quedaron sin registro ni seguimiento; registrarlos si siguen interesados. La atribución perdida SÍ es recuperable a mano: **los comentarios públicos del post** son la evidencia (así se rescataron los 13 el 2026-07-27) — pero es trabajo detective de una vez, no un proceso.
-   - ✅ `MC_KEY` seteada (2026-07-09): los 7 puentes protegidos, 401 sin key verificado.
+> **El foco actual está en §2, con una sola fecha.** Esta sección lista únicamente lo que
+> sigue vivo. Todo lo cumplido se movió a [`CHANGELOG.md`](CHANGELOG.md), que es donde vive
+> la historia — no la dupliques acá.
 
-1. **TERMINAR botón de venta en la Agenda (RETOMAR, pausado 2026-06-30):** probar edición inline de `Bici comprada` en la vista previa; elegir botón nativo (URL + campo `RecID`) o el botón-campo ya funcional; probar con DEMO antes de quitar el otro; dar permiso **Editar** al staff al compartir. (Detalle: memoria de Claude `project_biketrust_reporte_metricas.md`.)
-2. **Limpiar datos de prueba** — ✅ **HECHO 2026-07-27** (17 registros, autorizado por Gabriel): 6 Leads (3 `DEMO=1` «EJEMPLO — …», `@{{ig_username}}` de un merge tag sin resolver, y las 2 cuentas de prueba `@gabriel.matamala.mkt` / `@_.matamala`) · 6 Intereses (236, 206, 207, 217, 232, 233) · 1 fila vacía de `Reels` · 1 bici vacía de `Inventario` · 3 tickets vacíos de `Solicitudes`. **Se conservó `@matiasdittborn`, que es real.** Efectos a tener presentes: se fue el único Interés con `Resultado=Agendó`, así que el embudo del tablero ya no muestra esa etapa, y el reel `Dad9A_zJy0D` (Levo SL2) quedó con 0 interesados. `Reservas` y `Consignaciones` ya estaban vacías. Queda pendiente limpiar inconsistencias de facturación demo.
-3. **Pulidos menores:** colores de cards + botón "+ Nueva bici" en inventario; páginas Ventas (Intereses Cerró por lead + rollups `N° compras`/`Total comprado`).
-4. **Dominio `biketrust.cl`** → Cloudflare Pages + setear env `SITE_URL` (para que OG/canonical/sitemap usen el dominio real).
-5. **Walk-in** (venta sin lead) → UI/form mínima que pegue a `/api/registrar-venta` (POST).
-6. **Aviso diario al staff** (fase ManyChat): cada mañana ~8-9 AM, mensaje con las visitas de HOY (leads con `Fecha visita`=hoy).
-7. **Funnel ManyChat** (fase grande, desbloqueada): Puerta 1 (reel→ficha por DM), Puerta 2 (quiz), flujo central ManyChat↔Airtable (upsert por handle IG — agregar campo texto para el `@handle` e incluirlo en la fórmula del primario `Lead`), reenganche diario de sueltos, medición/pixel, imagen de ficha para el DM. Requiere ManyChat Pro + Meta Business. **Contrato que ManyChat debe cumplir** (o el reporte no funciona): cada lead nace con `Fecha primer contacto`, avanza `Estado` por valores canónicos, usa `Canal origen` canónico, deduplica por @handle.
+**Del rediseño V2** (lo que bloquea el lanzamiento — detalle en `docs/V2_PLAN_MIERCOLES.md`):
+1. **Horario de atención de Luis** — decisión de los dueños, pendiente. Bloquea la promesa de
+   hora en el bot y el formato de `AVISO_HORARIOS` (hoy no admite el martes libre).
+2. **Montar en ManyChat** las 2 puertas + duplicar ×6 la de comentarios.
+3. **Crear en Airtable**: las opciones `Llamada pendiente` y `No contestado` del campo
+   `Salida` (la API no agrega opciones a un select), el Kanban de Luis y la pantalla de
+   Solicitudes, más las 2 plantillas nuevas de WhatsApp (`region_gestionando`,
+   `llamada_no_contestada`).
+4. **Que `salida-llamado` cree el registro en `Solicitudes`** cuando la salida es Encargo —
+   sin eso el encargo muere en el Kanban y nunca llega a la cola de sourcing.
+5. **Confirmar que Luis tiene asiento con permiso de edición** en Airtable. Bloqueante.
+
+**Deuda anterior que sigue viva:**
+6. **Dominio `biketrust.cl`** → Cloudflare Pages + setear `SITE_URL` (para que OG, canonical
+   y sitemap usen el dominio real).
+7. **Walk-in** (venta sin lead) → form mínimo que pegue a `/api/registrar-venta`.
+8. **Rotar el PAT de Airtable** (se pegó una vez en un chat) y la `MC_KEY` (en el D1 de la V2).
+9. **Registrar a los 5 comentaristas que no están en el CRM** — fueron respondidos a mano en
+   los comentarios pero quedaron sin seguimiento (detalle en el CHANGELOG).
+10. **Limpiar inconsistencias de facturación demo** y las 2 opciones con nombre vacío del
+    campo `Estado` de Leads.
 
 > Documento maestro de diseño del funnel: `…/2. Fragua/airtable/BikeTrust_Diseno_Tecnico.docx` y la guía de Airtable en la misma carpeta.

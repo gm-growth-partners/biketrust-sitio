@@ -60,7 +60,7 @@ export async function onRequest({ request, env }) {
   const wH = { Authorization: `Bearer ${WRITE}`, 'Content-Type': 'application/json' };
   const now = new Date().toISOString();
 
-  const MC_TOKEN = env.MC_TOKEN || '';
+  const MC_TOKEN = env.MANYCHAT_TOKEN || env.MC_TOKEN || '';
   const FLOW = env.FLOW_NS_BUSCANDO || '';
   const SIDS = String(env.AVISO_SOURCING_SIDS || env.BRIEFING_SIDS || '')
     .split(',').map(s => s.trim()).filter(Boolean);

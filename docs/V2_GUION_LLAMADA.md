@@ -46,7 +46,7 @@ Dar primero lo que el bot prometió, sin pedir nada a cambio:
 | Vive en Santiago **y** la bici le sirve | **Visita agendada** | Día y hora concretos → `Fecha y hora de visita` |
 | Vive fuera de Santiago | **Coordinación región** | Video de la unidad + condiciones de despacho |
 | No tenemos lo que busca (talla, modelo o presupuesto) | **Encargo de búsqueda** | Qué busca, hasta cuánto, y que le avisamos al entrar |
-| No contestó tras el intento | **No contestado** | Sale solo el mensaje de rescate; el ticket sigue abierto |
+| No se pudo hablar con la persona | **No contestado** | Sale solo el mensaje de rescate; el ticket sigue abierto |
 | Contestó pero no hay nada que hacer | **Sin interés** | Anotar el motivo real en `Notas` |
 
 ## El cierre · obligatorio, nunca opcional

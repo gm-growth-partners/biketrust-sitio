@@ -320,7 +320,7 @@ Solo hay 10 cupos y no hay término medio (o keywords, o cualquier comentario). 
 
 ---
 
-## 8 · El ciclo «No contestó» (rescate automático)
+## 8 · El ciclo «No contestado» (rescate automático)
 
 Las 4 salidas que Luis marca en Airtable al colgar:
 
@@ -329,10 +329,10 @@ Las 4 salidas que Luis marca en Airtable al colgar:
 | `Agendamiento en tienda` | queda la visita → confirmación + recordatorios (ya en vivo) |
 | `Llamado de región` | coordinación a distancia |
 | `Encargo de búsqueda` | ticket en `Solicitudes` → aviso a Roberto y Alfonso al pasar a `Buscando` |
-| **`No contestó`** | **dispara mensaje automático + el ticket sigue abierto** |
+| **`No contestado`** | **dispara mensaje automático + el ticket sigue abierto** |
 
 ### La automatización
-Disparador: `Salida` cambia a **`No contestó`** → (1) envía el mensaje, (2) suma 1 a
+Disparador: `Salida` cambia a **`No contestado`** → (1) envía el mensaje, (2) suma 1 a
 `Intentos`, (3) **deja `Estado` en `Llamada pendiente`** — no contestar no cierra el ticket,
 solo lo devuelve a la cola.
 
@@ -366,7 +366,7 @@ un mensaje de servicio sobre algo que ella solicitó, no promoción. Aprobación
 
 ### Cambio pendiente en Airtable
 El campo `Salida` hoy tiene 5 opciones (`Visita agendada`, `Coordinación región`,
-`Encargo de búsqueda`, `Solo información`, `Sin interés`). Hay que **agregar `No contestó`**.
+`Encargo de búsqueda`, `Solo información`, `Sin interés`). Hay que **agregar `No contestado`**.
 La API de Airtable no agrega opciones a un select existente → se hace a mano en la tabla.
 
 ---

@@ -57,6 +57,11 @@ entregadas, **0 visitas agendadas**, 5 DMs libres varados en `nuevo`):
 Acompañan (código, no ManyChat): umbral de no-match en `mc-match` modo B (§2.2) ·
 ManyChat emite `quiz_iniciado` · hora exacta en `Llamados` · semana en curso en el tablero.
 
+**La operación de Luis (2026-07-27):** [`docs/V2_OPERACION_KANBAN.md`](docs/V2_OPERACION_KANBAN.md)
+— una sola pantalla tipo Kanban sobre `Llamados`, agrupada por `Salida`. **Arrastrar la
+tarjeta es marcar la salida es disparar el mensaje**: un gesto, sin segundo paso que olvidar.
+Los dueños ven el mismo Kanban en modo lectura.
+
 **Insumos del D1 listos (2026-07-27):** [`docs/V2_DIA1_INSUMOS.md`](docs/V2_DIA1_INSUMOS.md)
 — runbook ordenado, hoja definitiva de **44** campos (conteo real; los «33/34» eran erróneos),
 las 9 entradas con sus shortcodes y bodies JSON, decisiones abiertas y verificación de cierre.

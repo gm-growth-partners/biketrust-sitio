@@ -21,15 +21,30 @@ const reply = (obj, status = 200) => new Response(JSON.stringify(obj), { status,
 
 const BASE_DEFAULT = 'appQUgk8aeD752923';
 
-// Salida que marca Luis → qué pasa. `flowEnv` es la variable de Cloudflare con el
-// namespace del flujo de ManyScript que envuelve la plantilla aprobada.
+// Salida que marca Luis (arrastrando la tarjeta en el Kanban) → qué pasa.
+//
+// ⚠️ LOS NOMBRES SON MATCH EXACTO contra las opciones del select `Salida` en
+// Airtable. Si no calzan, este endpoint no encuentra la salida y NO dispara nada,
+// en silencio. Al agregar u ordenar opciones en Airtable, actualizar acá.
+// Las 6 opciones del campo son: `Llamada pendiente` (la cola, no dispara nada) +
+// las 5 de abajo.
+//
+// `flowEnv`      = variable de Cloudflare con el namespace del flujo de ManyChat.
+// `estadoLead`   = a qué estado avanza el LEAD (con guarda de no-regresión).
+// `estadoTicket` = a qué estado va el TICKET. Lo mantiene este endpoint porque
+//                  Luis ya no toca `Estado`: solo arrastra la tarjeta. De ese
+//                  cambio depende el sello de `Fecha primera llamada` (la métrica
+//                  de velocidad), la cola del briefing y el dedup de mc-llamado.
 const SALIDAS = {
-  'Visita agendada':     { flowEnv: 'FLOW_NS_CONFIRMACION', estadoLead: 'visita_agendada', necesitaPermiso: true,  copiaVisita: true },
-  'Coordinación región': { flowEnv: 'FLOW_NS_REGION',       estadoLead: null,              necesitaPermiso: true,  copiaVisita: false },
-  'Encargo de búsqueda': { flowEnv: 'FLOW_NS_ENCARGO',      estadoLead: null,              necesitaPermiso: true,  copiaVisita: false },
-  // Excepción deliberada: no hubo llamada donde pedir el permiso. Éste viene del
+  'Visita agendada':     { flowEnv: 'FLOW_NS_CONFIRMACION', estadoLead: 'visita_agendada', estadoTicket: 'Llamado', necesitaPermiso: true,  copiaVisita: true },
+  'Coordinación región': { flowEnv: 'FLOW_NS_REGION',       estadoLead: null,              estadoTicket: 'Llamado', necesitaPermiso: true,  copiaVisita: false },
+  'Encargo de búsqueda': { flowEnv: 'FLOW_NS_ENCARGO',      estadoLead: null,              estadoTicket: 'Llamado', necesitaPermiso: true,  copiaVisita: false },
+  // Excepción deliberada de permiso: no hubo llamada donde pedirlo. Viene del
   // bloque de confirmación del bot («si no te pilla, te deja un WhatsApp»).
-  'No contestado':       { flowEnv: 'FLOW_NS_NO_CONTESTA',  estadoLead: null,              necesitaPermiso: false, copiaVisita: false },
+  // El ticket VUELVE a la cola: no contestar no cierra nada, es la bandeja de reintentos.
+  'No contestado':       { flowEnv: 'FLOW_NS_NO_CONTESTA',  estadoLead: null,              estadoTicket: 'Llamada pendiente', necesitaPermiso: false, copiaVisita: false },
+  // Habló y no va a avanzar. Cierra el ticket sin mandar nada, a propósito.
+  'Sin interés':         { flowEnv: null,                   estadoLead: null,              estadoTicket: 'Cerrada', necesitaPermiso: false, copiaVisita: false },
 };
 
 async function afetch(url, opts, tries = 3) {
@@ -135,12 +150,14 @@ export async function onRequestPost({ request, env }) {
 
   // 4) EL MENSAJE. Best-effort: si falla, el lead ya quedó bien escrito y la
   //    respuesta dice por qué — el error NO muere en silencio.
-  const MC_TOKEN = env.MC_TOKEN || '';
+  const MC_TOKEN = env.MANYCHAT_TOKEN || env.MC_TOKEN || '';
   const flowNs = env[cfg.flowEnv] || '';
   const sid = lf['MC subscriber id'] || '';
   let mensaje = 'no_configurado';
 
-  if (cfg.necesitaPermiso && t['Permiso WhatsApp'] !== true) {
+  if (!cfg.flowEnv) {
+    mensaje = 'sin_mensaje_por_diseño';   // «Sin interés» no manda nada, a propósito
+  } else if (cfg.necesitaPermiso && t['Permiso WhatsApp'] !== true) {
     mensaje = 'sin_permiso';
   } else if (!MC_TOKEN || !flowNs) {
     mensaje = `falta_env:${cfg.flowEnv}`;
@@ -167,17 +184,23 @@ export async function onRequestPost({ request, env }) {
     }
   }
 
-  // 5) Sellar SOLO si salió. Si no salió, el ticket queda reintentable.
-  if (mensaje === 'enviado') {
+  // 5) Actualizar el TICKET: estado + sello de idempotencia.
+  //    El `Estado` se sincroniza SIEMPRE (Luis ya no lo toca, solo arrastra la
+  //    tarjeta). El sello solo si el mensaje salió — si falló, queda reintentable.
+  const updTicket = {};
+  if (cfg.estadoTicket && t['Estado'] !== cfg.estadoTicket) updTicket['Estado'] = cfg.estadoTicket;
+  if (mensaje === 'enviado' || mensaje === 'sin_mensaje_por_diseño') updTicket['Aviso salida enviado'] = now;
+  if (Object.keys(updTicket).length) {
     await afetch(`${api('Llamados')}/${llamadoId}`, {
       method: 'PATCH', headers: wH,
-      body: JSON.stringify({ fields: { 'Aviso salida enviado': now } }),
+      body: JSON.stringify({ typecast: true, fields: updTicket }),
     });
   }
 
   return reply({ ok: true, salida, leadId, mensaje,
     permisoPropagado: upd['Opt-in WhatsApp'] === true,
     visitaCopiada: !!upd['Fecha visita'],
-    estadoLead: upd['Estado'] || null });
+    estadoLead: upd['Estado'] || null,
+    estadoTicket: updTicket['Estado'] || null });
 }
 // Sólo POST.

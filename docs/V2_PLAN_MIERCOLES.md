@@ -69,7 +69,7 @@ Probado offline contra 4 casos reales (e-bike, muscular, vendida, ficha incomple
 **Automatización nueva:** cuando una `Solicitudes` pasa a `Buscando` → aviso a Roberto y Alfonso (pedido de Roberto: hoy el sourcing no tiene trazabilidad).
 
 ### 3.2 ManyChat 🧑
-- Rehacer las 6 automatizaciones de comentario con el flujo nuevo (bloques en `embudo_v2_diseno.html`).
+- Rehacer las 6 automatizaciones de comentario con el flujo nuevo — los bloques con el copy literal están en [`V2_PLANTILLA_COMENTARIOS.md`](V2_PLANTILLA_COMENTARIOS.md).
 - **10 palabras clave por reel** (decisión: NO any-word). Elegirlas así: la palabra del caption + variantes de precio (`precio`, `valor`, `cuánto`, `$$$`, `$$`) + typos frecuentes del modelo.
 - ⚠️ En `mc-llamado` **NO mandar `optin:true`**: el permiso de WhatsApp lo marca Luis en la llamada. Mandarlo desde el bot es consentimiento de canal A usado en canal B.
 - Mantener el botón de flujo en la respuesta privada (es terminal: sin botón, el hilo muere).

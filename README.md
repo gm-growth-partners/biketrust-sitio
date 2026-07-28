@@ -1,10 +1,32 @@
-# Bike Trust · Sitio
+# Bike Trust · Sitio y sistema
 
-> 📖 **Documentación del sistema:**
-> - **[`DOCUMENTACION.md`](DOCUMENTACION.md)** — web, CRM, operación del staff, ventas, reportes y arquitectura.
-> - **[`EMBUDO.md`](EMBUDO.md)** — el embudo de captación Instagram + ManyChat → Airtable (puertas, flujo, endpoints, cómo publicar reels a escala, roadmap).
->
-> Este README cubre solo el build y deploy del sitio estático.
+⚠️ **Este repo NO es solo un sitio.** Contiene el sitio estático **y** todo el backend del
+embudo comercial: 15 Pages Functions que hablan con Instagram/ManyChat y escriben en Airtable,
+más los crons. **El sistema está a mitad de un rediseño (V2).**
+
+## 🧭 Por dónde empezar
+
+| Si necesitas… | Lee |
+|---|---|
+| **Entender qué pasó, por qué, y qué decisiones ya están cerradas** | **[`CHANGELOG.md`](CHANGELOG.md)** ← empieza acá, son 5 minutos |
+| El estado actual, modelo de datos, endpoints y errores ya cometidos | [`CLAUDE.md`](CLAUDE.md) |
+| **Qué se está construyendo ahora** (rediseño V2) | [`MANYCHAT_REBUILD.md`](MANYCHAT_REBUILD.md) §0.5–0.7 y [`docs/`](docs/) |
+| Solo el build y deploy del sitio estático | este README, más abajo |
+
+> **Ojo con la documentación histórica.** [`EMBUDO.md`](EMBUDO.md) y
+> [`DOCUMENTACION.md`](DOCUMENTACION.md) describen el sistema **V1**. Siguen siendo útiles
+> (contratos de endpoints, modelo de datos, operación del staff) pero **su capa conversacional
+> y varios estados están superados por la V2**. Léelos después del CHANGELOG, no antes, y
+> ante cualquier contradicción **mandan el CHANGELOG y el código**.
+
+## Cómo se prueba
+
+```bash
+npm test     # 3 suites, sin tocar Airtable ni producción (fetch simulado)
+npm run build   # sin AIRTABLE_TOKEN → modo mock
+```
+
+---
 
 Sitio estático generado desde Airtable (Airtable = única fuente de verdad).
 El build lee la vista **Disponibles** de la tabla **Inventario** y genera un catálogo + una ficha por bici, sobre la identidad de marca. Corre en **Cloudflare Pages** desde este repo.

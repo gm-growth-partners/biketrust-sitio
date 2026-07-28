@@ -120,7 +120,7 @@ Airtable (appQUgk8aeD752923)  ──►  build.mjs  ──►  /dist (HTML está
 ```
 
 - **Repo:** `github.com/gm-growth-partners/biketrust-sitio` (rama `main`, auto-deploy on push).
-- **Carpeta local:** `…/Clientes/2. biketrust.cl/Estrategia/2. Fragua/github`.
+- **Repos:** `biketrust-sitio` (este) y `biketrust-tablero`, carpetas gemelas en disco.
 - **Build:** `build.mjs` (Node, `fetch` nativo, sin dependencias). Lee la vista **Disponibles** de **Inventario** y genera el catálogo, una ficha por bici, la ficha técnica imprimible (PDF vía `window.print()`), y SEO (OpenGraph, sitemap, robots, favicon, 404).
 - **Fotos:** el build **descarga** los adjuntos de `Fotos galería` y los **auto-hostea** en `/assets/bikes/<slug>/` (así no dependen de las URLs de Airtable, que expiran).
 - **Seguridad:** el token de lectura solo vive en el build (lado servidor). El sitio público es HTML estático: nadie lee ni escribe la base desde la web.
