@@ -44,7 +44,7 @@ const check = (ok, msg, extra) => { console.log((ok ? 'OK   ' : 'FALLO') + ' · 
 // 1 · Visita agendada con permiso → propaga permiso, copia visita, limpia sellos, avanza estado, manda flujo
 {
   const { out, calls } = await run(
-    { Salida: 'Visita agendada', 'Permiso WhatsApp': true, Lead: ['recL'], 'Fecha y hora de visita': '2026-07-30T18:30:00.000Z', 'Bici de interés': ['recB'] },
+    { Salida: 'Visita agendada', 'Teléfono': '+56911111111', Lead: ['recL'], 'Fecha y hora de visita': '2026-07-30T18:30:00.000Z', 'Bici de interés': ['recB'] },
     { ...LEAD_BASE });
   check(out.mensaje === 'enviado', 'visita: manda el mensaje', out);
   check(calls.patchLead['Opt-in WhatsApp'] === true, 'visita: PROPAGA EL PERMISO al lead', calls.patchLead);
@@ -58,18 +58,18 @@ const check = (ok, msg, extra) => { console.log((ok ? 'OK   ' : 'FALLO') + ' · 
 // 2 · Idempotencia: ya enviado → no vuelve a mandar
 {
   const { out, calls } = await run(
-    { Salida: 'Visita agendada', 'Permiso WhatsApp': true, Lead: ['recL'], 'Aviso salida enviado': '2026-07-27T10:00:00.000Z' },
+    { Salida: 'Visita agendada', 'Teléfono': '+56911111111', Lead: ['recL'], 'Aviso salida enviado': '2026-07-27T10:00:00.000Z' },
     { ...LEAD_BASE });
   check(out.accion === 'ya_enviado' && calls.sendFlow.length === 0, 'idempotencia: NO reenvía', out);
 }
-// 3 · Sin permiso → no manda, pero igual escribe el lead
+// 3 · Luis NO marca nada en el Kanban: el mensaje sale igual.
+//     El consentimiento lo capturó el bot al pedir el número (B6 lo declara),
+//     y los 4 mensajes son transaccionales sobre lo que la persona pidió.
 {
   const { out, calls } = await run(
-    { Salida: 'Encargo de búsqueda', 'Permiso WhatsApp': false, Lead: ['recL'] }, { ...LEAD_BASE });
-  check(out.mensaje === 'sin_permiso' && calls.sendFlow.length === 0, 'sin permiso: no manda nada', out);
-  // El Estado SÍ se sincroniza (Luis ya no lo toca), pero el sello NO: sin sello,
-  // el aviso se reintenta cuando Luis marque el permiso.
-  check(!calls.patchTicket?.['Aviso salida enviado'], 'sin permiso: NO sella (queda reintentable)', calls.patchTicket);
+    { Salida: 'Encargo de búsqueda', Lead: ['recL'], 'Teléfono': '+56911111111' }, { ...LEAD_BASE });
+  check(out.mensaje === 'enviado', 'sin casilla de permiso: el mensaje SALE igual', out);
+  check(calls.patchLead?.['Opt-in WhatsApp'] === true, 'red de seguridad: deja el opt-in en el Lead para los crons', calls.patchLead);
 }
 // 4 · No contestado → manda SIN permiso (excepción deliberada)
 {
@@ -80,13 +80,13 @@ const check = (ok, msg, extra) => { console.log((ok ? 'OK   ' : 'FALLO') + ' · 
 }
 // 5 · Región con permiso
 {
-  const { out } = await run({ Salida: 'Coordinación región', 'Permiso WhatsApp': true, Lead: ['recL'] }, { ...LEAD_BASE });
+  const { out } = await run({ Salida: 'Coordinación región', 'Teléfono': '+56911111111', Lead: ['recL'] }, { ...LEAD_BASE });
   check(out.mensaje === 'enviado' && out.permisoPropagado === true, 'región: manda y propaga permiso', out);
 }
 // 6 · Guarda de no-regresión: lead ya cerró → no retrocede a visita_agendada
 {
   const { calls } = await run(
-    { Salida: 'Visita agendada', 'Permiso WhatsApp': true, Lead: ['recL'], 'Fecha y hora de visita': '2026-07-30T18:30:00.000Z' },
+    { Salida: 'Visita agendada', 'Teléfono': '+56911111111', Lead: ['recL'], 'Fecha y hora de visita': '2026-07-30T18:30:00.000Z' },
     { ...LEAD_BASE, Estado: 'cerró' });
   check(calls.patchLead['Estado'] === undefined, 'no-regresión: un lead cerrado NO retrocede', calls.patchLead);
 }
@@ -97,7 +97,7 @@ const check = (ok, msg, extra) => { console.log((ok ? 'OK   ' : 'FALLO') + ' · 
 }
 // 8 · Falta la env del flujo → lo dice, no muere en silencio
 {
-  const calls = mockFetch({ ticket: { Salida: 'Coordinación región', 'Permiso WhatsApp': true, Lead: ['recL'] }, lead: { ...LEAD_BASE } });
+  const calls = mockFetch({ ticket: { Salida: 'Coordinación región', 'Teléfono': '+56911111111', Lead: ['recL'] }, lead: { ...LEAD_BASE } });
   const res = await mod({ request: { url: 'https://x/api/salida-llamado', json: async () => ({ llamadoId: 'r' }) },
     env: { ...ENV, FLOW_NS_REGION: '' } });
   const out = await res.json();
@@ -107,7 +107,7 @@ const check = (ok, msg, extra) => { console.log((ok ? 'OK   ' : 'FALLO') + ' · 
 // 9 · Sincronía del ticket: Luis solo arrastra la tarjeta, el Estado lo pone el endpoint
 {
   const { out, calls } = await run(
-    { Salida: 'Visita agendada', 'Permiso WhatsApp': true, Lead: ['recL'], Estado: 'Llamada pendiente',
+    { Salida: 'Visita agendada', 'Teléfono': '+56911111111', Lead: ['recL'], Estado: 'Llamada pendiente',
       'Fecha y hora de visita': '2026-07-30T18:30:00.000Z' }, { ...LEAD_BASE });
   check(calls.patchTicket?.['Estado'] === 'Llamado', 'ticket: visita → Estado pasa a Llamado', calls.patchTicket);
   check(out.estadoTicket === 'Llamado', 'ticket: lo reporta en la respuesta', out);
@@ -128,7 +128,7 @@ const check = (ok, msg, extra) => { console.log((ok ? 'OK   ' : 'FALLO') + ' · 
 }
 // 12 · El token de ManyChat se lee de MANYCHAT_TOKEN (la variable que usan las otras 8 funciones)
 {
-  const calls = mockFetch({ ticket: { Salida: 'Coordinación región', 'Permiso WhatsApp': true, Lead: ['recL'] }, lead: { ...LEAD_BASE } });
+  const calls = mockFetch({ ticket: { Salida: 'Coordinación región', 'Teléfono': '+56911111111', Lead: ['recL'] }, lead: { ...LEAD_BASE } });
   const { MANYCHAT_TOKEN, ...sinToken } = { ...ENV, MANYCHAT_TOKEN: 'mc' };
   const res = await mod({ request: { url: 'https://x/api/salida-llamado', json: async () => ({ llamadoId: 'r' }) },
     env: { ...sinToken, MANYCHAT_TOKEN: 'mc-real', MC_TOKEN: undefined } });
@@ -139,7 +139,7 @@ const check = (ok, msg, extra) => { console.log((ok ? 'OK   ' : 'FALLO') + ' · 
 // 12-bis · Visita: las bicis a preparar se copian al Lead (máx 3) para el briefing
 {
   const { calls } = await run(
-    { Salida: 'Visita agendada', 'Permiso WhatsApp': true, Lead: ['recL'],
+    { Salida: 'Visita agendada', 'Teléfono': '+56911111111', Lead: ['recL'],
       'Fecha y hora de visita': '2026-07-30T18:30:00.000Z',
       'Bicis para la visita': ['recB1', 'recB2'] }, { ...LEAD_BASE });
   check(calls.patchLead?.['MC bici'] === 'Levo SL S-Works · Levo SL S-Works',
@@ -148,7 +148,7 @@ const check = (ok, msg, extra) => { console.log((ok ? 'OK   ' : 'FALLO') + ' · 
 // 12-ter · Si Luis no eligió ninguna, cae a la bici del reel (siempre hay algo que preparar)
 {
   const { calls } = await run(
-    { Salida: 'Visita agendada', 'Permiso WhatsApp': true, Lead: ['recL'],
+    { Salida: 'Visita agendada', 'Teléfono': '+56911111111', Lead: ['recL'],
       'Fecha y hora de visita': '2026-07-30T18:30:00.000Z',
       'Bici de interés': ['recB'] }, { ...LEAD_BASE });
   check(calls.patchLead?.['MC bici'] === 'Levo SL S-Works', 'visita sin selección: cae a la bici del reel', calls.patchLead);
@@ -157,7 +157,7 @@ const check = (ok, msg, extra) => { console.log((ok ? 'OK   ' : 'FALLO') + ' · 
 // 12-quater · Clasificar ≠ completar: visita sin fecha queda clasificada y NO sella
 {
   const { out, calls } = await run(
-    { Salida: 'Visita agendada', 'Permiso WhatsApp': true, Lead: ['recL'], Estado: 'Llamada pendiente' },
+    { Salida: 'Visita agendada', 'Teléfono': '+56911111111', Lead: ['recL'], Estado: 'Llamada pendiente' },
     { ...LEAD_BASE });
   check(out.accion === 'clasificado_sin_fecha', 'visita sin fecha: queda clasificada', out);
   check(calls.sendFlow.length === 0, 'visita sin fecha: NO confirma (no hay qué confirmar)', calls.sendFlow);
@@ -168,7 +168,7 @@ const check = (ok, msg, extra) => { console.log((ok ? 'OK   ' : 'FALLO') + ' · 
 // 13 · Encargo → nace el ticket de búsqueda y queda enlazado (cierra el circuito)
 {
   const { out, calls } = await run(
-    { Salida: 'Encargo de búsqueda', 'Permiso WhatsApp': true, Lead: ['recL'],
+    { Salida: 'Encargo de búsqueda', 'Teléfono': '+56911111111', Lead: ['recL'],
       'Modelo buscado': 'Levo SL2 talla S3', 'Teléfono': '+56912345678',
       Ciudad: 'Ñuñoa', 'Estatura (cm)': 178, Notas: 'Busca hasta $6M' },
     { ...LEAD_BASE });
@@ -183,19 +183,19 @@ const check = (ok, msg, extra) => { console.log((ok ? 'OK   ' : 'FALLO') + ' · 
 // 14 · Guarda anti-duplicado: si ya tiene Solicitud, no crea otra
 {
   const { calls } = await run(
-    { Salida: 'Encargo de búsqueda', 'Permiso WhatsApp': true, Lead: ['recL'],
+    { Salida: 'Encargo de búsqueda', 'Teléfono': '+56911111111', Lead: ['recL'],
       'Modelo buscado': 'Epic 8', Solicitud: ['recYA'] }, { ...LEAD_BASE });
   check(calls.nuevaSolicitud === null, 'encargo repetido: NO crea una segunda solicitud', calls.nuevaSolicitud);
 }
 // 15 · Sin modelo escrito, el ticket igual nace (mejor incompleto que perdido)
 {
   const { calls } = await run(
-    { Salida: 'Encargo de búsqueda', 'Permiso WhatsApp': true, Lead: ['recL'] }, { ...LEAD_BASE });
+    { Salida: 'Encargo de búsqueda', 'Teléfono': '+56911111111', Lead: ['recL'] }, { ...LEAD_BASE });
   check(calls.nuevaSolicitud?.['Modelo buscado'] === '(por confirmar con el cliente)', 'encargo sin modelo: nace igual, marcado', calls.nuevaSolicitud);
 }
 // 16 · Las otras salidas NO crean solicitud
 {
-  const { calls } = await run({ Salida: 'Visita agendada', 'Permiso WhatsApp': true, Lead: ['recL'] }, { ...LEAD_BASE });
+  const { calls } = await run({ Salida: 'Visita agendada', 'Teléfono': '+56911111111', Lead: ['recL'] }, { ...LEAD_BASE });
   check(calls.nuevaSolicitud === null, 'visita: no toca la cola de sourcing', calls.nuevaSolicitud);
 }
 

@@ -3,10 +3,11 @@
 // Airtable cuando Luis marca `Salida` en un ticket de `Llamados`.
 //
 // Cierra de una vez los tres huecos que rompían en silencio:
-//   1. PUENTE DEL PERMISO — Luis marca `Permiso WhatsApp` en el TICKET, pero los
-//      motores (cron-recordatorios, cron-reenganche) filtran por `Opt-in WhatsApp`
-//      en el LEAD. Sin este puente el barrido devuelve 0 sin dar error y nadie
-//      recibe confirmación ni recordatorios.
+//   1. EL CONSENTIMIENTO LLEGA A DONDE SE LEE — los motores (cron-recordatorios,
+//      cron-reenganche) filtran por `Opt-in WhatsApp` en el LEAD. El opt-in lo
+//      escribe `mc-llamado` al capturar el número; acá va la red de seguridad
+//      para tickets manuales y leads viejos. Sin eso el barrido devuelve 0 sin
+//      dar error y nadie recibe confirmación ni recordatorios.
 //   2. LA VISITA INVISIBLE — una visita agendada por teléfono no existía para el
 //      sistema: nadie escribía `Leads.Fecha visita` ni el `Estado`. Sin eso no
 //      salen recordatorios y el tablero muestra «Agendó: 0» aunque Luis agende diez.
@@ -35,16 +36,18 @@ const BASE_DEFAULT = 'appQUgk8aeD752923';
 //                  Luis ya no toca `Estado`: solo arrastra la tarjeta. De ese
 //                  cambio depende el sello de `Fecha primera llamada` (la métrica
 //                  de velocidad), la cola del briefing y el dedup de mc-llamado.
+// El consentimiento NO se pide acá: lo captura el bot al pedir el número (ver
+// `mc-llamado`). Los cuatro mensajes son TRANSACCIONALES sobre algo que la
+// persona pidió —su visita, su encargo, su llamada— así que ninguno depende de
+// que Luis marque una casilla. Marketing es otra cosa y tiene su propio permiso.
 const SALIDAS = {
-  'Visita agendada':     { flowEnv: 'FLOW_NS_CONFIRMACION', estadoLead: 'visita_agendada', estadoTicket: 'Llamado', necesitaPermiso: true,  copiaVisita: true },
-  'Coordinación región': { flowEnv: 'FLOW_NS_REGION',       estadoLead: null,              estadoTicket: 'Llamado', necesitaPermiso: true,  copiaVisita: false },
-  'Encargo de búsqueda': { flowEnv: 'FLOW_NS_ENCARGO',      estadoLead: null,              estadoTicket: 'Llamado', necesitaPermiso: true,  copiaVisita: false },
-  // Excepción deliberada de permiso: no hubo llamada donde pedirlo. Viene del
-  // bloque de confirmación del bot («si no te pilla, te deja un WhatsApp»).
+  'Visita agendada':     { flowEnv: 'FLOW_NS_CONFIRMACION', estadoLead: 'visita_agendada', estadoTicket: 'Llamado', copiaVisita: true },
+  'Coordinación región': { flowEnv: 'FLOW_NS_REGION',       estadoLead: null,              estadoTicket: 'Llamado', copiaVisita: false },
+  'Encargo de búsqueda': { flowEnv: 'FLOW_NS_ENCARGO',      estadoLead: null,              estadoTicket: 'Llamado', copiaVisita: false },
   // El ticket VUELVE a la cola: no contestar no cierra nada, es la bandeja de reintentos.
-  'No contestado':       { flowEnv: 'FLOW_NS_NO_CONTESTA',  estadoLead: null,              estadoTicket: 'Llamada pendiente', necesitaPermiso: false, copiaVisita: false },
+  'No contestado':       { flowEnv: 'FLOW_NS_NO_CONTESTA',  estadoLead: null,              estadoTicket: 'Llamada pendiente', copiaVisita: false },
   // Habló y no va a avanzar. Cierra el ticket sin mandar nada, a propósito.
-  'Sin interés':         { flowEnv: null,                   estadoLead: null,              estadoTicket: 'Cerrada', necesitaPermiso: false, copiaVisita: false },
+  'Sin interés':         { flowEnv: null,                   estadoLead: null,              estadoTicket: 'Cerrada', copiaVisita: false },
 };
 
 async function afetch(url, opts, tries = 3) {
@@ -135,8 +138,12 @@ export async function onRequestPost({ request, env }) {
   // 3) PROPAGAR AL LEAD lo que Luis registró en el ticket.
   const upd = { 'Fecha última interacción': now };
 
-  //   3a) El puente del permiso: del ticket a la persona.
-  if (t['Permiso WhatsApp'] === true && !lf['Opt-in WhatsApp']) {
+  //   3a) Red de seguridad del consentimiento. El opt-in normal lo escribe
+  //       `mc-llamado` al capturar el número (el bot lo declara en B6). Esto
+  //       cubre el borde: tickets creados a mano por el staff, o leads viejos
+  //       anteriores a ese cambio. Sin esto, los crons los filtran fuera y no
+  //       reciben ni confirmación ni recordatorios, sin dar error.
+  if (!lf['Opt-in WhatsApp'] && (t['Teléfono'] || t['Permiso WhatsApp'] === true)) {
     upd['Opt-in WhatsApp'] = true;
     upd['Fecha opt-in'] = today;
   }
@@ -239,8 +246,6 @@ export async function onRequestPost({ request, env }) {
 
   if (!cfg.flowEnv) {
     mensaje = 'sin_mensaje_por_diseño';   // «Sin interés» no manda nada, a propósito
-  } else if (cfg.necesitaPermiso && t['Permiso WhatsApp'] !== true) {
-    mensaje = 'sin_permiso';
   } else if (!MC_TOKEN || !flowNs) {
     mensaje = `falta_env:${cfg.flowEnv}`;
   } else if (!sid) {

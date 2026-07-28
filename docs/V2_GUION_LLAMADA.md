@@ -63,15 +63,14 @@ solo el 46 % de los vendedores pide la cita. Más de la mitad se pierden por no 
 
 Nunca pedir seña ni transferencia por teléfono.
 
-## El permiso de WhatsApp · antes de colgar, siempre
+## El WhatsApp · no hay que pedirlo
 
-> «¿Te dejo todo confirmado por WhatsApp a este mismo número? Te mando la ficha, las fotos
-> en alta y la dirección, así no se te pierde.»
+El permiso ya está: el bot se lo dijo al pedir el número (*«si no te pilla, te deja un
+WhatsApp a ese mismo número»*) y la persona lo entregó después de leerlo. **No hay casilla
+que marcar.**
 
-El sí verbal es el permiso → marcar **`Permiso WhatsApp`**.
-
-⚠️ **Sin ese casillero marcado, el sistema no le escribe nada.** Ni la confirmación de la
-visita, ni los recordatorios. La razón siempre es entregar algo, nunca «para hacerte seguimiento».
+Vale mencionarlo al cerrar, pero como información, no como permiso:
+> «Te dejo todo confirmado por WhatsApp a este mismo número.»
 
 ## Si se va en indirectas
 
@@ -84,8 +83,8 @@ La respuesta va textual a `Notas`.
 
 ## Al colgar · dos pasos, en este orden
 
-**Durante la llamada, lo mínimo:** `Ciudad` · `Permiso WhatsApp` · `Notas`.
-Nada más — no llenar formularios mientras la persona habla.
+**Durante la llamada no se anota nada.** Escuchar y conversar; el sistema no pide nada
+mientras la persona habla.
 
 **1 · Clasificar (5 segundos).** Arrastrar la tarjeta a su columna. Eso ya avanza el estado
 y, cuando corresponde, dispara el mensaje.

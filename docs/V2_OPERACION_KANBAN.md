@@ -125,13 +125,18 @@ de nuevo y **ahí sí sale la confirmación** con los recordatorios enganchados.
 
 > `Estado bici` es la guarda contra el peor error posible: ofrecer una unidad ya vendida.
 
-**Al abrirla — lo MÍNIMO editable durante la llamada.** Solo lo que sirve para clasificar y
-lo que no se puede recuperar después:
-`Ciudad` (decide visita vs región) · `Permiso WhatsApp` (el consentimiento, se pide y se
-marca en el momento) · `Notas` (lo que se dijo) · `Intentos`
+**Editable durante la llamada: NADA.** El primer Kanban es de solo lectura salvo el arrastre.
+Luis escucha, decide el tipo de petición y mueve la tarjeta. Punto.
 
-Todo lo demás va en la pantalla del caso: la fecha y las bicis en Visitas, el detalle del
-encargo en Solicitudes.
+> **Por qué ni la ciudad ni el permiso se anotan acá:**
+> - **La ciudad es redundante**: la columna a la que arrastra *ya dice* si es Santiago o
+>   región. Escribirla de nuevo es pedir el mismo dato dos veces. Donde sí hace falta el
+>   detalle —qué comuna, para el despacho— es en la pantalla de Región, no en la llamada.
+> - **El permiso de WhatsApp no lo pide Luis**: lo captura el bot al pedir el número. El
+>   mensaje de confirmación declara literalmente *«si no te pilla, te deja un WhatsApp a ese
+>   mismo número»*, y la persona entrega el teléfono después de leer eso. Depender de que
+>   Luis se acuerde de preguntarlo en cada llamada era frágil: un olvido y ese lead se
+>   quedaba sin confirmación ni recordatorios, sin que nadie se enterara.
 
 ## 4 · La cadena completa hasta la otra pantalla
 

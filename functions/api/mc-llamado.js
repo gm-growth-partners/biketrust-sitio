@@ -276,7 +276,16 @@ export async function onRequestPost({ request, env }) {
   // 2) Lead → contacto + opt-in. OJO: sin `Fecha visita` (no es una visita).
   const upd = { 'Fecha última interacción': now };
   if (telefono) upd['WhatsApp'] = telefono;
-  if (optin) { upd['Opt-in WhatsApp'] = true; upd['Fecha opt-in'] = today; }
+  // CONSENTIMIENTO: lo captura el BOT, no Luis. Al pedir el número, el mensaje
+  // de confirmación declara literalmente «si no te pilla, te deja un WhatsApp a
+  // ese mismo número» — la persona entrega el teléfono DESPUÉS de leer eso, así
+  // que el opt-in queda otorgado ahí, con testigo y fecha. Depender de que Luis
+  // se acuerde de preguntarlo en cada llamada era frágil: un olvido y el lead se
+  // queda sin confirmación ni recordatorios, en silencio.
+  // ⚠️ Esto cubre mensajes TRANSACCIONALES sobre lo que la persona pidió
+  // (confirmación de SU visita, estado de SU encargo). NO cubre marketing
+  // (`reactivacion_stock`, `seguimiento_suelto`): eso necesita su propio permiso.
+  if (telefono || optin) { upd['Opt-in WhatsApp'] = true; upd['Fecha opt-in'] = today; }
   if (subId && !leadFields?.['MC subscriber id']) upd['MC subscriber id'] = subId;
   // ETAPA «teléfono» del embudo V2 — la métrica #1 del negocio (% de leads que
   // entregan su número). Se sella UNA sola vez: si el lead vuelve por otro reel,
