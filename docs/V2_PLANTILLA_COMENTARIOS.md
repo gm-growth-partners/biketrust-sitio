@@ -34,7 +34,7 @@ comentario con palabra clave
 2. **`mc-lead` SIEMPRE antes que `mc-evento`.** Si se invierte, el lead nace con
    `Canal = Quiz` y se pierde la atribución al reel.
 
-## 3 · Campos personalizados (17, todos tipo texto)
+## 3 · Campos personalizados (18, todos tipo texto)
 
 **Los que llena la respuesta de `mc-evento`** (mapeo directo, §5.2):
 `cf_bici_modelo` · `cf_bici_puntaje` · `cf_bici_area_baja` · `cf_bici_estado_honesto` ·
@@ -42,7 +42,7 @@ comentario con palabra clave
 `cf_bici_foto` · `cf_bici_ficha` · `cf_bici_disponible` · `cf_bici_bateria` · `cf_bici_ciclos`
 
 **De la conversación:**
-`cf_lead_id` · `cf_telefono` · `cf_mensaje` (lo que la persona escribió — Luis lo lee antes de llamar) ·
+`cf_lead_id` · `cf_telefono` · `cf_promesa` (la hora prometida, §5.3) · `cf_mensaje` (lo que la persona escribió — Luis lo lee antes de llamar) ·
 `cf_oferta_enviada` (bandera anti-duplicado, §4.3)
 
 > ⚠️ **Borrar el grupo de `cf_bici_*` al inicio de cada corrida** (acción «borrar valor»),
@@ -200,7 +200,7 @@ Crea el ticket y dispara el aviso a Luis. **NO mandar `optin`** (§5.3).
 
 ### B6 · Confirmación final
 ```
-Listo ✅ Te va a llamar Luis Sulbarán, nuestro especialista, lo antes posible.
+Listo ✅ Te va a llamar Luis Sulbarán, nuestro especialista, {{cf_promesa}}.
 
 Te marca desde el +56 9 XXXX XXXX — guarda el número así sabes que somos nosotros 😉
 
@@ -277,6 +277,14 @@ Cualquier duda me escribes por acá. Y si alguien la aparta antes, te aviso.
   "notas": "Puerta 1 · dijo: {{cf_mensaje}}"
 }
 ```
+**Mapeo de la respuesta:** `promesaLlamada` → **`cf_promesa`** (lo imprime B6).
+El endpoint calcula la promesa REAL contra el horario del especialista, así el bot nunca
+promete lo que no se puede cumplir: *«en los próximos minutos»* si está abierto, *«mañana a
+partir de las 10:00»* si ya cerró, *«el miércoles…»* si mañana es día libre. **Nunca poner
+«lo antes posible» a mano**: alguien que deja su número el sábado a las 16:00 lo lee y recibe
+la llamada el lunes — 42 horas después, con la promesa rota. Cambiar el horario es editar la
+env `HORARIO_ESPECIALISTA`, no tocar los flujos.
+
 > **No mandar `optin: true`.** El teléfono se pidió para una llamada, no para mensajes.
 > El permiso de WhatsApp lo marca **Luis en la llamada** (checkbox `Permiso WhatsApp` en
 > Airtable). Mandarlo desde el bot es usar un consentimiento de un canal en otro.

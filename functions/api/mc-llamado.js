@@ -60,6 +60,45 @@ function horarioOk(env, sid, now = new Date()) {
   return dia >= Number(m[1]) && dia <= Number(m[2]) && hora >= Number(m[3]) && hora < Number(m[4]);
 }
 
+// ── Horario del especialista y promesa de llamada ────────────────────────────
+// El bot NO puede prometer «te llamamos al tiro» a las 2 AM ni un sábado a las
+// 19:00: una promesa incumplida hace más daño que no haberla hecho. Este helper
+// calcula la promesa REAL y `mc-llamado` la devuelve lista para que ManyChat la
+// imprima. Así el horario vive en UN solo lugar y cambiarlo es editar una env,
+// no tocar código ni los flujos de ManyChat.
+//
+// Formato de `HORARIO_ESPECIALISTA`: bloques `dia@desde-hasta` separados por `|`.
+// Día: 0=domingo … 6=sábado. Un día ausente = no se trabaja ese día.
+// Default = horario real de Luis al 2026-07-27 (martes y domingo libres).
+const HORARIO_DEFAULT = '1@10-20|3@10-20|4@10-20|5@10-20|6@10-15';
+const DIAS_SEMANA = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+
+function parseHorario(env) {
+  const out = {};
+  for (const bloque of String(env.HORARIO_ESPECIALISTA || HORARIO_DEFAULT).split('|')) {
+    const m = /^(\d)@(\d{1,2})-(\d{1,2})$/.exec(bloque.trim());
+    if (m) out[Number(m[1])] = [Number(m[2]), Number(m[3])];
+  }
+  return out;
+}
+
+// → { abierto, promesa } · `promesa` es el texto literal para el DM de confirmación.
+function promesaLlamada(env, now = new Date()) {
+  const H = parseHorario(env);
+  const p = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Santiago', hour: 'numeric', hour12: false, weekday: 'short' }).formatToParts(now);
+  const hora = Number(p.find(x => x.type === 'hour').value);
+  const hoy = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }[p.find(x => x.type === 'weekday').value];
+
+  const hoyH = H[hoy];
+  if (hoyH && hora >= hoyH[0] && hora < hoyH[1]) return { abierto: true, promesa: 'en los próximos minutos' };
+  if (hoyH && hora < hoyH[0]) return { abierto: false, promesa: `hoy a partir de las ${hoyH[0]}:00` };
+  for (let i = 1; i <= 7; i++) {
+    const d = (hoy + i) % 7;
+    if (H[d]) return { abierto: false, promesa: `${i === 1 ? 'mañana' : 'el ' + DIAS_SEMANA[d]} a partir de las ${H[d][0]}:00` };
+  }
+  return { abierto: false, promesa: 'apenas abramos' };
+}
+
 // Texto limpio: recorta y descarta merge tags sin resolver ({{cuf_…}}).
 const clean = (v, max = 200) => {
   const s = v == null ? '' : String(v).trim();
@@ -332,6 +371,10 @@ export async function onRequestPost({ request, env }) {
     }
   }
 
-  return reply({ ok: true, llamadoId, leadId, leadCreado, biciNombre: biciNombre || null, llamarEl: llamarEl || null, llamarElLegible: llamarEl ? diaLegible(llamarEl) : null, aviso });
+  // `promesaLlamada` va lista para que ManyChat la imprima en la confirmación:
+  //   «Luis te llama {{promesaLlamada}} desde el +56 9 XXXX XXXX.»
+  // Nunca promete lo que el horario no permite. Se ajusta con HORARIO_ESPECIALISTA.
+  const pl = promesaLlamada(env);
+  return reply({ ok: true, llamadoId, leadId, leadCreado, biciNombre: biciNombre || null, llamarEl: llamarEl || null, llamarElLegible: llamarEl ? diaLegible(llamarEl) : null, aviso, promesaLlamada: pl.promesa, dentroDeHorario: pl.abierto });
 }
 // Sólo POST. Pages responde 405 automáticamente a otros métodos en esta ruta.
