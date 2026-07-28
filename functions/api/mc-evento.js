@@ -15,6 +15,32 @@ const JSONH = { 'Content-Type': 'application/json; charset=utf-8' };
 const reply = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: JSONH });
 
 const BASE_DEFAULT = 'appQUgk8aeD752923';
+const SITE_DEFAULT = 'https://biketrust-sitio.pages.dev';
+
+// slug idéntico al de build.mjs y mc-match: minúsculas, sin acentos, no-alfanum → '-'.
+const slugify = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
+const clp = (n) => (n == null || n === '') ? '' : '$' + Number(n).toLocaleString('es-CL');
+
+// Del "Desglose puntaje" saca el área con nota más baja: "Frenos 6,8 · Suspensión 5,9"
+// o una por línea. Devuelve { area, nota, linea } — es el dato que abre el mensaje
+// de honestidad ("dónde perdió puntos") sin que nadie tenga que redactarlo a mano.
+function areaMasBaja(desglose) {
+  const txt = String(desglose || '');
+  if (!txt.trim()) return { area: '', nota: null, linea: '' };
+  const partes = txt.split(/[\n·;|]+/).map(s => s.trim()).filter(Boolean);
+  let best = null;
+  for (const p of partes) {
+    const m = /(\d+(?:[.,]\d+)?)\s*$|(\d+(?:[.,]\d+)?)\s*\/\s*7/.exec(p);
+    if (!m) continue;
+    const nota = parseFloat((m[1] || m[2]).replace(',', '.'));
+    if (!isFinite(nota)) continue;
+    const area = p.replace(/[:\-–]?\s*\d+(?:[.,]\d+)?\s*(\/\s*7)?\s*$/, '').replace(/[:\-–]\s*$/, '').trim();
+    if (!best || nota < best.nota) best = { area, nota, linea: p };
+  }
+  return best || { area: '', nota: null, linea: '' };
+}
 
 // Orden de la máquina de 13 estados (ver CLAUDE.md). 99 = terminal, siempre
 // se puede setear (muerto/descartado cierran el lead desde cualquier punto).
@@ -71,6 +97,8 @@ export async function onRequestPost({ request, env }) {
   const LEADS = env.AIRTABLE_LEADS_TABLE || 'Leads';
   const INTER = env.AIRTABLE_INTERESES_TABLE || 'Intereses';
   const REELS = env.AIRTABLE_REELS_TABLE || 'Reels';
+  const INV   = env.AIRTABLE_INVENTARIO_TABLE || 'Inventario';
+  const SITE  = (env.SITE_URL || SITE_DEFAULT).replace(/\/+$/, '');
   if (!READ || !WRITE) return reply({ error: 'not_configured' }, 503);
 
   const api = (t) => `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(t)}`;
@@ -153,9 +181,59 @@ export async function onRequestPost({ request, env }) {
     interesId = (await ir.json()).id;
   }
 
+  // 6) Devolver la BICI en campos PLANOS (mismo criterio que mc-match §2.1: la UI
+  //    de ManyChat no lee bien rutas anidadas). Es lo que permite que el DM de la
+  //    Puerta 1 muestre puntaje, dónde perdió puntos, estado honesto y ahorro sin
+  //    que nadie los copie a mano. Best-effort: si falla, el evento igual quedó
+  //    registrado y ManyChat cae a su copy genérico.
+  let bici = {};
+  if (biciId) {
+    // Ojo: el GET de un registro único NO acepta ?fields[] (422). Se lee completo.
+    const br = await afetch(`${api(INV)}/${biciId}`, { headers: rH });
+    if (br.ok) {
+      const f = (await br.json()).fields || {};
+      const modelo = f.Modelo || f.Etiqueta || '';
+      const talla = f.Talla || '';
+      const precio = f.Precio ?? null;
+      const precioNuevo = f['Precio nuevo'] ?? null;
+      const ahorro = (precio != null && precioNuevo != null && precioNuevo > precio) ? precioNuevo - precio : null;
+      const baja = areaMasBaja(f['Desglose puntaje']);
+      const fotos = f['Fotos galería'];
+      const foto = Array.isArray(fotos) && fotos[0] ? (fotos[0].thumbnails?.large?.url || fotos[0].url) : '';
+      const esElectrica = String(f['Motorización'] || '').toLowerCase().startsWith('el');
+      bici = {
+        biciModelo: modelo,
+        biciEtiqueta: f.Etiqueta || modelo,
+        biciAnio: f['Año'] || '',
+        biciTalla: talla || '',
+        biciPrecio: clp(precio),
+        biciPrecioNuevo: clp(precioNuevo),
+        biciAhorro: clp(ahorro),
+        biciPuntaje: f['Puntaje certificación'] != null ? String(f['Puntaje certificación']).replace('.', ',') : '',
+        biciDesglose: f['Desglose puntaje'] || '',
+        biciAreaBaja: baja.area,
+        biciAreaBajaLinea: baja.linea,
+        biciEstadoHonesto: f['Estado honesto'] || '',
+        biciRangoAltura: f['Rango altura'] || '',
+        biciPorQueAmarla: f['Por qué amarla'] || '',
+        biciFoto: foto,
+        biciFicha: `${SITE}/ficha/${slugify(`${modelo}-${talla}`)}`,
+        // Estado real de la unidad: deja que ManyChat bifurque en vez de afirmar
+        // "sigue disponible" sobre una bici ya vendida (el reel sigue circulando).
+        biciEstado: f.Estado || '',
+        biciDisponible: f.Estado === 'Disponible',
+        // Solo e-bikes; en musculares van vacíos y ManyChat los omite.
+        biciBateria: esElectrica && f['Diag · salud batería'] != null ? String(Math.round(f['Diag · salud batería'] * 100)) : '',
+        biciCiclos: esElectrica && f['Diag · ciclos'] != null ? String(f['Diag · ciclos']) : '',
+        biciKmMotor: esElectrica && f['Diag · km motor'] != null ? String(f['Diag · km motor']) : '',
+      };
+    }
+  }
+
   return reply({
     ok: true, leadId, interesId, biciId: biciId || null,
     estadoActual: fieldsLead['Estado'] || estadoActual, estadoAplicado,
+    ...bici,
   });
 }
 // Sólo POST. Pages responde 405 automáticamente a otros métodos en esta ruta.

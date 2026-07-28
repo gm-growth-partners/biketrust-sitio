@@ -220,6 +220,11 @@ export async function onRequestPost({ request, env }) {
   if (telefono) upd['WhatsApp'] = telefono;
   if (optin) { upd['Opt-in WhatsApp'] = true; upd['Fecha opt-in'] = today; }
   if (subId && !leadFields?.['MC subscriber id']) upd['MC subscriber id'] = subId;
+  // ETAPA «teléfono» del embudo V2 — la métrica #1 del negocio (% de leads que
+  // entregan su número). Se sella UNA sola vez: si el lead vuelve por otro reel,
+  // la fecha original no se pisa, para no falsear la cohorte de la semana.
+  // La bandera `Llegó a teléfono` deriva de este campo por fórmula.
+  if (telefono && !leadFields?.['Fecha teléfono']) upd['Fecha teléfono'] = now;
   const lp = await afetch(`${C.api(C.LEADS)}/${leadId}`, {
     method: 'PATCH', headers: C.wH,
     body: JSON.stringify({ typecast: true, fields: upd }),
@@ -238,6 +243,47 @@ export async function onRequestPost({ request, env }) {
       const link = rec?.fields?.Bici;
       biciId = (Array.isArray(link) ? link[0] : link) || '';
     }
+  }
+
+  // 2b-bis) Nombre del modelo (lo usan el dedup y el resumen del aviso).
+  let biciNombre = '';
+  if (biciId) {
+    const br = await afetch(`${C.api('Inventario')}/${biciId}`, { headers: C.rH });
+    if (br.ok) { const bf = (await br.json()).fields || {}; biciNombre = bf.Modelo || bf.Etiqueta || ''; }
+  }
+
+  // 2c) DEDUP: ¿este lead ya tiene un llamado abierto? El comprador más caliente
+  //      es justo el que comenta en dos o tres reels y deja el teléfono en cada
+  //      uno. Sin esto, Luis ve tres filas del mismo nombre: o llama tres veces
+  //      (queda como spam) o llama una y las otras dos ensucian la cola y la
+  //      métrica de «nunca llamados». Se agrega el interés nuevo al ticket vivo.
+  let abierto = null;
+  try {
+    const fu = `${C.api(C.LLAM)}?pageSize=50&filterByFormula=${encodeURIComponent(`{Estado}='Llamada pendiente'`)}`;
+    const fr = await afetch(fu, { headers: C.rH });
+    if (fr.ok) {
+      const recs = (await fr.json()).records || [];
+      abierto = recs.find(r => (r.fields?.Lead || []).some(x => (typeof x === 'string' ? x : x?.id) === leadId)) || null;
+    }
+  } catch { /* best-effort: si falla la búsqueda, se crea uno nuevo */ }
+
+  if (abierto) {
+    const extra = [
+      abierto.fields?.Notas || '',
+      `+ ${today}: también preguntó por ${biciNombre || 'otra bici'}${notas ? ' · ' + notas : ''}`,
+    ].filter(Boolean).join('\n');
+    const pr = await afetch(`${C.api(C.LLAM)}/${abierto.id}`, {
+      method: 'PATCH', headers: C.wH,
+      body: JSON.stringify({ typecast: true, fields: {
+        'Notas': extra.slice(0, 2000),
+        ...(telefono && !abierto.fields?.['Teléfono'] ? { 'Teléfono': telefono } : {}),
+      } }),
+    });
+    if (pr.ok) {
+      return reply({ ok: true, llamadoId: abierto.id, leadId, leadCreado, dedup: true,
+        biciNombre: biciNombre || null, llamarEl: null, llamarElLegible: null, aviso: 'omitido_ticket_abierto' });
+    }
+    // si el PATCH falla, cae al camino normal y crea uno nuevo
   }
 
   // 3) Crear el TICKET de llamado (Estado=Llamada pendiente → cola del staff).
@@ -260,13 +306,6 @@ export async function onRequestPost({ request, env }) {
   });
   if (!lr.ok) return reply({ error: 'airtable_llamado_create', status: lr.status, detail: await lr.text() }, 502);
   const llamadoId = (await lr.json()).id;
-
-  // 3b) Nombre del modelo para el resumen del aviso (best-effort).
-  let biciNombre = '';
-  if (biciId) {
-    const br = await afetch(`${C.api('Inventario')}/${biciId}`, { headers: C.rH });
-    if (br.ok) { const bf = (await br.json()).fields || {}; biciNombre = bf.Modelo || bf.Etiqueta || ''; }
-  }
 
   // 4) AVISO AL STAFF por WhatsApp (best-effort; el ticket ya quedó creado).
   let aviso = 'no_configurado';
