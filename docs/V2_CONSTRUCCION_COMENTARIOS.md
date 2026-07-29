@@ -113,10 +113,34 @@ Hola 👋 Vi tu comentario en la {{cf_bici_modelo}}.
 | Botón | Chars | Destino |
 |---|---|---|
 | `Sí, muéstramela` | 15 | → C1b *(paso 17)* |
-| `Tengo una consulta` | 18 | → C1b *(paso 17)* |
+| `Tengo una consulta` | 18 | → **B1-Q** *(paso 17-bis — cambio 2026-07-29: iban los dos al mismo lugar)* |
 
 *El catch-all «escribe en vez de tocar» no se puede colgar de la respuesta privada: ese
 texto cae al Default Reply y lo capturará la puerta de DM.*
+
+### Paso 17-bis · B1-Q + B1-W · El router de la consulta *(diseño de Gabriel, 2026-07-29)*
+
+**B1-Q · ¿Bici o tienda? — paso de texto:**
+```
+Dime 🙂 ¿tu consulta es sobre esta bici o sobre la tienda?
+```
+| Botón | Chars | Destino |
+|---|---|---|
+| `Sobre la bici` | 13 | → C1b (la ficha responde; B3 llega solo a los 40 s) |
+| `Sobre la tienda` | 15 | → B1-W |
+
+**B1-W · La tienda — paso de texto, sin botones.** ⚠️ PROVISORIO: cuando exista la puerta
+de DM, `Sobre la tienda` se re-apunta al enrutador de intención.
+```
+Estamos en Av. Las Condes 12461, Las Condes 📍 Lunes a viernes de 9:00 a 20:00, sábado de 10:00 a 14:00.
+
+Y acá puedes ver todo lo que tenemos: https://biketrust-sitio.pages.dev
+```
+Salida → **D1**: responde lo que preguntó y a los 40 s B3 le ofrece la llamada igual.
+
+> **Mejora futura anotada (2ª iteración, NO hoy):** nutrición post-catálogo — preguntar al
+> rato si le interesó algún modelo (a quien pasó por B2-C o B1-W). No es un bloque más: es
+> un mini-ciclo de reenganche que necesita ventana abierta o plantilla de WhatsApp.
 
 ### N4 · B2 · La ficha *(construido — su salida se cablea en el paso 14)*
 Paso normal (alcanzado por botón → sin límite de bloques). **3 burbujas:**
@@ -205,10 +229,16 @@ https://biketrust-sitio.pages.dev/api/mc-llamado?key=<MC_KEY>
    *(este request además dispara solo el aviso `nuevo_llamado` a Luis)*
 3. Salida → **C3**
 
-### Paso 6 · B4-L · Salida lateral — paso de texto, sin botones
+### Paso 6 · B4-L · Salida lateral — paso de texto + notificación
+*(Rediseñado 2026-07-29: reenviar la ficha era ruido —ya la recibió en B2— y en la ruta de
+bici vendida ni siquiera existe. Quien llega acá QUIERE la llamada; el formulario no le
+tomó el número.)*
 ```
-Ningún problema 👌 Te dejo la ficha por acá y cualquier duda me escribes: {{cf_bici_ficha}}
+Uy, no me tomó el número 🙈 Mándamelo por acá no más, escrito como mensaje, y te llamamos igual 🙂
 ```
+**+ acción nativa «Notificar al administrador»** en el mismo bloque. El número escrito a
+mano NO crea ticket automático (cae en la bandeja): sin el aviso, nadie se entera y Luis lo
+mete a mano cuando le llega la notificación.
 
 ### Paso 7 · B4 · El teléfono — entrada de usuario
 - Tipo de respuesta: **Teléfono** → guardar en `cf_telefono`
@@ -360,18 +390,21 @@ Sin más pasos. Nunca intenta recuperar.
 ### Paso 21 · Checklist de conexiones
 ```
 Acción 0 → C1a
-C1a  Sí → B2-V              · Si no → B1
-B2-V Sí que me llamen → B4  · Ver lo que hay ahora → C2
-B1   botones ×2 → C1b
-C1b  Sí → B2-E              · Si no → B2
+C1a  Sí → B2-V                 · Si no → B1
+B2-V Sí que me llamen → B4     · Ver lo que hay ahora → B2-C
+B2-C → D1
+B1   Sí, muéstramela → C1b     · Tengo una consulta → B1-Q
+B1-Q Sobre la bici → C1b       · Sobre la tienda → B1-W
+B1-W → D1
+C1b  Sí → B2-E                 · Si no → B2
 B2   → D1        B2-E → D1
 D1   → C2
 C2   Sí → (nada) · Si no → A1
 A1   → B3
-B3   Sí que me llamen → B4  · Por ahora no → B7
-B4   válido → B5            · falla ×2 → B4-L
-B5   Correcto → A2 → SE3 → C3 · Corregir → B4
-C3   Sí → B6                · Si no → B6-D
+B3   Sí que me llamen → B4     · Por ahora no → B7
+B4   válido → B5               · falla ×2 → B4-L (+ Notificar al administrador)
+B5   Correcto → A2 → SE3 → C3  · Corregir → B4
+C3   Sí (con valor) → B6       · Si no (vacío) → B6-D
 ```
 
 ### Publicar y probar
