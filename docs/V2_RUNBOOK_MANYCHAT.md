@@ -215,6 +215,9 @@ Se monta **una vez, sobre un solo reel**, y recién después se duplica.
 
 ### Acción 0 · Tracking (invisible, ANTES de cualquier mensaje)
 
+> En ManyChat este bloque quedó montado con el nombre **«Acción 0 — tracking invisible»**
+> (2026-07-29). Si un doc o una sesión futura lo busca, es ese.
+
 **Este orden no es negociable:**
 
 1. **Borrar valor** de los **14** `cf_bici_*` del Grupo B.
@@ -795,7 +798,7 @@ Disponible**, porque «tienen» y «la» puntúan 0. Solo calzan los mensajes qu
 
 Mapeo de respuesta: `heroBici`→`cf_hero_bici` · `heroModelo`→`cf_hero_modelo` ·
 `heroTalla`→`cf_hero_talla` · `heroPrecio`→`cf_hero_precio` · `heroFicha`→`cf_hero_ficha` ·
-`heroFoto`→`cf_hero_foto` · `match`→`cf_match` · `otrasTexto`→`cf_otras_texto` ·
+`heroFoto`→`cf_hero_foto` · `match`→`cf_match` · `otrasTexto`→`cf_otras` ·
 `altModelo`→`cf_alt_modelo` · `altPrecio`→`cf_alt_precio` · `altFicha`→`cf_alt_ficha` ·
 `altBici`→`cf_alt_bici` · `leadId`→`cf_lead_id`.
 
@@ -820,7 +823,7 @@ alimentan B2 en comentarios → **el copy de B2 se reutiliza literal**, con el m
 ⚠️ **Borrar los 14 `cf_bici_*` antes de esta llamada**, igual que en la puerta de comentarios.
 
 **Paso 5 — la ficha.** Mismo copy de **B2** (§3), incluidas las variantes e-bike y bici vendida.
-Si `cf_otras_texto` no está vacío, agregar esa línea tal cual antes de los botones: ya viene
+Si `cf_otras` no está vacío, agregar esa línea tal cual antes de los botones: ya viene
 redactada del endpoint.
 
 **Paso 6 → B3.** Los botones de la ficha van a **B3**, nunca a una visita en tienda.
@@ -1091,10 +1094,10 @@ cf_modelo_texto       ← el mensaje completo, para las notas del ticket
 cf_hero_bici     cf_hero_modelo   cf_hero_talla   cf_hero_precio
 cf_hero_ficha    cf_hero_foto
 cf_alt_bici      cf_alt_modelo    cf_alt_precio   cf_alt_ficha
-cf_otras_texto   cf_match
+cf_otras   cf_match
 cf_v_modelo      cf_v_anio        cf_v_talla      cf_v_estado
 cf_consigna_id
-cf_q_disciplina  cf_q_presupuesto cf_q_altura     ← solo para la 2ª iteración (quiz)
+cf_q_disc  cf_q_presup cf_q_altura     ← solo para la 2ª iteración (quiz)
 cf_solicitud_id  cf_v_precio                      ← solo si vuelve mc-waitlist / se pide precio
 ```
 
@@ -1102,6 +1105,23 @@ cf_solicitud_id  cf_v_precio                      ← solo si vuelve mc-waitlist
 
 > **No crear** `cf_q_motor`: decisión §0-bis.5, el quiz son 3 preguntas. Tampoco `cf_ciudad`,
 > `cf_franja`, `cf_slot`, `cf_fecha_libre`, `cf_valido`, `cf_brief`, `cf_no_texto_intentos`.
+
+#### Estado real en ManyChat (inventario 2026-07-29, contra la pantalla)
+
+- **Los 8 literales del backend ya existían de la V1, bien escritos** — el riesgo de tipeo
+  grande estaba resuelto de antes.
+- **Se reusan 3 campos V1 en vez de crear los nombres nuevos** (son de mapeo, el nombre lo
+  elegimos nosotros): `cf_otras` (por «cf_otras_texto») · `cf_q_disc` (por
+  «cf_q_disciplina») · `cf_q_presup` (por «cf_q_presupuesto»). Este runbook ya usa los
+  nombres reales en todos los mapeos.
+- **13 campos V1 quedaron MUERTOS y no hay que usarlos**: `cf_agenda_msg` ·
+  `cf_agenda_valida` · `cf_dia_llamado` · `cf_estado_aplicado` · `cf_fecha_otra` ·
+  `cf_llamado_id` · `cf_ll_ciudad` · `cf_ll_franja` · `cf_notas` · `cf_q_motor` ·
+  `cf_q_talla` · `cf_slot_a` · `cf_slot_b`.
+  **NO borrarlos todavía**: los referencian las automatizaciones V1, que siguen vivas.
+  Se borran en el go-live (§9), después de apagar la V1. Los dos que más importa no reusar
+  por error: `cf_ll_ciudad` y `cf_ll_franja` — son justo los datos que el V2 dejó de mandar
+  a `mc-llamado`.
 
 ### 5.10 · Lo que queda por verificar en pantalla
 
@@ -1270,7 +1290,10 @@ Con una **cuenta de Instagram virgen** (por el enfriamiento de 24 h):
 2. Apagar las automatizaciones V1.
 3. ~~Borrar la opción `Solo información` de `Salida`~~ ✅ **HECHO** (verificado 2026-07-29:
    el campo tiene exactamente las 6 opciones que espera el código).
-4. Monitorear el primer día: `Leads.Fecha teléfono` es el indicador único de que el embudo
+4. **Borrar los 13 custom fields muertos de la V1** (lista en §5.9) — recién acá, un día
+   después de apagar la V1: mientras esté viva, sus automatizaciones los referencian y
+   borrarlos rompe el embudo actual sin aviso.
+5. Monitorear el primer día: `Leads.Fecha teléfono` es el indicador único de que el embudo
    V2 funciona. Meta: **20–30 %** de los leads entregan teléfono (semana 30 = 3 %).
 
 ---
