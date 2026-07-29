@@ -305,7 +305,25 @@ Pero si es la que andabas buscando, te la conseguimos. Todas las semanas salimos
 | Botón | Chars | Destino |
 |---|---|---|
 | `Sí, que me llamen` | 17 | → **B4** (se salta B3) |
-| `Ver lo que hay ahora` | 20 — límite exacto | → **C2** |
+| `Ver lo que hay ahora` | 20 — límite exacto | → **B2-C** *(cambio 2026-07-29: pedía ver el stock y se le ofrecía una llamada — pregunta una cosa, respondíamos otra)* |
+
+### Paso 18-bis · B2-C · Catálogo — paso de texto, sin botones
+```
+Acá puedes ver todo lo que tenemos disponible ahora mismo 👉 https://biketrust-sitio.pages.dev
+
+Todas pasaron por nuestra inspección, con su nota de 1 a 7 a la vista.
+```
+Salida → **D1** (la misma Pausa): valor → 40 s mirando el catálogo → C2 → B3 ofrece la
+llamada. Responde lo que pidió Y converge igual.
+
+> **Dos decisiones revisadas y RATIFICADAS el mismo día (no re-abrir):**
+> - **`Tengo una consulta` → C1b → B2 se queda.** La ficha responde la mayoría de las
+>   consultas, y para el resto la salida llega sola: D1 → B3 («te resuelve las dudas que por
+>   chat no se responden bien»). El Q&A real por chat es trabajo de la puerta de DM.
+> - **B4-L se queda en la rama de fallo del teléfono.** Quien llega ahí QUIERE la llamada
+>   (tocó «Sí, que me llamen» e intentó dos veces): mandarle B7 («Cero llamadas») sería
+>   responderle al revés. B4-L cierra con valor y deja la puerta abierta; si escribe su
+>   número a mano, abre la ventana de 24 h y cae en la bandeja.
 
 ### Paso 19 · Reposicionar C1a — entre Acción 0 y B1
 - `cf_bici_disponible` **es** `false` *(texto: el endpoint escribe la palabra)*
