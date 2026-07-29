@@ -204,6 +204,11 @@ Un campo tipo número rompe esas comparaciones.
 
 ## §3 · Puerta 1 · Comentarios — bloque por bloque
 
+> **Para CONSTRUIR usa [`V2_CONSTRUCCION_COMENTARIOS.md`](V2_CONSTRUCCION_COMENTARIOS.md)**
+> (los 23 bloques en orden de montaje, con el cambio 2026-07-29: C1a antes de B1) y el mapa
+> [`embudo_comentarios_v2_bloques.svg`](embudo_comentarios_v2_bloques.svg). Esta sección es
+> el diseño y el porqué.
+
 Se monta **una vez, sobre un solo reel**, y recién después se duplica.
 
 ### Disparador
