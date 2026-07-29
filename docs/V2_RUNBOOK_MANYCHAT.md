@@ -27,8 +27,7 @@ la recomendación y su razón. **Ninguna necesita código nuevo.**
 | 7 | **Respuesta pública: 3 o 5 variantes** | **Las 5** del doc de copy, **+ el delay de ~3 s** de INSUMOS | No se excluyen: el delay es higiene anti-spam, las variantes son rotación |
 | 8 | **Rotar `MC_KEY` ahora o al final** | **AL FINAL**, cuando se apaguen las automatizaciones V1 | El plan D1 mandaba rotarla al inicio porque asumía demoler la V1 primero. La V1 está VIVA y llamando a los endpoints: rotar ahora la deja fuera de servicio de golpe. Montar el V2 con la llave actual y rotar en el go-live |
 
-**Dato que solo tienes tú:** el **número de teléfono real de Luis** para B6 — en el copy está
-como el placeholder literal `+56 9 XXXX XXXX`.
+**Teléfono de Luis para B6:** `+56 9 2181 5855` (confirmado 2026-07-29, ya está en el copy del §3).
 
 ---
 
@@ -79,11 +78,50 @@ abierto, no en una sesión aparte.
 
 ### §1.1 · Pre-checks
 
+*Auditado contra la base real el 2026-07-29.*
+
 | # | Qué | Estado |
 |---|---|---|
-| 1 | **¿Meta aprobó `nuevo_llamado`?** | ⚠️ **Es el único bloqueante real.** Sin esa plantilla, entra un lead con teléfono y **Luis no se entera**. Todo lo demás se puede lanzar cojo; esto no |
-| 2 | **`mc-evento` con el payload de bici, desplegado** | ✅ Ya está. Está en `main` y Cloudflare autodespliega. Los 21 campos planos salen (`mc-evento.js` líneas 205–228). *Los docs que dicen «escrito pero sin desplegar» están vencidos* |
-| 3 | **Luis con asiento de EDITOR en Airtable** | ⚠️ Sin verificar. Sin permiso de edición no puede arrastrar tarjetas y el Kanban no sirve |
+| 1 | **`nuevo_llamado` aprobada por Meta** | ✅ Aprobada, en su versión vieja. ⚠️ Su texto fijo cierra con «contacta a la persona en la franja indicada» y **en V2 no hay franja** — ver §1.2 |
+| 2 | **`mc-evento` con el payload de bici, desplegado** | ✅ En `main`, Cloudflare autodespliega. Los 21 campos planos salen |
+| 3 | **Luis con permiso de edición en Airtable** | ✅ Confirmado |
+| 4 | **Interfaz «Operación Llamadas (V2)» publicada** | ✅ Las 4 pantallas existen: `1 · Llamadas` (con `Salida` editable y el brief completo), `2 · Visitas`, `3 · Región`, `4 · Búsquedas` |
+| 5 | **Las 6 opciones de `Salida`** | ✅ Calzan **exactas** con la const `SALIDAS` del código. **`Solo información` ya fue borrada** — el pendiente del §9 está cumplido *(solo quedó stale la descripción del campo, que todavía la menciona)* |
+| 6 | **Automatización `kanban a mensajes`** | ✅ Desplegada y **con el bug arreglado**: mapea `recordId` ← `trigger.id` y el script lee `config.recordId`. Pega a `/api/salida-llamado` con la llave correcta |
+| 7 | **Campos del embudo V2** | ✅ `Leads.Fecha teléfono` + `Llegó a teléfono`; `Solicitudes.Aviso buscando` para `cron-sourcing`; los 4 lookups del brief en `Llamados` |
+
+> 💡 **Dónde sacar el valor de `MC_KEY`** (Cloudflare lo guarda como Secret y **no se puede leer
+> de vuelta**): está a la vista en el script de la automatización **`kanban a mensajes`**, en el
+> `?key=` de la URL. Es la llave actual, la que va en todas las Solicitudes externas que montes
+> hoy. **No uses `MC_KEY_V2`** (la de `.dev.vars`): esa es para el go-live, y el día que la
+> pegues en Cloudflare todas las automatizaciones V1 empiezan a dar 401 de golpe.
+
+### §1.2 · La franja de `nuevo_llamado` — qué hacer
+
+**El campo ya está resuelto por código.** `mc-llamado` **no** incluye la franja en
+`cf_llamado_datos`: el resumen es `nombre · de ciudad · interesado en X · teléfono`, y el propio
+comentario del endpoint dice que en V2 no hay franja porque al lead no se le pregunta cuándo
+prefiere que lo llamen. No hay nada que vaciar.
+
+**El problema que queda es el texto FIJO de la plantilla**, que cierra con «Contacta a la
+persona en la franja indicada». Eso no es una variable: se imprime siempre, y ahora no se
+refiere a nada.
+
+**Recomendación: lanzar así, y crear `nuevo_llamado_v2` en paralelo.**
+
+- Es un mensaje **interno**, a Luis y Roberto, que saben que no hay franja. La frase colgando
+  cuesta cero hacia afuera.
+- ⛔ **NO editar la plantilla actual.** Editarla la manda de vuelta a revisión de Meta y queda
+  **inutilizable mientras tanto** — o sea, Luis se queda sin avisos justo en el lanzamiento.
+- La v2 (copy en §6.2.3) se aprueba en minutos–24 h; cuando esté, se cambia el flujo envoltorio
+  y listo.
+
+### §1.3 · Los dos detalles menores encontrados en la auditoría
+
+| Qué | Impacto |
+|---|---|
+| **El ticket nace con `Salida` VACÍA.** `mc-llamado` no escribe ese campo (la automatización que existe llena `Estado`, que es otro campo). El Kanban agrupa por `Salida` → las tarjetas nuevas caen en la pila «sin categoría», no en la columna «Llamada pendiente» | Cosmético pero confunde. **Arreglo:** una automatización de una línea, `Salida` vacía → `Llamada pendiente`. Es seguro: dispara `kanban a mensajes`, que para ese valor devuelve `salida_sin_mensaje` y no hace nada |
+| **`Notas` está en la pantalla 1** del Kanban | Se acordó que Luis **no anota nada** en la primera pantalla: solo arrastra. Quitarlo de esa vista (sigue en las pantallas 2, 3 y 4) |
 
 ---
 
@@ -427,13 +465,13 @@ Anotado: {{cf_telefono}} ✅
 ```
 Listo ✅ Te va a llamar Luis Sulbarán, nuestro especialista, {{cf_promesa}}.
 
-Te marca desde el +56 9 XXXX XXXX — guarda el número así sabes que somos nosotros 😉
+Te marca desde el +56 9 2181 5855 — guarda el número así sabes que somos nosotros 😉
 
 Si no te pilla, te deja un WhatsApp a ese mismo número.
 ```
 
-- ⚠️ **`+56 9 XXXX XXXX` es un placeholder literal**: poner el número real de Luis. No es
-  variable de ManyChat.
+- ✅ **`+56 9 2181 5855` es el número real de Luis** (confirmado 2026-07-29). Es **texto fijo**,
+  no variable de ManyChat: se escribe tal cual en la burbuja.
 - ⚠️ **La última línea no se puede sacar.** Es donde se declara el permiso que habilita el
   mensaje automático del ciclo «No contestado». Sacarla deja ese mensaje sin base.
 - `{{cf_promesa}}` la calcula el endpoint contra `HORARIO_ESPECIALISTA`: *«en los próximos
@@ -1230,9 +1268,8 @@ Con una **cuenta de Instagram virgen** (por el enfriamiento de 24 h):
 1. Rotar `MC_KEY` en Cloudflare + **redesplegar** + actualizar la llave en **todas** las
    Solicitudes externas de ManyChat.
 2. Apagar las automatizaciones V1.
-3. Borrar la opción **`Solo información`** del campo `Salida` en Airtable (a mano; la API no
-   borra opciones). Mientras siga viva es una columna del Kanban que **no dispara nada, en
-   silencio**.
+3. ~~Borrar la opción `Solo información` de `Salida`~~ ✅ **HECHO** (verificado 2026-07-29:
+   el campo tiene exactamente las 6 opciones que espera el código).
 4. Monitorear el primer día: `Leads.Fecha teléfono` es el indicador único de que el embudo
    V2 funciona. Meta: **20–30 %** de los leads entregan teléfono (semana 30 = 3 %).
 
