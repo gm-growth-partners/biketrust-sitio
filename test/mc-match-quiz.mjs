@@ -9,19 +9,33 @@ const src = readFileSync(
 
 // norm() + parseRangoAltura() + bloque scoreBici…umbralQuiz (nivel módulo).
 const normSrc = src.match(/const norm = [\s\S]*?\.trim\(\);/)[0];
-const discStart = src.indexOf('function parseDisciplina');
+const presupStart = src.indexOf('function parsePresupuesto');
 const rangoStart = src.indexOf('function parseRangoAltura');
 const rangoEnd = src.indexOf('const cfg =');
 const scoreStart = src.indexOf('function scoreBici');
 const scoreEnd = src.indexOf('// ─────');
-if ([discStart, rangoStart, rangoEnd, scoreStart, scoreEnd].some(i => i < 0)) throw new Error('no encontré los bloques');
+if ([presupStart, rangoStart, rangoEnd, scoreStart, scoreEnd].some(i => i < 0)) throw new Error('no encontré los bloques');
 
 const lib = new Function(`
   ${normSrc}
-  ${src.slice(discStart, rangoEnd)}
+  ${src.slice(presupStart, rangoEnd)}
   ${src.slice(scoreStart, scoreEnd)}
-  return { scoreBici, rankDisponibles, umbralQuiz, parseDisciplina };
+  return { scoreBici, rankDisponibles, umbralQuiz, parseDisciplina, parsePresupuesto };
 `)();
+
+// ── parsePresupuesto: lo que la gente escribe de verdad ──
+const PRESUP = [
+  ['3,5 millones', 3500000], ['3.5 millones', 3500000], ['3 millones', 3000000],
+  ['$3.500.000', 3500000], ['3500000', 3500000], ['3,5', 3500000], ['10', 10000000],
+  ['tengo 4 palos', 4000000], ['flexible', null],
+];
+let failP = 0;
+for (const [txt, want] of PRESUP) {
+  const got = lib.parsePresupuesto(txt);
+  const ok = got === want;
+  if (!ok) failP++;
+  console.log(`${ok ? 'OK ' : 'FALLO'} presupuesto «${txt}» -> ${got} ${ok ? '' : `(esperaba ${want})`}`);
+}
 
 // Inventario sintético con la forma real de Airtable.
 const bici = (id, Modelo, Disciplina, Motorizacion, Precio, Rango, Talla) => ({
@@ -74,5 +88,5 @@ for (const [desc, inv, crit, want] of CASES) {
   if (!ok) fail++;
   console.log(`${ok ? 'OK ' : 'FALLO'} ${desc} -> ${got || 'no-match'}${ok ? '' : ` (esperaba: ${want || 'no-match'})`}`);
 }
-console.log(fail === 0 ? '\nTODOS OK' : `\n${fail} FALLOS`);
-process.exit(fail === 0 ? 0 : 1);
+console.log((fail + failP) === 0 ? '\nTODOS OK' : `\n${fail + failP} FALLOS`);
+process.exit((fail + failP) === 0 ? 0 : 1);

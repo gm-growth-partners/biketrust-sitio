@@ -75,15 +75,22 @@ const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-
 
 const clp = (n) => (n == null || n === '') ? null : '$' + Number(n).toLocaleString('es-CL');
 
-// Presupuesto tolerante: "$3.000.000", "3000000", "3 millones" → número (techo).
+// Presupuesto tolerante: "$3.000.000", "3000000", "3 millones", "3,5 millones",
+// "3.5", "10" → número (techo). ⚠️ El decimal se captura ANTES de pelar los
+// puntos: la versión anterior leía «3,5 millones» como 35 → $35.000.000 (bug
+// cazado en el E2E del quiz 2026-07-30: recomendó la bici más cara del techo).
 function parsePresupuesto(v) {
   if (v == null || v === '') return null;
   const s = String(v).toLowerCase();
+  // «3,5 millones» / «3.5 palos» → 3.5 × 1M
+  const mill = /(\d+(?:[.,]\d+)?)\s*(?:mill|palo)/.exec(s);
+  if (mill) return Math.round(parseFloat(mill[1].replace(',', '.')) * 1000000);
+  // Número corto solo («3,5» · «10» · «7») → son millones en este negocio
+  const corto = /^[^0-9]*(\d{1,2}(?:[.,]\d{1,2})?)[^0-9]*$/.exec(s);
+  if (corto) return Math.round(parseFloat(corto[1].replace(',', '.')) * 1000000);
   const digits = s.replace(/[^0-9]/g, '');
   if (!digits) return null;
-  let n = parseInt(digits, 10);
-  if (/mill/.test(s) && n < 1000) n = n * 1000000; // "3 millones" → 3.000.000
-  return n;
+  return parseInt(digits, 10);
 }
 
 // Disciplina tolerante: el quiz de ManyChat guarda el TEXTO del botón («MTB /
