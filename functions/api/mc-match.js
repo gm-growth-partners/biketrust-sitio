@@ -495,7 +495,11 @@ export async function onRequestPost({ request, env }) {
   return reply({
     ok: true,
     mode: modelo ? 'modelo' : 'quiz',
-    match, waitlist,
+    // Como PALABRA, no booleano: el mapeo de ManyChat no guarda booleanos en
+    // campos de texto (cf_match quedaba vacío y C-Q caía al no-match aunque
+    // hubiera hero — cazado en el E2E del quiz 2026-07-30).
+    match: match ? 'true' : 'false',
+    waitlist: waitlist ? 'true' : 'false',
     ...flat,                          // ← usar estos en ManyChat (planos)
     otrasTexto: otrasTexto || '',     // línea lista para el DM cuando hay varias
     modeloBuscado: modeloBuscado || null,

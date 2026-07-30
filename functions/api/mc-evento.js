@@ -221,7 +221,10 @@ export async function onRequestPost({ request, env }) {
         // Estado real de la unidad: deja que ManyChat bifurque en vez de afirmar
         // "sigue disponible" sobre una bici ya vendida (el reel sigue circulando).
         biciEstado: f.Estado || '',
-        biciDisponible: f.Estado === 'Disponible',
+        // Como PALABRA, no booleano: el mapeo de ManyChat no guarda booleanos en
+        // campos de texto — la condición C1a («es false» → bici vendida) nunca
+        // habría disparado (bug gemelo del cf_match, cazado 2026-07-30).
+        biciDisponible: f.Estado === 'Disponible' ? 'true' : 'false',
         // Solo e-bikes; en musculares van vacíos y ManyChat los omite.
         biciBateria: esElectrica && f['Diag · salud batería'] != null ? String(Math.round(f['Diag · salud batería'] * 100)) : '',
         biciCiclos: esElectrica && f['Diag · ciclos'] != null ? String(f['Diag · ciclos']) : '',
