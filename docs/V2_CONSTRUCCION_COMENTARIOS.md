@@ -11,8 +11,8 @@
 > automatización ManyChat se entrega con su diagrama de bloques así.
 >
 > Esta hoja está escrita para el **reel SL (`DbEh9fBI9Np`, Levo SL S-Works · M)**, que es el
-> primero que se monta. Al duplicar cambian 3 cosas (runbook §4): el post, las 10 keywords y
-> el `reel` de los 2 bodies.
+> master. **Al duplicar cambian exactamente 4 elementos en 3 bloques** — tabla completa por
+> reel en la sección «Duplicación por reel» al final.
 
 Reglas transversales:
 - **Todos los botones son «Ir a un paso» (flujo), NUNCA URL** — un botón URL no revive el
@@ -158,11 +158,12 @@ Estado honesto, tal cual está hoy:
 Nueva hoy sale {{cf_bici_precio_nuevo}}.
 Esta queda en {{cf_bici_precio}} → te ahorras {{cf_bici_ahorro}}.
 ```
-3. **El link va como TEXTO, no como botón:**
-```
-Ficha completa con todas las fotos: {{cf_bici_ficha}}
-```
-Sin botones: de B2 se sale por el Smart Delay.
+3. **El link de la ficha** — *as-built 2026-07-29: quedó como botón «Ver Ficha» (URL =
+   `{{cf_bici_ficha}}`) en vez de texto, y es válido*: en un paso normal el botón URL no
+   interfiere con el Next Step hacia el Smart Delay (la restricción de botones-URL era solo
+   para B1, la respuesta privada terminal).
+
+De B2 se sale por el Smart Delay (Next Step), no por el botón.
 
 ### N5 · C1a *(construida — se reposiciona en el paso 19)*
 
@@ -229,16 +230,18 @@ https://biketrust-sitio.pages.dev/api/mc-llamado?key=<MC_KEY>
    *(este request además dispara solo el aviso `nuevo_llamado` a Luis)*
 3. Salida → **C3**
 
-### Paso 6 · B4-L · Salida lateral — paso de texto + notificación
-*(Rediseñado 2026-07-29: reenviar la ficha era ruido —ya la recibió en B2— y en la ruta de
-bici vendida ni siquiera existe. Quien llega acá QUIERE la llamada; el formulario no le
-tomó el número.)*
+### Paso 6 · ~~B4-L~~ ELIMINADO — el reintento vive DENTRO del paso de teléfono
+*(Realidad de plataforma verificada en pantalla, 2026-07-29: el paso de entrada de teléfono
+NO permite acciones ni ramas tras los intentos fallidos — solo un mensaje de reintento.
+B4-L se eliminó del canvas; no crear ningún bloque.)*
+
+El único mecanismo es el **mensaje de reintento** configurado dentro del propio B4:
 ```
-Uy, no me tomó el número 🙈 Mándamelo por acá no más, escrito como mensaje, y te llamamos igual 🙂
+Creo que se cortó un dígito 🙈 ¿me lo mandas de nuevo? Así sirve: 9 1234 5678
 ```
-**+ acción nativa «Notificar al administrador»** en el mismo bloque. El número escrito a
-mano NO crea ticket automático (cae en la bandeja): sin el aviso, nadie se entera y Luis lo
-mete a mano cuando le llega la notificación.
+Tras ~3 intentos fallidos el flujo termina en silencio. Mitigación: si la persona escribe
+el número a mano, cae en la bandeja — **revisar la bandeja es rutina operativa** hasta que
+exista la puerta de DM.
 
 ### Paso 7 · B4 · El teléfono — entrada de usuario
 - Tipo de respuesta: **Teléfono** → guardar en `cf_telefono`
@@ -359,10 +362,9 @@ llamada. Responde lo que pidió Y converge igual.
 - `cf_bici_disponible` **es** `false` *(texto: el endpoint escribe la palabra)*
 - **Sí** → B2-V · **Si no** → B1
 
-⚠️ **Único paso que puede protestar** (pariente de la limitación de la respuesta privada).
-Si el builder no acepta una condición entre las acciones y la respuesta privada, **fallback
-= diseño anterior**: C1a vive después de B1 (botones de B1 → C1a; «Sí» → B2-V sin el
-«Hola 👋»; «Si no» → C1b). Todo lo demás queda idéntico.
+> ✅ **CONFIRMADO EN PANTALLA (2026-07-29): el builder SÍ acepta la condición entre las
+> acciones y la respuesta privada.** C1a quedó antes de B1 y el fallback no fue necesario.
+> Cada rama tiene su propia respuesta privada (B2-V o B1).
 
 *Beneficio lateral: si `mc-evento` fallara y los campos llegaran vacíos, «es false» no calza
 y cae al camino normal (B1).*
@@ -402,7 +404,7 @@ D1   → C2
 C2   Sí → (nada) · Si no → A1
 A1   → B3
 B3   Sí que me llamen → B4     · Por ahora no → B7
-B4   válido → B5               · falla ×2 → B4-L (+ Notificar al administrador)
+B4   válido → B5               · reintento interno (sin rama de fallo: límite de plataforma)
 B5   Correcto → A2 → SE3 → C3  · Corregir → B4
 C3   Sí (con valor) → B6       · Si no (vacío) → B6-D
 ```
@@ -413,4 +415,35 @@ C3   Sí (con valor) → B6       · Si no (vacío) → B6-D
 3. Completar el viaje hasta B6 y verificar contra el E2E del runbook §8 (Lead con canal,
    Interés con `Reel`, ticket con brief, `Fecha teléfono` sellada, aviso a Luis, rama dedup).
 4. Borrar los registros de prueba por id.
-5. Recién entonces duplicar ×5 (runbook §4).
+5. Recién entonces duplicar (sección siguiente).
+
+---
+
+## Duplicación por reel — los 4 elementos que cambian
+
+| # | Bloque | Elemento | Cómo queda |
+|---|---|---|---|
+| 1 | Disparador | El post vinculado | El reel elegido |
+| 2 | Disparador | Las 10 palabras clave | Las del reel (tabla abajo) |
+| 3 | «Acción 0» → Solicitud externa `mc-evento` | `"reel"` en el body | El shortcode del reel |
+| 4 | «A2 + SE3» → Solicitud externa `mc-llamado` | `"reel"` en el body | El mismo shortcode |
+
+**Nada más se toca**: URLs, `handle`, mapeos, copy y condicionales son idénticos — la bici
+correcta la trae `mc-evento` desde Airtable usando el shortcode.
+
+| Reel | Shortcode | Bici | 10 keywords |
+|---|---|---|---|
+| SL (master) | `DbEh9fBI9Np` | Levo SL S-Works · M | sl · levo · levo sl · sworks · precio · valor · cuanto · $$$ · disponible · queda |
+| Epic 8 Pro | `DbCLcpEB4aT` | Epic 8 Pro · L | epic · epic 8 · epica · pro · precio · valor · cuanto · $$$ · disponible · queda |
+| Creo SL | `DbQjdNLBmnv` | Creo SL S-Works · M | creo · creo sl · sl · sworks · precio · valor · cuanto · $$$ · disponible · queda |
+| Levo SL2 | `Dad9A_zJy0D` | Levo SL2 S-Works · S4 | levo · sl2 · levo sl · sworks · precio · valor · cuanto · $$$ · disponible · queda |
+| Levo 4G | `DZ1O3ViO2Qz` | Levo 4G S-Works · S4 | levo · 4g · levo 4g · sworks · precio · valor · cuanto · $$$ · disponible · queda |
+
+Al activar cada duplicado: **pausar la automatización V1 de ESE post** (colisionan) y hacer
+el smoke test — comentar con cuenta virgen y verificar que **B1 nombre la bici correcta**
+(el error clásico es dejar el shortcode del post anterior; el único síntoma es la bici
+equivocada).
+
+⚠️ El reel 6 «Ruta» (`DbJy7ynB5T4`) queda FUERA: su fila de `Reels` no tiene bici a
+propósito (deriva a asesoría), B1 imprimiría el modelo vacío y la Tarmac ya se vendió.
+Necesita variante propia — segunda pasada, junto con la puerta de DM.
