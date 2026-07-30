@@ -73,8 +73,10 @@ check(sl.biciPuntaje === '6,4', 'puntaje con coma, dio ' + sl.biciPuntaje);
 check(sl.biciBateria === '91' && sl.biciCiclos === '214', 'diagnostico bateria e-bike');
 check(epic.biciBateria === '' && epic.biciCiclos === '', 'muscular NO trae bateria');
 check(sl.biciFicha === 'https://s/ficha/levo-sl-s-works-m', 'slug ficha, dio ' + sl.biciFicha);
-check(vend.biciDisponible === false && vend.biciEstado === 'Vendida', 'bici vendida bifurca');
-check(sl.biciDisponible === true, 'bici disponible');
+// Como PALABRA, no booleano: el mapeo de ManyChat no guarda booleanos en
+// campos de texto (fix 2026-07-30, mismo contrato que cf_match).
+check(vend.biciDisponible === 'false' && vend.biciEstado === 'Vendida', 'bici vendida bifurca');
+check(sl.biciDisponible === 'true', 'bici disponible');
 check(inc.biciAhorro === '' && inc.biciPuntaje === '' && inc.biciAreaBaja === '', 'ficha incompleta no rompe');
 check(inc.biciFicha === 'https://s/ficha/kenevo-comp-s3', 'slug con ficha incompleta');
 console.log(fail === 0 ? '\nTODAS OK' : `\n${fail} FALLOS`);
