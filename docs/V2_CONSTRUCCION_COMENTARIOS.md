@@ -134,7 +134,7 @@ de DM, `Sobre la tienda` se re-apunta al enrutador de intención.
 ```
 Estamos en Av. Las Condes 12461, Las Condes 📍 Lunes a viernes de 9:00 a 20:00, sábado de 10:00 a 14:00.
 
-Y acá puedes ver todo lo que tenemos: https://biketrust-sitio.pages.dev
+Y acá puedes ver todo lo que tenemos: https://biketrust.cl
 ```
 Salida → **D1**: responde lo que preguntó y a los 40 s B3 le ofrece la llamada igual.
 
@@ -339,7 +339,7 @@ Pero si es la que andabas buscando, te la conseguimos. Todas las semanas salimos
 
 ### Paso 18-bis · B2-C · Catálogo — paso de texto, sin botones
 ```
-Acá puedes ver todo lo que tenemos disponible ahora mismo 👉 https://biketrust-sitio.pages.dev
+Acá puedes ver todo lo que tenemos disponible ahora mismo 👉 https://biketrust.cl
 
 Todas pasaron por nuestra inspección, con su nota de 1 a 7 a la vista.
 ```
