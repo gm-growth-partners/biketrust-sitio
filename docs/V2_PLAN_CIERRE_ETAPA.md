@@ -29,21 +29,30 @@ El embudo ya mete leads; Luis opera de inmediato. Contiene:
 Reparto: Claude diseña/construye interfaz y guía (con OK de Gabriel); Gabriel las
 plantillas en Meta y las envs en Cloudflare.
 
-## 2 · Embudo para reels sin bici específica
+## 2 · Embudo para reels sin bici específica — **AHORA CON QUIZ (decisión 2026-07-30)**
 
-- Duplicado **Levo SL2** pendiente (6 elementos — ver guía de construcción).
-- **Variante B1-G** (diseñada): B1 genérico → asesoría/catálogo → convergencia. Sin
-  C1a/C1b/fichas. Acción 0 mínima (solo `mc-lead`); `mc-llamado` sin `reel`.
+> Gabriel decidió que estos reels hacen el **quiz** (uso · presupuesto · estatura) y
+> muestran la ficha de la bici que más se acerca, antes de rutear a la llamada. Los dos
+> prerrequisitos del runbook §5.5 quedaron cumplidos el mismo día: **umbral en `mc-match`
+> modo B** (bajo el corte → no-match honesto) y **atribución por `reel` en `mc-match`**.
+> ⚠️ Ambos exigen **deploy antes de probar E2E**.
+> **La hoja de construcción es [`V2_CONSTRUCCION_QUIZ.md`](V2_CONSTRUCCION_QUIZ.md)**
+> (+ diagrama `embudo_quiz_v2_bloques.svg`).
+
+- Duplicado **Levo SL2** pendiente (6 elementos — ver guía de construcción de comentarios).
+- **Quiz master en el reel «Ruta»** (`DbJy7ynB5T4`): B1-G → QZ0–QZ3 → `mc-match` modo B →
+  ficha rica del hero → convergencia en la llamada. Salida honesta real en no-match.
 - **Catch-all any-word** para el catálogo viejo, CON compuerta: **probar el doble disparo**
   (¿la automatización de "cualquier post" colisiona con las específicas?). Si colisiona →
-  duplicados selectivos por post en vez de catch-all.
-- Incluye el testimonio `DatyQVJuTFT` (fila en `Reels` lista, sin bici, keyword «Bici»).
+  duplicados selectivos por post en vez de catch-all. Sin `reel` (atribución se pierde, aceptado).
+- Incluye el testimonio `DatyQVJuTFT` (fila en `Reels` lista, sin bici).
 
 ## 3 · Puerta de DM con placeholders
 
 - Diseño CERRADO en runbook §5 (AI Step enrutador, 2 campos listos para pegar).
-- Placeholders asumidos: los 4 textos de Roberto (Grupo D lanza con fallback) y el quiz
-  fuera (ASESORIA → B3, vuelve en 2ª iteración con umbral + `quiz_iniciado`).
+- Placeholders asumidos: los 4 textos de Roberto (Grupo D lanza con fallback).
+  ~~El quiz fuera~~ → **ACTUALIZADO 2026-07-30: `ASESORIA` va al quiz** (los prerrequisitos
+  se cumplieron; ver ítem 2 y el final de `V2_CONSTRUCCION_QUIZ.md`).
 - Las 4 verificaciones de pantalla del §5.10 (salida del AI Step · precedencia de la baja ·
   AI Step mudo · encolamiento).
 - **Al activarla se completa el reemplazo de la V1 → acá va el go-live formal: rotar

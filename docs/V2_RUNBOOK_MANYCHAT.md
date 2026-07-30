@@ -46,6 +46,11 @@ razón para no re-discutirlas, y porque varias contradicen documentos de diseño
 | 6 | **Ruta C: ¿uno o dos tickets?** | **UNO** (`Llamados`) | El Kanban de Luis es el que se trabaja; Roberto opera desde la página de Consignaciones |
 | 7 | **¿El quiz entra en la 1ª pasada?** | **NO.** `ASESORIA` va directo a B3 | Es el 16 % del tráfico y el bloque con más puntas sueltas. Mismo patrón que la decisión §0.3. Vuelve en la 2ª iteración con el umbral implementado y `quiz_iniciado` montado (§5.5) |
 
+> **ACTUALIZACIÓN 2026-07-30 — la decisión 7 quedó SUPERSEDIDA:** el quiz SÍ entra en esta
+> pasada. Sus dos prerrequisitos se cumplieron (umbral en `mc-match` modo B + bloque
+> `quiz_iniciado`), y `ASESORIA` va al quiz, no a B3. La hoja de construcción es
+> [`V2_CONSTRUCCION_QUIZ.md`](V2_CONSTRUCCION_QUIZ.md) (cubre también los reels sin bici).
+
 **La regla que sostiene el diseño nuevo:** el AI Step **clasifica y entrega, nunca responde**.
 Todo lo que la persona lee sigue siendo copy determinístico. El riesgo de un enrutador
 generativo no es que clasifique mal — es que hable, y termine inventando un precio o
@@ -926,9 +931,17 @@ postventa entra al Kanban de Luis idéntico a un lead de compra:
 *(`mc-llamado` **sí** filtra merge tags sin resolver, a diferencia de `mc-match` y
 `mc-consigna` del §5.11: acá es seguro.)*
 
-### 5.5 · Grupo B · `ASESORIA` — **fuera de la primera pasada**
+### 5.5 · Grupo B · `ASESORIA` — ~~fuera de la primera pasada~~ **→ AL QUIZ (2026-07-30)**
 
-**Decisión §0-bis.7: en la primera pasada, `ASESORIA` va a B3.**
+> **ACTUALIZACIÓN 2026-07-30:** el umbral de `mc-match` modo B se implementó (35 % del
+> puntaje alcanzable con los criterios entregados; quiz completo ≈ 25 — test
+> `test/mc-match-quiz.mjs`) y el bloque `quiz_iniciado` es parte de la hoja del quiz.
+> **`ASESORIA` → QZ0 (quiz)**, con las diferencias listadas al final de
+> [`V2_CONSTRUCCION_QUIZ.md`](V2_CONSTRUCCION_QUIZ.md). El copy de abajo (B3 directo) queda
+> de fallback si el quiz se pausara. Las «cuatro reglas obligatorias» siguen vigentes y ya
+> están aplicadas en el copy de esa hoja.
+
+**Decisión §0-bis.7 (supersedida): en la primera pasada, `ASESORIA` va a B3.**
 
 ```
 Esa te la contesto bien, no a medias 🙌
