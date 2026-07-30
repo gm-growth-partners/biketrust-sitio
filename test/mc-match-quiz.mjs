@@ -9,17 +9,18 @@ const src = readFileSync(
 
 // norm() + parseRangoAltura() + bloque scoreBici…umbralQuiz (nivel módulo).
 const normSrc = src.match(/const norm = [\s\S]*?\.trim\(\);/)[0];
+const discStart = src.indexOf('function parseDisciplina');
 const rangoStart = src.indexOf('function parseRangoAltura');
 const rangoEnd = src.indexOf('const cfg =');
 const scoreStart = src.indexOf('function scoreBici');
 const scoreEnd = src.indexOf('// ─────');
-if ([rangoStart, rangoEnd, scoreStart, scoreEnd].some(i => i < 0)) throw new Error('no encontré los bloques');
+if ([discStart, rangoStart, rangoEnd, scoreStart, scoreEnd].some(i => i < 0)) throw new Error('no encontré los bloques');
 
 const lib = new Function(`
   ${normSrc}
-  ${src.slice(rangoStart, rangoEnd)}
+  ${src.slice(discStart, rangoEnd)}
   ${src.slice(scoreStart, scoreEnd)}
-  return { scoreBici, rankDisponibles, umbralQuiz };
+  return { scoreBici, rankDisponibles, umbralQuiz, parseDisciplina };
 `)();
 
 // Inventario sintético con la forma real de Airtable.
@@ -36,10 +37,12 @@ const INV = [
 ];
 
 // El quiz V2 pregunta 3 cosas: uso (disciplina) · presupuesto · estatura.
+// La disciplina llega como TEXTO DEL BOTÓN de ManyChat → pasa por parseDisciplina.
 const decide = (disponibles, crit) => {
   if (!disponibles.length) return null;
-  const ranked = lib.rankDisponibles(disponibles, crit);
-  return ranked[0].s >= lib.umbralQuiz(crit) ? ranked[0].b.fields.Modelo : null;
+  const c = { ...crit, disciplina: crit.disciplina ? lib.parseDisciplina(crit.disciplina) : '' };
+  const ranked = lib.rankDisponibles(disponibles, c);
+  return ranked[0].s >= lib.umbralQuiz(c) ? ranked[0].b.fields.Modelo : null;
 };
 
 const CASES = [
@@ -58,6 +61,10 @@ const CASES = [
     [INV[1]], { disciplina: 'MTB', presupuesto: 3000000, altura: 1.60 }, null],
   ['inventario vacío',
     [], { disciplina: 'MTB', presupuesto: 8000000, altura: 1.75 }, null],
+  ['botón de ManyChat «MTB / cerro» calza como MTB',
+    INV, { disciplina: 'MTB / cerro', presupuesto: 8000000, altura: 1.70 }, 'Levo SL S-Works'],
+  ['botón de ManyChat «Ciudad» calza como Urbana (no hay urbanas → no-match honesto)',
+    INV, { disciplina: 'Ciudad', presupuesto: 8000000, altura: 1.70 }, null],
 ];
 
 let fail = 0;

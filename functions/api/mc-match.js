@@ -86,6 +86,18 @@ function parsePresupuesto(v) {
   return n;
 }
 
+// Disciplina tolerante: el quiz de ManyChat guarda el TEXTO del botón («MTB /
+// cerro», «Ciudad»), no el literal del select de Airtable. Sin esto, 2 de las
+// 3 opciones perdían los 40 puntos de disciplina y caían en no-match falso.
+function parseDisciplina(v) {
+  const s = norm(v);
+  if (!s) return '';
+  if (/mtb|cerro|montan|trail|enduro|descenso/.test(s)) return 'MTB';
+  if (/ruta|gravel|pista|triatl/.test(s)) return 'Ruta';
+  if (/urban|ciudad|paseo|commut/.test(s)) return 'Urbana';
+  return String(v).trim();
+}
+
 // Estatura tolerante: "1,75", "1.75", "175", "175 cm" → metros. Fuera de rango
 // humano razonable (o merge tag sin resolver) → null.
 function parseAltura(v) {
@@ -156,7 +168,13 @@ function biciView(C, b) {
 // Todos blandos: nada bloquea ("no sé mi talla → se confirma en la visita").
 function scoreBici(f, crit) {
   let score = 0;
-  if (crit.disciplina && norm(f.Disciplina) === norm(crit.disciplina)) score += 40;
+  if (crit.disciplina) {
+    if (norm(f.Disciplina) === norm(crit.disciplina)) score += 40;
+    // Pidió OTRA disciplina: no es «sin dato» (0), es «no es lo que busca».
+    // Sin esta pena, presupuesto+estatura solos superaban el umbral del quiz
+    // y se recomendaba una MTB a alguien que pidió ciudad.
+    else if (f.Disciplina) score -= 15;
+  }
   if (crit.motorizacion && norm(f['Motorización']) === norm(crit.motorizacion)) score += 30;
   if (crit.presupuesto != null && f.Precio != null) {
     if (f.Precio <= crit.presupuesto) score += 20 - Math.min(15, (crit.presupuesto - f.Precio) / 1e6); // dentro: premia lo cercano al techo
@@ -208,7 +226,7 @@ export async function onRequestPost({ request, env }) {
   const modelo = data?.modelo ? String(data.modelo).trim() : '';
   const crit = {
     motorizacion: data?.motorizacion ? String(data.motorizacion).trim() : '',
-    disciplina: data?.disciplina ? String(data.disciplina).trim() : '',
+    disciplina: data?.disciplina ? parseDisciplina(data.disciplina) : '',
     presupuesto: parsePresupuesto(data?.presupuesto),
     altura: parseAltura(data?.altura),
     talla: data?.talla ? String(data.talla).trim() : '',
