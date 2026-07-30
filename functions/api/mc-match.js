@@ -13,11 +13,14 @@
 //     · nada calza              → no_match + waitlist (guarda "Modelo buscado")
 //   Modo B · quiz (criterios):   body { motorizacion, disciplina, presupuesto, talla }
 //     · puntúa las Disponibles  → hero (protagonista) + alternativa
+//     · mejor score bajo umbral → no_match + waitlist (no recomienda cualquier cosa)
 //     · inventario vacío        → no_match + waitlist
 //
 //   - Lead    → resuelto por lead/handle/subscriber_id; si no existe y hay handle,
 //               se crea (contrato mc-lead: @handle, Canal, Estado, fechas).
 //               Estado avanza a match_entregado / no_match (guarda de no-regresión).
+//   - reel    → opcional (Post ID Instagram): enlaza el Interés al Reel para que
+//               el tablero atribuya el quiz al video de origen (patrón mc-evento).
 //   - Interés → Match (Es hero, link Bici, Crit·… del quiz) cuando hay UNA bici;
 //               No-match (+ "Modelo buscado") en waitlist. En multi-opción NO crea
 //               Interés (se crea al agendar, vía mc-agenda). No duplica.
@@ -116,6 +119,7 @@ const cfg = (env) => {
     LEADS: env.AIRTABLE_LEADS_TABLE || 'Leads',
     INTER: env.AIRTABLE_INTERESES_TABLE || 'Intereses',
     INV: env.AIRTABLE_INVENTARIO_TABLE || 'Inventario',
+    REELS: env.AIRTABLE_REELS_TABLE || 'Reels',
     api: (t) => `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(t)}`,
     rH: { Authorization: `Bearer ${READ}` },
     wH: { Authorization: `Bearer ${WRITE}`, 'Content-Type': 'application/json' },
@@ -175,6 +179,18 @@ function rankDisponibles(disponibles, crit, excludeId) {
     .filter(b => b.id !== excludeId)
     .map(b => ({ b, s: scoreBici(b.fields, crit) }))
     .sort((x, y) => y.s - x.s);
+}
+
+// Umbral del quiz (modo B): 35% del puntaje alcanzable con los criterios que la
+// persona SÍ entregó (quiz completo uso+presupuesto+estatura → máx 72 ≈ corte 25).
+// Relativo y no fijo porque el puntaje por presupuesto premia acercarse al techo:
+// una bici correcta pero muy bajo el presupuesto puntúa poco, y un corte fijo la
+// descartaría cuando la persona respondió pocas preguntas.
+function umbralQuiz(crit) {
+  const maxPosible = (crit.disciplina ? 40 : 0) + (crit.motorizacion ? 30 : 0)
+    + (crit.presupuesto != null ? 20 : 0) + (crit.altura != null ? 12 : 0)
+    + (crit.talla ? 10 : 0);
+  return maxPosible * 0.35;
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -251,6 +267,18 @@ export async function onRequestPost({ request, env }) {
     const lr = await afetch(`${C.api(C.LEADS)}/${leadId}`, { headers: C.rH });
     if (!lr.ok) return reply({ error: 'lead_not_found', status: lr.status }, 404);
     estadoActual = (await lr.json()).fields?.Estado || 'nuevo';
+  }
+
+  // 1c) Resolver el reel (opcional): atribuye el Interés al video de origen,
+  //     igual que mc-evento. Sin esto, los leads del quiz por reel quedan
+  //     huérfanos de atribución en el tablero. Best-effort: si la fila no
+  //     existe, el match sigue igual.
+  let reelId = null;
+  const reelIn = data?.reel ? String(data.reel).trim() : '';
+  if (reelIn && !reelIn.includes('{{')) {
+    const u = `${C.api(C.REELS)}?maxRecords=1&filterByFormula=${encodeURIComponent(`{Post ID Instagram}='${reelIn.replace(/'/g, "\\'")}'`)}`;
+    const rr = await afetch(u, { headers: C.rH });
+    if (rr.ok) reelId = (await rr.json()).records?.[0]?.id || null;
   }
 
   // 2) Traer el Inventario (14 unidades premium → una página basta; cap 100).
@@ -349,11 +377,18 @@ export async function onRequestPost({ request, env }) {
     }
   } else {
     // ── Modo B · quiz por criterios ─────────────────────────────────────────
+    // Con umbral (2026-07-30): antes devolvía SIEMPRE la mejor Disponible por
+    // mal que calzara ("ruta · $3M · 1,60m" contra una MTB L de $8M salía como
+    // match) y el tablero contaba 100% de acierto por construcción. Bajo el
+    // umbral: no-match honesto → waitlist, igual que cuando no hay inventario.
     if (disponibles.length) {
       const ranked = rankDisponibles(disponibles, crit);
-      hero = biciView(C, ranked[0].b);
-      if (ranked[1] && ranked[1].s > 0) alternativa = biciView(C, ranked[1].b);
-    } else {
+      if (ranked[0].s >= umbralQuiz(crit)) {
+        hero = biciView(C, ranked[0].b);
+        if (ranked[1] && ranked[1].s > 0) alternativa = biciView(C, ranked[1].b);
+      }
+    }
+    if (!hero) {
       waitlist = true;
       modeloBuscado = [crit.motorizacion, crit.disciplina, crit.talla, crit.presupuesto ? clp(crit.presupuesto) : '']
         .filter(Boolean).join(' · ');
@@ -399,6 +434,7 @@ export async function onRequestPost({ request, env }) {
         'Resultado': 'Match',
         'Es hero': true,
         'Fecha': today,
+        ...(reelId ? { 'Reel': [reelId] } : {}),
         ...critFields,
       } }),
     });
@@ -413,6 +449,7 @@ export async function onRequestPost({ request, env }) {
         'Resultado': 'No-match',
         'Modelo buscado': modeloBuscado.slice(0, 200),
         'Fecha': today,
+        ...(reelId ? { 'Reel': [reelId] } : {}),
         ...critFields,
       } }),
     });
