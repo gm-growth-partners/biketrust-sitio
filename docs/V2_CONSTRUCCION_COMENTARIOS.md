@@ -158,10 +158,12 @@ Estado honesto, tal cual está hoy:
 Nueva hoy sale {{cf_bici_precio_nuevo}}.
 Esta queda en {{cf_bici_precio}} → te ahorras {{cf_bici_ahorro}}.
 ```
-3. **El link de la ficha** — *as-built 2026-07-29: quedó como botón «Ver Ficha» (URL =
-   `{{cf_bici_ficha}}`) en vez de texto, y es válido*: en un paso normal el botón URL no
-   interfiere con el Next Step hacia el Smart Delay (la restricción de botones-URL era solo
-   para B1, la respuesta privada terminal).
+3. **El link de la ficha** — *as-built 2026-07-30: quedó como botón «Ver Ficha» con URL
+   **FIJA** (la ficha del reel de esa automatización), válido en paso normal (el botón URL
+   no interfiere con el Next Step; la restricción de botones-URL era solo para B1)*.
+   ⚠️ **Consecuencia: la URL del botón CAMBIA en cada duplicado** (en B2 y en B2-E) — es el
+   5º elemento de la duplicación. Mejora pendiente de probar: poner `{{cf_bici_ficha}}` como
+   URL del botón; si ManyChat acepta la variable ahí, este paso desaparece.
 
 De B2 se sale por el Smart Delay (Next Step), no por el botón.
 
@@ -427,17 +429,19 @@ C3   Sí (con valor) → B6       · Si no (vacío) → B6-D
 | 2 | Disparador | Las 10 palabras clave | Las del reel (tabla abajo) |
 | 3 | «Acción 0» → Solicitud externa `mc-evento` | `"reel"` en el body | El shortcode del reel |
 | 4 | «A2 + SE3» → Solicitud externa `mc-llamado` | `"reel"` en el body | El mismo shortcode |
+| 5 | **B2** → botón «Ver Ficha» | URL de destino | La ficha de ESE reel (tabla abajo) |
+| 6 | **B2-E** → botón «Ver Ficha» | URL de destino | La misma ficha |
 
 **Nada más se toca**: URLs, `handle`, mapeos, copy y condicionales son idénticos — la bici
 correcta la trae `mc-evento` desde Airtable usando el shortcode.
 
-| Reel | Shortcode | Bici | 10 keywords |
-|---|---|---|---|
-| SL (master) | `DbEh9fBI9Np` | Levo SL S-Works · M | sl · levo · levo sl · sworks · precio · valor · cuanto · $$$ · disponible · queda |
-| Epic 8 Pro | `DbCLcpEB4aT` | Epic 8 Pro · L | epic · epic 8 · epica · pro · precio · valor · cuanto · $$$ · disponible · queda |
-| Creo SL | `DbQjdNLBmnv` | Creo SL S-Works · M | creo · creo sl · sl · sworks · precio · valor · cuanto · $$$ · disponible · queda |
-| Levo SL2 | `Dad9A_zJy0D` | Levo SL2 S-Works · S4 | levo · sl2 · levo sl · sworks · precio · valor · cuanto · $$$ · disponible · queda |
-| Levo 4G | `DZ1O3ViO2Qz` | Levo 4G S-Works · S4 | levo · 4g · levo 4g · sworks · precio · valor · cuanto · $$$ · disponible · queda |
+| Reel | Shortcode | Bici | URL del botón «Ver Ficha» | 10 keywords |
+|---|---|---|---|---|
+| SL (master) | `DbEh9fBI9Np` | Levo SL S-Works · M | `https://biketrust-sitio.pages.dev/ficha/levo-sl-s-works-m` | sl · levo · levo sl · sworks · precio · valor · cuanto · $$$ · disponible · queda |
+| Epic 8 Pro | `DbCLcpEB4aT` | Epic 8 Pro · L | `https://biketrust-sitio.pages.dev/ficha/epic-8-pro-l` | epic · epic 8 · epica · pro · precio · valor · cuanto · $$$ · disponible · queda |
+| Creo SL | `DbQjdNLBmnv` | Creo SL S-Works · M | `https://biketrust-sitio.pages.dev/ficha/creo-sl-s-works-m` | creo · creo sl · sl · sworks · precio · valor · cuanto · $$$ · disponible · queda |
+| Levo SL2 | `Dad9A_zJy0D` | Levo SL2 S-Works · S4 | `https://biketrust-sitio.pages.dev/ficha/levo-sl2-s-works-s4` | levo · sl2 · levo sl · sworks · precio · valor · cuanto · $$$ · disponible · queda |
+| Levo 4G | `DZ1O3ViO2Qz` | Levo 4G S-Works · S4 | `https://biketrust-sitio.pages.dev/ficha/levo-4g-s-works-s4` | levo · 4g · levo 4g · sworks · precio · valor · cuanto · $$$ · disponible · queda |
 
 Al activar cada duplicado: **pausar la automatización V1 de ESE post** (colisionan) y hacer
 el smoke test — comentar con cuenta virgen y verificar que **B1 nombre la bici correcta**
