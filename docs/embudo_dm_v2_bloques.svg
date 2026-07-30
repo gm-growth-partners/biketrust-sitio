@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" font-family="Segoe UI, Arial, sans-serif">
+<defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#888780"/></marker></defs>
+<rect x="0" y="0" width="1600" height="900" fill="#FFFFFF"/>
+<text x="20" y="28" font-size="18" font-weight="600" fill="#2C2C2A">Puerta de DM V2 — AI Step enrutador (UNA automatización, no se duplica)</text>
+<text x="20" y="46" font-size="12" fill="#888780">hoja: V2_CONSTRUCCION_DM.md · textos del AI Step: runbook §5.2 · el AI clasifica y extrae, NUNCA responde · la regla de baja corre ANTES, en su automatización aparte</text>
+
+<!-- Fila entrada -->
+<rect x="20" y="70" width="160" height="52" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="1.5"/><text x="100" y="91" font-size="13" font-weight="500" fill="#26215C" text-anchor="middle">E-0 · Disparador</text><text x="100" y="108" font-size="11" fill="#3C3489" text-anchor="middle">cualquier DM + historia</text>
+<rect x="210" y="70" width="160" height="52" rx="8" fill="#FAEEDA" stroke="#854F0B" stroke-width="1.5"/><text x="290" y="91" font-size="13" font-weight="500" fill="#412402" text-anchor="middle">E-1 · ¿modo humano?</text><text x="290" y="108" font-size="11" fill="#633806" text-anchor="middle">cf_modo_humano = si → nada</text>
+<rect x="400" y="70" width="170" height="52" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="1.5"/><text x="485" y="91" font-size="13" font-weight="500" fill="#042C53" text-anchor="middle">E-2 · ¿audio/foto?</text><text x="485" y="108" font-size="11" fill="#0C447C" text-anchor="middle">«Lo mío es el texto» · sin golpe</text>
+<rect x="600" y="70" width="170" height="52" rx="8" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="1.5"/><text x="685" y="91" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle">E-3 · guardar mensaje</text><text x="685" y="108" font-size="11" fill="#444441" text-anchor="middle">→ cf_mensaje (SIEMPRE)</text>
+<rect x="800" y="60" width="220" height="72" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="2.5"/><text x="910" y="85" font-size="14" font-weight="600" fill="#26215C" text-anchor="middle">E-4 · AI STEP enrutador</text><text x="910" y="103" font-size="11" fill="#3C3489" text-anchor="middle">clasifica → cf_intencion</text><text x="910" y="118" font-size="11" fill="#3C3489" text-anchor="middle">extrae → cf_modelo_buscado</text>
+<path d="M180,96 L210,96" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M370,96 L400,96" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M570,96 L600,96" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M770,96 L800,96" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<!-- Rutas del enrutador -->
+<text x="20" y="170" font-size="12" font-weight="600" fill="#888780">LAS 10 RUTAS + ELSE ↓</text>
+
+<!-- MODELO -->
+<rect x="20" y="190" width="150" height="52" rx="8" fill="#FAECE7" stroke="#993C1D" stroke-width="1.5"/><text x="95" y="211" font-size="13" font-weight="500" fill="#4A1B0C" text-anchor="middle">MODELO · A-1</text><text x="95" y="228" font-size="11" fill="#712B13" text-anchor="middle">mc-lead · DM IG</text>
+<rect x="200" y="190" width="160" height="52" rx="8" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="1.5"/><text x="280" y="211" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle">A-2 · borrar 31</text><text x="280" y="228" font-size="11" fill="#444441" text-anchor="middle">campos del match</text>
+<rect x="390" y="190" width="170" height="52" rx="8" fill="#FAEEDA" stroke="#854F0B" stroke-width="1.5"/><text x="475" y="211" font-size="13" font-weight="500" fill="#412402" text-anchor="middle">A-3 · ¿buscado vacío?</text><text x="475" y="228" font-size="11" fill="#633806" text-anchor="middle">sí → BICI_SUELTA</text>
+<rect x="590" y="190" width="170" height="52" rx="8" fill="#FAECE7" stroke="#993C1D" stroke-width="1.5"/><text x="675" y="211" font-size="13" font-weight="500" fill="#4A1B0C" text-anchor="middle">A-4 · mc-match A</text><text x="675" y="228" font-size="11" fill="#712B13" text-anchor="middle">cf_modelo_buscado</text>
+<rect x="790" y="190" width="140" height="52" rx="8" fill="#FAEEDA" stroke="#854F0B" stroke-width="1.5"/><text x="860" y="211" font-size="13" font-weight="500" fill="#412402" text-anchor="middle">A-5 · ¿match?</text><text x="860" y="228" font-size="11" fill="#633806" text-anchor="middle">true / false</text>
+<rect x="960" y="165" width="180" height="52" rx="8" fill="#FAECE7" stroke="#993C1D" stroke-width="1.5"/><text x="1050" y="186" font-size="13" font-weight="500" fill="#4A1B0C" text-anchor="middle">SE-F · ficha rica</text><text x="1050" y="203" font-size="11" fill="#712B13" text-anchor="middle">mc-evento soloEstado</text>
+<rect x="960" y="230" width="180" height="52" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="1.5"/><text x="1050" y="251" font-size="13" font-weight="500" fill="#042C53" text-anchor="middle">NM-A · no-match</text><text x="1050" y="268" font-size="11" fill="#0C447C" text-anchor="middle">«ninguna calza» → B4/B2-C</text>
+<rect x="1170" y="165" width="180" height="52" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="1.5"/><text x="1260" y="186" font-size="13" font-weight="500" fill="#042C53" text-anchor="middle">B2-Q ficha (+e-bike)</text><text x="1260" y="203" font-size="11" fill="#0C447C" text-anchor="middle">+ cf_otras si viene</text>
+<path d="M170,216 L200,216" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M360,216 L390,216" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M560,216 L590,216" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M760,216 L790,216" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M930,205 L960,191" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/><text x="934" y="196" font-size="11" fill="#633806">sí</text>
+<path d="M930,230 L960,250" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/><text x="934" y="248" font-size="11" fill="#633806">no</text>
+<path d="M1140,191 L1170,191" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<!-- QUIZ / ASESORIA -->
+<rect x="20" y="280" width="200" height="52" rx="8" fill="#FAECE7" stroke="#993C1D" stroke-width="1.5"/><text x="120" y="301" font-size="13" font-weight="500" fill="#4A1B0C" text-anchor="middle">ASESORIA → QZ0…NM</text><text x="120" y="318" font-size="11" fill="#712B13" text-anchor="middle">el quiz completo (hoja quiz)</text>
+<text x="240" y="310" font-size="11" fill="#888780">sin reel · origen default «Puerta 2 (quiz)» · salida ficha → C-OFERTA</text>
+
+<!-- Códigos cortos -->
+<rect x="20" y="360" width="180" height="52" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="1.5"/><text x="110" y="381" font-size="13" font-weight="500" fill="#042C53" text-anchor="middle">BICI_SUELTA</text><text x="110" y="398" font-size="11" fill="#0C447C" text-anchor="middle">«¿cuál de todas?» · sin mc-match</text>
+<rect x="230" y="360" width="180" height="52" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="1.5"/><text x="320" y="381" font-size="13" font-weight="500" fill="#042C53" text-anchor="middle">CONTACTO</text><text x="320" y="398" font-size="11" fill="#0C447C" text-anchor="middle">«confírmame el número» → B4</text>
+<rect x="440" y="360" width="180" height="52" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="1.5"/><text x="530" y="381" font-size="13" font-weight="500" fill="#042C53" text-anchor="middle">SALUDO</text><text x="530" y="398" font-size="11" fill="#0C447C" text-anchor="middle">3 botones · SIN golpe</text>
+<rect x="650" y="360" width="180" height="52" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="1.5"/><text x="740" y="381" font-size="13" font-weight="500" fill="#042C53" text-anchor="middle">VISITA</text><text x="740" y="398" font-size="11" fill="#0C447C" text-anchor="middle">dirección + horario → B3/B4</text>
+<rect x="860" y="360" width="180" height="52" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="1.5"/><text x="950" y="381" font-size="13" font-weight="500" fill="#042C53" text-anchor="middle">ENVIOS</text><text x="950" y="398" font-size="11" fill="#0C447C" text-anchor="middle">«sí despachamos» → B4/B7</text>
+<rect x="1070" y="360" width="200" height="52" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="1.5"/><text x="1170" y="381" font-size="13" font-weight="500" fill="#042C53" text-anchor="middle">GARANTIA · PAGOS</text><text x="1170" y="398" font-size="11" fill="#0C447C" text-anchor="middle">fallback → B4/B7 · marca ruta</text>
+
+<!-- VENDER -->
+<rect x="20" y="440" width="230" height="52" rx="8" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.5"/><text x="135" y="461" font-size="13" font-weight="500" fill="#1E3A06" text-anchor="middle">VENDER · V-1…V-4 captura</text><text x="135" y="478" font-size="11" fill="#3B6D11" text-anchor="middle">modelo · año · talla · estado (1 línea)</text>
+<rect x="280" y="440" width="150" height="52" rx="8" fill="#FAEEDA" stroke="#854F0B" stroke-width="1.5"/><text x="355" y="461" font-size="13" font-weight="500" fill="#412402" text-anchor="middle">V-5 ¿modelo?</text><text x="355" y="478" font-size="11" fill="#633806" text-anchor="middle">vacío → V-1</text>
+<rect x="460" y="440" width="170" height="52" rx="8" fill="#FAECE7" stroke="#993C1D" stroke-width="1.5"/><text x="545" y="461" font-size="13" font-weight="500" fill="#4A1B0C" text-anchor="middle">V-6 · mc-consigna</text><text x="545" y="478" font-size="11" fill="#712B13" text-anchor="middle">ANTES del teléfono</text>
+<rect x="660" y="440" width="180" height="52" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="1.5"/><text x="750" y="461" font-size="13" font-weight="500" fill="#042C53" text-anchor="middle">V-7 · puente Luis</text><text x="750" y="478" font-size="11" fill="#0C447C" text-anchor="middle">«bajo 4 no la tomamos» → B4</text>
+<path d="M250,466 L280,466" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M430,466 L460,466" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M630,466 L660,466" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<!-- Anti-bucle -->
+<rect x="900" y="440" width="200" height="52" rx="8" fill="#FBEAF0" stroke="#993556" stroke-width="1.5"/><text x="1000" y="461" font-size="13" font-weight="500" fill="#4B1528" text-anchor="middle">NO_CLASIFICA + ELSE</text><text x="1000" y="478" font-size="11" fill="#72243E" text-anchor="middle">golpe 1: 3 botones</text>
+<rect x="1130" y="440" width="200" height="52" rx="8" fill="#FBEAF0" stroke="#993556" stroke-width="1.5"/><text x="1230" y="461" font-size="13" font-weight="500" fill="#4B1528" text-anchor="middle">golpe 2 → modo humano</text><text x="1230" y="478" font-size="11" fill="#72243E" text-anchor="middle">cf_modo_humano = si · bot mudo</text>
+<path d="M1100,466 L1130,466" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<!-- Convergencia -->
+<text x="20" y="545" font-size="12" font-weight="600" fill="#888780">CONVERGENCIA (misma de las otras puertas — cf_oferta_enviada es POR CONTACTO) ↓</text>
+<rect x="20" y="565" width="190" height="52" rx="8" fill="#FAEEDA" stroke="#854F0B" stroke-width="1.5"/><text x="115" y="586" font-size="13" font-weight="500" fill="#412402" text-anchor="middle">C-OFERTA · guarda 2ª vuelta</text><text x="115" y="603" font-size="11" fill="#633806" text-anchor="middle">oferta ya enviada → B4 directo</text>
+<rect x="240" y="565" width="140" height="52" rx="8" fill="#FBEAF0" stroke="#993556" stroke-width="1.5"/><text x="310" y="586" font-size="13" font-weight="500" fill="#4B1528" text-anchor="middle">D1 · 40 s</text><text x="310" y="603" font-size="11" fill="#72243E" text-anchor="middle">Smart Delay</text>
+<rect x="410" y="565" width="150" height="52" rx="8" fill="#FAEEDA" stroke="#854F0B" stroke-width="1.5"/><text x="485" y="586" font-size="13" font-weight="500" fill="#412402" text-anchor="middle">C2 · guard</text><text x="485" y="603" font-size="11" fill="#633806" text-anchor="middle">si → nada</text>
+<rect x="590" y="565" width="150" height="52" rx="8" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="1.5"/><text x="665" y="586" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle">A1 · marca</text><text x="665" y="603" font-size="11" fill="#444441" text-anchor="middle">oferta_enviada = si</text>
+<rect x="770" y="565" width="160" height="52" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="1.5"/><text x="850" y="586" font-size="13" font-weight="500" fill="#042C53" text-anchor="middle">B3 · oferta llamada</text><text x="850" y="603" font-size="11" fill="#0C447C" text-anchor="middle">sí → B4 · no → B7</text>
+<rect x="960" y="565" width="150" height="52" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="1.5"/><text x="1035" y="586" font-size="13" font-weight="500" fill="#042C53" text-anchor="middle">B7 · salida blanda</text><text x="1035" y="603" font-size="11" fill="#0C447C" text-anchor="middle">«cero llamadas»</text>
+<path d="M210,591 L240,591" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M380,591 L410,591" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M560,591 L590,591" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/><text x="564" y="585" font-size="11" fill="#633806">no</text>
+<path d="M740,591 L770,591" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M930,591 L960,591" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<!-- Teléfono -->
+<rect x="20" y="655" width="170" height="52" rx="8" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.5"/><text x="105" y="676" font-size="13" font-weight="500" fill="#1E3A06" text-anchor="middle">B4 · el teléfono</text><text x="105" y="693" font-size="11" fill="#3B6D11" text-anchor="middle">→ WhatsApp ID</text>
+<rect x="220" y="655" width="140" height="52" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="1.5"/><text x="290" y="676" font-size="13" font-weight="500" fill="#042C53" text-anchor="middle">B5 · eco</text><text x="290" y="693" font-size="11" fill="#0C447C" text-anchor="middle">Correcto / Corregir</text>
+<rect x="390" y="655" width="200" height="52" rx="8" fill="#FAECE7" stroke="#993C1D" stroke-width="1.5"/><text x="490" y="676" font-size="13" font-weight="500" fill="#4A1B0C" text-anchor="middle">A2+SE3 · mc-llamado</text><text x="490" y="693" font-size="11" fill="#712B13" text-anchor="middle">bici hero · notas por ruta</text>
+<rect x="620" y="655" width="140" height="52" rx="8" fill="#FAEEDA" stroke="#854F0B" stroke-width="1.5"/><text x="690" y="676" font-size="13" font-weight="500" fill="#412402" text-anchor="middle">C3 · ¿promesa?</text><text x="690" y="693" font-size="11" fill="#633806" text-anchor="middle">sí / no (dedup)</text>
+<rect x="790" y="655" width="150" height="52" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="1.5"/><text x="865" y="676" font-size="13" font-weight="500" fill="#042C53" text-anchor="middle">B6 · confirmación</text><text x="865" y="693" font-size="11" fill="#0C447C" text-anchor="middle">Luis + promesa</text>
+<rect x="970" y="655" width="160" height="52" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="1.5"/><text x="1050" y="676" font-size="13" font-weight="500" fill="#042C53" text-anchor="middle">B6-D · dedup</text><text x="1050" y="693" font-size="11" fill="#0C447C" text-anchor="middle">«ya tenía tu solicitud»</text>
+<path d="M190,681 L220,681" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M360,681 L390,681" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M590,681 L620,681" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M760,681 L790,681" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/><text x="764" y="675" font-size="11" fill="#633806">sí</text>
+<path d="M690,707 L690,725 L1050,725 L1050,707" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/><text x="855" y="738" font-size="11" fill="#633806">no (dedup)</text>
+
+<!-- Leyenda -->
+<rect x="20" y="775" width="13" height="13" rx="3" fill="#EEEDFE" stroke="#534AB7"/><text x="39" y="786" font-size="12" fill="#444441">Disparador / AI Step</text>
+<rect x="180" y="775" width="13" height="13" rx="3" fill="#FAECE7" stroke="#993C1D"/><text x="199" y="786" font-size="12" fill="#444441">Solicitud externa</text>
+<rect x="330" y="775" width="13" height="13" rx="3" fill="#F1EFE8" stroke="#5F5E5A"/><text x="349" y="786" font-size="12" fill="#444441">Acción</text>
+<rect x="420" y="775" width="13" height="13" rx="3" fill="#FAEEDA" stroke="#854F0B"/><text x="439" y="786" font-size="12" fill="#444441">Condición</text>
+<rect x="530" y="775" width="13" height="13" rx="3" fill="#E6F1FB" stroke="#185FA5"/><text x="549" y="786" font-size="12" fill="#444441">Mensaje</text>
+<rect x="630" y="775" width="13" height="13" rx="3" fill="#EAF3DE" stroke="#3B6D11"/><text x="649" y="786" font-size="12" fill="#444441">Entrada de usuario</text>
+<rect x="790" y="775" width="13" height="13" rx="3" fill="#FBEAF0" stroke="#993556"/><text x="809" y="786" font-size="12" fill="#444441">Delay / anti-bucle</text>
+<text x="20" y="825" font-size="11" fill="#888780">🚨 La rama ELSE del AI Step es OBLIGATORIA (cualquier salida ≠ 10 códigos → anti-bucle) — sin ella, el lead se pierde sin dejar rastro en ninguna métrica.</text>
+<text x="20" y="845" font-size="11" fill="#888780">⚠️ NO usar la «Pausa 24 h» nativa (suspende la regla de baja) · el disparador de respuesta a HISTORIA se agrega aparte apuntando al mismo flujo · al activar esta puerta: go-live formal (rotar MC_KEY + apagar V1).</text>
+</svg>
