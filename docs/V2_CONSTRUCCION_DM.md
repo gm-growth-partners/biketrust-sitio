@@ -19,11 +19,132 @@ selector · `?key=<MC_KEY>` en TODAS las solicitudes externas · mapeos con ruta
 
 ---
 
-## Etapa 1 · Convergencia y cierre — idénticos a la hoja del quiz
+## Etapa 1 · Convergencia y cierre — los 12 bloques, en orden de construcción
 
-Construir igual: **B7 · B6 · B6-D · C3 · B4 · B5 · B3 · A1 · C2 · D1 (40 s) · B2-C**.
+> Del final hacia atrás, para que cada cable encuentre su destino ya creado. Todos los
+> mensajes son del canal Instagram. Botones siempre «Ir a un paso», nunca URL.
 
-**A2+SE3 (`mc-llamado`) — la única diferencia está en `notas`, que cambia POR RUTA**
+### 1 · B7 · Salida blanda — Mensaje, sin botones, sin siguiente paso
+```
+Dale, sin problema 👌 Cero llamadas.
+
+Cualquier duda me escribes por acá. Y si alguien la aparta antes, te aviso.
+```
+
+### 2 · B6 · Confirmación — Mensaje, sin botones, sin siguiente paso
+```
+Listo ✅ Te va a llamar Luis Sulbarán, nuestro especialista, {{cf_promesa}}.
+
+Te marca desde el +56 9 2181 5855 — guarda el número así sabes que somos nosotros 😉
+
+Si no te pilla, te deja un WhatsApp a ese mismo número.
+```
+- El número va **tipeado tal cual** (no es variable). `{{cf_promesa}}` desde el selector.
+- La última línea **no se saca**: declara el permiso del ciclo «No contestado».
+
+### 3 · B6-D · Confirmación dedup — Mensaje, sin botones, sin siguiente paso
+```
+Listo ✅ Ya tenía tu solicitud anotada — Luis te llama en cuanto pueda.
+
+Te marca desde el +56 9 2181 5855 — guarda el número así sabes que somos nosotros 😉
+
+Si no te pilla, te deja un WhatsApp a ese mismo número.
+```
+
+### 4 · C3 · ¿Hubo promesa? — Condición
+- `cf_promesa` **tiene algún valor** → **B6** · Si no → **B6-D**.
+- *Por qué: si el lead ya tenía ticket abierto, `mc-llamado` responde `dedup` SIN
+  `promesaLlamada` → el campo queda vacío (A2 lo borró antes) → B6 saldría con el hueco.*
+
+### 5 · A2+SE3 · El backend — Acción + Solicitud externa, en secuencia
+1. **Acción → Borrar valor** de `cf_promesa`.
+2. **Solicitud externa** — POST · `Content-Type: application/json`
+```
+https://biketrust-sitio.pages.dev/api/mc-llamado?key=<MC_KEY>
+```
+```json
+{
+  "handle": "<Nombre de usuario>",
+  "telefono": "{{cf_telefono}}",
+  "bici": "{{cf_hero_bici}}",
+  "notas": "Puerta 2 {{cf_modelo_texto}} · dijo: {{cf_mensaje}}"
+}
+```
+   - `<Nombre de usuario>` = campo de sistema de Instagram **desde el selector**.
+   - `<MC_KEY>` = la llave vigente (la del script de «kanban a mensajes»), NO la V2.
+   - **Sin** `reel` · `ciudad` · `franja` · `optin`. `bici` vacío si la ruta no pasó por
+     match → ticket sin brief, correcto.
+   - **Mapeo de respuesta:** `$.promesaLlamada` → `cf_promesa`.
+3. Siguiente paso → **C3**.
+
+### 6 · B4 · El teléfono — Entrada de usuario
+- Pregunta:
+```
+Perfecto 🙌 ¿A qué número te llamamos?
+
+Escríbelo como quieras (9 1234 5678, +569…, da lo mismo).
+```
+- Tipo de respuesta: **Teléfono** → guardar en `cf_telefono` · ✅ **«Guardar como ID de
+  WhatsApp»** (lo necesita el motor de recordatorios).
+- Mensaje de reintento (el paso no permite ramas de fallo, solo este texto):
+```
+Creo que se cortó un dígito 🙈 ¿me lo mandas de nuevo? Así sirve: 9 1234 5678
+```
+- Respuesta válida → **B5** *(cable diferido: se conecta al crear B5 en el paso 7)*.
+
+### 7 · B5 · El eco — Mensaje
+```
+Anotado: {{cf_telefono}} ✅
+```
+| Botón | Destino |
+|---|---|
+| `Correcto` | → **A2+SE3** |
+| `Corregir` | → **B4** |
+*(Ahora volver a B4 y conectar su respuesta válida → B5. Único cable mutuo del montaje.)*
+
+### 8 · B3 · La oferta de llamada — Mensaje (copy nuevo 2026-07-30)
+```
+Oye, mejor que te llame Luis 📞 Él inspeccionó personalmente cada bici que tenemos — nadie te va a responder más derecho.
+
+En 5 minutos te dice cuál te calza según tu estatura, qué hay dentro de tu presupuesto, y si quieres te la aparta mientras decides.
+```
+| Botón | Destino |
+|---|---|
+| `Sí, que me llamen` | → **B4** |
+| `Por ahora no` | → **B7** |
+
+### 9 · A1 · Marcar oferta — Acción
+- Set custom field → `cf_oferta_enviada` = `si` (texto, sin tilde) → siguiente: **B3**.
+
+### 10 · D1 · Smart Delay — 40 segundos
+- Al vencer → **A1**. *(Sin C2: directo — el guard se eliminó 2026-07-30.)*
+
+### 11 · C-OFERTA · La guarda de segunda vuelta — Condición
+- `cf_oferta_enviada` **es igual a** `si` → **B4** *(ya recibió la oferta: se le pide el
+  número directo, sin repetir el discurso — acorta, nunca corta)*.
+- Si no → **D1**.
+
+### 12 · B2-C · Catálogo — Mensaje, sin botones
+```
+Acá puedes ver todo lo que tenemos disponible ahora mismo 👉 https://biketrust.cl
+
+Todas pasaron por nuestra inspección, con su nota de 1 a 7 a la vista.
+```
+- Salida → **C-OFERTA**.
+
+### Checklist de cables de la Etapa 1
+```
+B2-C → C-OFERTA
+C-OFERTA  sí → B4 · no → D1
+D1 → A1 → B3
+B3  «Sí, que me llamen» → B4 · «Por ahora no» → B7
+B4  válido → B5 (reintento interno, sin rama de fallo)
+B5  «Correcto» → A2+SE3 · «Corregir» → B4
+A2+SE3 → C3
+C3  con valor → B6 · vacío → B6-D
+```
+
+**Las `notas` de SE3 cambian POR RUTA** vía el portador `cf_modelo_texto`
 (sin esto, un reclamo de postventa entra al Kanban idéntico a un lead de compra):
 
 | Ruta que llega al teléfono | `"notas"` en el body |
