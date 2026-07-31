@@ -16,6 +16,11 @@
 > 5. El backend se endureció el mismo día para soportar este montaje: `parseDisciplina`
 >    (texto de botón), `parsePresupuesto` (decimales de millón), `match`/`biciDisponible`
 >    como **palabra** `"true"`/`"false"`, umbral modo B y pena por disciplina distinta.
+> 6. **C2 (el guard de `cf_oferta_enviada`) SE ELIMINÓ** de comentarios y quiz (decisión
+>    Gabriel 2026-07-30 noche): en el as-built B3 tiene UNA sola vía de entrada (D1), el
+>    duplicado que C2 prevenía es imposible, y lo único que hacía era matar en silencio al
+>    contacto que volvía por segunda vez. Cableado vigente: **D1 → A1 → B3**. A1 se conserva
+>    (la marca es señal para la guarda C-OFERTA de la puerta de DM, que NO muere: manda a B4).
 > **E2E verificado contra Airtable 2026-07-30.** Detalle de los 6 bugs: CHANGELOG.
 
 > **Qué es esto.** El detalle técnico de CADA bloque de la automatización de quiz, en el

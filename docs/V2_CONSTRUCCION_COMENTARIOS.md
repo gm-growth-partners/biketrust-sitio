@@ -291,15 +291,17 @@ Te resuelve las dudas que por chat no se responden bien: si esa talla te calza, 
 
 ### Paso 11 · A1 · Marcar oferta — acción set field
 `cf_oferta_enviada` = `si` → siguiente paso: **B3**.
-*(La bandera ANTES que el mensaje: ese orden es la protección anti-duplicado.)*
 
-### Paso 12 · C2 · El guard — condición
-- `cf_oferta_enviada` **es** `si`
-- **Sí** → **NADA** (sin destino: el flujo muere ahí a propósito)
-- **Si no** → A1
+### Paso 12 · ~~C2 · El guard~~ — **ELIMINADO (2026-07-30, decisión Gabriel)**
+> En el as-built B3 tiene **una sola vía de entrada** (D1): el catch-all que motivaba el
+> anti-duplicado no se pudo montar (el texto libre cae al Default Reply). Lo único que C2
+> hacía en la práctica era **matar en silencio al contacto que volvía por segunda vez**
+> (`cf_oferta_enviada` es por contacto y persiste). Se quitó de TODAS las automatizaciones
+> de comentarios y del quiz. A1 se conserva: la marca es la señal de la guarda C-OFERTA de
+> la puerta de DM (que no corta: manda a B4).
 
 ### Paso 13 · D1 · Smart Delay — 40 segundos
-Al vencer → **C2**. *(Tuneable; lo importante es la bandera, no el valor.)*
+Al vencer → **A1** (directo; sin C2).
 
 ---
 
@@ -402,8 +404,7 @@ B1-Q Sobre la bici → C1b       · Sobre la tienda → B1-W
 B1-W → D1
 C1b  Sí → B2-E                 · Si no → B2
 B2   → D1        B2-E → D1
-D1   → C2
-C2   Sí → (nada) · Si no → A1
+D1   → A1        (C2 eliminado 2026-07-30)
 A1   → B3
 B3   Sí que me llamen → B4     · Por ahora no → B7
 B4   válido → B5               · reintento interno (sin rama de fallo: límite de plataforma)

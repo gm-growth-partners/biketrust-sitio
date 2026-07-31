@@ -174,7 +174,13 @@ Te dice derecho qué vale y si la recibimos o no: bajo 4 no la tomamos, y prefer
 
 ### C-OFERTA · Condición (la Guarda 1 del runbook §5.4-bis)
 - `cf_oferta_enviada` **es** `si` → **B4** (ya recibió la oferta; solo falta el número).
-- Si no → **D1** (40 s → C2 → A1 → B3, la convergencia normal).
+- Si no → **D1** (40 s → A1 → B3, la convergencia normal).
+
+> ⚠️ **2026-07-30: C2 (el guard post-delay) fue ELIMINADO de las puertas de comentarios y
+> quiz** — en el as-built B3 tiene una sola vía de entrada y C2 solo mataba al que volvía.
+> En ESTA puerta la protección de segunda vuelta es C-OFERTA, y su rama «sí» **acorta** el
+> camino (→ B4); **nunca deja al contacto sin respuesta**. No montar ningún C2 acá tampoco:
+> el tramo es `D1 → A1 → B3` directo.
 
 *La usan: la salida de la ficha (match), BICI_SUELTA, SALUDO y NO_CLASIFICA.*
 
