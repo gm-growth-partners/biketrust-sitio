@@ -62,16 +62,15 @@
 <path d="M1100,466 L1130,466" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
 
 <!-- Convergencia -->
-<text x="20" y="545" font-size="12" font-weight="600" fill="#888780">CONVERGENCIA (misma de las otras puertas — cf_oferta_enviada es POR CONTACTO) ↓</text>
+<text x="20" y="545" font-size="12" font-weight="600" fill="#888780">CONVERGENCIA (misma de las otras puertas · sin C2: D1 → A1 → B3 directo) ↓</text>
 <rect x="20" y="565" width="190" height="52" rx="8" fill="#FAEEDA" stroke="#854F0B" stroke-width="1.5"/><text x="115" y="586" font-size="13" font-weight="500" fill="#412402" text-anchor="middle">C-OFERTA · guarda 2ª vuelta</text><text x="115" y="603" font-size="11" fill="#633806" text-anchor="middle">oferta ya enviada → B4 directo</text>
 <rect x="240" y="565" width="140" height="52" rx="8" fill="#FBEAF0" stroke="#993556" stroke-width="1.5"/><text x="310" y="586" font-size="13" font-weight="500" fill="#4B1528" text-anchor="middle">D1 · 40 s</text><text x="310" y="603" font-size="11" fill="#72243E" text-anchor="middle">Smart Delay</text>
-<rect x="410" y="565" width="150" height="52" rx="8" fill="#FAEEDA" stroke="#854F0B" stroke-width="1.5"/><text x="485" y="586" font-size="13" font-weight="500" fill="#412402" text-anchor="middle">C2 · guard</text><text x="485" y="603" font-size="11" fill="#633806" text-anchor="middle">si → nada</text>
+<rect x="410" y="565" width="150" height="52" rx="8" fill="#FFFFFF" stroke="#C9C7BF" stroke-width="1.5" stroke-dasharray="6,4"/><text x="485" y="586" font-size="13" font-weight="500" fill="#888780" text-anchor="middle">~~C2~~ eliminado</text><text x="485" y="603" font-size="11" fill="#888780" text-anchor="middle">2026-07-30 · D1 va directo</text>
 <rect x="590" y="565" width="150" height="52" rx="8" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="1.5"/><text x="665" y="586" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle">A1 · marca</text><text x="665" y="603" font-size="11" fill="#444441" text-anchor="middle">oferta_enviada = si</text>
 <rect x="770" y="565" width="160" height="52" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="1.5"/><text x="850" y="586" font-size="13" font-weight="500" fill="#042C53" text-anchor="middle">B3 · oferta llamada</text><text x="850" y="603" font-size="11" fill="#0C447C" text-anchor="middle">sí → B4 · no → B7</text>
 <rect x="960" y="565" width="150" height="52" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="1.5"/><text x="1035" y="586" font-size="13" font-weight="500" fill="#042C53" text-anchor="middle">B7 · salida blanda</text><text x="1035" y="603" font-size="11" fill="#0C447C" text-anchor="middle">«cero llamadas»</text>
 <path d="M210,591 L240,591" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
-<path d="M380,591 L410,591" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
-<path d="M560,591 L590,591" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/><text x="564" y="585" font-size="11" fill="#633806">no</text>
+<path d="M380,558 C440,530 540,530 590,558" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
 <path d="M740,591 L770,591" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
 <path d="M930,591 L960,591" stroke="#888780" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
 
