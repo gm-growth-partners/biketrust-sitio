@@ -1,5 +1,23 @@
 # Hoja de construcción — Quiz V2 (reels sin bici + ruta ASESORIA del DM)
 
+> ## ⚠️ AS-BUILT 2026-07-30 — cómo quedó montado de verdad (manda sobre lo de abajo)
+> La automatización real es **«Plantilla reel sin bici específica»** (carpeta V2 → P1
+> Comentarios) y difiere de esta hoja en 5 cosas, todas decididas por Gabriel:
+> 1. **UNA sola automatización con VARIOS triggers** (un trigger de comentario por post
+>    viejo, **any-word**) en vez de duplicar por reel. Consecuencia aceptada: **sin `reel`**
+>    en los bodies de `mc-match` y `mc-llamado` → sin atribución por video en estos posts.
+> 2. **Las 3 preguntas viven en UN bloque** (mensaje con entradas secuenciales), no en 3
+>    pasos: 1/3 elección múltiple → `cf_q_disc` («MTB / cerro» · «Ruta» · «Ciudad» + Omitir)
+>    · 2/3 texto → `cf_q_presup` · 3/3 texto → `cf_q_altura`. Expiración: 30 min.
+> 3. **B2-Q es SOLO TEXTO** (sin burbuja de imagen): el gancho es el link de la ficha y el
+>    teaser de «dónde perdió puntos». El copy vigente es el que pasó Claude en el chat
+>    (2026-07-30), no el de esta hoja.
+> 4. `mc-llamado` va con `bici: {{cf_hero_bici}}` (el HERO), sin `reel`.
+> 5. El backend se endureció el mismo día para soportar este montaje: `parseDisciplina`
+>    (texto de botón), `parsePresupuesto` (decimales de millón), `match`/`biciDisponible`
+>    como **palabra** `"true"`/`"false"`, umbral modo B y pena por disciplina distinta.
+> **E2E verificado contra Airtable 2026-07-30.** Detalle de los 6 bugs: CHANGELOG.
+
 > **Qué es esto.** El detalle técnico de CADA bloque de la automatización de quiz, en el
 > orden real de construcción (del final hacia el principio, igual que
 > [`V2_CONSTRUCCION_COMENTARIOS.md`](V2_CONSTRUCCION_COMENTARIOS.md)). Cubre: los **reels

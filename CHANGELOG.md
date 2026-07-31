@@ -10,6 +10,57 @@
 
 ## V2 · El embudo que apunta a la llamada — EN CONSTRUCCIÓN (desde 2026-07-27)
 
+### 2026-07-30 (tarde) · Quiz construido + 6 bugs cazados probando con tráfico real
+**Ítems 1 y 2 del plan de cierre quedaron operativos.** El quiz de reels sin bici se montó
+en ManyChat (as-built: **una sola automatización** con triggers de varios posts en any-word,
+las 3 preguntas en un bloque único, ficha SOLO TEXTO con el link como gancho, **sin `reel`**
+— se acepta perder la atribución por video en estos posts) y se verificó E2E contra Airtable:
+Lead + `Cuestionario iniciado` + Interés `Match` con `Crit·*` + ticket con la bici del hero
+y el brief + `Fecha teléfono`.
+
+**Los 6 bugs, todos cazados en pruebas reales del mismo día (ninguno daba error visible):**
+1. **El trigger de «kanban a mensajes» no re-disparaba.** Era *record matches conditions ·
+   Salida no vacía*, que solo dispara en la transición vacío→valor; como «Salida vacía →
+   Llamada pendiente» llena el campo al nacer el ticket, **ningún arrastre posterior del
+   Kanban ejecutaba `salida-llamado`** (ni mensajes, ni Solicitudes, ni Estado). → Ahora es
+   **record updated observando `Salida` + `Fecha y hora de visita`** (el segundo campo es el
+   que dispara la confirmación de visita al completar la fecha).
+2. **ManyChat no guarda booleanos en campos de texto.** `match` y `biciDisponible` viajaban
+   como booleano JSON → `cf_match` quedaba vacío → C-Q mostraba el no-match honesto AUNQUE
+   hubiera hero (y la rama C1a de bici vendida en comentarios nunca habría disparado). → Los
+   endpoints emiten **la palabra** `"true"`/`"false"`.
+3. **«3,5 millones» se parseaba como $35.000.000** (pelaba el punto antes de multiplicar) →
+   el quiz recomendaba la bici más cara de un techo ×10. → `parsePresupuesto` captura el
+   decimal primero y acepta números cortos a secas («3,5» · «10») como millones.
+4. **El quiz guarda el TEXTO del botón** («MTB / cerro», «Ciudad»), no el literal del select
+   → 2 de 3 opciones perdían los 40 pts de disciplina. → `parseDisciplina` canonicaliza, y
+   pedir OTRA disciplina ahora **resta** (antes presupuesto+estatura solos pasaban el umbral
+   y se recomendaba una MTB a quien pidió ciudad).
+5. **Modo B sin umbral** (recomendaba siempre) → umbral del 35 % del puntaje alcanzable con
+   los criterios entregados (quiz completo ≈ 25) + `mc-match` acepta `reel` para atribuir el
+   Interés al video. Tests offline: `test/mc-match-quiz.mjs` (18 aserciones).
+6. **C2 (guard anti-duplicado) estaba cableado al revés** en ManyChat: la rama «ya recibió
+   oferta» iba a A1→B3 y la rama del lead nuevo moría sin destino.
+
+**Operación (ítem 1):** interfaz «Operación Llamadas (V2)» afinada — `Notas` fuera de la
+pantalla 1, `No contestado` antes de `Sin interés` en el select, **«Haz clic en los detalles
+del registro» activado en Visitas y Región** (sin eso Luis no podía editar nada), y
+**formulario «➕ Nuevo llamado»** publicado (walk-in/llamado directo; `Origen` con default
+`Manual` a nivel de tabla — seguro porque el bot escribe `Bot DM` explícito). El ticket real
+de `@carlosbriceno._` (26-jul) estaba varado «Sin categorizar» y se rescató a la cola.
+**Plantillas aprobadas por Meta:** `region_gestionando` quedó **sin variable** (texto fijo —
+no editarla: vuelve a revisión) y `llamada_no_contestada` fue **recategorizada a Marketing**
+por Meta (funciona igual; cuesta más por conversación). Envs `FLOW_NS_REGION` y
+`FLOW_NS_NO_CONTESTA` seteadas y desplegadas. Aviso `nuevo_llamado` a Luis **verificado en
+su chat**. ⚠️ Tickets manuales (sin Lead) **no despachan mensajes ni crean Solicitudes**
+(`sin_lead` por diseño): el walk-in que busca algo se registra con el form «Nueva solicitud».
+
+**Documentos nuevos:** `docs/V2_CONSTRUCCION_QUIZ.md` + `docs/embudo_quiz_v2_bloques.svg` ·
+`docs/V2_CONSTRUCCION_DM.md` + `docs/embudo_dm_v2_bloques.svg` · `docs/V2_GUIA_ROLES.md`
+(1 página Luis + 1 dueños). **Lección operativa:** se subió un reel sin aviso y 3
+comentaristas se perdieron (sin automatización no hay respuesta privada, y no son contactos
+→ irrecuperables) — **ningún reel se publica sin su automatización activa**.
+
 ### 2026-07-27 · El pivote
 **Qué cambió:** el objetivo del bot deja de ser la visita y pasa a ser **el teléfono**. El bot
 entrega valor (ficha con puntaje, estado honesto y ahorro), pide el número, y **la visita la

@@ -2,7 +2,7 @@
 
 > Este archivo lo lee Claude Code automáticamente al iniciar sesión en este repo.
 > Es la **memoria viva del proyecto**. Idioma de trabajo: **español**.
-> Última actualización: **2026-07-27** (rediseño V2: el embudo apunta a la llamada).
+> Última actualización: **2026-07-30** (quiz en ManyChat + 6 bugs cazados — ver CHANGELOG).
 
 ## 🧭 EMPIEZA ACÁ
 
@@ -66,7 +66,7 @@ Meta del dueño: **20–30 % de los leads entregan teléfono** (semana 30 = 3 %)
 | 🟢 **Avisos WhatsApp al staff** | EN VIVO (2026-07-09): briefing 8AM (Luis+Roberto) · nueva solicitud · nueva oferta · `encargo_recibido` al cliente. 🟡 Esperan Meta: `nuevo_llamado` y `visita_reagendada` (tickets igual se crean; se ven en pantalla). |
 | 🟢 **Tablero de reporte (Anexo A3)** | EN VIVO (2026-07-17) — app web privada **SEPARADA** (repo/proyecto Pages `biketrust-tablero`, carpeta `…/2. Fragua/tablero`). Lee ESTA misma base y calcula 19 métricas en build time; gate server-side (clave compartida) + disparador (Deploy Hook). Solo lectura. **Agregó campos + 3 automatizaciones a esta base** (ver §4). §06 verificado. Su propio `README.md` tiene el estado. |
 
-**FOCO ACTUAL (2026-07-30): cerrar la etapa Embudo V2 — los 5 ítems de [`docs/V2_PLAN_CIERRE_ETAPA.md`](docs/V2_PLAN_CIERRE_ETAPA.md).** La puerta de comentarios ya está **EN PRODUCCIÓN** (4 reels, E2E verificado); sigue: interfaz de Llamados + guía a Luis → reels sin bici → puerta de DM → gran doc → tablero con roles (el cierre). *(Contexto del pivote, abajo — histórico:)* Pivote: **intención en vez de menú** (4 rutas: modelo específico · asesoría · vender · pregunta general) y **convergencia única en agenda** (ubicación decide: Santiago → visita `mc-agenda` · región → llamada `mc-llamado`). Diseño, plan y fe de erratas: `MANYCHAT_REBUILD.md` §0.5–0.7; spec de montaje: `docs/cuaderno_montaje_biketrust.html`. Motiva: S30 con 27 fichas entregadas y 0 agendas; 5 DMs libres varados. Acompañan (código): umbral no-match en quiz · emitir `quiz_iniciado` · hora exacta en Llamados · semana en curso en el tablero. *(Foco anterior 2026-07-08 —sistema operativo completo— CUMPLIDO y lanzado 2026-07-10; limpieza de prueba hecha 2026-07-27.)*
+**FOCO ACTUAL (2026-07-30 noche): cerrar la etapa Embudo V2 — los 5 ítems de [`docs/V2_PLAN_CIERRE_ETAPA.md`](docs/V2_PLAN_CIERRE_ETAPA.md).** Puerta de comentarios **EN PRODUCCIÓN** (4 reels) · **ítem 1 (Airtable+guía) e ítem 2 (quiz reels sin bici) OPERATIVOS y verificados E2E** (falta: activar triggers de posts reales, duplicado Levo SL2, prueba de humo de las 5 salidas con mensajes reales, pegar copy nuevo de B3). **Sigue: ítem 3 puerta de DM** — hoja lista: [`docs/V2_CONSTRUCCION_DM.md`](docs/V2_CONSTRUCCION_DM.md) → gran doc → tablero con roles (el cierre). *(Contexto del pivote, abajo — histórico:)* Pivote: **intención en vez de menú** (4 rutas: modelo específico · asesoría · vender · pregunta general) y **convergencia única en agenda** (ubicación decide: Santiago → visita `mc-agenda` · región → llamada `mc-llamado`). Diseño, plan y fe de erratas: `MANYCHAT_REBUILD.md` §0.5–0.7; spec de montaje: `docs/cuaderno_montaje_biketrust.html`. Motiva: S30 con 27 fichas entregadas y 0 agendas; 5 DMs libres varados. Acompañan (código): umbral no-match en quiz · emitir `quiz_iniciado` · hora exacta en Llamados · semana en curso en el tablero. *(Foco anterior 2026-07-08 —sistema operativo completo— CUMPLIDO y lanzado 2026-07-10; limpieza de prueba hecha 2026-07-27.)*
 
 ⚠️ **DECISIÓN 2026-07-20 (reunión con los dueños) — AILOO = ERP CENTRAL; el embudo se corta en show/no-show.**
 - **Ailoo** (ERP chileno donde BikeTrust factura y donde vive biketrust.cl) pasa a ser el sistema central. Se acordó pedirle a Ailoo **dos automatizaciones hacia Airtable**: (1) **alta de bici** → la bici nace en Inventario lista para publicar (requiere **campos personalizados** en el form de producto de Ailoo — talla/año/motorización/etc. como campos, NO texto libre en la descripción; es REQUISITO, no nice-to-have); (2) **venta** → la bici queda `Vendida` + llegan los datos del comprador.
@@ -140,9 +140,15 @@ Meta del dueño: **20–30 % de los leads entregan teléfono** (semana 30 = 3 %)
    - ✅ **SÍ crea** campos `multipleLookupValues` (lookup), `rollup`, `formula`, `count`, selects, fechas, checkboxes… (verificado creando 15 campos).
    - ✅ **SÍ crea páginas de interfaz** (`create_page`) y las publica. No hay que armarlas a mano.
    - ✅ **SÍ edita la fórmula** de un campo existente (PATCH sin cambiar su id → las automatizaciones que lo referencian siguen intactas).
-   - ❌ **NO agrega ni quita opciones a un select existente** (solo `typecast:true` crea opciones al escribir un registro).
+   - ❌ **NO agrega ni quita opciones a un select existente** (solo `typecast:true` crea opciones al escribir un registro). Reordenarlas: solo manual.
    - ❌ **NO borra campos** ni cambia el tipo de uno existente.
-   - ❌ **NO toca Automatizaciones** (eso sigue siendo manual u Omni).
+   - ⚠️ **Automatizaciones — CORREGIDO 2026-07-30:** el **MCP de Airtable SÍ las crea y edita**
+     (nacen como borrador apagado; el usuario las enciende en la UI)… **EXCEPTO si contienen
+     un nodo `customScript`** — esas son read-only por API y se editan en la UI (así se cambió
+     el trigger de «kanban a mensajes», por Chrome).
+   - 🚨 **Gotcha de triggers (bug real 2026-07-30):** *record matches conditions* dispara SOLO
+     en la transición no-cumple→cumple. Para reaccionar a cada cambio de un campo (ej. cada
+     arrastre del Kanban) se usa ***record updated* con `watchFields`**.
 3. **Cloudflare bloquea scripts (error 1010/403).** Pegarle a la función en vivo (`/api/reservar`) desde python/curl da 403 por bot. → **Manda header `User-Agent` de navegador** (Mozilla/5.0…).
 4. **Nombres de campo EXACTOS importan — verifica antes de diagnosticar.** Falsos diagnósticos por mismatches: `Reservas` (plural, no `Reserva`), `Precio Bici` (B mayúscula), `' Valor potencial'` (espacio inicial). → Lee el esquema real por API (`meta/bases/.../tables`) y usa el nombre literal antes de concluir que "algo falla".
 5. **Repo git anidado accidental:** `C:\Users\Gabriel` es un repo git por error; `biketrust-sitio` es repo propio anidado. → **Verifica `git rev-parse --show-toplevel` antes de commitear.**
@@ -186,14 +192,14 @@ Meta del dueño: **20–30 % de los leads entregan teléfono** (semana 30 = 3 %)
 > sigue vivo. Todo lo cumplido se movió a [`CHANGELOG.md`](CHANGELOG.md), que es donde vive
 > la historia — no la dupliques acá.
 
-**Del rediseño V2** (lo que bloquea el lanzamiento — detalle en `docs/V2_PLAN_MIERCOLES.md`):
-1. **Horario de atención de Luis** — decisión de los dueños, pendiente. Bloquea la promesa de
-   hora en el bot y el formato de `AVISO_HORARIOS` (hoy no admite el martes libre).
-2. **Montar en ManyChat** las 2 puertas + duplicar ×6 la de comentarios.
-3. **Crear en Airtable**: las opciones `Llamada pendiente` y `No contestado` del campo
-   `Salida` (la API no agrega opciones a un select), el Kanban de Luis y la pantalla de
-   Solicitudes, más las 2 plantillas nuevas de WhatsApp (`region_gestionando`,
-   `llamada_no_contestada`).
+**Del rediseño V2** (lo que bloquea el go-live — el plan vivo es `docs/V2_PLAN_CIERRE_ETAPA.md`):
+1. ~~Horario de atención de Luis~~ ✅ resuelto (cobertura en `HORARIO_ESPECIALISTA`/`AVISO_HORARIOS`; Roberto cubre el martes).
+2. **Montar en ManyChat**: ~~comentarios~~ ✅ (4 reels) · ~~quiz reels sin bici~~ ✅ 2026-07-30
+   (falta activar triggers de posts reales + duplicado **Levo SL2**) · **puerta de DM**
+   (hoja: `docs/V2_CONSTRUCCION_DM.md`) — al activarla: go-live formal (§9 del runbook).
+3. ~~Opciones de `Salida`, Kanban, pantalla Solicitudes, 2 plantillas WhatsApp~~ ✅ TODO hecho
+   y aprobado por Meta (2026-07-30). ⚠️ `region_gestionando` quedó SIN variable (no editarla)
+   y `llamada_no_contestada` es categoría **Marketing** (la recategorizó Meta).
 4. **Env de Cloudflare — 2 faltan para el V2, 3 llevan flujos apagados.**
    *(Auditado 2026-07-28 contra el panel real. ⚠️ No deducir qué env existen leyendo el
    código: varias las creó el V1 y ninguna función nueva las referencia.)*
@@ -204,12 +210,12 @@ Meta del dueño: **20–30 % de los leads entregan teléfono** (semana 30 = 3 %)
    enviar y devuelve un error opaco de ManyChat en vez del `falta_env:X` explícito.
    **Toda env nueva exige redesplegar** — no aplican al deploy en curso.
 
-   **Bloquean el lanzamiento V2** (esperan que se arme el flujo en ManyChat):
+   ~~Bloquean el lanzamiento V2~~ ✅ **SETEADAS Y DESPLEGADAS (2026-07-30):**
 
    | Env | Se dispara con | Plantilla |
    |---|---|---|
-   | `FLOW_NS_REGION` | Kanban → Coordinación región | `region_gestionando` (por crear) |
-   | `FLOW_NS_NO_CONTESTA` | Kanban → No contestado | `llamada_no_contestada` (por crear) |
+   | `FLOW_NS_REGION` ✅ | Kanban → Coordinación región | `region_gestionando` (aprobada, SIN variable) |
+   | `FLOW_NS_NO_CONTESTA` ✅ | Kanban → No contestado | `llamada_no_contestada` (aprobada, cat. Marketing) |
 
    **Mientras falten, el sistema NO se rompe:** `salida-llamado` escribe igual el opt-in, la
    fecha de visita, el estado del lead, el ticket de `Solicitudes` y el `Estado` del ticket —
@@ -236,7 +242,7 @@ Meta del dueño: **20–30 % de los leads entregan teléfono** (semana 30 = 3 %)
    *Sin fallback y por eso inofensivas:* `AIRTABLE_BASE`, los `AIRTABLE_*_TABLE`,
    `BRIEFING_HOUR` y `SITE_URL` no están seteadas pero todas tienen valor por defecto en el
    código. `SITE_URL` se setea recién al conectar el dominio (punto 6).
-5. **Confirmar que Luis tiene asiento con permiso de edición** en Airtable. Bloqueante.
+5. ~~Confirmar que Luis tiene asiento con permiso de edición~~ ✅ confirmado (runbook §1.1).
 
 **Deuda anterior que sigue viva:**
 6. **Dominio `biketrust.cl`** → Cloudflare Pages + setear `SITE_URL` (para que OG, canonical
