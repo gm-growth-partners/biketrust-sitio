@@ -58,6 +58,11 @@ plantillas en Meta y las envs en Cloudflare.
 - **Al activarla se completa el reemplazo de la V1 → acá va el go-live formal: rotar
   `MC_KEY` (la `MC_KEY_V2` de `.dev.vars`) + apagar lo que quede de V1 + borrar los 13
   custom fields muertos.**
+- ⚠️ **ANTES de entregar el embudo (pedido explícito de Gabriel 2026-07-31): pasada
+  completa de COPYS de todas las puertas** — las 5 automatizaciones de comentarios/quiz,
+  la puerta de DM y los mensajes de las salidas. Revisar y mejorar cada texto (tono,
+  persuasión, chileno natural) manteniendo los candados de honestidad. Los copys actuales
+  son funcionales, no finales — B3 ya se renovó como referencia del estándar.
 
 ## 4 · El gran doc
 
