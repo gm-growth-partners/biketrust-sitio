@@ -258,39 +258,35 @@ corre antes — **no recrearla**.
 
 ### E-1 · Condición: `cf_modo_humano` es `si` → **nada** (el bot se calla). Si no → E-2.
 
-### E-2 · Mensaje sin texto procesable (audio / foto / sticker / post compartido) — SIN contar golpe
+### E-2 · Mensaje sin texto (audio / foto / sticker / post compartido) — SIN contar golpe
 
-**Las dos puertas de intervención humana del sistema, explícitas (diseño Gabriel 2026-07-30):**
+**Diseño FINAL (Gabriel 2026-07-30): un solo tratamiento para todo lo que no sea texto —
+la excusa genérica, culpándole a Instagram, una sola vez.** Sin distinguir tipos de adjunto
+(ya no hace falta verificar si el builder puede).
 
-| Caso | El bot | Sigue |
-|---|---|---|
-| **Audio / foto / sticker** | **NO responde nada.** Notifica a administradores (acción nativa) y espera | El humano responde desde la bandeja |
-| **Post/reel compartido** | Responde **con la excusa** (abajo) para convertirlo a texto + notifica | Si escribe el modelo → enrutador (MODELO) · si no → humano |
-| **Golpe 2 del anti-bucle** | «Mejor te contesta una persona» + notifica + modo humano con cool-off 24 h | Humano |
-
-Copy de la excusa — **culpa a la plataforma, nunca a la persona**, y pide el único dato que
-el enrutador procesa. Si el builder distingue el video compartido:
-```
-Chuta, Instagram no me deja ver el video que me mandaste 🙈 ¿Me escribes el nombre del modelo que sale? Y te lo reviso al tiro.
-```
-Si NO distingue el tipo de adjunto (verificar en pantalla), se usa la excusa genérica:
 ```
 Chuta, no me deja abrir lo que me mandaste 🙈 ¿Me lo escribes por acá? Si es una bici, con el nombre del modelo me basta y te lo reviso al tiro.
 ```
 
-**🛡️ Guarda anti-repetición (caso borde 2026-07-30: post compartido + audio explicándolo
-— cada mensaje dispara por separado y la excusa saldría DOS veces).** Campo nuevo
-**`cf_excusa_enviada`** (texto — es el custom field nº 26 de esta puerta):
-1. Antes de la excusa: ¿`cf_excusa_enviada` = `si`? → **no repetir**: solo notificar admins.
-2. Vacío → setear `si` → recién ahí la excusa.
-3. **Se borra en E-3** (llegó texto y el enrutador lo va a procesar) — una sesión futura
-   puede excusarse de nuevo.
-Así el combo queda: post → excusa (una vez) + aviso · audio → silencio + aviso · el humano
-responde con TODO el contexto (ve el post y escucha el audio en la bandeja).
+Secuencia del bloque:
+1. **¿`cf_excusa_enviada` = `si`?** → NO repetir la excusa: solo notificar admins. FIN.
+2. Vacío → setear `cf_excusa_enviada` = `si` → **la excusa** → **notificar administradores**
+   (acción nativa; respaldo: si la persona no re-escribe, el humano pesca el audio/post
+   desde la bandeja con todo el contexto). FIN.
+
+- La guarda cubre el caso borde del combo (post compartido + audio explicándolo): cada
+  mensaje dispara por separado, pero la excusa sale UNA vez.
+- **Se rearma en E-3**: cuando llega texto, se borra `cf_excusa_enviada`.
+- `cf_excusa_enviada` es el custom field nº 26 de esta puerta.
+- Si responde con el nombre del modelo → cae al enrutador como MODELO. El humano solo
+  interviene si la persona no convierte.
 
 *(Contexto técnico: **ManyChat no expone qué publicación compartieron** — sin texto, sin
-shortcode, sin URL — y no existe disparador de «post compartido», así que no puede haber
-automatización tipo comentarios para ese caso.)*
+shortcode, sin URL — y no existe disparador de «post compartido»; por eso la excusa que
+convierte a texto es el único embudo posible para ese tráfico.)*
+
+**Las puertas de intervención humana quedan en dos:** E-2 cuando la persona no convierte a
+texto (aviso de respaldo) · golpe 2 del anti-bucle (aviso + modo humano con cool-off 24 h).
 
 ### E-3 · Acción: guardar el mensaje en `cf_mensaje` + borrar `cf_excusa_enviada`
 **ANTES del AI Step, no dentro de una ruta** — si se guarda solo en la ruta de modelo, en
