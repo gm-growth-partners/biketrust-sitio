@@ -273,19 +273,29 @@ el enrutador procesa. Si el builder distingue el video compartido:
 ```
 Chuta, Instagram no me deja ver el video que me mandaste 🙈 ¿Me escribes el nombre del modelo que sale? Y te lo reviso al tiro.
 ```
-Si NO distingue el tipo de adjunto (probable — verificar en pantalla), los dos primeros
-casos se FUSIONAN: **excusa genérica + aviso al humano** (así el que compartió un reel — el
-caso más frecuente y más caliente — no espera a que alguien despierte):
+Si NO distingue el tipo de adjunto (verificar en pantalla), se usa la excusa genérica:
 ```
 Chuta, no me deja abrir lo que me mandaste 🙈 ¿Me lo escribes por acá? Si es una bici, con el nombre del modelo me basta y te lo reviso al tiro.
 ```
+
+**🛡️ Guarda anti-repetición (caso borde 2026-07-30: post compartido + audio explicándolo
+— cada mensaje dispara por separado y la excusa saldría DOS veces).** Campo nuevo
+**`cf_excusa_enviada`** (texto — es el custom field nº 26 de esta puerta):
+1. Antes de la excusa: ¿`cf_excusa_enviada` = `si`? → **no repetir**: solo notificar admins.
+2. Vacío → setear `si` → recién ahí la excusa.
+3. **Se borra en E-3** (llegó texto y el enrutador lo va a procesar) — una sesión futura
+   puede excusarse de nuevo.
+Así el combo queda: post → excusa (una vez) + aviso · audio → silencio + aviso · el humano
+responde con TODO el contexto (ve el post y escucha el audio en la bandeja).
+
 *(Contexto técnico: **ManyChat no expone qué publicación compartieron** — sin texto, sin
 shortcode, sin URL — y no existe disparador de «post compartido», así que no puede haber
 automatización tipo comentarios para ese caso.)*
 
-### E-3 · Acción: guardar el mensaje en `cf_mensaje`
+### E-3 · Acción: guardar el mensaje en `cf_mensaje` + borrar `cf_excusa_enviada`
 **ANTES del AI Step, no dentro de una ruta** — si se guarda solo en la ruta de modelo, en
-el resto llega vacío o arrastrado del mensaje anterior.
+el resto llega vacío o arrastrado del mensaje anterior. El borrado de `cf_excusa_enviada`
+rearma la guarda anti-repetición de E-2 (llegó texto: la sesión de adjuntos terminó).
 
 ### E-4 · AI STEP · el enrutador
 - Campo «objetivo» y campo «contexto»: **pegar TAL CUAL del runbook §5.2** (incluyen las
