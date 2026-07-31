@@ -258,16 +258,30 @@ corre antes — **no recrearla**.
 
 ### E-1 · Condición: `cf_modo_humano` es `si` → **nada** (el bot se calla). Si no → E-2.
 
-### E-2 · ¿El mensaje es audio / foto / sticker / post compartido? — respuesta propia, SIN contar golpe:
+### E-2 · Mensaje sin texto procesable (audio / foto / sticker / post compartido) — SIN contar golpe
+
+**Las dos puertas de intervención humana del sistema, explícitas (diseño Gabriel 2026-07-30):**
+
+| Caso | El bot | Sigue |
+|---|---|---|
+| **Audio / foto / sticker** | **NO responde nada.** Notifica a administradores (acción nativa) y espera | El humano responde desde la bandeja |
+| **Post/reel compartido** | Responde **con la excusa** (abajo) para convertirlo a texto + notifica | Si escribe el modelo → enrutador (MODELO) · si no → humano |
+| **Golpe 2 del anti-bucle** | «Mejor te contesta una persona» + notifica + modo humano con cool-off 24 h | Humano |
+
+Copy de la excusa — **culpa a la plataforma, nunca a la persona**, y pide el único dato que
+el enrutador procesa. Si el builder distingue el video compartido:
 ```
-¿Me compartiste un video? 🚲 Dime el nombre de la bici que sale (Levo, Epic, Creo…) y te la ubico al toque. Lo mío es el texto 🙈
+Chuta, Instagram no me deja ver el video que me mandaste 🙈 ¿Me escribes el nombre del modelo que sale? Y te lo reviso al tiro.
 ```
-*(Copy 2026-07-30: cubre el caso frecuente del que comparte un reel por DM. **ManyChat NO
-expone qué publicación compartieron** — sin texto, sin shortcode, sin URL — y no existe
-disparador de «post compartido», así que no puede haber automatización tipo comentarios:
-se le pide el nombre y su respuesta re-entra al enrutador como MODELO. Verificar en
-pantalla cómo se detecta el tipo de mensaje; si el builder no distingue, esta rama queda
-como fallback del AI Step.)*
+Si NO distingue el tipo de adjunto (probable — verificar en pantalla), los dos primeros
+casos se FUSIONAN: **excusa genérica + aviso al humano** (así el que compartió un reel — el
+caso más frecuente y más caliente — no espera a que alguien despierte):
+```
+Chuta, no me deja abrir lo que me mandaste 🙈 ¿Me lo escribes por acá? Si es una bici, con el nombre del modelo me basta y te lo reviso al tiro.
+```
+*(Contexto técnico: **ManyChat no expone qué publicación compartieron** — sin texto, sin
+shortcode, sin URL — y no existe disparador de «post compartido», así que no puede haber
+automatización tipo comentarios para ese caso.)*
 
 ### E-3 · Acción: guardar el mensaje en `cf_mensaje`
 **ANTES del AI Step, no dentro de una ruta** — si se guarda solo en la ruta de modelo, en
@@ -320,6 +334,15 @@ Es la fuga 100 % invisible del runbook §5.1.
 | 8 | audio | «Lo mío es el texto» y NO consume golpe |
 | 9 | `stop` | Unsubscribe seco, sin pasar por el AI Step |
 | 10 | Al terminar | borrar Leads/Intereses/tickets de prueba por id |
+
+## Gestión por persona (creado 2026-07-30, lo consume el tablero del ítem 5)
+
+En `Llamados` existen **`Atiende`** (single select Luis · Roberto · Alfonso — quien toma el
+ticket se marca; opciones nuevas se agregan a mano) y **`_atiende_desde`**
+(`LAST_MODIFIED_TIME({Atiende})`, el sello de cuándo se tomó). Con eso + `Creado` +
+`Fecha primera llamada` + `Aviso salida enviado`, el tablero podrá mostrar **quién gestiona
+qué y cuánto demora en cada paso**. Pendiente manual: mostrar `Atiende` en las tarjetas del
+Kanban y en «Detalle de Llamados». Backend: sin cambios por ahora.
 
 ## Go-live de la puerta (al activarla se completa el reemplazo de la V1)
 
