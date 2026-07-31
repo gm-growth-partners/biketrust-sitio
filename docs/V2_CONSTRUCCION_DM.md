@@ -50,6 +50,13 @@ Construir igual: **B7 · B6 · B6-D · C3 · B4 · B5 · B3 · A1 · C2 · D1 (4
 > ```
 > `bici` va vacío si la ruta no pasó por match — el ticket nace sin brief, correcto.
 > **Sin `reel` · sin `ciudad` · sin `franja` · sin `optin`.**
+>
+> 📣 **Aviso multi-persona (mejora operativa pedida 2026-07-30):** el backend ya soporta
+> varios destinatarios — `AVISO_LLAMADO_SIDS` = subscriber IDs separados por coma (hoy:
+> Luis). Cuando el equipo esté definido: cada miembro le escribe UNA vez al WhatsApp del
+> negocio (para nacer como contacto con ID), se agregan sus IDs a la env y se redespliega.
+> ⛔ **Grupos de WhatsApp NO**: la API de WhatsApp Business no soporta mensajes a grupos
+> (limitación de Meta). El «quién lo toma» se coordina en el grupo interno del equipo.
 
 ## Etapa 2 · El quiz — reusar la construcción de la hoja del quiz
 
@@ -224,12 +231,19 @@ Puede que me haya perdido 🙈 Dime en qué te ayudo:
 ```
 Botones: `Busco una bici` → BICI_SUELTA · `Ayúdenme a elegir` → QZ0 · `Quiero vender` → V-1.
 
-**Golpe 2** (`cf_no_reconocido` = `1`): setear `cf_modo_humano` = `si` → mensaje:
+**Golpe 2** (`cf_no_reconocido` = `1`): en este orden —
+1. Setear `cf_modo_humano` = `si`.
+2. **Acción nativa «Notificar a administradores»** (push/email de ManyChat): conversación
+   varada con intención real; alguien la toma en la bandeja.
+3. Mensaje:
 ```
 Mejor te contesta una persona 🙂 Dame un rato y te escribo por acá.
 ```
-Sin más pasos. *(El bot queda mudo para este contacto hasta que alguien borre
-`cf_modo_humano` a mano — revisar la bandeja es rutina.)*
+4. **Cool-off (mejora 2026-07-30, pedida por Gabriel): Smart Delay de 24 h → borrar
+   `cf_modo_humano` Y `cf_no_reconocido`.** El contacto vuelve solo al circuito automático
+   al día siguiente, con los golpes reseteados — es además la regla original del pivote
+   («el bot no retoma DENTRO de las 24 h», no «nunca»). Si Luis quiere silencio más largo,
+   lo re-setea a mano.
 
 ⚠️ **NO usar la «Pausa de automatizaciones 24 h» nativa**: suspende también la regla de
 baja (choque conocido, runbook §5.3).
@@ -244,12 +258,16 @@ corre antes — **no recrearla**.
 
 ### E-1 · Condición: `cf_modo_humano` es `si` → **nada** (el bot se calla). Si no → E-2.
 
-### E-2 · ¿El mensaje es audio / foto / sticker? — respuesta propia, SIN contar golpe:
+### E-2 · ¿El mensaje es audio / foto / sticker / post compartido? — respuesta propia, SIN contar golpe:
 ```
-Lo mío es el texto 🙈 ¿me lo escribes en dos palabras?
+¿Me compartiste un video? 🚲 Dime el nombre de la bici que sale (Levo, Epic, Creo…) y te la ubico al toque. Lo mío es el texto 🙈
 ```
-*(Verificar en pantalla cómo se detecta: si el disparador no distingue tipo de mensaje,
-esta rama puede quedar como el propio fallback del AI Step.)*
+*(Copy 2026-07-30: cubre el caso frecuente del que comparte un reel por DM. **ManyChat NO
+expone qué publicación compartieron** — sin texto, sin shortcode, sin URL — y no existe
+disparador de «post compartido», así que no puede haber automatización tipo comentarios:
+se le pide el nombre y su respuesta re-entra al enrutador como MODELO. Verificar en
+pantalla cómo se detecta el tipo de mensaje; si el builder no distingue, esta rama queda
+como fallback del AI Step.)*
 
 ### E-3 · Acción: guardar el mensaje en `cf_mensaje`
 **ANTES del AI Step, no dentro de una ruta** — si se guarda solo en la ruta de modelo, en
