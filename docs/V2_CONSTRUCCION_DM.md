@@ -223,6 +223,36 @@ Antes de B4 en estas dos rutas: setear `cf_modelo_texto` = `POSTVENTA/FAQ`.
 ⚠️ **Los botones son obligatorios** — sin botón de flujo la pregunta queda retórica y el
 lead muere ahí.
 
+### TECNICA — pregunta de especificación (ruta nueva 2026-07-30, caso real Joshua G.)
+*«¿Esos neumáticos sirven para tubeless?» — pregunta técnica que la ficha no siempre
+responde. Señal de compra alta: nadie pregunta por tubeless sin estar considerándola.*
+```
+Buena pregunta 🙌 Esa es de las que responde Luis — él inspeccionó personalmente cada bici que tenemos.
+
+¿Te llamamos y te la responde al tiro? Si prefieres seguir por acá, te lo averiguo y te escribo.
+```
+| Botón | Destino |
+|---|---|
+| `Sí, que me llamen` | setear `cf_modelo_texto` = `· TÉCNICA: {{cf_mensaje}}` → **B4** |
+| `Prefiero por acá` | → **T-2** |
+
+**T-2 · derivación a humano con contexto** (acciones en orden):
+1. **Notificar a administradores** (la pregunta queda visible en la bandeja vía `cf_mensaje`).
+2. Setear `cf_modo_humano` = `si` (el bot no pisa la respuesta del humano).
+3. Mensaje: `Dale 👌 Dame un rato y te escribo por acá con la respuesta.`
+4. Smart Delay 24 h → borrar `cf_modo_humano` (el mismo cool-off del anti-bucle).
+
+### CIERRE — despedida o rechazo cortés (ruta nueva 2026-07-30, caso real Joshua G.)
+*«Muchas gracias» · «lo voy a pensar, estoy barajando opciones». La persona está cerrando;
+responderle con un menú de botones (lo que hacía NO_CLASIFICA) es venderle a quien ya dijo
+que no. Respuesta blanda, SIN botones, SIN gastar golpe del anti-bucle:*
+```
+Dale, sin apuro 👌 Cualquier cosa me escribes por acá.
+
+Y si más adelante quieres ver alguna, me dices y coordinamos al tiro 🙌
+```
+Sin siguiente paso — fin.
+
 ## Etapa 7 · El anti-bucle (`NO_CLASIFICA` y cualquier valor inesperado)
 
 **Golpe 1** (`cf_no_reconocido` vacío): setear `cf_no_reconocido` = `1` → mensaje:
@@ -309,9 +339,15 @@ rearma la guarda anti-repetición de E-2 (llegó texto: la sesión de adjuntos t
 | `CONTACTO` | → CONTACTO |
 | `ENVIOS` | → ENVIOS |
 | `GARANTIA` · `PAGOS` | → fallback GARANTIA/PAGOS |
+| `TECNICA` | → TECNICA (Luis responde · llamada o «te averiguo») |
 | `VISITA` | → VISITA |
 | `SALUDO` | → SALUDO |
+| `CIERRE` | → CIERRE (despedida blanda, sin botones, sin golpe) |
 | `NO_CLASIFICA` **y CUALQUIER OTRO VALOR (rama else)** | → anti-bucle |
+
+*(12 códigos desde 2026-07-30 — TECNICA y CIERRE salieron de la conversación real de
+Joshua G.: una pregunta de tubeless y un «gracias, lo voy a pensar» que el diseño de 10
+rutas habría mandado al anti-bucle.)*
 
 🚨 **La rama «else» es obligatoria** — si el AI emite cualquier cosa fuera de las 10
 cadenas y no hay else, el flujo muere en silencio: ni mensaje, ni Lead, ni métrica.
