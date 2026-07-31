@@ -386,6 +386,16 @@ ticket se marca; opciones nuevas se agregan a mano) y **`_atiende_desde`**
 qué y cuánto demora en cada paso**. Pendiente manual: mostrar `Atiende` en las tarjetas del
 Kanban y en «Detalle de Llamados». Backend: sin cambios por ahora.
 
+## Evaluación post-go-live (NO para esta pasada) — AI hub de ManyChat
+
+Investigado 2026-07-30: el **AI Agent / AI hub (beta)** de ManyChat genera respuestas desde
+un Knowledge Base estático — incompatible con el funnel (no llama APIs, no ve el stock vivo,
+no crea tickets, y redacta libre: justo lo que este negocio no puede permitirse). El **AI
+Step clasificador** es el uso correcto y el previsto por la plataforma. Donde el hub SÍ
+podría sumar después: **capa de FAQs no transaccionales** (garantía/envíos/políticas) cuando
+exista la garantía escrita de Roberto — texto aprobado al Knowledge Base + confidence limits
+derivando a humano. Requiere resolver el choque con el disparador «cualquier DM».
+
 ## Go-live de la puerta (al activarla se completa el reemplazo de la V1)
 
 Es el §9 del runbook: rotar `MC_KEY` (la `MC_KEY_V2` de `.dev.vars`) + redeploy +
