@@ -1208,6 +1208,15 @@ llamados). <strong>Redeploy después.</strong></li>
 </ol>
 <p>⚠️ Este aviso NO respeta <code>AVISO_HORARIOS</code> (decisión de diseño): un lead varado a las
 23:00 es mejor que suene a que se pierda. Los demás avisos siguen con su horario.</p>
+<p><strong>Métrica (2026-08-03) — cada aviso queda REGISTRADO en Airtable.</strong> Tabla nueva
+<strong><code>Avisos</code></strong> (<code>tbliwiCa6XPm2nI2y</code>): el endpoint escribe Resumen · @handle IG · Motivo ·
+Mensaje · «WhatsApp enviado» y linkea el <strong>Lead</strong> (resuelto por <code>@handle IG</code>, el mismo
+dedup de <code>mc-lead</code>). La columna <strong>«Terminó en venta»</strong> es un rollup que sigue la bandera
+<code>Llegó a cerró</code> del Lead: se prende sola cuando se registra la venta, sin importar cuánto
+después. Con eso el conteo pedido es directo: total de avisos = filas; conversión = filas
+con «Terminó en venta» = 1. Es 100 % backend — ni ManyChat ni el staff hacen nada; el
+registro ocurre aunque las envs de WhatsApp falten (<code>WhatsApp enviado</code> queda sin marcar).
+El tablero (ítem 5) la consume después.</p>
 <h2>Evaluación post-go-live (NO para esta pasada) — AI hub de ManyChat</h2>
 <p>Investigado 2026-07-30: el <strong>AI Agent / AI hub (beta)</strong> de ManyChat genera respuestas desde
 un Knowledge Base estático — incompatible con el funnel (no llama APIs, no ve el stock vivo,

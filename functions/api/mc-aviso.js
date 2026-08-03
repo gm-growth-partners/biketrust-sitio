@@ -16,10 +16,18 @@
 // un lead varado esperando a una persona» — perderlo de noche es peor que
 // sonar. (Los demás avisos sí respetan AVISO_HORARIOS; este no.)
 //
+// Además REGISTRA cada aviso en la tabla `Avisos` de Airtable (con link al
+// Lead resuelto por @handle IG). Ahí vive la métrica: cuántas veces el bot
+// necesitó humano y cuántos de esos casos terminaron en venta (el rollup
+// «Terminó en venta» sigue la bandera `Llegó a cerró` del Lead solo). El
+// registro es best-effort y ocurre SIEMPRE, incluso con las envs de WhatsApp
+// sin configurar — la cuenta no depende de que el mensaje haya salido.
+//
 // Protegido por MC_KEY (?key=). Mientras falten las envs devuelve
 // `no_configurado` sin romper el flujo que lo llama.
 
 const JSONH = { 'Content-Type': 'application/json; charset=utf-8' };
+const BASE_DEFAULT = 'appQUgk8aeD752923';
 const reply = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: JSONH });
 
 async function afetch(url, opts, tries = 3) {
@@ -39,6 +47,51 @@ const clean = (v, max = 400) => {
   return s.slice(0, max);
 };
 
+// Registro del aviso en Airtable (tabla `Avisos`). Best-effort: si Airtable
+// falla, el aviso al equipo no se cae por esto. Devuelve 'registrado',
+// 'sin_token' o 'error' para el response.
+async function registrarAviso(env, { handle, motivo, mensaje, resumen, enviado }) {
+  const BASE = env.AIRTABLE_BASE || BASE_DEFAULT;
+  const READ = env.AIRTABLE_TOKEN || env.AIRTABLE_WRITE_TOKEN;
+  const WRITE = env.AIRTABLE_WRITE_TOKEN;
+  const AVISOS = env.AIRTABLE_AVISOS_TABLE || 'Avisos';
+  const LEADS = env.AIRTABLE_LEADS_TABLE || 'Leads';
+  if (!WRITE) return 'sin_token';
+
+  const api = (t) => `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(t)}`;
+  const wH = { Authorization: `Bearer ${WRITE}`, 'Content-Type': 'application/json' };
+
+  // Resolver el Lead por @handle IG (mismo dedup que mc-lead). Best-effort.
+  let leadId = null;
+  if (handle) {
+    try {
+      const lower = handle.toLowerCase().replace(/'/g, "\\'");
+      const formula = `LOWER({@handle IG})='${lower}'`;
+      const rr = await afetch(`${api(LEADS)}?maxRecords=1&filterByFormula=${encodeURIComponent(formula)}`,
+        { headers: { Authorization: `Bearer ${READ}` } });
+      if (rr.ok) {
+        const rec = ((await rr.json()).records || [])[0];
+        if (rec) leadId = rec.id;
+      }
+    } catch { /* sin link, pero el aviso igual se registra */ }
+  }
+
+  try {
+    const cr = await afetch(api(AVISOS), {
+      method: 'POST', headers: wH,
+      body: JSON.stringify({ typecast: true, fields: {
+        'Resumen': resumen.slice(0, 250),
+        ...(handle ? { '@handle IG': handle } : {}),
+        ...(motivo ? { 'Motivo': motivo } : {}),
+        ...(mensaje ? { 'Mensaje': mensaje } : {}),
+        'WhatsApp enviado': !!enviado,
+        ...(leadId ? { 'Lead': [leadId] } : {}),
+      } }),
+    });
+    return cr.ok ? 'registrado' : 'error';
+  } catch { return 'error'; }
+}
+
 export async function onRequestPost({ request, env }) {
   const url = new URL(request.url);
   if (!keyOk(env, url)) return reply({ error: 'unauthorized' }, 401);
@@ -55,16 +108,17 @@ export async function onRequestPost({ request, env }) {
   const SIDS = String(env.AVISO_EQUIPO_SIDS || env.AVISO_LLAMADO_SIDS || env.LUIS_SUBSCRIBER_ID || '')
     .split(',').map(s => s.trim()).filter(Boolean);
 
-  if (!MC_TOKEN || !FLOW || !SIDS.length) {
-    return reply({ ok: true, aviso: 'no_configurado',
-      falta: [!MC_TOKEN && 'MANYCHAT_TOKEN', !FLOW && 'FLOW_NS_AVISO_EQUIPO', !SIDS.length && 'AVISO_EQUIPO_SIDS'].filter(Boolean) });
-  }
-
   const resumen = [
     handle ? `IG @${handle}` : 'contacto sin handle',
     motivo || 'necesita a una persona',
     mensaje ? `dijo: «${mensaje}»` : '',
   ].filter(Boolean).join(' · ');
+
+  if (!MC_TOKEN || !FLOW || !SIDS.length) {
+    const registro = await registrarAviso(env, { handle, motivo, mensaje, resumen, enviado: false });
+    return reply({ ok: true, aviso: 'no_configurado', registro,
+      falta: [!MC_TOKEN && 'MANYCHAT_TOKEN', !FLOW && 'FLOW_NS_AVISO_EQUIPO', !SIDS.length && 'AVISO_EQUIPO_SIDS'].filter(Boolean) });
+  }
 
   let enviados = 0, errores = [];
   for (const sid of SIDS) {
@@ -86,6 +140,9 @@ export async function onRequestPost({ request, env }) {
     }
   }
 
-  return reply({ ok: true, aviso: enviados ? 'enviado' : 'error', enviados, ...(errores.length ? { errores } : {}) });
+  const registro = await registrarAviso(env, { handle, motivo, mensaje, resumen, enviado: enviados > 0 });
+
+  return reply({ ok: true, aviso: enviados ? 'enviado' : 'error', enviados, registro,
+    ...(errores.length ? { errores } : {}) });
 }
 // Sólo POST. Pages responde 405 automáticamente a otros métodos en esta ruta.

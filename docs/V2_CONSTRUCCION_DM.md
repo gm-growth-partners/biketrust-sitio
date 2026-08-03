@@ -859,6 +859,16 @@ Respóndele desde la bandeja de Manychat.
 ⚠️ Este aviso NO respeta `AVISO_HORARIOS` (decisión de diseño): un lead varado a las
 23:00 es mejor que suene a que se pierda. Los demás avisos siguen con su horario.
 
+**Métrica (2026-08-03) — cada aviso queda REGISTRADO en Airtable.** Tabla nueva
+**`Avisos`** (`tbliwiCa6XPm2nI2y`): el endpoint escribe Resumen · @handle IG · Motivo ·
+Mensaje · «WhatsApp enviado» y linkea el **Lead** (resuelto por `@handle IG`, el mismo
+dedup de `mc-lead`). La columna **«Terminó en venta»** es un rollup que sigue la bandera
+`Llegó a cerró` del Lead: se prende sola cuando se registra la venta, sin importar cuánto
+después. Con eso el conteo pedido es directo: total de avisos = filas; conversión = filas
+con «Terminó en venta» = 1. Es 100 % backend — ni ManyChat ni el staff hacen nada; el
+registro ocurre aunque las envs de WhatsApp falten (`WhatsApp enviado` queda sin marcar).
+El tablero (ítem 5) la consume después.
+
 ## Evaluación post-go-live (NO para esta pasada) — AI hub de ManyChat
 
 Investigado 2026-07-30: el **AI Agent / AI hub (beta)** de ManyChat genera respuestas desde
