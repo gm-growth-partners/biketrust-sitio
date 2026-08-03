@@ -711,7 +711,7 @@ rearma la guarda anti-repetición de E-2 (llegó texto: la sesión de adjuntos t
 | `MODELO` | → A-1 (Etapa 3) |
 | `BICI_SUELTA` | → BICI_SUELTA |
 | `ASESORIA` | → **QZ0** (el quiz — decisión 2026-07-30) |
-| `VENDER` | → A-1' (mc-lead con canal DM IG) → V-1 |
+| `VENDER` | → V-1 directo (sin mc-lead previo: `mc-consigna` crea/actualiza el Lead con `Canal = Consignación`) |
 | `CONTACTO` | → CONTACTO |
 | `ENVIOS` | → ENVIOS |
 | `GARANTIA` · `PAGOS` | → fallback GARANTIA/PAGOS |
