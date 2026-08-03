@@ -584,7 +584,27 @@ Sí, despachamos a regiones. El costo y el plazo dependen de dónde estés, y es
 ```
 Botones: `Sí, que me llamen` → B4 · `Por ahora no` → B7.
 
-### GARANTIA · PAGOS — fallback compartido (hasta que llegue el texto de Roberto)
+### GARANTIA — Mensaje con contenido real *(2026-08-03: llegó el doc de garantía — ya no
+es fallback ciego. Fuente: «Garantia Biketrust v2.docx», resumen conservador porque el
+documento está sujeto a revisión legal)*
+```
+Sí 🙌 Todas nuestras bicis salen con garantía Bike Trust de 6 meses: si un componente falla, lo reparamos sin costo — repuesto y mano de obra. No cubre golpes ni el desgaste normal de uso.
+
+Y algo que casi nadie ofrece: nos comprometemos a recomprarte la bici dentro de 18 meses, previa evaluación de su estado.
+
+¿Te llamamos y Luis te cuenta el detalle según tu caso?
+```
+| Botón | Destino |
+|---|---|
+| `Sí, que me llamen` | → **G-1** → **B4** |
+| `Por ahora no` | → **B7** |
+
+- ⚠️ **No agregar más detalle que este** (plazos de respuesta, talleres, condiciones de la
+  recompra): el documento aún está en revisión legal y con campos sin completar. El detalle
+  fino lo da Luis. Cuando el doc quede firmado, se re-evalúa cuánto más puede decir el bot
+  (y alimentar la web y el futuro AI hub).
+
+### PAGOS — fallback (decisión 2026-08-03: las consultas específicas se derivan a llamada)
 ```
 Eso te lo explica mejor Luis en dos minutos que yo por acá 🙂
 
@@ -592,12 +612,15 @@ Eso te lo explica mejor Luis en dos minutos que yo por acá 🙂
 ```
 | Botón | Destino |
 |---|---|
-| `Sí, que me llamen` | → **G-1** (bloque de Acción nuevo: `cf_modelo_texto` = `· POSTVENTA/FAQ`) → **B4** |
+| `Sí, que me llamen` | → **G-1** → **B4** |
 | `Por ahora no` | → **B7** |
 
 ⚠️ **Los botones son obligatorios** — sin botón de flujo la pregunta queda retórica y el
-lead muere ahí. G-1 es la nota para Luis: distingue el reclamo/consulta de postventa de un
-lead de compra en el Kanban.
+lead muere ahí.
+
+### G-1 — Acción compartida por GARANTIA y PAGOS (la nota para Luis)
+- Set custom field → `cf_modelo_texto` = `· POSTVENTA/FAQ` → siguiente: **B4**.
+- Distingue el reclamo/consulta de postventa de un lead de compra en el Kanban.
 
 ### TECNICA — pregunta de especificación (ruta nueva 2026-07-30, caso real Joshua G.)
 *«¿Esos neumáticos sirven para tubeless?» — pregunta técnica que la ficha no siempre
@@ -714,7 +737,8 @@ rearma la guarda anti-repetición de E-2 (llegó texto: la sesión de adjuntos t
 | `VENDER` | → V-1 directo (sin mc-lead previo: `mc-consigna` crea/actualiza el Lead con `Canal = Consignación`) |
 | `CONTACTO` | → CONTACTO |
 | `ENVIOS` | → ENVIOS |
-| `GARANTIA` · `PAGOS` | → fallback GARANTIA/PAGOS |
+| `GARANTIA` | → GARANTIA (responde con el resumen real de la garantía — doc 2026-08-03) |
+| `PAGOS` | → PAGOS (fallback: deriva a llamada) |
 | `TECNICA` | → TECNICA (Luis responde · llamada o «te averiguo») |
 | `VISITA` | → VISITA |
 | `SALUDO` | → SALUDO |
