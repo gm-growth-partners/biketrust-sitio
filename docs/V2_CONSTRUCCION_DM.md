@@ -466,17 +466,23 @@ Salida → **C-OFERTA** (Etapa 1).
 
 ## Etapa 4 · Los códigos cortos
 
-### BICI_SUELTA — paso de texto
+### BICI_SUELTA — Mensaje con 3 botones *(copy corregido 2026-08-03: el anterior pedía
+escribir Y ofrecía botones que iban a otra cosa — señales cruzadas)*
 ```
-¿Cuál de todas? 🚲 Mándame el nombre (Levo, Epic, Creo, Tarmac, Stumpjumper…) o pégame el link del video y te la ubico al toque.
-```
-| Botón | Destino |
-|---|---|
-| `Que me llamen mejor` | → B4 |
-| `Ver lo que hay ahora` | → B2-C |
+¿Cuál de todas? 🚲 Escríbeme el nombre y te la ubico al toque: Levo, Epic, Creo, Tarmac, Stumpjumper…
 
-*Si en vez de botón escribe el modelo, el mensaje cae al Default Reply → vuelve a entrar
-al enrutador → sale como MODELO. No cuenta golpe del anti-bucle.*
+¿No sabes cuál? Dale a un botón 👇
+```
+| Botón | Chars | Destino |
+|---|---|---|
+| `Ayúdenme a elegir` | 17 | → **QZ0** (el quiz) |
+| `Ver lo que hay ahora` | 20 | → **B2-C** |
+| `Que me llamen mejor` | 19 | → **B4** |
+
+- **El camino principal es ESCRIBIR el nombre**: ese texto cae al Default Reply → vuelve a
+  entrar al enrutador → sale como MODELO con el nombre extraído. No cuenta golpe.
+- Los botones son la salida explícita para quien NO tiene el nombre — ya no contradicen el
+  copy: el mensaje pide una cosa y ofrece la alternativa aparte.
 
 ### CONTACTO — paso de texto → B4
 ```

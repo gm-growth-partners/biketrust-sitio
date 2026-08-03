@@ -695,27 +695,42 @@ prefieres una de esas.»)</em> Salida → <strong>C-ALT</strong>.</p>
 </code></pre>
 <p>Salida → <strong>C-OFERTA</strong> (Etapa 1).</p>
 <h2>Etapa 4 · Los códigos cortos</h2>
-<h3>BICI_SUELTA — paso de texto</h3>
-<pre><code>¿Cuál de todas? 🚲 Mándame el nombre (Levo, Epic, Creo, Tarmac, Stumpjumper…) o pégame el link del video y te la ubico al toque.
+<h3>BICI_SUELTA — Mensaje con 3 botones *(copy corregido 2026-08-03: el anterior pedía</h3>
+<p>escribir Y ofrecía botones que iban a otra cosa — señales cruzadas)*</p>
+<pre><code>¿Cuál de todas? 🚲 Escríbeme el nombre y te la ubico al toque: Levo, Epic, Creo, Tarmac, Stumpjumper…
+
+¿No sabes cuál? Dale a un botón 👇
 </code></pre>
 <table>
 <thead>
 <tr>
 <th>Botón</th>
+<th>Chars</th>
 <th>Destino</th>
 </tr>
 </thead>
 <tbody><tr>
-<td><code>Que me llamen mejor</code></td>
-<td>→ B4</td>
+<td><code>Ayúdenme a elegir</code></td>
+<td>17</td>
+<td>→ <strong>QZ0</strong> (el quiz)</td>
 </tr>
 <tr>
 <td><code>Ver lo que hay ahora</code></td>
-<td>→ B2-C</td>
+<td>20</td>
+<td>→ <strong>B2-C</strong></td>
+</tr>
+<tr>
+<td><code>Que me llamen mejor</code></td>
+<td>19</td>
+<td>→ <strong>B4</strong></td>
 </tr>
 </tbody></table>
-<p><em>Si en vez de botón escribe el modelo, el mensaje cae al Default Reply → vuelve a entrar
-al enrutador → sale como MODELO. No cuenta golpe del anti-bucle.</em></p>
+<ul>
+<li><strong>El camino principal es ESCRIBIR el nombre</strong>: ese texto cae al Default Reply → vuelve a
+entrar al enrutador → sale como MODELO con el nombre extraído. No cuenta golpe.</li>
+<li>Los botones son la salida explícita para quien NO tiene el nombre — ya no contradicen el
+copy: el mensaje pide una cosa y ofrece la alternativa aparte.</li>
+</ul>
 <h3>CONTACTO — paso de texto → B4</h3>
 <pre><code>Dale, te llamamos 🙌 Confírmame el número tal cual, para no equivocarnos.
 </code></pre>
