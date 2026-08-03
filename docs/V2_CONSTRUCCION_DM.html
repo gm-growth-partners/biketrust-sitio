@@ -729,11 +729,19 @@ entrar al enrutador → sale como MODELO con el nombre extraído. No cuenta golp
 <li>Los botones son la salida explícita para quien NO tiene el nombre — no contradicen el
 copy: el mensaje pide una cosa y ofrece la alternativa aparte.</li>
 </ul>
-<h3>CONTACTO — paso de texto → B4</h3>
+<h3>CONTACTO — 2 bloques nuevos → B4</h3>
+<p>La persona dejó su número o pidió que la llamen. Aunque YA escribió el número, viene
+mezclado con texto — se le pide confirmarlo para capturarlo validado.</p>
+<p><strong>C-1 · Acción</strong> (tipo «Establecer campo de usuario») — la nota para Luis en el ticket:</p>
+<ul>
+<li>Campo: <code>cf_modelo_texto</code> · Valor: <code>· dio teléfono solo</code></li>
+</ul>
+<p><strong>C-2 · Mensaje</strong> (sin botones):</p>
 <pre><code>Dale, te llamamos 🙌 Confírmame el número tal cual, para no equivocarnos.
 </code></pre>
-<p>→ <strong>B4</strong> (el paso de teléfono normal; NUNCA volcar el mensaje crudo en <code>cf_telefono</code>).
-Antes de B4: setear <code>cf_modelo_texto</code> = <code>dio teléfono solo</code>.</p>
+<p><strong>Cables:</strong> rama CONTACTO de E-4 → C-1 → C-2 → <strong>B4</strong> (el bloque de teléfono existente de
+la Etapa 1 — no crear otro). ⚠️ NUNCA volcar el mensaje crudo en <code>cf_telefono</code>: rompería
+el ID de WhatsApp. B4 valida y guarda limpio.</p>
 <h3>SALUDO — invitación abierta, SIN botones, SIN contar golpe</h3>
 <p><em>(Corregido 2026-08-03, objeción de Gabriel: el pivote es «sin menú — el bot reconoce la
 intención del texto libre», y responderle un menú al primer «hola» resucitaba lo que se
@@ -774,7 +782,11 @@ no da el número, la consignación igual queda registrada y avisada.)</em></p>
 
 Te dice derecho qué vale y si la recibimos o no: bajo 4 no la tomamos, y preferimos decírtelo por teléfono antes de hacerte venir.
 </code></pre>
-<p>→ setear <code>cf_modelo_texto</code> = <code>VENDE: {{cf_v_modelo}} {{cf_v_anio}}</code> → <strong>B4</strong>.</p>
+<p><strong>V-8 · Acción</strong> (bloque nuevo, tipo «Establecer campo de usuario») — la nota para Luis:</p>
+<ul>
+<li>Campo: <code>cf_modelo_texto</code> · Valor: <code>· VENDE: {{cf_v_modelo}} {{cf_v_anio}}</code>
+<strong>Cables:</strong> V-7 → V-8 → <strong>B4</strong>.</li>
+</ul>
 <h2>Etapa 6 · Grupo D + la guarda de segunda vuelta</h2>
 <h3>C-OFERTA · Condición (la Guarda 1 del runbook §5.4-bis)</h3>
 <ul>
@@ -823,10 +835,25 @@ Antes de que vengas, ¿te tinca que te llame Luis? Así te dice qué hay hoy en 
 
 ¿Te llamamos y de paso te resuelve todo lo demás?
 </code></pre>
-<p>Botones: <code>Sí, que me llamen</code> → B4 · <code>Por ahora no</code> → B7.
-Antes de B4 en estas dos rutas: setear <code>cf_modelo_texto</code> = <code>POSTVENTA/FAQ</code>.
-⚠️ <strong>Los botones son obligatorios</strong> — sin botón de flujo la pregunta queda retórica y el
-lead muere ahí.</p>
+<table>
+<thead>
+<tr>
+<th>Botón</th>
+<th>Destino</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Sí, que me llamen</code></td>
+<td>→ <strong>G-1</strong> (bloque de Acción nuevo: <code>cf_modelo_texto</code> = <code>· POSTVENTA/FAQ</code>) → <strong>B4</strong></td>
+</tr>
+<tr>
+<td><code>Por ahora no</code></td>
+<td>→ <strong>B7</strong></td>
+</tr>
+</tbody></table>
+<p>⚠️ <strong>Los botones son obligatorios</strong> — sin botón de flujo la pregunta queda retórica y el
+lead muere ahí. G-1 es la nota para Luis: distingue el reclamo/consulta de postventa de un
+lead de compra en el Kanban.</p>
 <h3>TECNICA — pregunta de especificación (ruta nueva 2026-07-30, caso real Joshua G.)</h3>
 <p><em>«¿Esos neumáticos sirven para tubeless?» — pregunta técnica que la ficha no siempre
 responde. Señal de compra alta: nadie pregunta por tubeless sin estar considerándola.</em></p>
@@ -843,7 +870,7 @@ responde. Señal de compra alta: nadie pregunta por tubeless sin estar consider�
 </thead>
 <tbody><tr>
 <td><code>Sí, que me llamen</code></td>
-<td>setear <code>cf_modelo_texto</code> = <code>· TÉCNICA: {{cf_mensaje}}</code> → <strong>B4</strong></td>
+<td>→ <strong>T-1</strong> (bloque de Acción nuevo: <code>cf_modelo_texto</code> = <code>· TÉCNICA: {{cf_mensaje}}</code>) → <strong>B4</strong></td>
 </tr>
 <tr>
 <td><code>Prefiero por acá</code></td>

@@ -486,12 +486,20 @@ escribir Y ofrecía botones que iban a otra cosa — señales cruzadas)*
 - Los botones son la salida explícita para quien NO tiene el nombre — no contradicen el
   copy: el mensaje pide una cosa y ofrece la alternativa aparte.
 
-### CONTACTO — paso de texto → B4
+### CONTACTO — 2 bloques nuevos → B4
+La persona dejó su número o pidió que la llamen. Aunque YA escribió el número, viene
+mezclado con texto — se le pide confirmarlo para capturarlo validado.
+
+**C-1 · Acción** (tipo «Establecer campo de usuario») — la nota para Luis en el ticket:
+- Campo: `cf_modelo_texto` · Valor: `· dio teléfono solo`
+
+**C-2 · Mensaje** (sin botones):
 ```
 Dale, te llamamos 🙌 Confírmame el número tal cual, para no equivocarnos.
 ```
-→ **B4** (el paso de teléfono normal; NUNCA volcar el mensaje crudo en `cf_telefono`).
-Antes de B4: setear `cf_modelo_texto` = `dio teléfono solo`.
+**Cables:** rama CONTACTO de E-4 → C-1 → C-2 → **B4** (el bloque de teléfono existente de
+la Etapa 1 — no crear otro). ⚠️ NUNCA volcar el mensaje crudo en `cf_telefono`: rompería
+el ID de WhatsApp. B4 valida y guarda limpio.
 
 ### SALUDO — invitación abierta, SIN botones, SIN contar golpe
 *(Corregido 2026-08-03, objeción de Gabriel: el pivote es «sin menú — el bot reconoce la
@@ -537,7 +545,9 @@ Listo, ya lo tengo. Para tasarla te llama Luis — es el que inspecciona todas l
 
 Te dice derecho qué vale y si la recibimos o no: bajo 4 no la tomamos, y preferimos decírtelo por teléfono antes de hacerte venir.
 ```
-→ setear `cf_modelo_texto` = `VENDE: {{cf_v_modelo}} {{cf_v_anio}}` → **B4**.
+**V-8 · Acción** (bloque nuevo, tipo «Establecer campo de usuario») — la nota para Luis:
+- Campo: `cf_modelo_texto` · Valor: `· VENDE: {{cf_v_modelo}} {{cf_v_anio}}`
+**Cables:** V-7 → V-8 → **B4**.
 
 ## Etapa 6 · Grupo D + la guarda de segunda vuelta
 
@@ -580,10 +590,14 @@ Eso te lo explica mejor Luis en dos minutos que yo por acá 🙂
 
 ¿Te llamamos y de paso te resuelve todo lo demás?
 ```
-Botones: `Sí, que me llamen` → B4 · `Por ahora no` → B7.
-Antes de B4 en estas dos rutas: setear `cf_modelo_texto` = `POSTVENTA/FAQ`.
+| Botón | Destino |
+|---|---|
+| `Sí, que me llamen` | → **G-1** (bloque de Acción nuevo: `cf_modelo_texto` = `· POSTVENTA/FAQ`) → **B4** |
+| `Por ahora no` | → **B7** |
+
 ⚠️ **Los botones son obligatorios** — sin botón de flujo la pregunta queda retórica y el
-lead muere ahí.
+lead muere ahí. G-1 es la nota para Luis: distingue el reclamo/consulta de postventa de un
+lead de compra en el Kanban.
 
 ### TECNICA — pregunta de especificación (ruta nueva 2026-07-30, caso real Joshua G.)
 *«¿Esos neumáticos sirven para tubeless?» — pregunta técnica que la ficha no siempre
@@ -595,7 +609,7 @@ Buena pregunta 🙌 Esa es de las que responde Luis — él inspeccionó persona
 ```
 | Botón | Destino |
 |---|---|
-| `Sí, que me llamen` | setear `cf_modelo_texto` = `· TÉCNICA: {{cf_mensaje}}` → **B4** |
+| `Sí, que me llamen` | → **T-1** (bloque de Acción nuevo: `cf_modelo_texto` = `· TÉCNICA: {{cf_mensaje}}`) → **B4** |
 | `Prefiero por acá` | → **T-2** |
 
 **T-2 · derivación a humano con contexto** (acciones en orden):
