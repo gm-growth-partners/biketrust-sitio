@@ -217,6 +217,15 @@ Meta del dueño: **20–30 % de los leads entregan teléfono** (semana 30 = 3 %)
    | `FLOW_NS_REGION` ✅ | Kanban → Coordinación región | `region_gestionando` (aprobada, SIN variable) |
    | `FLOW_NS_NO_CONTESTA` ✅ | Kanban → No contestado | `llamada_no_contestada` (aprobada, cat. Marketing) |
 
+   ⏳ **PENDIENTE hasta que Meta apruebe la plantilla `aviso_equipo` (2026-08-03):**
+   `FLOW_NS_AVISO_EQUIPO` (+ opcional `AVISO_EQUIPO_SIDS`) — el WhatsApp genérico de
+   «humano requerido» que manda `/api/mc-aviso` (lo llaman AB-2 del anti-bucle y T-2 de
+   TECNICA). Mientras falte NO se rompe nada: el endpoint devuelve `no_configurado`,
+   **igual registra el aviso en la tabla `Avisos`** (con link al Lead y rollup «Terminó
+   en venta») y la notificación nativa de ManyChat sale. Al aprobarse: flujo envoltorio
+   de 1 nodo (`{{1}}` → `cf_aviso_datos`) → setear la env → redeploy. Detalle en
+   `docs/V2_CONSTRUCCION_DM.md` § «La plantilla aviso_equipo».
+
    **Mientras falten, el sistema NO se rompe:** `salida-llamado` escribe igual el opt-in, la
    fecha de visita, el estado del lead, el ticket de `Solicitudes` y el `Estado` del ticket —
    lo único que no sale es el WhatsApp. Y **no estampa `Aviso salida enviado`**, así que el
