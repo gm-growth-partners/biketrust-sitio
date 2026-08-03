@@ -912,13 +912,21 @@ responde. Señal de compra alta: nadie pregunta por tubeless sin estar consider�
 <td>→ <strong>T-2</strong></td>
 </tr>
 </tbody></table>
-<p><strong>T-2 · derivación a humano con contexto</strong> (acciones en orden):</p>
+<p><strong>T-2 · derivación a humano con contexto</strong> (acciones en orden — mismo patrón que AB):</p>
 <ol>
-<li><strong>Notificar a administradores</strong> (la pregunta queda visible en la bandeja vía <code>cf_mensaje</code>).</li>
-<li>Setear <code>cf_modo_humano</code> = <code>si</code> (el bot no pisa la respuesta del humano).</li>
-<li>Mensaje: <code>Dale 👌 Dame un rato y te escribo por acá con la respuesta.</code></li>
-<li>Smart Delay 24 h → borrar <code>cf_modo_humano</code> (el mismo cool-off del anti-bucle).</li>
+<li><strong>Notificar a administradores</strong> (nativa).</li>
+<li><strong>Solicitud externa <code>mc-aviso</code></strong> (el WhatsApp real al equipo):</li>
 </ol>
+<pre><code class="language-json">{
+  &quot;handle&quot;: &quot;&lt;Nombre de usuario&gt;&quot;,
+  &quot;motivo&quot;: &quot;pregunta técnica, pidió respuesta por chat&quot;,
+  &quot;mensaje&quot;: &quot;{{cf_mensaje}}&quot;
+}
+</code></pre>
+<p>   → <code>https://biketrust-sitio.pages.dev/api/mc-aviso?key=&lt;MC_KEY&gt;</code> · sin mapeo.
+3. Setear <code>cf_modo_humano</code> = <code>si</code> (el bot no pisa la respuesta del humano).
+4. Mensaje: <code>Dale 👌 Dame un rato y te escribo por acá con la respuesta.</code>
+5. Smart Delay 24 h → borrar <code>cf_modo_humano</code> (el mismo cool-off del anti-bucle).</p>
 <h3>CIERRE — despedida o rechazo cortés (ruta nueva 2026-07-30, caso real Joshua G.)</h3>
 <p><em>«Muchas gracias» · «lo voy a pensar, estoy barajando opciones». La persona está cerrando;
 responderle con un menú de botones (lo que hacía NO_CLASIFICA) es venderle a quien ya dijo
@@ -942,11 +950,24 @@ Es el mismo patrón de T-2 (TECNICA «prefiero por acá») — consistencia tota
 <ul>
 <li>Set custom field → <code>cf_modo_humano</code> = <code>si</code> → siguiente: <strong>AB-2</strong>.</li>
 </ul>
-<h3>AB-2 · Avisar al equipo — Acción nativa «Notificar a administradores»</h3>
-<ul>
-<li>Push/email de ManyChat: el mensaje que el bot no entendió queda visible en la bandeja
-con todo el historial. → siguiente: <strong>AB-3</strong>.</li>
-</ul>
+<h3>AB-2 · Avisar al equipo — Acción nativa + Solicitud externa *(rediseño 2026-08-03:</h3>
+<p>la notificación nativa de ManyChat SE COMPLEMENTA con un WhatsApp real al equipo)*</p>
+<ol>
+<li><strong>Acción nativa «Notificar a administradores»</strong> (push/email — el respaldo en la app).</li>
+<li><strong>Solicitud externa <code>mc-aviso</code></strong> — POST · <code>Content-Type: application/json</code></li>
+</ol>
+<pre><code>https://biketrust-sitio.pages.dev/api/mc-aviso?key=&lt;MC_KEY&gt;
+</code></pre>
+<pre><code class="language-json">{
+  &quot;handle&quot;: &quot;&lt;Nombre de usuario&gt;&quot;,
+  &quot;motivo&quot;: &quot;el bot no entendió el mensaje&quot;,
+  &quot;mensaje&quot;: &quot;{{cf_mensaje}}&quot;
+}
+</code></pre>
+<p>   Sin mapeo de respuesta. El endpoint manda la plantilla <strong><code>aviso_equipo</code></strong> por WhatsApp
+   a <code>AVISO_EQUIPO_SIDS</code> (fallback: la lista de llamados → Luis), <strong>sin filtro de
+   horario</strong> a propósito: este aviso significa «lead varado esperando a una persona».
+→ siguiente: <strong>AB-3</strong>.</p>
 <h3>AB-3 · El mensaje — sin botones</h3>
 <pre><code>Espérame un poco 🙌 Le paso tu mensaje a un especialista del equipo y te responde por acá.
 </code></pre>
@@ -1157,6 +1178,36 @@ ticket se marca; opciones nuevas se agregan a mano) y <strong><code>_atiende_des
 <code>Fecha primera llamada</code> + <code>Aviso salida enviado</code>, el tablero podrá mostrar <strong>quién gestiona
 qué y cuánto demora en cada paso</strong>. Pendiente manual: mostrar <code>Atiende</code> en las tarjetas del
 Kanban y en «Detalle de Llamados». Backend: sin cambios por ahora.</p>
+<h2>La plantilla <code>aviso_equipo</code> — el WhatsApp genérico de «humano requerido»</h2>
+<p><strong>Una sola plantilla para TODOS los casos de aviso a administradores</strong> (AB-2, T-2 y los
+que vengan). La manda el endpoint nuevo <code>/api/mc-aviso</code> (desplegado 2026-08-03).</p>
+<p><strong>Crear en Meta</strong> (vía ManyChat → Settings → WhatsApp → Plantillas de mensaje):</p>
+<ul>
+<li>Nombre: <code>aviso_equipo</code> · Categoría: <strong>Utility</strong> · Idioma: <strong>Spanish (MEX)</strong></li>
+<li>Sin encabezado · Pie de página: <code>Bike Trust · Specialized certificadas</code></li>
+<li>Cuerpo:</li>
+</ul>
+<pre><code>🔔 Un cliente necesita a una persona del equipo.
+
+{{1}}
+
+Respóndele desde la bandeja de Manychat.
+</code></pre>
+<ul>
+<li>Valor de ejemplo para <code>{{1}}</code> al someterla: <code>IG @cliente · el bot no entendió el mensaje · dijo: «tienen repuestos para frenos?»</code></li>
+</ul>
+<p><strong>Después de aprobada:</strong></p>
+<ol>
+<li><strong>Flujo envoltorio</strong> (igual que los otros 2): un solo nodo WhatsApp con la plantilla,
+sin disparador, sin quick replies · <strong><code>{{1}}</code> bindeado a <code>cf_aviso_datos</code></strong> (custom
+field NUEVO de ManyChat — crearlo, tipo texto; lo escribe el endpoint en el contacto
+de cada destinatario).</li>
+<li><strong>Envs en Cloudflare:</strong> <code>FLOW_NS_AVISO_EQUIPO</code> = namespace del envoltorio ·
+<code>AVISO_EQUIPO_SIDS</code> = <code>579628082,302195575</code> (opcional: sin ella cae a la lista de
+llamados). <strong>Redeploy después.</strong></li>
+</ol>
+<p>⚠️ Este aviso NO respeta <code>AVISO_HORARIOS</code> (decisión de diseño): un lead varado a las
+23:00 es mejor que suene a que se pierda. Los demás avisos siguen con su horario.</p>
 <h2>Evaluación post-go-live (NO para esta pasada) — AI hub de ManyChat</h2>
 <p>Investigado 2026-07-30: el <strong>AI Agent / AI hub (beta)</strong> de ManyChat genera respuestas desde
 un Knowledge Base estático — incompatible con el funnel (no llama APIs, no ve el stock vivo,
