@@ -928,27 +928,88 @@ que no. Respuesta blanda, SIN botones, SIN gastar golpe del anti-bucle:</em></p>
 Y si más adelante quieres ver alguna, me dices y coordinamos al tiro 🙌
 </code></pre>
 <p>Sin siguiente paso — fin.</p>
-<h2>Etapa 7 · El anti-bucle (<code>NO_CLASIFICA</code> y cualquier valor inesperado)</h2>
-<p><strong>Golpe 1</strong> (<code>cf_no_reconocido</code> vacío): setear <code>cf_no_reconocido</code> = <code>1</code> → mensaje:</p>
+<h2>Etapa 7 · El anti-bucle — los 8 bloques (<code>NO_CLASIFICA</code> y cualquier valor inesperado)</h2>
+<blockquote>
+<p>La red de seguridad: convierte «no te entendí» en un lead (golpe 1) o en una derivación
+a humano con retorno automático (golpe 2). <strong>Entrada: la rama NO_CLASIFICA de E-4 Y la
+rama ELSE</strong> (cualquier valor fuera de los 12 códigos — ambas apuntan a AB-1).
+Recordatorio: SALUDO, BICI_SUELTA, CIERRE y E-2 <strong>nunca</strong> consumen golpes.</p>
+</blockquote>
+<h3>AB-1 · ¿Ya falló antes? — Condición</h3>
+<ul>
+<li><code>cf_no_reconocido</code> <strong>tiene algún valor</strong> → <strong>AB-4</strong> (segundo golpe: a humano).</li>
+<li>Vacío → <strong>AB-2</strong> (primer golpe: rescate con botones).</li>
+</ul>
+<h3>AB-2 · Marcar el primer golpe — Acción</h3>
+<ul>
+<li>Set custom field → <code>cf_no_reconocido</code> = <code>1</code> → siguiente: <strong>AB-3</strong>.</li>
+</ul>
+<h3>AB-3 · El rescate — Mensaje con 3 botones *(el ÚNICO menú legítimo del sistema:</h3>
+<p>acá ya fallamos dos veces en entender; guiar es rescate, no bienvenida)*</p>
 <pre><code>Puede que me haya perdido 🙈 Dime en qué te ayudo:
 </code></pre>
-<p>Botones: <code>Busco una bici</code> → BICI_SUELTA · <code>Ayúdenme a elegir</code> → QZ0 · <code>Quiero vender</code> → V-1.</p>
-<p><strong>Golpe 2</strong> (<code>cf_no_reconocido</code> = <code>1</code>): en este orden —</p>
-<ol>
-<li>Setear <code>cf_modo_humano</code> = <code>si</code>.</li>
-<li><strong>Acción nativa «Notificar a administradores»</strong> (push/email de ManyChat): conversación
-varada con intención real; alguien la toma en la bandeja.</li>
-<li>Mensaje:</li>
-</ol>
+<table>
+<thead>
+<tr>
+<th>Botón</th>
+<th>Chars</th>
+<th>Destino</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Busco una bici</code></td>
+<td>14</td>
+<td>→ <strong>BICI_SUELTA</strong></td>
+</tr>
+<tr>
+<td><code>Ayúdenme a elegir</code></td>
+<td>17</td>
+<td>→ <strong>QZ0</strong> (el quiz)</td>
+</tr>
+<tr>
+<td><code>Quiero vender</code></td>
+<td>13</td>
+<td>→ <strong>V-1</strong></td>
+</tr>
+</tbody></table>
+<ul>
+<li>Si en vez de botón escribe de nuevo → Default Reply → enrutador: si ahora clasifica,
+sigue su ruta (el golpe queda marcado pero no molesta); si vuelve a NO_CLASIFICA,
+AB-1 lo manda al golpe 2.</li>
+</ul>
+<h3>AB-4 · Silenciar al bot — Acción</h3>
+<ul>
+<li>Set custom field → <code>cf_modo_humano</code> = <code>si</code> → siguiente: <strong>AB-5</strong>.</li>
+</ul>
+<h3>AB-5 · Avisar al equipo — Acción nativa «Notificar a administradores»</h3>
+<ul>
+<li>Push/email de ManyChat: conversación varada con intención real; alguien la toma en la
+bandeja (el historial completo está ahí). → siguiente: <strong>AB-6</strong>.</li>
+</ul>
+<h3>AB-6 · La despedida honesta — Mensaje, sin botones</h3>
 <pre><code>Mejor te contesta una persona 🙂 Dame un rato y te escribo por acá.
 </code></pre>
-<ol start="4">
-<li><strong>Cool-off (mejora 2026-07-30, pedida por Gabriel): Smart Delay de 24 h → borrar
-<code>cf_modo_humano</code> Y <code>cf_no_reconocido</code>.</strong> El contacto vuelve solo al circuito automático
-al día siguiente, con los golpes reseteados — es además la regla original del pivote
-(«el bot no retoma DENTRO de las 24 h», no «nunca»). Si Luis quiere silencio más largo,
-lo re-setea a mano.</li>
-</ol>
+<p>→ siguiente: <strong>AB-7</strong>.</p>
+<h3>AB-7 · El cool-off — Smart Delay de <strong>24 horas</strong></h3>
+<p>→ al vencer: <strong>AB-8</strong>.</p>
+<h3>AB-8 · El retorno automático — Acción</h3>
+<ul>
+<li><strong>Borrar valor</strong> de <code>cf_modo_humano</code> <strong>y</strong> de <code>cf_no_reconocido</code>. Sin siguiente paso.</li>
+<li>El contacto vuelve solo al circuito automático al día siguiente, con los golpes
+reseteados — la regla original del pivote es «el bot no retoma DENTRO de las 24 h»,
+no «nunca». Si Luis quiere silencio más largo, re-setea <code>cf_modo_humano</code> a mano.</li>
+</ul>
+<h3>Checklist de cables de la etapa</h3>
+<pre><code>E-4 (NO_CLASIFICA) → AB-1     E-4 (ELSE, cualquier otro valor) → AB-1
+AB-1  vacío → AB-2 → AB-3 (botones → BICI_SUELTA · QZ0 · V-1)
+AB-1  con valor → AB-4 → AB-5 → AB-6 → AB-7 (24 h) → AB-8 (fin)
+</code></pre>
+<ul>
+<li>Comportamiento conocido y aceptado: el contador NO se limpia cuando una ruta posterior
+clasifica bien — solo lo limpia AB-8. O sea, un fallo hoy + un fallo la próxima semana
+= golpe 2 directo. Es conservador a propósito (prefiere derivar a humano antes que
+marear); el cool-off lo deja siempre reversible.</li>
+</ul>
 <p>⚠️ <strong>NO usar la «Pausa de automatizaciones 24 h» nativa</strong>: suspende también la regla de
 baja (choque conocido, runbook §5.3).</p>
 <h2>Etapa 8 · La entrada — el enrutador</h2>
