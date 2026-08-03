@@ -433,20 +433,45 @@ Pero si sabes lo que buscas, te la conseguimos. Todas las semanas salimos a busc
 <td>→ <strong>B2-C</strong></td>
 </tr>
 </tbody></table>
-<h2>Etapa 3 · Grupo A · <code>MODELO</code> (54 % del tráfico)</h2>
-<h3>A-1 · <code>mc-lead</code> — solicitud externa</h3>
+<h2>Etapa 3 · Grupo A · <code>MODELO</code> (54 % del tráfico) — autocontenida</h2>
+<blockquote>
+<p>El viaje: la persona nombró una bici («tienen la Levo SL?») → nace/actualiza el Lead →
+se limpia el terreno → <code>mc-match</code> la busca en el stock VIVO → si está: ficha rica →
+oferta de llamada · si no está: encargo honesto. <strong>Entrada: la rama <code>MODELO</code> de E-4.</strong></p>
+</blockquote>
+<h3>A-1 · <code>mc-lead</code> — solicitud externa (SIEMPRE primero: crea/actualiza el Lead)</h3>
+<p>POST · <code>Content-Type: application/json</code></p>
+<pre><code>https://biketrust-sitio.pages.dev/api/mc-lead?key=&lt;MC_KEY&gt;
+</code></pre>
 <pre><code class="language-json">{ &quot;handle&quot;: &quot;&lt;Nombre de usuario&gt;&quot;, &quot;canal&quot;: &quot;DM IG&quot; }
 </code></pre>
+<ul>
+<li><code>&lt;Nombre de usuario&gt;</code> = campo de sistema de Instagram <strong>desde el selector</strong>, nunca tipeado.</li>
+<li>Sin mapeo de respuesta (el <code>leadId</code> lo trae <code>mc-match</code> en A-4).</li>
+<li>⚠️ No mandar <code>nombre</code> (llegaría el literal <code>{{full_name}}</code>).
+Siguiente paso → <strong>A-2</strong>.</li>
+</ul>
 <h3>A-2 · Acción: borrar los 31 campos</h3>
-<p>La misma lista completa de la Etapa 2 («LOS 31 CAMPOS QUE SE BORRAN»). <em>(En DM no hay
-Acción 0 global: la limpieza vive al inicio de las rutas que usan el match — esta y QZ0.)</em></p>
+<p>Los mismos 31 de la lista de la Etapa 2 — cópialos de ahí, son:</p>
+<pre><code>cf_bici_modelo · cf_bici_talla · cf_bici_puntaje · cf_bici_area_baja
+cf_bici_estado_honesto · cf_bici_precio · cf_bici_precio_nuevo · cf_bici_ahorro
+cf_bici_rango_altura · cf_bici_foto · cf_bici_ficha · cf_bici_disponible
+cf_bici_bateria · cf_bici_ciclos
+cf_hero_bici · cf_hero_modelo · cf_hero_talla · cf_hero_precio · cf_hero_ficha · cf_hero_foto
+cf_alt_bici · cf_alt_modelo · cf_alt_precio · cf_alt_ficha
+cf_otras · cf_match · cf_q_disc · cf_q_presup · cf_q_altura · cf_lead_id · cf_modelo_texto
+</code></pre>
+<p><em>(Por qué: el mapeo de ManyChat NO limpia campos que llegan vacíos — sin este borrado se
+arrastra la bici o el match de la corrida anterior. La falla más silenciosa del sistema.)</em>
+Siguiente paso → <strong>A-3</strong>.</p>
 <h3>A-3 · Condición: ¿<code>cf_modelo_buscado</code> está vacío?</h3>
 <ul>
-<li><strong>Sí (vacío)</strong> → tratar como <strong>BICI_SUELTA</strong> (Etapa 4). <strong>NUNCA llamar a <code>mc-match</code>
-con el campo vacío.</strong></li>
-<li><strong>No</strong> → A-4.</li>
+<li><code>cf_modelo_buscado</code> <strong>no tiene valor</strong> → <strong>BICI_SUELTA</strong> (Etapa 4). <strong>NUNCA llamar a
+<code>mc-match</code> con el campo vacío</strong> (devolvería No-match fantasma).</li>
+<li>Tiene valor → <strong>A-4</strong>.</li>
 </ul>
 <h3>A-4 · SE <code>mc-match</code> modo A — solicitud externa</h3>
+<p>POST · <code>Content-Type: application/json</code></p>
 <pre><code>https://biketrust-sitio.pages.dev/api/mc-match?key=&lt;MC_KEY&gt;
 </code></pre>
 <pre><code class="language-json">{
@@ -456,8 +481,71 @@ con el campo vacío.</strong></li>
 }
 </code></pre>
 <p>🚨 <strong><code>cf_modelo_buscado</code> (la salida 2 del AI Step), NUNCA <code>cf_mensaje</code></strong> — con el DM
-completo («tienen la Levo SL?») el matching devuelve No-match teniendo la bici.
-<strong>Mapeo:</strong> la misma tabla de 13 pares de SE-Q (Etapa 2), idéntica.</p>
+completo («tienen la Levo SL?») el matching devuelve No-match teniendo la bici: «tienen»
+y «la» puntúan cero. Solo el nombre limpio calza. El matching tolera typos («quenevo» →
+Kenevo, «swork» → S-Works).
+<strong>Mapeo de respuesta (13 pares, rutas planas):</strong></p>
+<table>
+<thead>
+<tr>
+<th>JSONPath</th>
+<th>→ Custom field</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>$.match</code></td>
+<td><code>cf_match</code></td>
+</tr>
+<tr>
+<td><code>$.heroBici</code></td>
+<td><code>cf_hero_bici</code></td>
+</tr>
+<tr>
+<td><code>$.heroModelo</code></td>
+<td><code>cf_hero_modelo</code></td>
+</tr>
+<tr>
+<td><code>$.heroTalla</code></td>
+<td><code>cf_hero_talla</code></td>
+</tr>
+<tr>
+<td><code>$.heroPrecio</code></td>
+<td><code>cf_hero_precio</code></td>
+</tr>
+<tr>
+<td><code>$.heroFicha</code></td>
+<td><code>cf_hero_ficha</code></td>
+</tr>
+<tr>
+<td><code>$.heroFoto</code></td>
+<td><code>cf_hero_foto</code></td>
+</tr>
+<tr>
+<td><code>$.altBici</code></td>
+<td><code>cf_alt_bici</code></td>
+</tr>
+<tr>
+<td><code>$.altModelo</code></td>
+<td><code>cf_alt_modelo</code></td>
+</tr>
+<tr>
+<td><code>$.altPrecio</code></td>
+<td><code>cf_alt_precio</code></td>
+</tr>
+<tr>
+<td><code>$.altFicha</code></td>
+<td><code>cf_alt_ficha</code></td>
+</tr>
+<tr>
+<td><code>$.otrasTexto</code></td>
+<td><code>cf_otras</code></td>
+</tr>
+<tr>
+<td><code>$.leadId</code></td>
+<td><code>cf_lead_id</code></td>
+</tr>
+</tbody></table>
+<p>Siguiente paso → <strong>A-5</strong>.</p>
 <h3>A-5 · Condición <code>cf_match</code> es <code>true</code></h3>
 <ul>
 <li><strong>Sí</strong> → <strong>SE-F</strong> (la ficha rica compartida, abajo).</li>

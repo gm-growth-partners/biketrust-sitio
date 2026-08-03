@@ -293,23 +293,47 @@ Pero si sabes lo que buscas, te la conseguimos. Todas las semanas salimos a busc
 | `Sí, que me llamen` | 17 | → **B4** (directo, se salta B3) |
 | `Ver lo que hay ahora` | 20 — límite exacto | → **B2-C** |
 
-## Etapa 3 · Grupo A · `MODELO` (54 % del tráfico)
+## Etapa 3 · Grupo A · `MODELO` (54 % del tráfico) — autocontenida
 
-### A-1 · `mc-lead` — solicitud externa
+> El viaje: la persona nombró una bici («tienen la Levo SL?») → nace/actualiza el Lead →
+> se limpia el terreno → `mc-match` la busca en el stock VIVO → si está: ficha rica →
+> oferta de llamada · si no está: encargo honesto. **Entrada: la rama `MODELO` de E-4.**
+
+### A-1 · `mc-lead` — solicitud externa (SIEMPRE primero: crea/actualiza el Lead)
+POST · `Content-Type: application/json`
+```
+https://biketrust-sitio.pages.dev/api/mc-lead?key=<MC_KEY>
+```
 ```json
 { "handle": "<Nombre de usuario>", "canal": "DM IG" }
 ```
+- `<Nombre de usuario>` = campo de sistema de Instagram **desde el selector**, nunca tipeado.
+- Sin mapeo de respuesta (el `leadId` lo trae `mc-match` en A-4).
+- ⚠️ No mandar `nombre` (llegaría el literal `{{full_name}}`).
+Siguiente paso → **A-2**.
 
 ### A-2 · Acción: borrar los 31 campos
-La misma lista completa de la Etapa 2 («LOS 31 CAMPOS QUE SE BORRAN»). *(En DM no hay
-Acción 0 global: la limpieza vive al inicio de las rutas que usan el match — esta y QZ0.)*
+Los mismos 31 de la lista de la Etapa 2 — cópialos de ahí, son:
+```
+cf_bici_modelo · cf_bici_talla · cf_bici_puntaje · cf_bici_area_baja
+cf_bici_estado_honesto · cf_bici_precio · cf_bici_precio_nuevo · cf_bici_ahorro
+cf_bici_rango_altura · cf_bici_foto · cf_bici_ficha · cf_bici_disponible
+cf_bici_bateria · cf_bici_ciclos
+cf_hero_bici · cf_hero_modelo · cf_hero_talla · cf_hero_precio · cf_hero_ficha · cf_hero_foto
+cf_alt_bici · cf_alt_modelo · cf_alt_precio · cf_alt_ficha
+cf_otras · cf_match · cf_q_disc · cf_q_presup · cf_q_altura · cf_lead_id · cf_modelo_texto
+```
+*(Por qué: el mapeo de ManyChat NO limpia campos que llegan vacíos — sin este borrado se
+arrastra la bici o el match de la corrida anterior. La falla más silenciosa del sistema.)*
+Siguiente paso → **A-3**.
 
 ### A-3 · Condición: ¿`cf_modelo_buscado` está vacío?
-- **Sí (vacío)** → tratar como **BICI_SUELTA** (Etapa 4). **NUNCA llamar a `mc-match`
-  con el campo vacío.**
-- **No** → A-4.
+- `cf_modelo_buscado` **no tiene valor** → **BICI_SUELTA** (Etapa 4). **NUNCA llamar a
+  `mc-match` con el campo vacío** (devolvería No-match fantasma).
+- Tiene valor → **A-4**.
 
 ### A-4 · SE `mc-match` modo A — solicitud externa
+POST · `Content-Type: application/json`
 ```
 https://biketrust-sitio.pages.dev/api/mc-match?key=<MC_KEY>
 ```
@@ -321,8 +345,28 @@ https://biketrust-sitio.pages.dev/api/mc-match?key=<MC_KEY>
 }
 ```
 🚨 **`cf_modelo_buscado` (la salida 2 del AI Step), NUNCA `cf_mensaje`** — con el DM
-completo («tienen la Levo SL?») el matching devuelve No-match teniendo la bici.
-**Mapeo:** la misma tabla de 13 pares de SE-Q (Etapa 2), idéntica.
+completo («tienen la Levo SL?») el matching devuelve No-match teniendo la bici: «tienen»
+y «la» puntúan cero. Solo el nombre limpio calza. El matching tolera typos («quenevo» →
+Kenevo, «swork» → S-Works).
+**Mapeo de respuesta (13 pares, rutas planas):**
+
+| JSONPath | → Custom field |
+|---|---|
+| `$.match` | `cf_match` |
+| `$.heroBici` | `cf_hero_bici` |
+| `$.heroModelo` | `cf_hero_modelo` |
+| `$.heroTalla` | `cf_hero_talla` |
+| `$.heroPrecio` | `cf_hero_precio` |
+| `$.heroFicha` | `cf_hero_ficha` |
+| `$.heroFoto` | `cf_hero_foto` |
+| `$.altBici` | `cf_alt_bici` |
+| `$.altModelo` | `cf_alt_modelo` |
+| `$.altPrecio` | `cf_alt_precio` |
+| `$.altFicha` | `cf_alt_ficha` |
+| `$.otrasTexto` | `cf_otras` |
+| `$.leadId` | `cf_lead_id` |
+
+Siguiente paso → **A-5**.
 
 ### A-5 · Condición `cf_match` es `true`
 - **Sí** → **SE-F** (la ficha rica compartida, abajo).
