@@ -476,12 +476,14 @@ escribir Y ofrecía botones que iban a otra cosa — señales cruzadas)*
 | Botón | Chars | Destino |
 |---|---|---|
 | `Ayúdenme a elegir` | 17 | → **QZ0** (el quiz) |
-| `Ver lo que hay ahora` | 20 | → **B2-C** |
 | `Que me llamen mejor` | 19 | → **B4** |
 
+- **Máximo 2 botones (decisión Gabriel 2026-08-03):** se eliminó «Ver lo que hay ahora» —
+  mandar al catálogo a quien no sabe cuál busca es dejarlo solo mirando vitrina; el quiz
+  cubre ese caso guiado y capturando datos.
 - **El camino principal es ESCRIBIR el nombre**: ese texto cae al Default Reply → vuelve a
   entrar al enrutador → sale como MODELO con el nombre extraído. No cuenta golpe.
-- Los botones son la salida explícita para quien NO tiene el nombre — ya no contradicen el
+- Los botones son la salida explícita para quien NO tiene el nombre — no contradicen el
   copy: el mensaje pide una cosa y ofrece la alternativa aparte.
 
 ### CONTACTO — paso de texto → B4
