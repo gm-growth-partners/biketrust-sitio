@@ -621,6 +621,11 @@ cableado ingenuo el bot afirma por escrito una venta que no ocurrió.**
 
 ### 5.2 · El AI Step — texto literal de sus dos campos
 
+> ⚠️ **SUPERSEDIDO EN PANTALLA (2026-08-03):** el campo «objetivo» real acepta máx. 500
+> caracteres. La versión AS-BUILT (objetivo corto + contexto ampliado que absorbe rutas,
+> reglas y prohibiciones) está en `V2_CONSTRUCCION_DM.md` § E-4. Lo de abajo queda como
+> referencia del diseño completo.
+
 #### Campo «objetivo» (*Dile a la IA lo que tiene que hacer*)
 
 ```
