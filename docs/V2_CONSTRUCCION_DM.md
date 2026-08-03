@@ -493,15 +493,17 @@ Dale, te llamamos 🙌 Confírmame el número tal cual, para no equivocarnos.
 → **B4** (el paso de teléfono normal; NUNCA volcar el mensaje crudo en `cf_telefono`).
 Antes de B4: setear `cf_modelo_texto` = `dio teléfono solo`.
 
-### SALUDO — mensaje con los 3 botones del anti-bucle, SIN contar golpe
+### SALUDO — invitación abierta, SIN botones, SIN contar golpe
+*(Corregido 2026-08-03, objeción de Gabriel: el pivote es «sin menú — el bot reconoce la
+intención del texto libre», y responderle un menú al primer «hola» resucitaba lo que se
+mató. La respuesta abierta deja que el siguiente mensaje pase por el enrutador, que para
+eso está. Los 3 botones quedan SOLO en el golpe 1 del anti-bucle — ahí son un rescate
+tras dos fallos, no un menú de bienvenida.)*
 ```
-Hola 👋 Dime en qué te ayudo:
+¡Hola! 👋 Cuéntame qué andas buscando — un modelo (Levo, Epic, Creo…), ayuda para elegir, o lo que necesites 🚲
 ```
-| Botón | Destino |
-|---|---|
-| `Busco una bici` | → BICI_SUELTA |
-| `Ayúdenme a elegir` | → QZ0 (el quiz) |
-| `Quiero vender` | → V-1 (VENDER) |
+- Sin botones, sin siguiente paso: su respuesta cae al Default Reply → enrutador → su ruta.
+- No incrementa `cf_no_reconocido` (un «hola» no es un fallo).
 
 ## Etapa 5 · Grupo C · `VENDER`
 

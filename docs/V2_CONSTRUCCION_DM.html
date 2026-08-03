@@ -734,29 +734,18 @@ copy: el mensaje pide una cosa y ofrece la alternativa aparte.</li>
 </code></pre>
 <p>→ <strong>B4</strong> (el paso de teléfono normal; NUNCA volcar el mensaje crudo en <code>cf_telefono</code>).
 Antes de B4: setear <code>cf_modelo_texto</code> = <code>dio teléfono solo</code>.</p>
-<h3>SALUDO — mensaje con los 3 botones del anti-bucle, SIN contar golpe</h3>
-<pre><code>Hola 👋 Dime en qué te ayudo:
+<h3>SALUDO — invitación abierta, SIN botones, SIN contar golpe</h3>
+<p><em>(Corregido 2026-08-03, objeción de Gabriel: el pivote es «sin menú — el bot reconoce la
+intención del texto libre», y responderle un menú al primer «hola» resucitaba lo que se
+mató. La respuesta abierta deja que el siguiente mensaje pase por el enrutador, que para
+eso está. Los 3 botones quedan SOLO en el golpe 1 del anti-bucle — ahí son un rescate
+tras dos fallos, no un menú de bienvenida.)</em></p>
+<pre><code>¡Hola! 👋 Cuéntame qué andas buscando — un modelo (Levo, Epic, Creo…), ayuda para elegir, o lo que necesites 🚲
 </code></pre>
-<table>
-<thead>
-<tr>
-<th>Botón</th>
-<th>Destino</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><code>Busco una bici</code></td>
-<td>→ BICI_SUELTA</td>
-</tr>
-<tr>
-<td><code>Ayúdenme a elegir</code></td>
-<td>→ QZ0 (el quiz)</td>
-</tr>
-<tr>
-<td><code>Quiero vender</code></td>
-<td>→ V-1 (VENDER)</td>
-</tr>
-</tbody></table>
+<ul>
+<li>Sin botones, sin siguiente paso: su respuesta cae al Default Reply → enrutador → su ruta.</li>
+<li>No incrementa <code>cf_no_reconocido</code> (un «hola» no es un fallo).</li>
+</ul>
 <h2>Etapa 5 · Grupo C · <code>VENDER</code></h2>
 <p><strong>V-1 a V-4 · Captura — 4 pasos de entrada de texto, uno por dato:</strong></p>
 <ol>
