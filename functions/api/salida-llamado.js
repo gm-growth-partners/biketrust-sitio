@@ -77,6 +77,26 @@ async function mcSendFlow(token, sid, flowNs) {
   if (!r.ok) throw new Error(`sendFlow ${r.status}: ${(await r.text()).slice(0, 200)}`);
 }
 
+// ── Horario de aviso por destinatario ────────────────────────────────────────
+// ⚠️ ESTE HELPER ESTÁ DUPLICADO en `mc-llamado.js` y `cron-briefing.js`.
+// Si cambias uno, cambia los tres. Formato de AVISO_HORARIOS: `sid:DIAS@desde-hasta`
+// separados por coma (DIAS = dígitos 0=domingo…6=sábado). Sin entrada para el
+// sid → siempre se avisa.
+const HORARIOS_DEFAULT = '579628082:13456@9-20,302195575:0123456@9-20';
+function horarioOk(env, sid, now = new Date()) {
+  const entry = String(env.AVISO_HORARIOS || HORARIOS_DEFAULT)
+    .split(',').map(s => s.trim()).find(s => s.startsWith(String(sid) + ':'));
+  if (!entry) return true;
+  const m = /^([\d-]+)@(\d{1,2})-(\d{1,2})$/.exec(entry.slice(entry.indexOf(':') + 1));
+  if (!m) return true;
+  const p = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Santiago', hour: 'numeric', hour12: false, weekday: 'short' }).formatToParts(now);
+  const hora = Number(p.find(x => x.type === 'hour').value);
+  const dia = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }[p.find(x => x.type === 'weekday').value];
+  if (hora < Number(m[2]) || hora >= Number(m[3])) return false;
+  if (m[1].includes('-')) { const [a, b] = m[1].split('-').map(Number); return dia >= a && dia <= b; }
+  return m[1].includes(String(dia));
+}
+
 export async function onRequestPost({ request, env }) {
   const url = new URL(request.url);
   if (!keyOk(env, url)) return reply({ error: 'unauthorized' }, 401);
@@ -205,8 +225,9 @@ export async function onRequestPost({ request, env }) {
   //     Guarda contra duplicados: el link `Solicitud` del ticket. Si ya tiene
   //     valor no se crea otro, aunque el endpoint se dispare de nuevo (Luis
   //     corrige algo, la automatización reintenta, etc.).
-  let solicitudId = null;
+  let solicitudId = null, avisoSolicitud = 'no_aplica';
   if (salida === 'Encargo de búsqueda' && !linkId(t['Solicitud'])) {
+    avisoSolicitud = 'no_configurado';
     const modelo = String(t['Modelo buscado'] || '').trim();
     const notas = [
       `Nace de la llamada de ${t['Nombre'] || 'un lead'}.`,
@@ -232,6 +253,36 @@ export async function onRequestPost({ request, env }) {
     });
     if (sr.ok) {
       solicitudId = (await sr.json()).id;
+
+      // AVISO AL EQUIPO (pedido de Gabriel 2026-08-03): el encargo nacido del
+      // Kanban avisa igual que los del bot (mc-waitlist) — misma plantilla
+      // `nueva_solicitud`, mismo flujo y mismos destinatarios. Best-effort: si
+      // falla, la Solicitud ya quedó creada y visible en la pantalla 4.
+      const TOKEN_AVISO = env.MANYCHAT_TOKEN || '';
+      const FLOW_SOL = env.FLOW_NS_SOLICITUD || '';
+      const SIDS_SOL = String(env.AVISO_SOLICITUD_SIDS || env.LUIS_SUBSCRIBER_ID || '')
+        .split(',').map(s => s.trim()).filter(Boolean);
+      if (TOKEN_AVISO && FLOW_SOL && SIDS_SOL.length) {
+        try {
+          const resumen = [
+            modelo || 'modelo por confirmar',
+            t['Ciudad'] ? `de ${t['Ciudad']}` : '',
+            `contacto: ${t['Teléfono'] || 'sin teléfono'}`,
+            t['Nombre'] ? `(${t['Nombre']})` : '',
+            'nace del Kanban de llamadas',
+          ].filter(Boolean).join(' · ');
+          let enviados = 0;
+          for (const sidAviso of SIDS_SOL) {
+            if (!horarioOk(env, sidAviso)) continue;
+            await mcSetField(TOKEN_AVISO, sidAviso, 'cf_solicitud_datos', resumen.slice(0, 900));
+            await mcSendFlow(TOKEN_AVISO, sidAviso, FLOW_SOL);
+            enviados++;
+          }
+          avisoSolicitud = enviados ? 'enviado' : 'fuera_de_horario';
+        } catch (e) {
+          avisoSolicitud = 'error: ' + String(e && e.message || e).slice(0, 200);
+        }
+      }
     }
     // Si falla, no se aborta: el mensaje al cliente igual debe salir. El campo
     // `Solicitud` queda vacío y el próximo disparo lo reintenta.
@@ -305,6 +356,6 @@ export async function onRequestPost({ request, env }) {
     visitaCopiada: !!upd['Fecha visita'],
     estadoLead: upd['Estado'] || null,
     estadoTicket: updTicket['Estado'] || null,
-    solicitudCreada: solicitudId });
+    solicitudCreada: solicitudId, avisoSolicitud });
 }
 // Sólo POST.
