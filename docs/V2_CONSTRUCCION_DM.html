@@ -256,23 +256,190 @@ negocio (para nacer como contacto con ID), se agregan sus IDs a la env y se rede
 ⛔ <strong>Grupos de WhatsApp NO</strong>: la API de WhatsApp Business no soporta mensajes a grupos
 (limitación de Meta). El «quién lo toma» se coordina en el grupo interno del equipo.</p>
 </blockquote>
-<h2>Etapa 2 · El quiz — reusar la construcción de la hoja del quiz</h2>
-<p><strong>QZ0 → QZ (3 preguntas) → SE-Q → C-Q → SE-F → C1b-Q → B2-Q/B2-QE → C-ALT → B2-ALT → NM</strong>
-idénticos a <a href="V2_CONSTRUCCION_QUIZ.md"><code>V2_CONSTRUCCION_QUIZ.md</code></a>, con 3 diferencias:</p>
+<h2>Etapa 2 · El quiz — los 8 bloques, desglosados</h2>
+<blockquote>
+<p>Es el mismo quiz de los reels sin bici, adaptado al DM: sin <code>reel</code>, sin <code>origen</code>, y la
+salida de la ficha va a C-OFERTA. La ficha rica (SE-F → C1b → B2-Q/B2-QE) se construye
+UNA vez y la comparten esta etapa y el Grupo A — está desglosada en la Etapa 3.</p>
+</blockquote>
+<h3>LOS 31 CAMPOS QUE SE BORRAN (referencia — los usan QZ0 acá y A-2 en la Etapa 3)</h3>
+<pre><code>cf_bici_modelo · cf_bici_talla · cf_bici_puntaje · cf_bici_area_baja
+cf_bici_estado_honesto · cf_bici_precio · cf_bici_precio_nuevo · cf_bici_ahorro
+cf_bici_rango_altura · cf_bici_foto · cf_bici_ficha · cf_bici_disponible
+cf_bici_bateria · cf_bici_ciclos
+cf_hero_bici · cf_hero_modelo · cf_hero_talla · cf_hero_precio · cf_hero_ficha · cf_hero_foto
+cf_alt_bici · cf_alt_modelo · cf_alt_precio · cf_alt_ficha
+cf_otras · cf_match · cf_q_disc · cf_q_presup · cf_q_altura · cf_lead_id · cf_modelo_texto
+</code></pre>
+<p><em>(Copiar y pegar los nombres, nunca tipearlos: <code>setCustomFieldByName</code> es match exacto.)</em></p>
+<h3>QZ0 · La entrada al quiz — Acciones + 2 solicitudes externas, en este orden</h3>
 <ol>
-<li>SE-Q <strong>sin <code>reel</code></strong> y <strong>sin <code>origen</code></strong> (el default del endpoint es <code>Puerta 2 (quiz)</code>).</li>
-<li>La salida de B2-Q/B2-QE/B2-ALT va a <strong>C-OFERTA</strong> (ver Etapa 6), no directo a D1.</li>
-<li>NM: botones <code>Sí, que me llamen</code> → B4 · <code>Ver lo que hay ahora</code> → B2-C.</li>
+<li><strong>Acción → Borrar valor</strong> de los <strong>31 campos</strong> de arriba.</li>
+<li><strong>Solicitud externa <code>mc-lead</code></strong> — POST · <code>Content-Type: application/json</code></li>
 </ol>
+<pre><code>https://biketrust-sitio.pages.dev/api/mc-lead?key=&lt;MC_KEY&gt;
+</code></pre>
+<pre><code class="language-json">{ &quot;handle&quot;: &quot;&lt;Nombre de usuario&gt;&quot;, &quot;canal&quot;: &quot;DM IG&quot; }
+</code></pre>
+<p>   Sin mapeo de respuesta.
+3. <strong>Solicitud externa <code>mc-evento</code></strong> (marca el inicio del cuestionario para el tablero):</p>
+<pre><code>https://biketrust-sitio.pages.dev/api/mc-evento?key=&lt;MC_KEY&gt;
+</code></pre>
+<pre><code class="language-json">{ &quot;handle&quot;: &quot;&lt;Nombre de usuario&gt;&quot;, &quot;estado&quot;: &quot;quiz_iniciado&quot;, &quot;soloEstado&quot;: true }
+</code></pre>
+<p>   Sin mapeo. Siguiente paso → <strong>QZ</strong>.</p>
+<h3>QZ · Las 3 preguntas — UN bloque de mensaje con entradas secuenciales</h3>
+<p><strong>1/3 — Elección múltiple</strong> → guardar en <code>cf_q_disc</code> · con botón «Omitir»:</p>
+<pre><code>1/3 · ¿En qué vas a andar? 🚵
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Botón</th>
+<th>Valor que guarda</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>MTB / cerro</code></td>
+<td>el texto del botón (el backend lo canonicaliza)</td>
+</tr>
+<tr>
+<td><code>Ruta</code></td>
+<td>ídem</td>
+</tr>
+<tr>
+<td><code>Ciudad</code></td>
+<td>ídem</td>
+</tr>
+</tbody></table>
+<p><strong>2/3 — Texto</strong> → guardar en <code>cf_q_presup</code>:</p>
+<pre><code>2/3 · ¿En cuánto anda tu presupuesto? 💸
+
+Escríbelo como quieras: 3.500.000 · 3,5 millones · «flexible», da lo mismo.
+</code></pre>
+<p><strong>3/3 — Texto</strong> → guardar en <code>cf_q_altura</code>:</p>
+<pre><code>3/3 · ¿Cuánto mides? 📏
+
+(1,75 o 175, como te acomode)
+</code></pre>
+<ul>
+<li>Expiración de la recopilación: <strong>30 minutos</strong>. Respuesta válida del 3/3 → <strong>SE-Q</strong>.</li>
+</ul>
+<h3>SE-Q · El motor — solicitud externa <code>mc-match</code> (modo B)</h3>
+<pre><code>https://biketrust-sitio.pages.dev/api/mc-match?key=&lt;MC_KEY&gt;
+</code></pre>
+<pre><code class="language-json">{
+  &quot;handle&quot;: &quot;&lt;Nombre de usuario&gt;&quot;,
+  &quot;disciplina&quot;: &quot;{{cf_q_disc}}&quot;,
+  &quot;presupuesto&quot;: &quot;{{cf_q_presup}}&quot;,
+  &quot;altura&quot;: &quot;{{cf_q_altura}}&quot;
+}
+</code></pre>
+<ul>
+<li><strong>SIN <code>reel</code> y SIN <code>origen</code></strong> (el default del endpoint es <code>Puerta 2 (quiz)</code>).</li>
+<li>El backend tolera texto libre («3,5 millones», «175», el texto del botón de disciplina).</li>
+<li><strong>Mapeo de respuesta (13 pares, rutas planas):</strong></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>JSONPath</th>
+<th>→ Custom field</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>$.match</code></td>
+<td><code>cf_match</code></td>
+</tr>
+<tr>
+<td><code>$.heroBici</code></td>
+<td><code>cf_hero_bici</code></td>
+</tr>
+<tr>
+<td><code>$.heroModelo</code></td>
+<td><code>cf_hero_modelo</code></td>
+</tr>
+<tr>
+<td><code>$.heroTalla</code></td>
+<td><code>cf_hero_talla</code></td>
+</tr>
+<tr>
+<td><code>$.heroPrecio</code></td>
+<td><code>cf_hero_precio</code></td>
+</tr>
+<tr>
+<td><code>$.heroFicha</code></td>
+<td><code>cf_hero_ficha</code></td>
+</tr>
+<tr>
+<td><code>$.heroFoto</code></td>
+<td><code>cf_hero_foto</code></td>
+</tr>
+<tr>
+<td><code>$.altBici</code></td>
+<td><code>cf_alt_bici</code></td>
+</tr>
+<tr>
+<td><code>$.altModelo</code></td>
+<td><code>cf_alt_modelo</code></td>
+</tr>
+<tr>
+<td><code>$.altPrecio</code></td>
+<td><code>cf_alt_precio</code></td>
+</tr>
+<tr>
+<td><code>$.altFicha</code></td>
+<td><code>cf_alt_ficha</code></td>
+</tr>
+<tr>
+<td><code>$.otrasTexto</code></td>
+<td><code>cf_otras</code></td>
+</tr>
+<tr>
+<td><code>$.leadId</code></td>
+<td><code>cf_lead_id</code></td>
+</tr>
+</tbody></table>
+<p>Siguiente paso → <strong>C-Q</strong>.</p>
+<h3>C-Q · ¿Hubo match? — Condición</h3>
+<ul>
+<li><code>cf_match</code> <strong>es igual a</strong> <code>true</code> <em>(texto — el endpoint escribe la palabra)</em> → <strong>SE-F</strong>
+(la ficha rica compartida, Etapa 3).</li>
+<li>Si no → <strong>NM</strong>.</li>
+</ul>
+<h3>NM · La salida honesta del quiz — Mensaje</h3>
+<pre><code>Te soy derecho: de lo que tengo HOY, ninguna calza bien con lo que me dijiste 🙈
+
+Pero si sabes lo que buscas, te la conseguimos. Todas las semanas salimos a buscar modelos específicos para gente que nos los encarga.
+
+¿Te contactamos con nuestro especialista para que te asesore?
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Botón</th>
+<th>Chars</th>
+<th>Destino</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Sí, que me llamen</code></td>
+<td>17</td>
+<td>→ <strong>B4</strong> (directo, se salta B3)</td>
+</tr>
+<tr>
+<td><code>Ver lo que hay ahora</code></td>
+<td>20 — límite exacto</td>
+<td>→ <strong>B2-C</strong></td>
+</tr>
+</tbody></table>
 <h2>Etapa 3 · Grupo A · <code>MODELO</code> (54 % del tráfico)</h2>
 <h3>A-1 · <code>mc-lead</code> — solicitud externa</h3>
 <pre><code class="language-json">{ &quot;handle&quot;: &quot;&lt;Nombre de usuario&gt;&quot;, &quot;canal&quot;: &quot;DM IG&quot; }
 </code></pre>
-<h3>A-2 · Acción: borrar los 31 campos del quiz/match</h3>
-<p>Los mismos 30 de la Acción 0 del quiz (14 <code>cf_bici_*</code> + 10 hero/alt + <code>cf_otras</code> ·
-<code>cf_match</code> · 3 <code>cf_q_*</code> · <code>cf_lead_id</code>) <strong>+ <code>cf_modelo_texto</code></strong> (el portador de la
-etiqueta de ruta). <em>(En DM no hay Acción 0 global: la limpieza vive al inicio de las
-rutas que usan el match — esta y el QZ0 del quiz, que acá también borra los 31.)</em></p>
+<h3>A-2 · Acción: borrar los 31 campos</h3>
+<p>La misma lista completa de la Etapa 2 («LOS 31 CAMPOS QUE SE BORRAN»). <em>(En DM no hay
+Acción 0 global: la limpieza vive al inicio de las rutas que usan el match — esta y QZ0.)</em></p>
 <h3>A-3 · Condición: ¿<code>cf_modelo_buscado</code> está vacío?</h3>
 <ul>
 <li><strong>Sí (vacío)</strong> → tratar como <strong>BICI_SUELTA</strong> (Etapa 4). <strong>NUNCA llamar a <code>mc-match</code>
@@ -280,6 +447,8 @@ con el campo vacío.</strong></li>
 <li><strong>No</strong> → A-4.</li>
 </ul>
 <h3>A-4 · SE <code>mc-match</code> modo A — solicitud externa</h3>
+<pre><code>https://biketrust-sitio.pages.dev/api/mc-match?key=&lt;MC_KEY&gt;
+</code></pre>
 <pre><code class="language-json">{
   &quot;handle&quot;: &quot;&lt;Nombre de usuario&gt;&quot;,
   &quot;modelo&quot;: &quot;{{cf_modelo_buscado}}&quot;,
@@ -288,12 +457,12 @@ con el campo vacío.</strong></li>
 </code></pre>
 <p>🚨 <strong><code>cf_modelo_buscado</code> (la salida 2 del AI Step), NUNCA <code>cf_mensaje</code></strong> — con el DM
 completo («tienen la Levo SL?») el matching devuelve No-match teniendo la bici.
-<strong>Mapeo:</strong> los mismos 13 pares del quiz (<code>$.match → cf_match</code> … <code>$.leadId → cf_lead_id</code>).</p>
+<strong>Mapeo:</strong> la misma tabla de 13 pares de SE-Q (Etapa 2), idéntica.</p>
 <h3>A-5 · Condición <code>cf_match</code> es <code>true</code></h3>
 <ul>
-<li><strong>Sí</strong> → <strong>SE-F</strong> (la ficha rica de la Etapa 2; el copy de B2-Q se reusa literal, y si
-<code>cf_otras</code> no está vacío, agregar esa línea tal cual — ya viene redactada).</li>
-<li><strong>No</strong> → <strong>NM-A</strong> (paso propio, NO el copy de «se vendió»):</li>
+<li><strong>Sí</strong> → <strong>SE-F</strong> (la ficha rica compartida, abajo).</li>
+<li><strong>No</strong> → <strong>NM-A</strong> (paso propio, NO el copy de «se vendió» — acá puede ser un modelo que
+nunca tuvimos, y afirmar una venta que no ocurrió es lo único prohibido):</li>
 </ul>
 <pre><code>Te soy derecho: hoy no tenemos ninguna que calce con eso 🙈
 
@@ -317,6 +486,126 @@ Si es la que andabas buscando, te la conseguimos. Todas las semanas salimos a bu
 <td>→ B2-C</td>
 </tr>
 </tbody></table>
+<h3>LA FICHA RICA COMPARTIDA (la usan A-5 del Grupo A y C-Q del quiz)</h3>
+<h4>SE-F · <code>mc-evento</code> con <code>soloEstado</code> — solicitud externa</h4>
+<pre><code>https://biketrust-sitio.pages.dev/api/mc-evento?key=&lt;MC_KEY&gt;
+</code></pre>
+<pre><code class="language-json">{ &quot;lead&quot;: &quot;{{cf_lead_id}}&quot;, &quot;bici&quot;: &quot;{{cf_hero_bici}}&quot;, &quot;soloEstado&quot;: true }
+</code></pre>
+<p>Con <code>soloEstado: true</code> no crea Interés (ya lo creó <code>mc-match</code>) y, al no mandar <code>estado</code>,
+no mueve el Estado del Lead. <strong>Mapeo de respuesta (15 pares, rutas planas):</strong></p>
+<table>
+<thead>
+<tr>
+<th>JSONPath</th>
+<th>→ Custom field</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>$.biciModelo</code></td>
+<td><code>cf_bici_modelo</code></td>
+</tr>
+<tr>
+<td><code>$.biciTalla</code></td>
+<td><code>cf_bici_talla</code></td>
+</tr>
+<tr>
+<td><code>$.biciPuntaje</code></td>
+<td><code>cf_bici_puntaje</code></td>
+</tr>
+<tr>
+<td><code>$.biciAreaBaja</code></td>
+<td><code>cf_bici_area_baja</code></td>
+</tr>
+<tr>
+<td><code>$.biciEstadoHonesto</code></td>
+<td><code>cf_bici_estado_honesto</code></td>
+</tr>
+<tr>
+<td><code>$.biciPrecio</code></td>
+<td><code>cf_bici_precio</code></td>
+</tr>
+<tr>
+<td><code>$.biciPrecioNuevo</code></td>
+<td><code>cf_bici_precio_nuevo</code></td>
+</tr>
+<tr>
+<td><code>$.biciAhorro</code></td>
+<td><code>cf_bici_ahorro</code></td>
+</tr>
+<tr>
+<td><code>$.biciRangoAltura</code></td>
+<td><code>cf_bici_rango_altura</code></td>
+</tr>
+<tr>
+<td><code>$.biciFoto</code></td>
+<td><code>cf_bici_foto</code></td>
+</tr>
+<tr>
+<td><code>$.biciFicha</code></td>
+<td><code>cf_bici_ficha</code></td>
+</tr>
+<tr>
+<td><code>$.biciDisponible</code></td>
+<td><code>cf_bici_disponible</code></td>
+</tr>
+<tr>
+<td><code>$.biciBateria</code></td>
+<td><code>cf_bici_bateria</code></td>
+</tr>
+<tr>
+<td><code>$.biciCiclos</code></td>
+<td><code>cf_bici_ciclos</code></td>
+</tr>
+<tr>
+<td><code>$.leadId</code></td>
+<td><code>cf_lead_id</code></td>
+</tr>
+</tbody></table>
+<p>Siguiente paso → <strong>C1b</strong>.</p>
+<h4>C1b · ¿Es eléctrica? — Condición</h4>
+<ul>
+<li><code>cf_bici_bateria</code> <strong>tiene algún valor</strong> → <strong>B2-QE</strong> · Si no → <strong>B2-Q</strong>.</li>
+</ul>
+<h4>B2-Q · La ficha del hero — Mensaje solo texto (una burbuja o cortada donde acomode)</h4>
+<pre><code>De lo que tengo disponible HOY, la que más se acerca a lo tuyo es esta 👇
+
+{{cf_bici_modelo}} · Talla {{cf_bici_talla}}
+
+Sacó {{cf_bici_puntaje}}/7 en nuestra inspección — y en la ficha te digo exactamente dónde perdió puntos, sin maquillaje. Eso casi nadie te lo muestra.
+
+Nueva hoy sale {{cf_bici_precio_nuevo}}. Esta queda en {{cf_bici_precio}} → te ahorras {{cf_bici_ahorro}}.
+
+Fotos reales, diagnóstico completo y su estado honesto, tal cual está:
+{{cf_bici_ficha}}
+
+La talla exacta se confirma contigo — Luis te lo dice al teléfono según tu estatura.
+</code></pre>
+<p>Salida → <strong>C-OTRAS</strong>.</p>
+<h4>B2-QE · La ficha e-bike — duplicar B2-Q e insertar ANTES de las líneas de precio:</h4>
+<pre><code>Diagnóstico de batería: {{cf_bici_bateria}}% de salud · {{cf_bici_ciclos}} ciclos. Regla nuestra: bajo 80% no la vendemos.
+</code></pre>
+<p>Salida → <strong>C-OTRAS</strong>.</p>
+<h4>C-OTRAS · ¿Hay más de una que calza? — Condición <em>(solo aplica al Grupo A)</em></h4>
+<ul>
+<li><code>cf_otras</code> <strong>tiene algún valor</strong> → <strong>B2-OTRAS</strong> · Si no → <strong>C-ALT</strong>.
+<em>(En el camino del quiz <code>cf_otras</code> siempre llega vacío — se borró en QZ0 y modo B no lo
+devuelve — así que salta solo a C-ALT.)</em></li>
+</ul>
+<h4>B2-OTRAS · Las otras coincidencias — Mensaje, sin botones</h4>
+<pre><code>{{cf_otras}}
+</code></pre>
+<p><em>(La línea viene redactada del endpoint: «También tengo: … Escríbeme el nombre exacto si
+prefieres una de esas.»)</em> Salida → <strong>C-ALT</strong>.</p>
+<h4>C-ALT · ¿Hay alternativa? — Condición</h4>
+<ul>
+<li><code>cf_alt_modelo</code> <strong>tiene algún valor</strong> → <strong>B2-ALT</strong> · Si no → <strong>C-OFERTA</strong> (Etapa 1).</li>
+</ul>
+<h4>B2-ALT · La alternativa — Mensaje, sin botones</h4>
+<pre><code>También te podría servir: {{cf_alt_modelo}} · {{cf_alt_precio}}
+{{cf_alt_ficha}}
+</code></pre>
+<p>Salida → <strong>C-OFERTA</strong> (Etapa 1).</p>
 <h2>Etapa 4 · Los códigos cortos</h2>
 <h3>BICI_SUELTA — paso de texto</h3>
 <pre><code>¿Cuál de todas? 🚲 Mándame el nombre (Levo, Epic, Creo, Tarmac, Stumpjumper…) o pégame el link del video y te la ubico al toque.
