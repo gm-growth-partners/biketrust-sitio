@@ -765,8 +765,20 @@ baja (choque conocido, runbook §5.3).
 ### E-0 · Disparador: **CUALQUIER DM** (sin keywords)
 + **agregar el disparador de respuesta a historia** apuntando al mismo flujo (si no se
 agrega, ese tráfico no enciende nada y no da error — §5.10.5).
-⚠️ La regla de baja R1 ya existe (automatización aparte, de la puerta de comentarios) y
-corre antes — **no recrearla**.
+
+⚠️ **CORRECCIÓN 2026-08-04: la regla de baja R1 NO existía** (este doc la daba por
+construida en la puerta de comentarios — era falso, lo cazó Gabriel en el E2E). Se
+construye como **automatización APARTE** para que su trigger de keywords le gane al
+cualquier-mensaje:
+- Disparador por **palabras específicas** — coincidencia **EXACTA** para las sueltas
+  (`stop` · `baja` · `unsubscribe`: en modo «contiene», «¿hacen re**baja**?» daría de
+  baja a un comprador) y **contiene** para las frases (`no me escribas` · `no me
+  escriban` · `no me molesten` · `sácame` · `sacame` · `no quiero que me escriban` ·
+  `déjenme tranquilo`).
+- Pasos: mensaje `Listo, no te escribimos más 👌` **y después** la acción Cancelar
+  suscripción (al revés, la despedida puede no salir).
+- La prueba 13 del protocolo verifica la precedencia: `stop` debe responder SOLO esto,
+  nunca el enrutador.
 
 ### E-1 · Condición: `cf_modo_humano` es `si` → **nada** (el bot se calla). Si no → E-2.
 

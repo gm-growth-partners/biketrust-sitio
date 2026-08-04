@@ -1055,9 +1055,21 @@ baja (choque conocido, runbook §5.3).</p>
 <h3>E-0 · Disparador: <strong>CUALQUIER DM</strong> (sin keywords)</h3>
 <ul>
 <li><strong>agregar el disparador de respuesta a historia</strong> apuntando al mismo flujo (si no se
-agrega, ese tráfico no enciende nada y no da error — §5.10.5).
-⚠️ La regla de baja R1 ya existe (automatización aparte, de la puerta de comentarios) y
-corre antes — <strong>no recrearla</strong>.</li>
+agrega, ese tráfico no enciende nada y no da error — §5.10.5).</li>
+</ul>
+<p>⚠️ <strong>CORRECCIÓN 2026-08-04: la regla de baja R1 NO existía</strong> (este doc la daba por
+construida en la puerta de comentarios — era falso, lo cazó Gabriel en el E2E). Se
+construye como <strong>automatización APARTE</strong> para que su trigger de keywords le gane al
+cualquier-mensaje:</p>
+<ul>
+<li>Disparador por <strong>palabras específicas</strong> — coincidencia <strong>EXACTA</strong> para las sueltas
+(<code>stop</code> · <code>baja</code> · <code>unsubscribe</code>: en modo «contiene», «¿hacen re<strong>baja</strong>?» daría de
+baja a un comprador) y <strong>contiene</strong> para las frases (<code>no me escribas</code> · <code>no me escriban</code> · <code>no me molesten</code> · <code>sácame</code> · <code>sacame</code> · <code>no quiero que me escriban</code> ·
+<code>déjenme tranquilo</code>).</li>
+<li>Pasos: mensaje <code>Listo, no te escribimos más 👌</code> <strong>y después</strong> la acción Cancelar
+suscripción (al revés, la despedida puede no salir).</li>
+<li>La prueba 13 del protocolo verifica la precedencia: <code>stop</code> debe responder SOLO esto,
+nunca el enrutador.</li>
 </ul>
 <h3>E-1 · Condición: <code>cf_modo_humano</code> es <code>si</code> → <strong>nada</strong> (el bot se calla). Si no → E-2.</h3>
 <h3>E-2 · Mensaje sin texto (audio / foto / sticker / post compartido) — SIN contar golpe</h3>
