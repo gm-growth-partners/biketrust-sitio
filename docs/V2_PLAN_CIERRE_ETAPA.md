@@ -10,6 +10,60 @@ de la Levo SL2 (queda dentro del ítem 2).
 
 ---
 
+## ✔️ CHECKLIST DE CIERRE — estado 2026-08-04 (el mapeo completo pedido por Gabriel)
+
+> Ítems 1 y 2: OPERATIVOS con flecos. Ítem 3: CONSTRUIDO, en pruebas. Esta lista es la
+> foto exacta de lo que falta, en el orden en que conviene hacerlo.
+
+**A · Cerrar la puerta de DM (bloquea todo lo demás):**
+- [ ] **Protocolo E2E de 13 pruebas** (`V2_CONSTRUCCION_DM.md` § Prueba E2E) — Gabriel
+      manda, Claude audita cada corrida contra Airtable. Al pasar: la puerta queda lista.
+- [ ] **Plantilla `aviso_equipo` en Meta** (corre EN PARALELO, no bloquea el E2E) — es el
+      WhatsApp al equipo cuando el bot no reconoce el mensaje o piden respuesta técnica
+      por chat. Tras aprobarse: envoltorio 1-nodo + campo `cf_aviso_datos` en ManyChat +
+      env `FLOW_NS_AVISO_EQUIPO` (+ opcional `AVISO_EQUIPO_SIDS`) + **redeploy**.
+      Mientras tanto el registro en la tabla `Avisos` YA corre (métrica intacta).
+
+**B · Airtable — detalles para que las pantallas operen como deben:**
+- [ ] Pantalla «2 · Visitas»: agregar **«Fecha y hora de visita»** (dispara la
+      confirmación) y **«Bicis para la visita»** al panel de detalle · **ocultar
+      `Franja`** (legado V1: el bot ya no la pregunta).
+- [ ] Mostrar **`Atiende`** en las tarjetas del Kanban y en el detalle de Llamados
+      (los campos existen desde 2026-07-30; falta exponerlos — alimentan la gestión
+      por persona del tablero).
+- [ ] **Prueba de humo de las 5 salidas del Kanban con mensajes reales** (nunca se hizo
+      completa; exige ticket creado por el bot, no manual).
+
+**C · Flecos de la puerta de comentarios (ítem 2):**
+- [ ] Duplicado **Levo SL2** (6 elementos).
+- [ ] Pegar el **copy nuevo de B3** en las automatizaciones de comentarios/quiz.
+- [ ] **Quitar C2** donde siga montado (decisión 2026-07-30: B3 con vía única).
+
+**D · Higiene de datos (antes del go-live, para no ensuciar métricas):**
+- [ ] Borrar los registros de prueba del 04-08: leads `@_cmposunlocked`,
+      `@_s.campos_`, `@domingaescandon` + sus tickets/avisos + el ticket de ensayo de
+      `@_.matamala` en Visitas.
+- [ ] Operativo Luis: llamar a los 3 teléfonos capturados por el **puente provisorio**
+      (Springmuller · Concha · Ayala — prometido «en minutos» hace días) y al ticket de
+      `@carlosbriceno._`.
+
+**E · Entrega de la etapa:**
+- [ ] **Pasada completa de COPYS de todas las puertas** (pedido explícito 2026-07-31;
+      B3 renovado = el estándar).
+- [ ] **GO-LIVE formal** (runbook §9): apagar las automatizaciones DM de V1 → rotar
+      `MC_KEY` (la `MC_KEY_V2` de `.dev.vars`; actualizar `?key=` en TODAS las
+      solicitudes externas) → rotar también el PAT de Airtable → al día siguiente,
+      borrar los 13 custom fields muertos.
+
+**F · Después del cierre (no bloquea, no olvidar):**
+- Gran doc (ítem 4) · **tablero con roles (ítem 5)** — ahí entran las mejoras de tablero
+  que Gabriel quiere, consumiendo `Atiende` y la tabla `Avisos` · costura **Ailoo**
+  (las bicis del puente provisorio no tienen ficha sin esto) · envs de rescate V1
+  apagadas (`FLOW_NS_2H` / `NOSHOW` / `SUELTO` + flujo propio para `BUSCANDO`) ·
+  binding `AI` para la capa IA de `mc-clasifica` · dominio `biketrust.cl` + `SITE_URL`.
+
+---
+
 ## 1 · Cerrar Airtable + guía a Luis  ← SE EMPIEZA ACÁ (2026-07-30 AM)
 
 El embudo ya mete leads; Luis opera de inmediato. Contiene:
