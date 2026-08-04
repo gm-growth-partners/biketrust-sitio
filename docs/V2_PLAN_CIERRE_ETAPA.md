@@ -16,13 +16,22 @@ de la Levo SL2 (queda dentro del ítem 2).
 > foto exacta de lo que falta, en el orden en que conviene hacerlo.
 
 **A · Cerrar la puerta de DM (bloquea todo lo demás):**
-- [ ] **Protocolo E2E de 13 pruebas** (`V2_CONSTRUCCION_DM.md` § Prueba E2E) — Gabriel
-      manda, Claude audita cada corrida contra Airtable. Al pasar: la puerta queda lista.
-- [ ] **Plantilla `aviso_equipo` en Meta** (corre EN PARALELO, no bloquea el E2E) — es el
-      WhatsApp al equipo cuando el bot no reconoce el mensaje o piden respuesta técnica
-      por chat. Tras aprobarse: envoltorio 1-nodo + campo `cf_aviso_datos` en ManyChat +
-      env `FLOW_NS_AVISO_EQUIPO` (+ opcional `AVISO_EQUIPO_SIDS`) + **redeploy**.
-      Mientras tanto el registro en la tabla `Avisos` YA corre (métrica intacta).
+- [x] ~~Protocolo E2E pruebas 1–7~~ ✅ 2026-08-04 — rastro auditado en Airtable (Interés
+      #278 Levo SL exacta · #279 quiz Kenevo · notas por ruta · dedup sumando al ticket).
+- [ ] **E2E pruebas 8–13** + repetir la 6 limpia (sin borrar el contacto a mitad de un
+      paso de captura — el paso queda armado, gotcha conocido). La 13 al final, con
+      cuenta desechable.
+- [ ] **Construir R1 · regla de baja** — NO existía (el doc la daba por hecha; cazado en
+      el E2E). Spec en `V2_CONSTRUCCION_DM.md` § E-0: keywords EXACTOS para palabras
+      sueltas (`baja` en «contiene» daría de baja a quien pregunta por una re**baja**),
+      mensaje ANTES del unsubscribe. La prueba 13 valida su precedencia.
+- [ ] **Sistema de avisos `aviso_equipo` — plantilla APROBADA por Meta (2026-08-04),
+      falta construirlo:** (1) Gabriel: flujo envoltorio de 1 nodo WhatsApp con la
+      plantilla, `{{1}}` bindeado a `cf_aviso_datos` (crear el campo, tipo texto) ·
+      (2) Gabriel: env `FLOW_NS_AVISO_EQUIPO` = namespace del envoltorio (+ opcional
+      `AVISO_EQUIPO_SIDS = 579628082,302195575`) · (3) Claude: **redeploy** · (4) probar
+      con un mensaje sin sentido → debe llegar el WhatsApp a Luis y quedar la fila en
+      `Avisos` con «WhatsApp enviado» ✓.
 
 **B · Airtable — detalles para que las pantallas operen como deben:**
 - [ ] Pantalla «2 · Visitas»: agregar **«Fecha y hora de visita»** (dispara la
@@ -49,7 +58,16 @@ de la Levo SL2 (queda dentro del ítem 2).
 
 **E · Entrega de la etapa:**
 - [ ] **Pasada completa de COPYS de todas las puertas** (pedido explícito 2026-07-31;
-      B3 renovado = el estándar).
+      B3 renovado = el estándar). Hallazgos del E2E que entran en esta pasada:
+      **ficha con intro por puerta** (portador `cf_ficha_intro`: MODELO ≠ quiz; versión
+      fina exige bandera `heroExacto` en `mc-match`) · **C-2 se acorta** a «Dale, te
+      llamamos 🙌» (hoy pide confirmar el número y B4 lo vuelve a pedir — redundante).
+- [ ] **Corregir `Estrategia/V2/guia_sistema_biketrust.html`** (el doc de presentación
+      a los dueños) — 4 afirmaciones hoy falsas: pinta como corriendo los 3 rescates
+      APAGADOS (recordatorio 2 h · no-show · reenganche 3 días — envs V1 sin flujo) ·
+      «llegó la bici encargada» NO es aviso automático (lo llama Luis) · cuenta la Levo
+      SL2 dentro de los 5 reels (son 4, el duplicado está pendiente) · «máximo 2
+      reintentos» en el teléfono no existe.
 - [ ] **GO-LIVE formal** (runbook §9): apagar las automatizaciones DM de V1 → rotar
       `MC_KEY` (la `MC_KEY_V2` de `.dev.vars`; actualizar `?key=` en TODAS las
       solicitudes externas) → rotar también el PAT de Airtable → al día siguiente,
