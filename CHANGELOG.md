@@ -10,6 +10,65 @@
 
 ## V2 · El embudo que apunta a la llamada — EN CONSTRUCCIÓN (desde 2026-07-27)
 
+### 2026-08-03/04 · Puerta de DM CONSTRUIDA (las 8 etapas) — y el enrutador se mudó a backend propio
+
+**El ítem 3 del plan de cierre quedó montado completo en ManyChat** (Gabriel, guiado
+etapa por etapa con `docs/V2_CONSTRUCCION_DM.md`): entrada E-0..E-4 (cualquier DM +
+respuesta a historia), cascada de 12 condiciones R-1..R-12 con rama else, las 12 rutas,
+anti-bucle y rama de adjuntos. Primeras corridas reales verificadas contra Airtable:
+**VENDER end-to-end** (captura de 4 datos → Consignaciones → teléfono → ticket con nota
+`VENDE: Kenevo expert…`) y **anti-bucle** («qué libros venden» → aviso + registro).
+
+**La decisión grande: el AI Step de ManyChat quedó DESCARTADO como enrutador.** En las
+pruebas respondía «Dame un segundo 👀» y moría en **0 % finalizado**: es un agente
+conversacional que solo avanza al siguiente paso cuando "decide" que cumplió su objetivo,
+y con un objetivo de clasificación muda espera mensajes para siempre — sin guardar
+`cf_intencion`, sin avanzar, sin error (bug conocido de la comunidad de ManyChat; el
+reprompt con orden de término explícita tampoco funcionó). → **`/api/mc-clasifica`**:
+el enrutador es ahora una Solicitud externa (avanza garantizado) con reglas deterministas
+que implementan las 12 rutas y sus precedencias (CONTACTO gana a todo · la pregunta le
+gana al gracias · precio sin modelo = BICI_SUELTA · diccionario de modelos con typos:
+«quenevo»→Kenevo, «swork»→S-Works). **45/45 tests offline** (`test/mc-clasifica.mjs`).
+Trae una capa de IA **dormida** (Workers AI; se activa con el binding `AI` en Pages +
+redeploy) — sin ella, lo ambiguo cae honesto en `NO_CLASIFICA` → anti-bucle → humano.
+Antes de eso el mismo límite obligó a reempaquetar los prompts (el campo «objetivo» real
+acepta 500 caracteres → versión corta + contexto ampliado), que quedó como referencia en
+el runbook §5.2.
+
+**Aviso a humanos con métrica de conversión (pedidos de Gabriel):**
+- **`/api/mc-aviso`** — cada «Notificar a administradores» del bot (AB-2 del anti-bucle,
+  T-2 de TECNICA) ahora además manda un WhatsApp real al equipo con la plantilla genérica
+  **`aviso_equipo`** (🟡 esperando aprobación de Meta; mientras tanto `no_configurado`,
+  sin romper nada). **Sin filtro de horario a propósito**: lead varado > silencio.
+- **Tabla `Avisos` en Airtable** — el endpoint registra cada aviso (resumen, handle,
+  motivo, mensaje, si el WhatsApp salió) con **link al Lead** y un rollup **«Terminó en
+  venta»** que sigue `Llegó a cerró`: total de avisos = filas, conversión = filas en 1.
+  100 % backend, cero trabajo del staff. Verificado con el caso real de «los libros».
+- Etapa 7 rediseñada según lo pidió Gabriel: **sin menú de rescate y sin contador de
+  golpes** — NO_CLASIFICA deriva directo a humano («Espérame un poco 🙌…»), modo humano
+  24 h con retorno automático. `cf_no_reconocido` quedó sin uso.
+
+**Bugs cazados probando con cuentas reales (2026-08-04), ninguno con error visible:**
+1. **Cable suelto A-2(2º)→A-3**: la ruta MODELO (54 % del tráfico) moría en silencio tras
+   borrar campos — «tienen la levo comp carbon» creaba el Lead y nada más. El backend
+   estaba perfecto (verificado offline: «Levo» → match Levo SL2 S-Works + otras).
+2. **«qué tienen en el catálogo» → NO_CLASIFICA**: regla nueva en `mc-clasifica` — el
+   browsing va a ASESORIA (el quiz recomienda).
+3. **El copy de GARANTIA decía recompra a 18 meses y son 12** (corrección de Gabriel).
+
+**As-built del canvas** (equivalencias, tabla completa al inicio del doc de construcción):
+E-2 detecta adjuntos con **«Last Reply Type es text»** (hallazgo de Gabriel, mejor que
+mirar Last Text Input: no arrastra texto viejo) · A-3 con la condición invertida («es
+desconocido») · V-1..V-4 en un solo bloque de 4 esperas · SE-CLASIFICA = «Acciones #4» ·
+B3 = «D3». **Los textos del AI Step del runbook §5.2 sobreviven como base del prompt de
+la capa IA de `mc-clasifica`.**
+
+**Además:** protocolo E2E actualizado a 13 pruebas (una por ruta + adjuntos + baja) ·
+las 4 verificaciones de pantalla bajaron a 2 (las del AI Step murieron con él) ·
+`Franja` quedó como campo legado (el bot V2 no la pregunta): ocultarla de la pantalla 2
+y agregar **«Fecha y hora de visita»** al panel — es EL campo que dispara la confirmación
+de visita (pendiente en la interfaz).
+
 ### 2026-07-30 (tarde) · Quiz construido + 6 bugs cazados probando con tráfico real
 **Ítems 1 y 2 del plan de cierre quedaron operativos.** El quiz de reels sin bici se montó
 en ManyChat (as-built: **una sola automatización** con triggers de varios posts en any-word,

@@ -34,20 +34,70 @@
 </head>
 <body>
 <main>
-<h1>Hoja de construcción — Puerta de DM V2 (AI Step enrutador)</h1>
+<h1>Hoja de construcción — Puerta de DM V2 (enrutador <code>mc-clasifica</code>)</h1>
 <blockquote>
 <p><strong>Qué es esto.</strong> El detalle ejecutable de la puerta de DM, en orden de construcción
 (del final hacia el principio). El diseño y el porqué viven en
-<a href="V2_RUNBOOK_MANYCHAT.md"><code>V2_RUNBOOK_MANYCHAT.md</code></a> §5 — <strong>los textos del AI Step se
-copian TAL CUAL de §5.2</strong> (no los duplico acá para que exista una sola versión).
-El mapa visual es <a href="embudo_dm_v2_bloques.svg"><code>embudo_dm_v2_bloques.svg</code></a>.</p>
+<a href="V2_RUNBOOK_MANYCHAT.md"><code>V2_RUNBOOK_MANYCHAT.md</code></a> §5.
+El mapa visual es <a href="embudo_dm_v2_bloques.svg"><code>embudo_dm_v2_bloques.svg</code></a>
+<em>(⚠️ el SVG describe el diseño anterior a las simplificaciones — la fuente de verdad
+es este doc)</em>.</p>
 <p><strong>Es UNA automatización, no se duplica.</strong> Los bloques con el mismo nombre que en las
 hojas de comentarios/quiz se construyen IGUAL que allá (mismo copy, mismos botones);
 acá solo se listan sus diferencias.</p>
-<p>Decisiones ya tomadas que esta hoja aplica: AI Step <strong>clasifica y extrae, nunca
-responde</strong> · <code>ASESORIA</code> → <strong>quiz</strong> (2026-07-30, umbral desplegado) · <code>mc-consigna</code>
+<p>Decisiones ya tomadas que esta hoja aplica: el enrutador <strong>clasifica y extrae, nunca
+responde</strong> (endpoint propio <code>mc-clasifica</code> — el AI Step de ManyChat quedó descartado,
+ver § E-4) · <code>ASESORIA</code> → <strong>quiz</strong> (2026-07-30, umbral desplegado) · <code>mc-consigna</code>
 ANTES del teléfono · un solo ticket (<code>Llamados</code>) · quiz de 3 preguntas.</p>
 </blockquote>
+<h2>🔨 ESTADO AS-BUILT (2026-08-04) — la puerta está CONSTRUIDA, en pruebas</h2>
+<p>Gabriel montó las <strong>8 etapas completas</strong> en ManyChat entre el 03 y el 04-08. Primeras
+corridas reales verificadas contra Airtable: VENDER end-to-end (ticket con nota
+<code>VENDE: Kenevo expert…</code> + Lead + teléfono) y el anti-bucle con registro en <code>Avisos</code>
+(<code>@_s.campos_</code> · «qué libros venden»). <strong>Desviaciones del canvas real vs esta hoja</strong>
+(equivalentes, no corregir):</p>
+<table>
+<thead>
+<tr>
+<th>En esta hoja</th>
+<th>En el canvas de ManyChat</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SE-CLASIFICA (E-4)</td>
+<td>bloque <strong>«Acciones #4»</strong> (Solicitud externa a <code>mc-clasifica</code>)</td>
+</tr>
+<tr>
+<td>B3 · la oferta de llamada</td>
+<td>bloque <strong>«D3»</strong></td>
+</tr>
+<tr>
+<td>E-2 con «Last Text Input»</td>
+<td>Condición <strong>«Last Reply Type es text»</strong> (mejor — ver E-2)</td>
+</tr>
+<tr>
+<td>A-3 «¿tiene valor?»</td>
+<td>condición <strong>invertida</strong> «es desconocido» (ver A-3)</td>
+</tr>
+<tr>
+<td>V-1…V-4 como 4 bloques</td>
+<td><strong>UN solo bloque</strong> de Instagram con 4 «Esperando texto» (ver Etapa 5)</td>
+</tr>
+<tr>
+<td>Etapa 7 en 5 bloques AB</td>
+<td><strong>4 nodos</strong> (AB-1 + notificación nativa fusionados en unas Acciones)</td>
+</tr>
+</tbody></table>
+<p><strong>Bugs cazados en las pruebas del 04-08</strong> (ya resueltos): cable suelto A-2(2º)→A-3
+mataba la ruta MODELO en silencio («tienen la levo comp carbon» → nada) · «qué tienen
+en el catálogo» caía en NO_CLASIFICA → regla nueva en <code>mc-clasifica</code> (→ ASESORIA) ·
+la recompra del copy de GARANTIA decía 18 meses y <strong>son 12</strong>.</p>
+<p><strong>Pendiente para cerrar:</strong> correr el protocolo E2E de 13 pruebas (abajo) · plantilla
+<code>aviso_equipo</code> en Meta → envoltorio → <code>FLOW_NS_AVISO_EQUIPO</code> + <code>cf_aviso_datos</code> →
+redeploy · en Airtable: agregar <strong>«Fecha y hora de visita»</strong> (y «Bicis para la visita»)
+al panel de la pantalla 2 y <strong>ocultar <code>Franja</code></strong> (legado V1, el bot ya no la pregunta) ·
+pasada de copys antes de entregar · go-live formal (runbook §9: apagar DMs V1 + rotar
+<code>MC_KEY</code> + borrar campos muertos).</p>
 <p>Reglas transversales: botones «Ir a un paso», nunca URL · <code>&lt;Nombre de usuario&gt;</code> desde el
 selector · <code>?key=&lt;MC_KEY&gt;</code> en TODAS las solicitudes externas · mapeos con rutas planas.</p>
 <hr>
@@ -470,6 +520,11 @@ Siguiente paso → <strong>A-3</strong>.</p>
 <code>mc-match</code> con el campo vacío</strong> (devolvería No-match fantasma).</li>
 <li>Tiene valor → <strong>A-4</strong>.</li>
 </ul>
+<blockquote>
+<p>🔧 <strong>AS-BUILT:</strong> quedó montada con la condición <strong>invertida</strong> — «<code>cf_modelo_buscado</code>
+es desconocido»: ✓ cumple (vacío) → BICI_SUELTA · ✗ no cumple (tiene valor) → A-4.
+Equivalente al diseño; no tocar.</p>
+</blockquote>
 <h3>A-4 · SE <code>mc-match</code> modo A — solicitud externa</h3>
 <p>POST · <code>Content-Type: application/json</code></p>
 <pre><code>https://biketrust-sitio.pages.dev/api/mc-match?key=&lt;MC_KEY&gt;
@@ -764,6 +819,13 @@ tras dos fallos, no un menú de bienvenida.)</em></p>
 ⚠️ <strong>entrada de UNA línea</strong> — el texto viaja crudo a la plantilla del staff y un salto
 de línea hace que Meta rechace el aviso sin error visible.</li>
 </ol>
+<blockquote>
+<p>🔧 <strong>AS-BUILT:</strong> las 4 preguntas viven en <strong>UN solo bloque</strong> de Instagram (4 pasos
+«Esperando texto del contacto» encadenados, cada uno guardando su <code>cf_v_*</code>). Las
+salidas opcionales de cada paso («Acción en respuesta» y «Si el contacto no ha
+respondido») quedan <strong>vacías a propósito</strong>. El «Siguiente paso» del final del bloque
+→ V-5.</p>
+</blockquote>
 <p><strong>V-5 · Condición:</strong> <code>cf_v_modelo</code> no vacío (mc-consigna da 422 si falta) → V-6; vacío → V-1.</p>
 <p><strong>V-6 · SE <code>mc-consigna</code>:</strong></p>
 <pre><code class="language-json">{
@@ -1004,12 +1066,12 @@ la excusa genérica, culpándole a Instagram, una sola vez.</strong> Sin disting
 (ya no hace falta verificar si el builder puede).</p>
 <pre><code>Chuta, no me deja abrir lo que me mandaste 🙈 ¿Me lo escribes por acá? Si es una bici, con el nombre del modelo me basta y te lo reviso al tiro.
 </code></pre>
-<p><strong>Cómo detectar «sin texto» en el builder:</strong> Condición sobre el campo de sistema
-<strong>«Last Text Input»</strong> — tiene valor → E-3 (llegó texto) · no tiene valor → este bloque.
-⚠️ Verificación de pantalla (la cubre la prueba 11 del protocolo): si al mandar un audio
-ManyChat conserva el texto ANTERIOR en «Last Text Input», el adjunto se colaría a E-3 con
-un mensaje viejo — en ese caso se ajusta el mecanismo con lo que la pantalla ofrezca
-(p. ej. disparadores separados por tipo de mensaje).</p>
+<p><strong>Cómo se detecta «sin texto» — AS-BUILT (2026-08-04):</strong> Condición <strong>«Last Reply Type
+es text»</strong> — cumple → E-3 (llegó texto) · no cumple → este bloque. <em>(Hallazgo de Gabriel
+en el builder, mejor que la idea original de mirar «Last Text Input»: el tipo de la última
+respuesta no arrastra texto viejo cuando llega un audio, así que el riesgo de colar un
+adjunto a E-3 con un mensaje anterior desaparece por construcción. La prueba 11 del
+protocolo lo confirma igual.)</em></p>
 <p>Secuencia del bloque:</p>
 <ol>
 <li><strong>¿<code>cf_excusa_enviada</code> = <code>si</code>?</strong> → NO repetir la excusa: solo notificar admins. FIN.</li>

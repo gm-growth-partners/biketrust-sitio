@@ -1,18 +1,49 @@
-# Hoja de construcción — Puerta de DM V2 (AI Step enrutador)
+# Hoja de construcción — Puerta de DM V2 (enrutador `mc-clasifica`)
 
 > **Qué es esto.** El detalle ejecutable de la puerta de DM, en orden de construcción
 > (del final hacia el principio). El diseño y el porqué viven en
-> [`V2_RUNBOOK_MANYCHAT.md`](V2_RUNBOOK_MANYCHAT.md) §5 — **los textos del AI Step se
-> copian TAL CUAL de §5.2** (no los duplico acá para que exista una sola versión).
-> El mapa visual es [`embudo_dm_v2_bloques.svg`](embudo_dm_v2_bloques.svg).
+> [`V2_RUNBOOK_MANYCHAT.md`](V2_RUNBOOK_MANYCHAT.md) §5.
+> El mapa visual es [`embudo_dm_v2_bloques.svg`](embudo_dm_v2_bloques.svg)
+> *(⚠️ el SVG describe el diseño anterior a las simplificaciones — la fuente de verdad
+> es este doc)*.
 >
 > **Es UNA automatización, no se duplica.** Los bloques con el mismo nombre que en las
 > hojas de comentarios/quiz se construyen IGUAL que allá (mismo copy, mismos botones);
 > acá solo se listan sus diferencias.
 >
-> Decisiones ya tomadas que esta hoja aplica: AI Step **clasifica y extrae, nunca
-> responde** · `ASESORIA` → **quiz** (2026-07-30, umbral desplegado) · `mc-consigna`
+> Decisiones ya tomadas que esta hoja aplica: el enrutador **clasifica y extrae, nunca
+> responde** (endpoint propio `mc-clasifica` — el AI Step de ManyChat quedó descartado,
+> ver § E-4) · `ASESORIA` → **quiz** (2026-07-30, umbral desplegado) · `mc-consigna`
 > ANTES del teléfono · un solo ticket (`Llamados`) · quiz de 3 preguntas.
+
+## 🔨 ESTADO AS-BUILT (2026-08-04) — la puerta está CONSTRUIDA, en pruebas
+
+Gabriel montó las **8 etapas completas** en ManyChat entre el 03 y el 04-08. Primeras
+corridas reales verificadas contra Airtable: VENDER end-to-end (ticket con nota
+`VENDE: Kenevo expert…` + Lead + teléfono) y el anti-bucle con registro en `Avisos`
+(`@_s.campos_` · «qué libros venden»). **Desviaciones del canvas real vs esta hoja**
+(equivalentes, no corregir):
+
+| En esta hoja | En el canvas de ManyChat |
+|---|---|
+| SE-CLASIFICA (E-4) | bloque **«Acciones #4»** (Solicitud externa a `mc-clasifica`) |
+| B3 · la oferta de llamada | bloque **«D3»** |
+| E-2 con «Last Text Input» | Condición **«Last Reply Type es text»** (mejor — ver E-2) |
+| A-3 «¿tiene valor?» | condición **invertida** «es desconocido» (ver A-3) |
+| V-1…V-4 como 4 bloques | **UN solo bloque** de Instagram con 4 «Esperando texto» (ver Etapa 5) |
+| Etapa 7 en 5 bloques AB | **4 nodos** (AB-1 + notificación nativa fusionados en unas Acciones) |
+
+**Bugs cazados en las pruebas del 04-08** (ya resueltos): cable suelto A-2(2º)→A-3
+mataba la ruta MODELO en silencio («tienen la levo comp carbon» → nada) · «qué tienen
+en el catálogo» caía en NO_CLASIFICA → regla nueva en `mc-clasifica` (→ ASESORIA) ·
+la recompra del copy de GARANTIA decía 18 meses y **son 12**.
+
+**Pendiente para cerrar:** correr el protocolo E2E de 13 pruebas (abajo) · plantilla
+`aviso_equipo` en Meta → envoltorio → `FLOW_NS_AVISO_EQUIPO` + `cf_aviso_datos` →
+redeploy · en Airtable: agregar **«Fecha y hora de visita»** (y «Bicis para la visita»)
+al panel de la pantalla 2 y **ocultar `Franja`** (legado V1, el bot ya no la pregunta) ·
+pasada de copys antes de entregar · go-live formal (runbook §9: apagar DMs V1 + rotar
+`MC_KEY` + borrar campos muertos).
 
 Reglas transversales: botones «Ir a un paso», nunca URL · `<Nombre de usuario>` desde el
 selector · `?key=<MC_KEY>` en TODAS las solicitudes externas · mapeos con rutas planas.
@@ -332,6 +363,10 @@ Siguiente paso → **A-3**.
   `mc-match` con el campo vacío** (devolvería No-match fantasma).
 - Tiene valor → **A-4**.
 
+> 🔧 **AS-BUILT:** quedó montada con la condición **invertida** — «`cf_modelo_buscado`
+> es desconocido»: ✓ cumple (vacío) → BICI_SUELTA · ✗ no cumple (tiene valor) → A-4.
+> Equivalente al diseño; no tocar.
+
 ### A-4 · SE `mc-match` modo A — solicitud externa
 POST · `Content-Type: application/json`
 ```
@@ -522,6 +557,12 @@ tras dos fallos, no un menú de bienvenida.)*
 4. `Cuéntame cómo está: kilómetros, si tiene algo suelto o algún golpe. Mientras más derecho seas, más firme es el número que te damos — así no te lo bajamos después de verla 🙌` → `cf_v_estado`
    ⚠️ **entrada de UNA línea** — el texto viaja crudo a la plantilla del staff y un salto
    de línea hace que Meta rechace el aviso sin error visible.
+
+> 🔧 **AS-BUILT:** las 4 preguntas viven en **UN solo bloque** de Instagram (4 pasos
+> «Esperando texto del contacto» encadenados, cada uno guardando su `cf_v_*`). Las
+> salidas opcionales de cada paso («Acción en respuesta» y «Si el contacto no ha
+> respondido») quedan **vacías a propósito**. El «Siguiente paso» del final del bloque
+> → V-5.
 
 **V-5 · Condición:** `cf_v_modelo` no vacío (mc-consigna da 422 si falta) → V-6; vacío → V-1.
 
@@ -739,12 +780,12 @@ la excusa genérica, culpándole a Instagram, una sola vez.** Sin distinguir tip
 Chuta, no me deja abrir lo que me mandaste 🙈 ¿Me lo escribes por acá? Si es una bici, con el nombre del modelo me basta y te lo reviso al tiro.
 ```
 
-**Cómo detectar «sin texto» en el builder:** Condición sobre el campo de sistema
-**«Last Text Input»** — tiene valor → E-3 (llegó texto) · no tiene valor → este bloque.
-⚠️ Verificación de pantalla (la cubre la prueba 11 del protocolo): si al mandar un audio
-ManyChat conserva el texto ANTERIOR en «Last Text Input», el adjunto se colaría a E-3 con
-un mensaje viejo — en ese caso se ajusta el mecanismo con lo que la pantalla ofrezca
-(p. ej. disparadores separados por tipo de mensaje).
+**Cómo se detecta «sin texto» — AS-BUILT (2026-08-04):** Condición **«Last Reply Type
+es text»** — cumple → E-3 (llegó texto) · no cumple → este bloque. *(Hallazgo de Gabriel
+en el builder, mejor que la idea original de mirar «Last Text Input»: el tipo de la última
+respuesta no arrastra texto viejo cuando llega un audio, así que el riesgo de colar un
+adjunto a E-3 con un mensaje anterior desaparece por construcción. La prueba 11 del
+protocolo lo confirma igual.)*
 
 Secuencia del bloque:
 1. **¿`cf_excusa_enviada` = `si`?** → NO repetir la excusa: solo notificar admins. FIN.
