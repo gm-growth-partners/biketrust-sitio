@@ -52,6 +52,11 @@ const CASOS = [
   ['gracias, mejor llámenme', 'CONTACTO', ''],          // CONTACTO gana a CIERRE
   ['la levo tiene mantención hecha?', 'TECNICA', 'Levo'], // técnica con modelo, sin precio
   ['quenevo', 'MODELO', 'Kenevo'],
+  // — casos de la prueba real 2026-08-04 (cuenta @_cmposunlocked) —
+  ['hola tienen la levo comp carbon', 'MODELO', 'Levo'],
+  ['hola, que tiene en el catalogo', 'ASESORIA', ''],
+  ['qué bicis tienen?', 'ASESORIA', ''],
+  ['que hay disponible?', 'BICI_SUELTA', ''], // aceptable: sus 2 botones (elegir/llamada) cubren el browsing igual
 ];
 
 let ok = 0, fail = 0;

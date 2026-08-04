@@ -103,8 +103,9 @@ export function clasificar(mensajeRaw) {
       /(la tienen|lo tienen|la del video|la de la historia|esta bici|esa bici|que talla|talla [smlx0-9]|de que ano|del ano|tiene fotos|mas fotos|kilometr)/.test(n))
     return { intencion: 'BICI_SUELTA', modelo: '' };
 
-  // 10 · ASESORIA — describe uso/presupuesto/estatura o pide recomendación
-  if (/(recomien|cual me (sirve|conviene|queda)|ayuda para elegir|no se cual|busco (una|algo) para|para (trail|cerro|enduro|xc|descenso|montana|ruta|ciudad|urbana)\b|mido [12]|presupuesto|ando en ?(\$|\d)|\b(un|dos|tres|cuatro|cinco|\d+) ?(palos?|millones|mill)\b)/.test(n))
+  // 10 · ASESORIA — describe uso/presupuesto/estatura, pide recomendación o
+  //      pregunta qué hay («qué tienen en el catálogo» → el quiz recomienda)
+  if (/(recomien|cual me (sirve|conviene|queda)|ayuda para elegir|no se cual|busco (una|algo) para|para (trail|cerro|enduro|xc|descenso|montana|ruta|ciudad|urbana)\b|mido [12]|presupuesto|ando en ?(\$|\d)|\b(un|dos|tres|cuatro|cinco|\d+) ?(palos?|millones|mill)\b|catalogo|que (bicis?|bicicletas?|modelos?)? ?tiene[sn]?\b|que hay (disponible|en venta|ahora)|que me ofrece)/.test(n))
     return { intencion: 'ASESORIA', modelo: '' };
 
   // 11 · SALUDO — solo el hola (o el «¿estás?» solo), sin pedir nada todavía
