@@ -625,6 +625,12 @@ cableado ingenuo el bot afirma por escrito una venta que no ocurrió.**
 > caracteres. La versión AS-BUILT (objetivo corto + contexto ampliado que absorbe rutas,
 > reglas y prohibiciones) está en `V2_CONSTRUCCION_DM.md` § E-4. Lo de abajo queda como
 > referencia del diseño completo.
+>
+> ⚠️ **2026-08-04 — el AI Step quedó DESCARTADO por completo:** no finaliza nunca
+> (0 % finalizado → no guarda campos → no avanza; bug conocido de la comunidad, el
+> reprompt no lo arregla). El enrutador real es **`/api/mc-clasifica`** (Solicitud
+> externa; reglas + IA opcional). Spec: `V2_CONSTRUCCION_DM.md` § E-4. Estos textos
+> sobreviven como base del prompt embebido en ese endpoint.
 
 #### Campo «objetivo» (*Dile a la IA lo que tiene que hacer*)
 
