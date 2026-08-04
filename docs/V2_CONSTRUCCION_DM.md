@@ -590,7 +590,7 @@ documento está sujeto a revisión legal)*
 ```
 Sí 🙌 Todas nuestras bicis salen con garantía Bike Trust de 6 meses: si un componente falla, lo reparamos sin costo — repuesto y mano de obra. No cubre golpes ni el desgaste normal de uso.
 
-Y algo que casi nadie ofrece: nos comprometemos a recomprarte la bici dentro de 18 meses, previa evaluación de su estado.
+Y algo que casi nadie ofrece: nos comprometemos a recomprarte la bici dentro de 12 meses, previa evaluación de su estado.
 
 ¿Te llamamos y Luis te cuenta el detalle según tu caso?
 ```
