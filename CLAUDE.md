@@ -10,6 +10,8 @@
 
 | Si necesitas… | Lee |
 |---|---|
+| **El sistema completo de punta a punta** (el gran doc — índice maestro) | [`docs/V2_SISTEMA_COMPLETO.md`](docs/V2_SISTEMA_COMPLETO.md) |
+| **Los copys finales de todas las puertas** (pasada 2026-08-05) | [`docs/V2_PASADA_COPYS.md`](docs/V2_PASADA_COPYS.md) |
 | **Entender qué pasó y por qué** (decisiones ya tomadas — no re-discutirlas) | [`CHANGELOG.md`](CHANGELOG.md) ← **partir por acá** |
 | El estado de cada pieza y qué falta | §2 de este archivo |
 | **El diseño V2** (qué se está construyendo ahora) | [`MANYCHAT_REBUILD.md`](MANYCHAT_REBUILD.md) §0.5–0.7 |
