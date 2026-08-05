@@ -10,6 +10,38 @@
 
 ## V2 · El embudo que apunta a la llamada — EN CONSTRUCCIÓN (desde 2026-07-27)
 
+### 2026-08-05 · La confirmación de visita, auditada en vivo: un bug cazado y el flujo Pendiente→Agendada
+
+**Bug real cazado probando la cadena completa:** la puerta de DM **no manda `subscriber_id`**
+en el body de `mc-llamado` (etapa A2+SE3) — el as-built lo omitía. Consecuencia medida en
+producción: el lead queda sin `MC subscriber id` y `salida-llamado` responde
+`sin_subscriber_id` → **ningún mensaje de salida (confirmación incluida) le llega a un lead
+de DM**. El doc ya está corregido; falta la línea en ManyChat (`"subscriber_id":
+"<ID de contacto>"`, mismo patrón que comentarios). La prueba en vivo confirmó de paso que
+el resto de la cadena SÍ funciona: fecha puesta → automatización → endpoint → visita copiada
+al lead + `visita_agendada`, y que `MANYCHAT_TOKEN`/`FLOW_NS_CONFIRMACION` están seteadas.
+
+**Idempotencia SOLO del mensaje** (`salida-llamado.js`): el sello cortaba TODO, así que las
+bicis elegidas después de poner la fecha nunca llegaban a `MC bici`, y un **reagendo por
+teléfono** dejaba los recordatorios corriendo sobre la fecha vieja. Ahora los datos del lead
+se refrescan siempre (el WhatsApp sigue saliendo una sola vez) y los sellos de recordatorio
+solo se limpian si la fecha CAMBIÓ — refrescar bicis no re-arma un recordatorio ya enviado.
+Tests 53/53 (`test/salida-llamado.mjs`, casos 17–19-bis nuevos).
+
+**Flujo Pendiente→Agendada en pantalla 2 (diseño de Gabriel):** opción nueva `Pendiente` en
+`Estado visita` (primera columna); la tarjeta que llega de «Visita agendada» entra ahí, y al
+completarle «Fecha y hora de visita» la automatización nueva **«Visitas: fecha puesta →
+Agendada»** (`wflzIYgsDfNxUacnW`) la mueve sola — el mismo gesto que dispara la confirmación.
+La automatización vieja quedó reescrita para escribir `Pendiente`. Ambas esperan
+activación/aplicación en la UI. Pendiente manual: agregar `Bicis para la visita` a los
+`watchFields` de «kanban a mensajes» (la API no edita automatizaciones con script — reconfirmado).
+
+**Limpieza y verdad de métricas:** borrados los registros de prueba del 04-08 (3 leads DM,
+3 tickets de Llamados incl. los ensayos de @_.matamala, 1 Solicitud, 1 Consignación, 2 Avisos);
+Intereses #278/#279 marcados DEMO (estaban contando como reales). `nuevo_llamado` reconfirmado
+funcionando (env `FLOW_NS_LLAMADO`); `aviso_equipo` con envoltorio creado por Gabriel (falta
+publicar + env `FLOW_NS_AVISO_EQUIPO` + redeploy).
+
 ### 2026-08-03/04 · Puerta de DM CONSTRUIDA (las 8 etapas) — y el enrutador se mudó a backend propio
 
 **El ítem 3 del plan de cierre quedó montado completo en ManyChat** (Gabriel, guiado

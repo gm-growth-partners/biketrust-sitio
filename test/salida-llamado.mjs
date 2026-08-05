@@ -38,8 +38,8 @@ const run = async (ticket, lead) => {
 };
 
 const LEAD_BASE = { 'MC subscriber id': '123', Estado: 'ficha_entregada' };
-let fail = 0;
-const check = (ok, msg, extra) => { console.log((ok ? 'OK   ' : 'FALLO') + ' · ' + msg + (ok ? '' : '  → ' + JSON.stringify(extra))); if (!ok) fail++; };
+let fail = 0, total = 0;
+const check = (ok, msg, extra) => { total++; console.log((ok ? 'OK   ' : 'FALLO') + ' · ' + msg + (ok ? '' : '  → ' + JSON.stringify(extra))); if (!ok) fail++; };
 
 // 1 · Visita agendada con permiso → propaga permiso, copia visita, limpia sellos, avanza estado, manda flujo
 {
@@ -221,5 +221,48 @@ const check = (ok, msg, extra) => { console.log((ok ? 'OK   ' : 'FALLO') + ' · 
   check(calls.nuevaSolicitud === null, 'visita: no toca la cola de sourcing', calls.nuevaSolicitud);
 }
 
-console.log(fail === 0 ? `\nTODAS OK (${43} aserciones)` : `\n${fail} FALLOS`);
+// 17 · Idempotencia SOLO del mensaje: con sello puesto, los DATOS igual se
+//      refrescan (bicis elegidas después de la fecha → llegan a MC bici)
+{
+  const { out, calls } = await run(
+    { Salida: 'Visita agendada', 'Teléfono': '+56911111111', Lead: ['recL'],
+      'Aviso salida enviado': '2026-08-05T10:00:00.000Z',
+      'Fecha y hora de visita': '2026-08-06T16:00:00.000Z',
+      'Bicis para la visita': ['recB1', 'recB2'] },
+    { ...LEAD_BASE, 'Fecha visita': '2026-08-06T16:00:00.000Z' });
+  check(out.accion === 'ya_enviado' && calls.sendFlow.length === 0, 'post-sello: NO reenvía el mensaje', out);
+  check(out.datosRefrescados === true, 'post-sello: lo reporta como refresco', out);
+  check(calls.patchLead?.['MC bici'] === 'Levo SL S-Works · Levo SL S-Works', 'post-sello: las bicis SÍ llegan a MC bici', calls.patchLead);
+  check(calls.nuevaSolicitud === null && !calls.patchTicket?.['Aviso salida enviado'], 'post-sello: ni solicitud ni re-sellado', calls.patchTicket);
+}
+// 18 · Post-sello con la MISMA fecha: NO re-arma recordatorios ya enviados
+{
+  const { calls } = await run(
+    { Salida: 'Visita agendada', 'Teléfono': '+56911111111', Lead: ['recL'],
+      'Aviso salida enviado': '2026-08-05T10:00:00.000Z',
+      'Fecha y hora de visita': '2026-08-06T16:00:00.000Z',
+      'Bicis para la visita': ['recB1'] },
+    { ...LEAD_BASE, 'Fecha visita': '2026-08-06T16:00:00.000Z' });
+  check(!('Recordatorio 48h' in (calls.patchLead || {})), 'misma fecha: NO limpia los sellos de recordatorio', calls.patchLead);
+}
+// 19 · Post-sello con fecha NUEVA (reagendo por teléfono): copia la fecha y
+//      limpia los sellos para que el ciclo de recordatorios corra de nuevo
+{
+  const { calls } = await run(
+    { Salida: 'Visita agendada', 'Teléfono': '+56911111111', Lead: ['recL'],
+      'Aviso salida enviado': '2026-08-05T10:00:00.000Z',
+      'Fecha y hora de visita': '2026-08-08T15:00:00.000Z' },
+    { ...LEAD_BASE, 'Fecha visita': '2026-08-06T16:00:00.000Z' });
+  check(calls.patchLead?.['Fecha visita'] === '2026-08-08T15:00:00.000Z', 'reagendo: la fecha nueva SÍ llega al lead', calls.patchLead);
+  check(calls.patchLead?.['Recordatorio 48h'] === null, 'reagendo: re-arma los recordatorios', calls.patchLead);
+}
+// 19-bis · Sello puesto y fecha borrada: no hace nada (estado raro, no romper)
+{
+  const { out, calls } = await run(
+    { Salida: 'Visita agendada', 'Teléfono': '+56911111111', Lead: ['recL'],
+      'Aviso salida enviado': '2026-08-05T10:00:00.000Z' }, { ...LEAD_BASE });
+  check(out.accion === 'ya_enviado' && !calls.patchLead, 'sello sin fecha: no toca nada', out);
+}
+
+console.log(fail === 0 ? `\nTODAS OK (${total} aserciones)` : `\n${fail} FALLOS`);
 process.exit(fail === 0 ? 0 : 1);

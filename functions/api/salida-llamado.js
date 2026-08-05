@@ -126,8 +126,14 @@ export async function onRequestPost({ request, env }) {
   const cfg = SALIDAS[salida];
   if (!cfg) return reply({ ok: true, accion: 'salida_sin_mensaje', salida });
 
-  // 2) IDEMPOTENCIA. Sin esto, cada corrección del ticket dispara otro WhatsApp.
-  if (t['Aviso salida enviado']) return reply({ ok: true, accion: 'ya_enviado', salida });
+  // 2) IDEMPOTENCIA — pero SOLO del mensaje (2026-08-05). El WhatsApp sale una
+  //    única vez; los DATOS del lead se refrescan siempre. Sin esto, las bicis
+  //    elegidas después de poner la fecha nunca llegaban a `MC bici`, y un
+  //    reagendo por teléfono dejaba los recordatorios corriendo sobre la fecha
+  //    vieja — el sello cortaba todo, no solo el envío.
+  const yaEnviado = !!t['Aviso salida enviado'];
+  // Salidas sin visita que copiar: con el sello puesto no queda nada que refrescar.
+  if (yaEnviado && !cfg.copiaVisita) return reply({ ok: true, accion: 'ya_enviado', salida });
 
   // 2b) CLASIFICAR ≠ COMPLETAR. El Kanban de Luis es para mover la tarjeta al
   //     tipo de petición, no para llenar formularios en medio de una llamada. El
@@ -138,6 +144,8 @@ export async function onRequestPost({ request, env }) {
   //     corre de nuevo y ahí sí sale la confirmación. El ticket queda clasificado
   //     y visible en su columna mientras tanto.
   if (cfg.copiaVisita && !t['Fecha y hora de visita']) {
+    // Con sello y sin fecha (fecha borrada tras enviar) no hay nada que hacer.
+    if (yaEnviado) return reply({ ok: true, accion: 'ya_enviado', salida });
     if (cfg.estadoTicket && t['Estado'] !== cfg.estadoTicket) {
       await afetch(`${api('Llamados')}/${llamadoId}`, {
         method: 'PATCH', headers: wH,
@@ -173,9 +181,15 @@ export async function onRequestPost({ request, env }) {
   //       el ciclo de recordatorios vuelva a correr sobre la fecha nueva.
   if (cfg.copiaVisita && t['Fecha y hora de visita']) {
     upd['Fecha visita'] = t['Fecha y hora de visita'];
-    upd['Recordatorio 48h'] = null;
-    upd['Recordatorio 8am'] = null;
-    upd['Recordatorio 2h'] = null;
+    // Los sellos de recordatorio se limpian SOLO si la fecha cambió (reagendo).
+    // Refrescar las bicis sin mover la fecha no debe re-armar un recordatorio
+    // ya enviado — el cron lo mandaría de nuevo.
+    const fechaAntes = lf['Fecha visita'] ? new Date(lf['Fecha visita']).getTime() : null;
+    if (fechaAntes !== new Date(t['Fecha y hora de visita']).getTime()) {
+      upd['Recordatorio 48h'] = null;
+      upd['Recordatorio 8am'] = null;
+      upd['Recordatorio 2h'] = null;
+    }
 
     // Las bicis que Luis va a PREPARAR (máx 3). Se escriben como texto en
     // `MC bici` del Lead, que es el campo que ya leen el briefing (`biciDe`) y
@@ -214,6 +228,14 @@ export async function onRequestPost({ request, env }) {
     method: 'PATCH', headers: wH, body: JSON.stringify({ typecast: true, fields: upd }),
   });
   if (!lp.ok) return reply({ error: 'airtable_lead_update', status: lp.status, detail: await lp.text() }, 502);
+
+  // Mensaje ya enviado → los datos quedaron al día y acá se corta: ni WhatsApp
+  // nuevo, ni solicitud, ni re-sellado. Es el caso «Luis completó/corrigió el
+  // ticket después de la confirmación».
+  if (yaEnviado) {
+    return reply({ ok: true, accion: 'ya_enviado', salida, leadId,
+      datosRefrescados: true, visitaCopiada: !!upd['Fecha visita'] });
+  }
 
   // 3d) ENCARGO → nace el ticket en `Solicitudes` (la cola de sourcing).
   //     Es el eslabón que conecta la llamada con la otra pantalla: sin esto el

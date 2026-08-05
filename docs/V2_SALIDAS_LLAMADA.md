@@ -152,8 +152,11 @@ El endpoint hace lo mismo que ya hace `cron-recordatorios`:
 4. Dispara el flujo con `sendFlow`.
 
 **Guardas obligatorias:**
-- **Idempotencia:** campo `Aviso salida enviado` (dateTime) en `Llamados`. Si ya tiene valor,
-  no reenviar — si no, cada vez que Luis corrija algo del ticket sale otro WhatsApp.
+- **Idempotencia — SOLO del mensaje (afinada 2026-08-05):** campo `Aviso salida enviado`
+  (dateTime) en `Llamados`. Si ya tiene valor, el WhatsApp no se reenvía — pero los DATOS
+  del lead sí se refrescan siempre: las bicis elegidas después de la fecha llegan igual a
+  `MC bici`, y un reagendo por teléfono copia la fecha nueva y re-arma los recordatorios
+  (los sellos de recordatorio solo se limpian si la fecha CAMBIÓ).
 - **Permiso:** para `Agendamiento`, `Encargo` y `Región` exigir `Permiso WhatsApp = ✓`
   (lo marca Luis en la llamada). **`No contestado` es la excepción**: no hubo llamada donde
   pedirlo, y el permiso viene del bloque de confirmación del bot (§4.2).

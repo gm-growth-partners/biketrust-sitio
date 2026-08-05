@@ -96,11 +96,17 @@ https://biketrust-sitio.pages.dev/api/mc-llamado?key=<MC_KEY>
 ```json
 {
   "handle": "<Nombre de usuario>",
+  "subscriber_id": "<ID de contacto>",
   "telefono": "{{cf_telefono}}",
   "bici": "{{cf_hero_bici}}",
   "notas": "Puerta 2 {{cf_modelo_texto}} · dijo: {{cf_mensaje}}"
 }
 ```
+   - ⚠️ **`subscriber_id` es OBLIGATORIO** (omisión cazada 2026-08-05): sin él el Lead
+     queda sin `MC subscriber id` y `salida-llamado` responde `sin_subscriber_id` →
+     NINGÚN mensaje de salida (confirmación de visita incluida) le llega a los leads
+     de esta puerta. `<ID de contacto>` = campo de sistema **desde el selector**
+     (mismo patrón que la puerta de comentarios, fix 2026-07-30).
    - `<Nombre de usuario>` = campo de sistema de Instagram **desde el selector**.
    - `<MC_KEY>` = la llave vigente (la del script de «kanban a mensajes»), NO la V2.
    - **Sin** `reel` · `ciudad` · `franja` · `optin`. `bici` vacío si la ruta no pasó por
