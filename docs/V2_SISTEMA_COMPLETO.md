@@ -125,8 +125,11 @@ Las que gobiernan el V2 (el resto en CLAUDE.md §4):
 | Cosa | Estado | Nota |
 |---|---|---|
 | Rescates: recordatorio 2 h · no-show · reenganche >3 días | 🔴 APAGADOS | envs `FLOW_NS_2H/NOSHOW/SUELTO` sin flujo; código listo — se encienden creando el flujo + env + redeploy |
-| Duplicado Levo SL2 (6 elementos) | ⬜ | tabla de duplicación al final de `V2_CONSTRUCCION_COMENTARIOS.md` |
-| B3 nuevo en comentarios/quiz + C-2 corto | ⬜ | `V2_PASADA_COPYS.md` §1–2 |
+| Duplicado Levo SL2 | ✅ | **No hacía falta: el post `Dad9A_zJy0D` YA tenía su automatización desde el 30-jul**, mal nombrada «Levo SL S-Works 6/07/2026». El duplicado que se creó el 05-ago quedó BORRADO (papelera) el 06-ago y la original se renombró. Ver CHANGELOG 2026-08-06 |
+| B3 nuevo en comentarios/quiz + C-2 corto | ✅ | `V2_PASADA_COPYS.md` §1–2, pegados y publicados 2026-08-05 |
+| Reel **Levo 4G** (`DZ1O3ViO2Qz`) sin automatización propia | ⬜ | los reels con flujo propio son 4 (SL2 · Epic 8 · Creo · Levo SL M); el 4G no aparece en `V2 › P1 Comentarios › Reels`. Decidir si se monta o si se deja al quiz |
+| Catch-all any-word del quiz (~75 disparadores «cualquier comentario») | ⚠️ ACTIVO | `Plantilla reel sin bici específica` tiene disparadores #20–#95 sobre posts del catálogo, todos ON salvo el #20. **Sin la prueba del doble disparo** no sabemos si alguno pisa a los 4 reels con ficha propia → la resuelve el humo con cuenta virgen |
+| Respuestas públicas de fábrica en 3 automatizaciones por-reel | ⬜ | epic 8 pro · Turbo Creo · Levo SL 21/07 (la SL2 ya quedó con las 5 estándar) |
 | Go-live formal: apagar restos V1 → **rotar `MC_KEY` + PAT** → borrar 13 cf muertos | ⬜ | runbook §9 · **la rotación SOLO con aprobación de Gabriel** |
 | Costura **Ailoo** (alta de bici + venta con teléfono) | ⏸ | `Referencia` ya es la llave pública unidad a unidad; memoria `project_biketrust_ailoo_integracion` |
 | Dominio `biketrust.cl` + `SITE_URL` · binding `AI` (capa IA del clasificador) · flujo propio `FLOW_NS_BUSCANDO` | ⬜ | deuda menor, CLAUDE.md §8 |

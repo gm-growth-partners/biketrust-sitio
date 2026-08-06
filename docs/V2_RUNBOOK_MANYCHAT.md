@@ -505,14 +505,18 @@ Cualquier duda me escribes por acá. Y si alguien la aparta antes, te aviso.
 
 ## §4 · Duplicar ×5 — qué cambia y qué no
 
-Al duplicar la automatización cambian **exactamente 3 cosas**:
+Al duplicar la automatización cambian **exactamente 4 cosas**:
 
 1. **El post** del disparador.
 2. **Las 10 palabras clave.**
 3. **El `reel`** (shortcode) en el body de `mc-evento` **y** de `mc-llamado`. ← los dos.
+4. **La URL del botón «Ver Ficha 🔍»** en B2 **y** en B2-E →
+   `https://biketrust-sitio.pages.dev/ficha/<slug>`. El as-built real la lleva **fija**
+   (el master trae `biketrust.cl` de placeholder); verificar el slug con un `curl` antes
+   de pegarlo.
 
-> ⚠️ Si el flujo quedó con un botón «Abrir ficha» de URL fija, cambiar también el slug. Con
-> el diseño de acá no hace falta: la ficha viene en `{{cf_bici_ficha}}` desde Airtable.
+> Las 5 respuestas públicas se heredan del master ya rotadas — no tocarlas (una de ellas
+> lleva «míralo en Solicitudes de mensaje», debe seguir así).
 
 **Los 6 reels:**
 
@@ -524,6 +528,28 @@ Al duplicar la automatización cambian **exactamente 3 cosas**:
 | 4 | `Dad9A_zJy0D` | «Levo SL» | Levo SL2 S-Works · S4 |
 | 5 | `DZ1O3ViO2Qz` | *(caption sin palabra clave)* | Levo 4G S-Works · S4 |
 | 6 | `DbJy7ynB5T4` | «Ruta» | ⚠️ **SIN BICI, a propósito** |
+
+> **⚠️ EL MAPA REAL (auditado en pantalla el 2026-08-06) NO es «6 automatizaciones».**
+> En `V2 › P1 Comentarios › Reels` hay **4 flujos por-reel LIVE**, más el quiz aparte:
+>
+> | Automatización (nombre en ManyChat) | `reel` que manda | Estado |
+> |---|---|---|
+> | **Levo SL2 S-Works 6/07/2026** | `Dad9A_zJy0D` | LIVE ✅ *(se llamaba «Levo SL S-Works 6/07/2026» — nombre de otra bici; renombrada 06-ago)* |
+> | epic 8 pro 20/07/2026 | `DbCLcpEB4aT` | LIVE |
+> | Turbo Creo S-Works 27/07/2026 | `DbQjdNLBmnv` | LIVE |
+> | Levo SL S-Works 21/07/2026 | `DbEh9fBI9Np` | LIVE |
+> | Tarmac S-Works SL6 13/07/2026 | *(post `DawQ95EO5mn`)* | **APAGADA 06-ago** — no hay Tarmac SL6 en Airtable, B2 no se podía armar |
+> | `DZ1O3ViO2Qz` (Levo 4G) | — | **SIN automatización propia.** Decidir si se monta |
+> | `DbJy7ynB5T4` (Ruta, sin bici) | — | lo cubre el quiz, por diseño |
+>
+> **Lección cara (06-ago):** el nombre de la automatización **no es evidencia** de a qué reel
+> apunta. Antes de crear un duplicado, verificar el `reel` del body de `mc-evento` **y** la
+> imagen del post del disparador — si no, se montan dos flujos sobre el mismo reel y el
+> comentarista recibe dos DMs. Pasó: el post de la SL2 ya estaba cubierto y se le creó un
+> segundo flujo (borrado sin alcanzar a disparar).
+>
+> **Humo pendiente** con cuenta ajena al equipo: comentar «precio» en el reel de la SL2 y
+> verificar que llegue **un solo** DM y que B1 nombre la Levo SL2.
 
 > **El reel 6 no está roto.** Su fila en `Reels` existe (para que el Interés quede atribuido
 > al video) pero **sin `Bici`**, porque el post compara Tarmac vs Creo y enlazar una bici

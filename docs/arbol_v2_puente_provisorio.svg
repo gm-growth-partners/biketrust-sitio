@@ -1,0 +1,78 @@
+<svg width="1000" height="1010" viewBox="0 0 1000 1010" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="t d">
+<title id="t">Árbol de decisiones — Puente provisorio · posts publicados antes de estar en Ailoo</title>
+<desc id="d">Respuesta automática provisoria de los posts Levo Comp Carbon y Turbo Kenevo: sin ficha posible (la bici no está en Ailoo), captura el teléfono para no perder al interesado.</desc>
+<defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0L8,4L0,8z" fill="#6E685D"/></marker></defs>
+<rect x="0" y="0" width="1000" height="1010" fill="#0A0A0A"/>
+
+<text x="60" y="44" font-size="19" font-weight="600" fill="#F3EEE4">El puente provisorio — posts del sábado (Levo Comp Carbon · Turbo Kenevo)</text>
+<text x="60" y="66" font-size="12" fill="#8A8377">Las bicis se publicaron antes de estar cargadas en Ailoo — sin Ailoo no hay datos para generar la ficha ni el flujo completo.</text>
+<text x="60" y="84" font-size="12" fill="#8A8377">Decisión deliberada: capturar el teléfono para no perder al interesado. Bike Trust, semana 31.</text>
+
+<!-- START -->
+<rect x="230" y="108" width="540" height="56" rx="12" fill="#1A1510" stroke="#4A3B27" stroke-width="1.5"/>
+<text x="500" y="131" font-size="13" font-weight="600" fill="#C9A26E" text-anchor="middle">💬 Comentario «Levo Comp» / «Kenevo» en el post</text>
+<text x="500" y="150" font-size="11" fill="#8A8377" text-anchor="middle">respuesta pública en el comentario — y sigue en privado</text>
+
+<path d="M500,164 L500,186" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<!-- MENSAJE -->
+<rect x="230" y="190" width="540" height="108" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="500" y="208" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">EL MENSAJE ÚNICO DEL PUENTE</text>
+<text x="500" y="226" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Hola! Lamentablemente aún no hemos pasado esta bici por</text>
+<text x="500" y="242" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">nuestro proceso de inspección, por lo cual no te podemos</text>
+<text x="500" y="258" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">responder por acá respecto a sus detalles. Si quieres conocer más,</text>
+<text x="500" y="274" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">uno de nuestros especialistas se puede poner en contacto contigo.»</text>
+
+<path d="M400,298 L280,328" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M600,298 L700,328" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<!-- NO -->
+<rect x="222" y="332" width="112" height="22" rx="11" fill="#12100D" stroke="#43302A" stroke-width="1"/>
+<text x="278" y="347" font-size="10" letter-spacing="1" fill="#C08863" text-anchor="middle">«NO GRACIAS»</text>
+<rect x="196" y="362" width="170" height="40" rx="10" fill="none" stroke="#2A2620" stroke-width="1.2" stroke-dasharray="6 4"/>
+<text x="281" y="387" font-size="12" fill="#8A8377" text-anchor="middle">fin — sin insistir</text>
+
+<!-- SI -->
+<rect x="622" y="332" width="156" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="700" y="347" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«SÍ, CONTÁCTENME»</text>
+
+<rect x="510" y="362" width="380" height="60" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="700" y="382" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Perfecto, déjanos tu número y nos</text>
+<text x="700" y="398" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">pondremos en contacto a la brevedad»</text>
+<text x="700" y="414" font-size="11" fill="#8A8377" text-anchor="middle">la persona escribe su teléfono</text>
+
+<path d="M700,422 L700,442" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="510" y="446" width="380" height="76" rx="12" fill="#141210" stroke="#31402F" stroke-width="1.4"/>
+<text x="700" y="464" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">LA PROMESA — FIN DEL PUENTE</text>
+<text x="700" y="482" font-size="12" font-style="italic" fill="#8FA98A" text-anchor="middle">«Perfecto, Luis Sulbarán se pondrá en contacto</text>
+<text x="700" y="498" font-size="12" font-style="italic" fill="#8FA98A" text-anchor="middle">contigo en los próximos minutos. Nos vemos!»</text>
+<text x="700" y="514" font-size="10.5" fill="#6E685D" text-anchor="middle">el teléfono queda guardado en ManyChat, a la vista del equipo</text>
+
+<!-- QUE LOGRA / QUE NO -->
+<rect x="60" y="580" width="425" height="170" rx="12" fill="#141210" stroke="#31402F" stroke-width="1.3"/>
+<text x="84" y="608" font-size="11" letter-spacing="1.5" fill="#8FA98A">LO QUE EL PUENTE LOGRA</text>
+<text x="84" y="634" font-size="12" fill="#B8B0A2">· Ningún comentarista de los primeros días queda</text>
+<text x="84" y="651" font-size="12" fill="#B8B0A2">  sin atención (son los de mayor movimiento)</text>
+<text x="84" y="675" font-size="12" fill="#B8B0A2">· El teléfono queda capturado — 3 compradores</text>
+<text x="84" y="692" font-size="12" fill="#B8B0A2">  este fin de semana (≈23%: la meta del dueño)</text>
+<text x="84" y="716" font-size="12" fill="#B8B0A2">· Honesto con el cliente: no promete una ficha</text>
+<text x="84" y="733" font-size="12" fill="#B8B0A2">  que todavía no existe</text>
+
+<rect x="515" y="580" width="425" height="170" rx="12" fill="#141210" stroke="#4A3327" stroke-width="1.3"/>
+<text x="539" y="608" font-size="11" letter-spacing="1.5" fill="#C08863">LO QUE EL PUENTE NO HACE (Y EL FLUJO COMPLETO SÍ)</text>
+<text x="539" y="634" font-size="12" fill="#B8B0A2">· No entrega ficha (no existe sin los datos de Ailoo)</text>
+<text x="539" y="656" font-size="12" fill="#B8B0A2">· No crea el ticket con brief ni avisa solo a Luis</text>
+<text x="539" y="678" font-size="12" fill="#B8B0A2">· No calcula la promesa contra el horario real</text>
+<text x="539" y="700" font-size="12" fill="#B8B0A2">· No corrobora el número ni queda en las métricas</text>
+<text x="539" y="726" font-size="12" fill="#C9A26E">→ mientras viva el puente, revisar la bandeja de</text>
+<text x="539" y="743" font-size="12" fill="#C9A26E">  ManyChat es rutina operativa diaria</text>
+
+<!-- LA COSTURA -->
+<rect x="60" y="790" width="880" height="150" rx="12" fill="none" stroke="#4A3B27" stroke-width="1.3" stroke-dasharray="7 5"/>
+<text x="84" y="818" font-size="11" letter-spacing="1.5" fill="#C9A26E">LA COSTURA — CÓMO SE RETIRA EL PUENTE (TRABAJO DE LA SEMANA 32)</text>
+<text x="84" y="846" font-size="12.5" fill="#C5BDAF">1 · Cargar la Levo Comp Carbon y la Turbo Kenevo en Ailoo (inspección y datos completos)</text>
+<text x="84" y="870" font-size="12.5" fill="#C5BDAF">2 · De Ailoo a Airtable → se genera y publica la ficha certificada de cada una</text>
+<text x="84" y="894" font-size="12.5" fill="#C5BDAF">3 · Conectar a cada post la automatización V2 completa (el árbol de bici específica) — rutina documentada de duplicación</text>
+<text x="84" y="918" font-size="12.5" fill="#C5BDAF">4 · Llamar YA a los teléfonos que el puente capturó — la promesa fue «en los próximos minutos»</text>
+</svg>

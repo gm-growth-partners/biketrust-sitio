@@ -1,0 +1,574 @@
+<svg width="2100" height="3860" viewBox="0 0 2100 3860" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="t d">
+<title id="t">Árbol de decisión completo — Puerta 2 · Mensajes directos (Bike Trust V2)</title>
+<desc id="d">Todos los mensajes que lee la persona y todas las decisiones del sistema en la puerta de DM: los tres filtros de entrada, el enrutador de 12 rutas con su rama de escape, y la convergencia común hasta la confirmación de llamada.</desc>
+<defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0L8,4L0,8z" fill="#6E685D"/></marker></defs>
+<rect x="0" y="0" width="2100" height="3860" fill="#0A0A0A"/>
+
+<text x="60" y="44" font-size="19" font-weight="600" fill="#F3EEE4">Puerta 2 · Mensajes directos — árbol de decisión completo</text>
+<text x="60" y="66" font-size="12" fill="#8A8377">Una sola automatización, no se duplica · sin menú y sin palabras clave: el sistema lee el texto libre y lo manda a una de 12 rutas · Bike Trust V2</text>
+
+<!-- ============ R1 ============ -->
+<rect x="1720" y="86" width="360" height="104" rx="12" fill="#12100D" stroke="#43302A" stroke-width="1.3" stroke-dasharray="6 4"/>
+<text x="1900" y="106" font-size="9.5" letter-spacing="1" fill="#C08863" text-anchor="middle">R1 · REGLA DE BAJA — CORRE ANTES QUE TODO</text>
+<text x="1900" y="125" font-size="10" fill="#8A8377" text-anchor="middle">stop · baja · no me escribas · no me escriban · no me molesten</text>
+<text x="1900" y="139" font-size="10" fill="#8A8377" text-anchor="middle">sácame · sacame · unsubscribe · no quiero · déjenme</text>
+<text x="1900" y="161" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Listo, no te escribimos más 👌»</text>
+<text x="1900" y="181" font-size="11" fill="#8FA98A" text-anchor="middle">ni siquiera pasa por el enrutador · nunca intenta recuperar</text>
+
+<!-- ============ ENTRADA ============ -->
+<rect x="670" y="88" width="560" height="60" rx="12" fill="#1A1510" stroke="#4A3B27" stroke-width="1.5"/>
+<text x="950" y="112" font-size="13" font-weight="600" fill="#C9A26E" text-anchor="middle">📩 Cualquier mensaje directo — sin palabras clave</text>
+<text x="950" y="131" font-size="11" fill="#8A8377" text-anchor="middle">también las respuestas a historias · una sola automatización para todo el tráfico de DM</text>
+
+<path d="M950,148 L950,176" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="720" y="180" width="460" height="44" rx="22" fill="#17140F" stroke="#7A6A4A" stroke-width="1.3" stroke-dasharray="6 4"/>
+<text x="950" y="207" font-size="13" font-weight="600" fill="#C9A26E" text-anchor="middle">¿Hay una persona del equipo atendiendo?</text>
+
+<path d="M810,224 L810,242 L240,242 L240,254" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="75" y="258" width="330" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="240" y="273" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">SÍ · MODO HUMANO ACTIVO</text>
+<rect x="60" y="294" width="360" height="58" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="240" y="313" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">EL BOT NO DICE NADA — fin</text>
+<text x="240" y="336" font-size="11" fill="#8FA98A" text-anchor="middle">vuelve solo al circuito automático a las 24 h</text>
+
+<path d="M950,224 L950,254" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="905" y="258" width="90" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="950" y="273" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">NO</text>
+<path d="M950,280 L950,300" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="720" y="304" width="460" height="44" rx="22" fill="#17140F" stroke="#7A6A4A" stroke-width="1.3" stroke-dasharray="6 4"/>
+<text x="950" y="331" font-size="13" font-weight="600" fill="#C9A26E" text-anchor="middle">¿El mensaje trae texto?</text>
+
+<path d="M790,348 L790,366 L280,366 L280,378" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="85" y="382" width="390" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="280" y="397" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">NO · AUDIO, FOTO, STICKER O POST COMPARTIDO</text>
+
+<rect x="120" y="418" width="320" height="44" rx="22" fill="#17140F" stroke="#7A6A4A" stroke-width="1.3" stroke-dasharray="6 4"/>
+<text x="280" y="445" font-size="13" font-weight="600" fill="#C9A26E" text-anchor="middle">¿ya se le mandó la excusa?</text>
+
+<path d="M210,462 L170,472" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M350,462 L380,472" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="130" y="476" width="80" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="170" y="491" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">SÍ</text>
+<text x="170" y="516" font-size="11" fill="#8FA98A" text-anchor="middle">no se repite. Fin</text>
+<text x="170" y="531" font-size="10.5" fill="#8A8377" text-anchor="middle">(solo aviso al equipo)</text>
+<rect x="340" y="476" width="80" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="380" y="491" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">NO</text>
+
+<path d="M380,498 L380,552" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="40" y="556" width="460" height="90" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="270" y="574" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">LA EXCUSA — sale UNA sola vez</text>
+<text x="270" y="595" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Chuta, no me deja abrir lo que me mandaste 🙈</text>
+<text x="270" y="612" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">¿Me lo escribes por acá? Si es una bici, con el</text>
+<text x="270" y="629" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">nombre del modelo me basta y te lo reviso al tiro.»</text>
+<text x="270" y="668" font-size="11" fill="#8FA98A" text-anchor="middle">+ aviso al equipo · si después escribe texto, vuelve a entrar por arriba</text>
+
+<path d="M950,348 L950,378" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="870" y="382" width="160" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="950" y="397" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">SÍ, ES TEXTO</text>
+<path d="M950,404 L950,436" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<!-- ROUTER -->
+<rect x="570" y="440" width="760" height="102" rx="12" fill="#1A1510" stroke="#4A3B27" stroke-width="1.5"/>
+<text x="950" y="462" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">EL ENRUTADOR · lee el texto y lo manda a UNA de 12 rutas</text>
+<text x="950" y="489" font-size="15" font-weight="600" fill="#C9A26E" text-anchor="middle">🧭 ¿Qué está pidiendo la persona?</text>
+<text x="950" y="511" font-size="10.5" fill="#8A8377" text-anchor="middle">clasifica y extrae, nunca responde: todo lo que la persona lee es copy nuestro, escrito de antemano</text>
+<text x="950" y="528" font-size="10.5" fill="#8A8377" text-anchor="middle">si no logra clasificarlo —o devuelve cualquier cosa rara— cae en «no entendí», nunca en el vacío</text>
+
+<path d="M950,542 L950,572" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<text x="950" y="592" font-size="11" fill="#8FA98A" text-anchor="middle">las 12 rutas, una por fila ↓</text>
+
+<g transform="translate(0,90)">
+<!-- ============ FILA 1 · MODELO ============ -->
+<path d="M40,606 L1500,606" stroke="#221F1A" stroke-width="1"/>
+<rect x="40" y="618" width="300" height="26" rx="8" fill="#1A1510" stroke="#4A3B27" stroke-width="1.2"/>
+<text x="190" y="636" font-size="12" font-weight="600" fill="#C9A26E" text-anchor="middle">1 · MODELO</text>
+<text x="40" y="662" font-size="10.5" fill="#8A8377">nombró una bici — 54 % del tráfico</text>
+<text x="40" y="678" font-size="10.5" fill="#8A8377">«tienen la Levo SL?» · «busco una Epic»</text>
+<text x="40" y="694" font-size="10.5" fill="#8A8377">«cuánto vale la Creo?» · «quenevo»</text>
+
+<rect x="380" y="618" width="420" height="44" rx="22" fill="#17140F" stroke="#7A6A4A" stroke-width="1.3" stroke-dasharray="6 4"/>
+<text x="590" y="645" font-size="13" font-weight="600" fill="#C9A26E" text-anchor="middle">¿Se pudo sacar el nombre del modelo?</text>
+
+<path d="M480,662 L440,686" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M700,662 L740,686" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="400" y="690" width="80" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="440" y="705" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">NO</text>
+<text x="480" y="732" font-size="11" fill="#8FA98A">⤵ se responde como BICI SUELTA (fila 2) · nunca se consulta el inventario en vacío</text>
+<rect x="700" y="690" width="80" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="740" y="705" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">SÍ</text>
+
+<path d="M740,712 L700,748" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="470" y="752" width="420" height="44" rx="22" fill="#17140F" stroke="#7A6A4A" stroke-width="1.3" stroke-dasharray="6 4"/>
+<text x="680" y="779" font-size="13" font-weight="600" fill="#C9A26E" text-anchor="middle">¿Hay una así en el stock de HOY?</text>
+
+<path d="M570,796 L520,820" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M790,796 L1010,820" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="445" y="824" width="150" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="520" y="839" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">SÍ, LA TENGO</text>
+<rect x="925" y="824" width="170" height="22" rx="11" fill="#12100D" stroke="#43302A" stroke-width="1"/>
+<text x="1010" y="839" font-size="10" letter-spacing="1" fill="#C08863" text-anchor="middle">NO HAY NINGUNA</text>
+
+<rect x="380" y="862" width="520" height="180" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="640" y="880" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">LA FICHA — la misma de la puerta de comentarios</text>
+<text x="640" y="901" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«De lo que tengo disponible HOY, la que más se acerca a lo tuyo es esta 👇</text>
+<text x="640" y="918" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">{modelo} · Talla {talla}</text>
+<text x="640" y="935" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Sacó {puntaje}/7 en nuestra inspección — y en la ficha te digo</text>
+<text x="640" y="952" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">exactamente dónde perdió puntos, sin maquillaje.</text>
+<text x="640" y="969" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Nueva hoy sale {precio nuevo}. Esta queda en {precio} → ahorras {ahorro}.</text>
+<text x="640" y="986" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Fotos reales, diagnóstico completo y su estado honesto: {link ficha}</text>
+<text x="640" y="1003" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">La talla exacta se confirma contigo — Luis te lo dice al teléfono.»</text>
+<text x="640" y="1026" font-size="10.5" fill="#8A8377" text-anchor="middle">si es e-bike: se agrega «Diagnóstico de batería: {salud}% · {ciclos} ciclos. Bajo 80% no la vendemos.»</text>
+
+<rect x="940" y="862" width="380" height="146" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="1130" y="880" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">EL ENCARGO HONESTO</text>
+<text x="1130" y="901" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Te soy derecho: hoy no tenemos</text>
+<text x="1130" y="918" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">ninguna que calce con eso 🙈</text>
+<text x="1130" y="935" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Si es la que andabas buscando, te la</text>
+<text x="1130" y="952" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">conseguimos. Todas las semanas salimos</text>
+<text x="1130" y="969" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">a buscar modelos específicos.</text>
+<text x="1130" y="986" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">¿Te contactamos con un especialista?»</text>
+<text x="1130" y="1004" font-size="10" fill="#8A8377" text-anchor="middle">nunca dice «esa se vendió»: puede ser un modelo que jamás tuvimos</text>
+
+<rect x="1130" y="1020" width="175" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="1218" y="1035" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«SÍ, QUE ME LLAMEN»</text>
+<text x="1320" y="1035" font-size="11" fill="#8FA98A">⤵ al teléfono</text>
+<rect x="1120" y="1052" width="195" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="1218" y="1067" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«VER LO QUE HAY AHORA»</text>
+<text x="1330" y="1067" font-size="11" fill="#8FA98A">⤵ al catálogo</text>
+
+<path d="M640,1042 L640,1062" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="380" y="1066" width="340" height="44" rx="22" fill="#17140F" stroke="#7A6A4A" stroke-width="1.3" stroke-dasharray="6 4"/>
+<text x="550" y="1093" font-size="13" font-weight="600" fill="#C9A26E" text-anchor="middle">¿Hay más de una que calza?</text>
+<rect x="380" y="1124" width="340" height="62" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="550" y="1142" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">SÍ · LAS OTRAS COINCIDENCIAS</text>
+<text x="550" y="1163" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«También tengo: {lista}. Escríbeme el</text>
+<text x="550" y="1180" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">nombre exacto si prefieres una de esas.»</text>
+
+<rect x="760" y="1066" width="340" height="44" rx="22" fill="#17140F" stroke="#7A6A4A" stroke-width="1.3" stroke-dasharray="6 4"/>
+<text x="930" y="1093" font-size="13" font-weight="600" fill="#C9A26E" text-anchor="middle">¿Hay una alternativa que ofrecer?</text>
+<rect x="760" y="1124" width="340" height="62" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="930" y="1142" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">SÍ · LA ALTERNATIVA</text>
+<text x="930" y="1163" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«También te podría servir:</text>
+<text x="930" y="1180" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">{modelo} · {precio} · {link ficha}»</text>
+
+<text x="640" y="1212" font-size="11.5" fill="#8FA98A" text-anchor="middle">⤵ y de ahí, siempre, a la convergencia (columna de la derecha)</text>
+
+<!-- ============ FILA 2 · BICI SUELTA ============ -->
+<path d="M40,1234 L1500,1234" stroke="#221F1A" stroke-width="1"/>
+<rect x="40" y="1246" width="300" height="26" rx="8" fill="#1A1510" stroke="#4A3B27" stroke-width="1.2"/>
+<text x="190" y="1264" font-size="12" font-weight="600" fill="#C9A26E" text-anchor="middle">2 · BICI SUELTA</text>
+<text x="40" y="1290" font-size="10.5" fill="#8A8377">pregunta por «esta» sin nombrarla</text>
+<text x="40" y="1306" font-size="10.5" fill="#8A8377">«cuánto vale?» · «sigue disponible?»</text>
+<text x="40" y="1322" font-size="10.5" fill="#8A8377">«la del video la tienen?»</text>
+
+<rect x="380" y="1246" width="520" height="94" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="640" y="1264" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">NO se consulta el inventario: no hay nada que buscar</text>
+<text x="640" y="1287" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«¿Cuál de todas? 🚲 Escríbeme el nombre y te la ubico al toque:</text>
+<text x="640" y="1304" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Levo, Epic, Creo, Tarmac, Stumpjumper…</text>
+<text x="640" y="1326" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">¿No sabes cuál? Dale a un botón 👇»</text>
+
+<rect x="392" y="1354" width="185" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="484" y="1369" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«AYÚDENME A ELEGIR»</text>
+<text x="484" y="1394" font-size="11" fill="#8FA98A" text-anchor="middle">⤵ al cuestionario (fila 3)</text>
+<rect x="622" y="1354" width="195" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="720" y="1369" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«QUE ME LLAMEN MEJOR»</text>
+<text x="720" y="1394" font-size="11" fill="#8FA98A" text-anchor="middle">⤵ al teléfono</text>
+
+<text x="950" y="1290" font-size="11" fill="#8FA98A">el camino principal es que ESCRIBA el nombre:</text>
+<text x="950" y="1306" font-size="11" fill="#8FA98A">ese texto vuelve a entrar por el enrutador</text>
+<text x="950" y="1322" font-size="11" fill="#8FA98A">y sale por la fila 1 (MODELO)</text>
+
+<!-- ============ FILA 3 · ASESORÍA ============ -->
+<path d="M40,1420 L1500,1420" stroke="#221F1A" stroke-width="1"/>
+<rect x="40" y="1432" width="300" height="26" rx="8" fill="#1A1510" stroke="#4A3B27" stroke-width="1.2"/>
+<text x="190" y="1450" font-size="12" font-weight="600" fill="#C9A26E" text-anchor="middle">3 · ASESORÍA → CUESTIONARIO</text>
+<text x="40" y="1476" font-size="10.5" fill="#8A8377">no sabe cuál quiere — 16 % del tráfico</text>
+<text x="40" y="1492" font-size="10.5" fill="#8A8377">«qué me recomiendas» · «ando en $3M»</text>
+<text x="40" y="1508" font-size="10.5" fill="#8A8377">«mido 1,70 cuál me sirve»</text>
+
+<rect x="380" y="1432" width="330" height="60" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="545" y="1450" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">1/3 · EN QUÉ VA A ANDAR</text>
+<text x="545" y="1476" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«1/3 · ¿En qué vas a andar? 🚵»</text>
+<rect x="386" y="1500" width="126" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="449" y="1515" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«MTB / CERRO»</text>
+<rect x="520" y="1500" width="84" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="562" y="1515" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«RUTA»</text>
+<rect x="612" y="1500" width="96" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="660" y="1515" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«CIUDAD»</text>
+
+<path d="M710,1462 L740,1462" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="750" y="1432" width="330" height="76" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="915" y="1450" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">2/3 · PRESUPUESTO (texto libre)</text>
+<text x="915" y="1471" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«2/3 · ¿En cuánto anda tu</text>
+<text x="915" y="1488" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">presupuesto? 💸 Escríbelo como</text>
+<text x="915" y="1505" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">quieras: 3.500.000 · 3,5 millones.»</text>
+
+<path d="M1080,1462 L1110,1462" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="1120" y="1432" width="330" height="76" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="1285" y="1450" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">3/3 · ESTATURA (texto libre)</text>
+<text x="1285" y="1478" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«3/3 · ¿Cuánto mides? 📏</text>
+<text x="1285" y="1495" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">(1,75 o 175, como te acomode)»</text>
+
+<path d="M1285,1508 L1285,1530 L680,1530 L680,1548" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="470" y="1552" width="420" height="44" rx="22" fill="#17140F" stroke="#7A6A4A" stroke-width="1.3" stroke-dasharray="6 4"/>
+<text x="680" y="1579" font-size="13" font-weight="600" fill="#C9A26E" text-anchor="middle">¿Alguna del stock de hoy calza de verdad?</text>
+<text x="910" y="1572" font-size="10.5" fill="#8A8377">con umbral real: bajo el corte responde</text>
+<text x="910" y="1587" font-size="10.5" fill="#8A8377">«ninguna calza» en vez de forzar una bici</text>
+
+<path d="M570,1596 L500,1620" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M790,1596 L900,1620" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="410" y="1624" width="180" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="500" y="1639" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">SÍ, HAY UNA</text>
+<text x="500" y="1666" font-size="11.5" fill="#8FA98A" text-anchor="middle">⤵ la MISMA ficha de la fila 1</text>
+<text x="500" y="1683" font-size="11.5" fill="#8FA98A" text-anchor="middle">y después la convergencia</text>
+
+<rect x="815" y="1624" width="170" height="22" rx="11" fill="#12100D" stroke="#43302A" stroke-width="1"/>
+<text x="900" y="1639" font-size="10" letter-spacing="1" fill="#C08863" text-anchor="middle">NINGUNA CALZA</text>
+
+<rect x="700" y="1660" width="520" height="106" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="960" y="1678" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">LA SALIDA HONESTA — nunca dice «esa se vendió»: acá no hay unidad</text>
+<text x="960" y="1699" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Te soy derecho: de lo que tengo HOY, ninguna calza bien con lo</text>
+<text x="960" y="1716" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">que me dijiste 🙈 Pero si sabes lo que buscas, te la conseguimos.</text>
+<text x="960" y="1733" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Todas las semanas salimos a buscar modelos específicos para</text>
+<text x="960" y="1750" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">gente que nos los encarga. ¿Te contactamos con un especialista?»</text>
+
+<rect x="742" y="1780" width="175" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="830" y="1795" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«SÍ, QUE ME LLAMEN»</text>
+<text x="830" y="1820" font-size="11" fill="#8FA98A" text-anchor="middle">⤵ al teléfono</text>
+<rect x="972" y="1780" width="195" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="1070" y="1795" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«VER LO QUE HAY AHORA»</text>
+<text x="1070" y="1820" font-size="11" fill="#8FA98A" text-anchor="middle">⤵ al catálogo</text>
+
+<!-- ============ FILA 4 · VENDER ============ -->
+<path d="M40,1846 L1500,1846" stroke="#221F1A" stroke-width="1"/>
+<rect x="40" y="1858" width="300" height="26" rx="8" fill="#1A1510" stroke="#4A3B27" stroke-width="1.2"/>
+<text x="190" y="1876" font-size="12" font-weight="600" fill="#C9A26E" text-anchor="middle">4 · VENDER</text>
+<text x="40" y="1902" font-size="10.5" fill="#8A8377">«vendo mi bici» · «reciben la mía?»</text>
+<text x="40" y="1918" font-size="10.5" fill="#8A8377">«la tomas en parte de pago?»</text>
+
+<rect x="380" y="1858" width="250" height="62" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="505" y="1876" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">1/4</text>
+<text x="505" y="1900" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«¿Qué bici tienes?</text>
+<text x="505" y="1915" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Marca y modelo 🚲»</text>
+
+<rect x="650" y="1858" width="230" height="62" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="765" y="1876" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">2/4</text>
+<text x="765" y="1903" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«¿De qué año es?»</text>
+
+<rect x="900" y="1858" width="230" height="62" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="1015" y="1876" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">3/4</text>
+<text x="1015" y="1903" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«¿Qué talla?»</text>
+
+<rect x="380" y="1936" width="560" height="90" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="660" y="1954" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">4/4 · EL ESTADO — respuesta de una sola línea</text>
+<text x="660" y="1975" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Cuéntame cómo está: kilómetros, si tiene algo suelto o algún golpe.</text>
+<text x="660" y="1992" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Mientras más derecho seas, más firme es el número que te damos —</text>
+<text x="660" y="2009" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">así no te lo bajamos después de verla 🙌»</text>
+
+<text x="980" y="1966" font-size="11" fill="#8FA98A">la consignación queda registrada y avisada a Roberto</text>
+<text x="980" y="1982" font-size="11" fill="#8FA98A">ANTES de pedir el teléfono: si después no lo da,</text>
+<text x="980" y="1998" font-size="11" fill="#8FA98A">igual queda anotada y recuperable</text>
+
+<path d="M660,2026 L660,2048" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="380" y="2052" width="560" height="106" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="660" y="2070" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">EL PUENTE A LA LLAMADA</text>
+<text x="660" y="2091" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Listo, ya lo tengo. Para tasarla te llama Luis — es el que inspecciona</text>
+<text x="660" y="2108" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">todas las bicis que entran, con la misma nota de 1 a 7 que ves en</text>
+<text x="660" y="2125" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">nuestras fichas. Te dice derecho qué vale y si la recibimos o no: bajo 4</text>
+<text x="660" y="2142" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">no la tomamos, y preferimos decírtelo por teléfono antes de hacerte venir.»</text>
+<text x="660" y="2180" font-size="11.5" fill="#8FA98A" text-anchor="middle">⤵ directo al teléfono, sin la oferta de llamada: ya la aceptó</text>
+
+<!-- ============ FILA 5 · CONTACTO ============ -->
+<path d="M40,2206 L1500,2206" stroke="#221F1A" stroke-width="1"/>
+<rect x="40" y="2218" width="300" height="26" rx="8" fill="#1A1510" stroke="#4A3B27" stroke-width="1.2"/>
+<text x="190" y="2236" font-size="12" font-weight="600" fill="#C9A26E" text-anchor="middle">5 · CONTACTO</text>
+<text x="40" y="2262" font-size="10.5" fill="#8A8377">dejó su número o pidió que lo llamen</text>
+<text x="40" y="2278" font-size="10.5" fill="#8A8377">gana por sobre cualquier otra ruta</text>
+
+<rect x="380" y="2218" width="520" height="66" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="640" y="2236" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">SE PIDE CONFIRMAR — el número venía mezclado con texto</text>
+<text x="640" y="2262" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Dale, te llamamos 🙌 Confírmame el número tal cual,</text>
+<text x="640" y="2279" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">para no equivocarnos.»</text>
+<text x="640" y="2308" font-size="11.5" fill="#8FA98A" text-anchor="middle">⤵ al teléfono, para capturarlo validado</text>
+
+<!-- ============ FILA 6 · VISITA ============ -->
+<path d="M40,2334 L1500,2334" stroke="#221F1A" stroke-width="1"/>
+<rect x="40" y="2346" width="300" height="26" rx="8" fill="#1A1510" stroke="#4A3B27" stroke-width="1.2"/>
+<text x="190" y="2364" font-size="12" font-weight="600" fill="#C9A26E" text-anchor="middle">6 · VISITA</text>
+<text x="40" y="2390" font-size="10.5" fill="#8A8377">«dónde están?» · «puedo ir a verlas?»</text>
+<text x="40" y="2406" font-size="10.5" fill="#8A8377">señal de compra: se responde completo</text>
+
+<rect x="380" y="2346" width="520" height="106" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="640" y="2364" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">LA DIRECCIÓN Y EL HORARIO — datos reales</text>
+<text x="640" y="2385" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Estamos en Av. Las Condes 12461, Las Condes 📍</text>
+<text x="640" y="2402" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Horario: lunes a viernes de 9:00 a 20:00, y sábado de 10:00 a 14:00.</text>
+<text x="640" y="2423" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Antes de que vengas, ¿te tinca que te llame Luis? Así te dice qué hay</text>
+<text x="640" y="2440" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">hoy en tu talla y no llegas a mirar vitrina.»</text>
+
+<rect x="392" y="2466" width="175" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="480" y="2481" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«SÍ, QUE ME LLAMEN»</text>
+<text x="590" y="2481" font-size="11" fill="#8FA98A">⤵ al teléfono</text>
+<rect x="700" y="2466" width="150" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="775" y="2481" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«POR AHORA NO»</text>
+<text x="872" y="2481" font-size="11" fill="#8FA98A">⤵ salida blanda</text>
+
+<!-- ============ FILA 7 · ENVÍOS ============ -->
+<path d="M40,2514 L1500,2514" stroke="#221F1A" stroke-width="1"/>
+<rect x="40" y="2526" width="300" height="26" rx="8" fill="#1A1510" stroke="#4A3B27" stroke-width="1.2"/>
+<text x="190" y="2544" font-size="12" font-weight="600" fill="#C9A26E" text-anchor="middle">7 · ENVÍOS</text>
+<text x="40" y="2570" font-size="10.5" fill="#8A8377">«despachan a Concepción?»</text>
+<text x="40" y="2586" font-size="10.5" fill="#8A8377">«mandan a regiones?»</text>
+
+<rect x="380" y="2526" width="520" height="88" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="640" y="2544" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">EL HECHO SÍ SE AFIRMA — el costo y el plazo no</text>
+<text x="640" y="2565" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Sí, despachamos a regiones. El costo y el plazo dependen de dónde</text>
+<text x="640" y="2582" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">estés, y eso te lo cuadra Luis mejor por teléfono que yo por acá 🙂</text>
+<text x="640" y="2603" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">¿Te llamamos y de paso te resuelve todo lo demás?»</text>
+
+<rect x="392" y="2628" width="175" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="480" y="2643" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«SÍ, QUE ME LLAMEN»</text>
+<text x="590" y="2643" font-size="11" fill="#8FA98A">⤵ al teléfono</text>
+<rect x="700" y="2628" width="150" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="775" y="2643" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«POR AHORA NO»</text>
+<text x="872" y="2643" font-size="11" fill="#8FA98A">⤵ salida blanda</text>
+
+<!-- ============ FILA 8 · GARANTÍA ============ -->
+<path d="M40,2676 L1500,2676" stroke="#221F1A" stroke-width="1"/>
+<rect x="40" y="2688" width="300" height="26" rx="8" fill="#1A1510" stroke="#4A3B27" stroke-width="1.2"/>
+<text x="190" y="2706" font-size="12" font-weight="600" fill="#C9A26E" text-anchor="middle">8 · GARANTÍA</text>
+<text x="40" y="2732" font-size="10.5" fill="#8A8377">«qué garantía tienen?»</text>
+<text x="40" y="2748" font-size="10.5" fill="#8A8377">«y si se echa a perder?»</text>
+
+<rect x="380" y="2688" width="560" height="126" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="660" y="2706" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">CONTENIDO REAL — y nada más que esto: el detalle fino lo da Luis</text>
+<text x="660" y="2727" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Sí 🙌 Todas nuestras bicis salen con garantía Bike Trust de 6 meses: si un</text>
+<text x="660" y="2744" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">componente falla, lo reparamos sin costo — repuesto y mano de obra. No</text>
+<text x="660" y="2761" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">cubre golpes ni el desgaste normal de uso.</text>
+<text x="660" y="2782" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Y algo que casi nadie ofrece: nos comprometemos a recomprarte la bici</text>
+<text x="660" y="2799" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">dentro de 12 meses, previa evaluación de su estado.»</text>
+<text x="990" y="2740" font-size="11" fill="#8FA98A">el documento de garantía sigue en</text>
+<text x="990" y="2756" font-size="11" fill="#8FA98A">revisión legal: por eso el bot no</text>
+<text x="990" y="2772" font-size="11" fill="#8FA98A">dice ni un plazo ni una condición más</text>
+
+<rect x="380" y="2826" width="560" height="34" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="660" y="2848" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«¿Te llamamos y Luis te cuenta el detalle según tu caso?»</text>
+<rect x="392" y="2874" width="175" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="480" y="2889" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«SÍ, QUE ME LLAMEN»</text>
+<text x="590" y="2889" font-size="11" fill="#8FA98A">⤵ al teléfono</text>
+<rect x="700" y="2874" width="150" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="775" y="2889" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«POR AHORA NO»</text>
+<text x="872" y="2889" font-size="11" fill="#8FA98A">⤵ salida blanda</text>
+
+<!-- ============ FILA 9 · PAGOS ============ -->
+<path d="M40,2922 L1500,2922" stroke="#221F1A" stroke-width="1"/>
+<rect x="40" y="2934" width="300" height="26" rx="8" fill="#1A1510" stroke="#4A3B27" stroke-width="1.2"/>
+<text x="190" y="2952" font-size="12" font-weight="600" fill="#C9A26E" text-anchor="middle">9 · PAGOS</text>
+<text x="40" y="2978" font-size="10.5" fill="#8A8377">«se puede en cuotas?»</text>
+<text x="40" y="2994" font-size="10.5" fill="#8A8377">«aceptan transferencia?»</text>
+
+<rect x="380" y="2934" width="520" height="72" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="640" y="2952" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">SE DERIVA — una frase de más acá se vuelve promesa contractual</text>
+<text x="640" y="2976" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Eso te lo explica mejor Luis en dos minutos que yo por acá 🙂</text>
+<text x="640" y="2996" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">¿Te llamamos y de paso te resuelve todo lo demás?»</text>
+
+<rect x="392" y="3020" width="175" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="480" y="3035" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«SÍ, QUE ME LLAMEN»</text>
+<text x="590" y="3035" font-size="11" fill="#8FA98A">⤵ al teléfono</text>
+<rect x="700" y="3020" width="150" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="775" y="3035" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«POR AHORA NO»</text>
+<text x="872" y="3035" font-size="11" fill="#8FA98A">⤵ salida blanda</text>
+
+<!-- ============ FILA 10 · TÉCNICA ============ -->
+<path d="M40,3068 L1500,3068" stroke="#221F1A" stroke-width="1"/>
+<rect x="40" y="3080" width="300" height="26" rx="8" fill="#1A1510" stroke="#4A3B27" stroke-width="1.2"/>
+<text x="190" y="3098" font-size="12" font-weight="600" fill="#C9A26E" text-anchor="middle">10 · TÉCNICA</text>
+<text x="40" y="3124" font-size="10.5" fill="#8A8377">«esos neumáticos sirven para tubeless?»</text>
+<text x="40" y="3140" font-size="10.5" fill="#8A8377">«qué grupo trae?» · «cuánto pesa?»</text>
+<text x="40" y="3156" font-size="10.5" fill="#8A8377">señal de compra alta</text>
+
+<rect x="380" y="3080" width="520" height="88" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="640" y="3098" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">EL BOT NO INVENTA LA RESPUESTA — la contesta Luis</text>
+<text x="640" y="3119" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Buena pregunta 🙌 Esa es de las que responde Luis — él inspeccionó</text>
+<text x="640" y="3136" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">personalmente cada bici que tenemos.</text>
+<text x="640" y="3157" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">¿Te llamamos y te la responde al tiro? Si prefieres seguir por acá,</text>
+<text x="640" y="3174" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">te lo averiguo y te escribo.»</text>
+
+<rect x="392" y="3198" width="175" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="480" y="3213" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«SÍ, QUE ME LLAMEN»</text>
+<text x="480" y="3238" font-size="11" fill="#8FA98A" text-anchor="middle">⤵ al teléfono</text>
+<rect x="640" y="3198" width="180" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="730" y="3213" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«PREFIERO POR ACÁ»</text>
+
+<path d="M820,3209 L860,3209" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="870" y="3178" width="560" height="72" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="1150" y="3196" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">SE DERIVA A UNA PERSONA, CON EL CONTEXTO</text>
+<text x="1150" y="3220" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Dale 👌 Dame un rato y te escribo por acá con la respuesta.»</text>
+<text x="1150" y="3242" font-size="10.5" fill="#8A8377" text-anchor="middle">sale un WhatsApp al equipo, queda registrado, y el bot se calla 24 h para no pisar la respuesta</text>
+
+<!-- ============ FILA 11 · SALUDO ============ -->
+<path d="M40,3276 L1500,3276" stroke="#221F1A" stroke-width="1"/>
+<rect x="40" y="3288" width="300" height="26" rx="8" fill="#1A1510" stroke="#4A3B27" stroke-width="1.2"/>
+<text x="190" y="3306" font-size="12" font-weight="600" fill="#C9A26E" text-anchor="middle">11 · SALUDO</text>
+<text x="40" y="3332" font-size="10.5" fill="#8A8377">«hola» · «buenas» · «estás?» · «🔥»</text>
+<text x="40" y="3348" font-size="10.5" fill="#8A8377">todavía no dijo qué necesita</text>
+
+<rect x="380" y="3288" width="560" height="74" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="660" y="3306" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">SIN BOTONES A PROPÓSITO — el pivote es que el bot lea el texto libre</text>
+<text x="660" y="3330" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«¡Hola! 👋 Cuéntame qué andas buscando — un modelo</text>
+<text x="660" y="3347" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">(Levo, Epic, Creo…), ayuda para elegir, o lo que necesites 🚲»</text>
+<text x="980" y="3324" font-size="11" fill="#8FA98A">su respuesta vuelve a entrar por el</text>
+<text x="980" y="3340" font-size="11" fill="#8FA98A">enrutador y sale por la ruta que sea</text>
+
+<!-- ============ FILA 12 · CIERRE ============ -->
+<path d="M40,3388 L1500,3388" stroke="#221F1A" stroke-width="1"/>
+<rect x="40" y="3400" width="300" height="26" rx="8" fill="#1A1510" stroke="#4A3B27" stroke-width="1.2"/>
+<text x="190" y="3418" font-size="12" font-weight="600" fill="#C9A26E" text-anchor="middle">12 · CIERRE</text>
+<text x="40" y="3444" font-size="10.5" fill="#8A8377">«muchas gracias, lo voy a pensar»</text>
+<text x="40" y="3460" font-size="10.5" fill="#8A8377">«por ahora no» · «después te escribo»</text>
+
+<rect x="380" y="3400" width="560" height="74" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="660" y="3418" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">FIN — no se le insiste a quien ya dijo que no</text>
+<text x="660" y="3442" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Dale, sin apuro 👌 Cualquier cosa me escribes por acá.</text>
+<text x="660" y="3459" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Y si más adelante quieres ver alguna, me dices y coordinamos al tiro 🙌»</text>
+<text x="980" y="3436" font-size="11" fill="#8FA98A">un «gracias» ACOMPAÑADO de una</text>
+<text x="980" y="3452" font-size="11" fill="#8FA98A">pregunta no es cierre: gana la pregunta</text>
+
+<!-- ============ FILA 13 · NO ENTENDÍ ============ -->
+<path d="M40,3500 L1500,3500" stroke="#221F1A" stroke-width="1"/>
+<rect x="40" y="3512" width="300" height="26" rx="8" fill="#1A1510" stroke="#43302A" stroke-width="1.2"/>
+<text x="190" y="3530" font-size="12" font-weight="600" fill="#C08863" text-anchor="middle">13 · NO ENTENDÍ</text>
+<text x="40" y="3556" font-size="10.5" fill="#8A8377">y también CUALQUIER respuesta rara</text>
+<text x="40" y="3572" font-size="10.5" fill="#8A8377">del enrutador — la rama de escape</text>
+<text x="40" y="3588" font-size="10.5" fill="#8A8377">obligatoria: sin ella el lead se pierde</text>
+<text x="40" y="3604" font-size="10.5" fill="#8A8377">en silencio, sin aparecer en ninguna métrica</text>
+
+<rect x="380" y="3512" width="520" height="74" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="640" y="3530" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">SE DERIVA DIRECTO A UNA PERSONA — sin menú de rescate</text>
+<text x="640" y="3554" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Espérame un poco 🙌 Le paso tu mensaje a un especialista</text>
+<text x="640" y="3571" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">del equipo y te responde por acá.»</text>
+<text x="640" y="3606" font-size="10.5" fill="#8A8377" text-anchor="middle">sin prometer plazo: «en minutos» a las 2 AM o un domingo es una promesa rota</text>
+
+<text x="950" y="3534" font-size="11" fill="#8FA98A">el bot queda mudo · sale un WhatsApp al equipo, sin filtro de horario</text>
+<text x="950" y="3552" font-size="11" fill="#8FA98A">(un lead varado a las 23:00 es mejor que suene a que se pierda)</text>
+<text x="950" y="3570" font-size="11" fill="#8FA98A">queda registrado en la tabla de Avisos, con su conversión a venta</text>
+<text x="950" y="3588" font-size="11" fill="#8FA98A">a las 24 h el bot vuelve solo al circuito automático</text>
+
+</g>
+
+<!-- ============ CONVERGENCIA ============ -->
+<path d="M1540,606 L2070,606" stroke="#221F1A" stroke-width="1"/>
+<text x="1540" y="630" font-size="13" font-weight="600" fill="#C9A26E">LA CONVERGENCIA</text>
+<text x="1540" y="650" font-size="11" fill="#8A8377">acá terminan todas las rutas · el objetivo del bot</text>
+<text x="1540" y="666" font-size="11" fill="#8A8377">no es la visita: es el teléfono</text>
+
+<rect x="1560" y="690" width="480" height="44" rx="22" fill="#17140F" stroke="#7A6A4A" stroke-width="1.3" stroke-dasharray="6 4"/>
+<text x="1800" y="717" font-size="13" font-weight="600" fill="#C9A26E" text-anchor="middle">¿Ya se le había ofrecido la llamada?</text>
+
+<path d="M1680,734 L1640,754" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M1920,734 L1960,754" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="1580" y="758" width="120" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="1640" y="773" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">SÍ</text>
+<text x="1640" y="798" font-size="11" fill="#8FA98A" text-anchor="middle">⤵ directo al teléfono</text>
+<text x="1640" y="814" font-size="10.5" fill="#8A8377" text-anchor="middle">acorta, nunca corta</text>
+<rect x="1900" y="758" width="120" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="1960" y="773" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">NO</text>
+
+<path d="M1960,780 L1960,830 L1810,830 L1810,846" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="1660" y="850" width="300" height="34" rx="17" fill="#12100D" stroke="#3A342B" stroke-width="1.2"/>
+<text x="1810" y="872" font-size="12" font-weight="600" fill="#C9A26E" text-anchor="middle">⏱ Pausa de 40 segundos</text>
+<path d="M1810,884 L1810,908" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="1560" y="912" width="500" height="108" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="1810" y="930" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">LA OFERTA DE LLAMADA</text>
+<text x="1810" y="951" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Oye, mejor que te llame Luis 📞 Él inspeccionó personalmente</text>
+<text x="1810" y="968" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">cada bici que tenemos — nadie te va a responder más derecho.</text>
+<text x="1810" y="989" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">En 5 minutos te dice cuál te calza según tu estatura, qué hay</text>
+<text x="1810" y="1006" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">dentro de tu presupuesto, y si quieres te la aparta mientras decides.»</text>
+
+<path d="M1740,1020 L1690,1042" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M1900,1020 L1950,1042" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="1602" y="1046" width="175" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="1690" y="1061" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«SÍ, QUE ME LLAMEN»</text>
+<rect x="1875" y="1046" width="150" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="1950" y="1061" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«POR AHORA NO»</text>
+
+<path d="M1950,1068 L1950,1088" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="1770" y="1092" width="290" height="84" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="1915" y="1110" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">SALIDA BLANDA — fin</text>
+<text x="1915" y="1131" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Dale, sin problema 👌 Cero llamadas.</text>
+<text x="1915" y="1148" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Cualquier duda me escribes por acá. Y si</text>
+<text x="1915" y="1165" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">alguien la aparta antes, te aviso.»</text>
+
+<path d="M1690,1068 L1690,1180 L1720,1180 L1720,1196" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="1560" y="1200" width="460" height="102" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="1790" y="1218" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">EL TELÉFONO — el único dato que la persona teclea</text>
+<text x="1790" y="1239" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Perfecto 🙌 ¿A qué número te llamamos?</text>
+<text x="1790" y="1256" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Escríbelo como quieras (9 1234 5678, +569…, da lo mismo).»</text>
+<text x="1790" y="1280" font-size="10.5" fill="#8A8377" text-anchor="middle">si viene mal: «Creo que se cortó un dígito 🙈 ¿me lo mandas de nuevo?</text>
+<text x="1790" y="1294" font-size="10.5" fill="#8A8377" text-anchor="middle">Así sirve: 9 1234 5678»</text>
+
+<path d="M1790,1302 L1790,1326" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="1620" y="1330" width="340" height="56" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="1790" y="1348" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">EL ECO DE CONFIRMACIÓN</text>
+<text x="1790" y="1372" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Anotado: {teléfono} ✅»</text>
+
+<path d="M1720,1386 L1700,1404" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M1870,1386 L1900,1404" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="1640" y="1408" width="120" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="1700" y="1423" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«CORRECTO»</text>
+<rect x="1840" y="1408" width="120" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="1900" y="1423" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«CORREGIR»</text>
+<text x="1900" y="1448" font-size="11" fill="#8FA98A" text-anchor="middle">⤴ vuelve a pedir el número</text>
+
+<path d="M1700,1430 L1700,1454" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="1540" y="1458" width="330" height="44" rx="22" fill="#17140F" stroke="#7A6A4A" stroke-width="1.3" stroke-dasharray="6 4"/>
+<text x="1705" y="1485" font-size="13" font-weight="600" fill="#C9A26E" text-anchor="middle">¿Se pudo prometer una hora?</text>
+
+<path d="M1620,1502 L1600,1522" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M1800,1502 L1930,1522" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="1540" y="1526" width="130" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="1605" y="1541" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">SÍ, HAY HORA</text>
+<rect x="1845" y="1526" width="170" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="1930" y="1541" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">YA TENÍA TICKET</text>
+
+<rect x="1540" y="1562" width="440" height="124" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="1760" y="1580" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">CONFIRMACIÓN FINAL — fin</text>
+<text x="1760" y="1601" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Listo ✅ Te va a llamar Luis Sulbarán, nuestro</text>
+<text x="1760" y="1618" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">especialista, {en los próximos minutos / mañana a las 10:00}.</text>
+<text x="1760" y="1635" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Te marca desde el +56 9 2181 5855 — guarda el número</text>
+<text x="1760" y="1652" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">así sabes que somos nosotros 😉</text>
+<text x="1760" y="1669" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Si no te pilla, te deja un WhatsApp a ese mismo número.»</text>
+
+<path d="M1930,1548 L1930,1700 L1800,1700 L1800,1714" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="1540" y="1718" width="480" height="124" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="1780" y="1736" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">CONFIRMACIÓN CUANDO YA TENÍA TICKET — fin</text>
+<text x="1780" y="1757" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Listo ✅ Ya tenía tu solicitud anotada — Luis te llama en cuanto pueda.</text>
+<text x="1780" y="1774" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Te marca desde el +56 9 2181 5855 — guarda el número así</text>
+<text x="1780" y="1791" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">sabes que somos nosotros 😉</text>
+<text x="1780" y="1808" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Si no te pilla, te deja un WhatsApp a ese mismo número.»</text>
+<text x="1780" y="1830" font-size="10.5" fill="#8A8377" text-anchor="middle">esa última línea no se saca: declara el permiso para escribirle después</text>
+
+<rect x="1540" y="1876" width="490" height="90" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="1785" y="1894" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">EL CATÁLOGO — llega desde varias rutas</text>
+<text x="1785" y="1915" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Acá puedes ver todo lo que tenemos disponible ahora</text>
+<text x="1785" y="1932" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">mismo 👉 biketrust.cl</text>
+<text x="1785" y="1949" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Todas pasaron por nuestra inspección, con su nota de 1 a 7.»</text>
+<text x="1785" y="1988" font-size="11.5" fill="#8FA98A" text-anchor="middle">⤴ y de ahí vuelve arriba: ¿ya se le había ofrecido la llamada?</text>
+
+<!-- LEYENDA -->
+<rect x="1540" y="2030" width="500" height="150" rx="12" fill="#0E0D0B" stroke="#221F1A" stroke-width="1"/>
+<text x="1560" y="2054" font-size="10" letter-spacing="1" fill="#6E685D">CÓMO SE LEE</text>
+<rect x="1560" y="2068" width="150" height="26" rx="13" fill="#17140F" stroke="#7A6A4A" stroke-width="1.2" stroke-dasharray="6 4"/>
+<text x="1635" y="2085" font-size="10.5" fill="#C9A26E" text-anchor="middle">decisión del sistema</text>
+<rect x="1728" y="2068" width="150" height="26" rx="8" fill="#141210" stroke="#2A2620" stroke-width="1.2"/>
+<text x="1803" y="2085" font-size="10.5" fill="#C5BDAF" text-anchor="middle">mensaje que se lee</text>
+<rect x="1896" y="2070" width="120" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="1956" y="2085" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">BOTÓN</text>
+<text x="1560" y="2118" font-size="11" fill="#8FA98A">⤵ ⤴ salto a otro bloque del mismo árbol</text>
+<text x="1560" y="2142" font-size="10.5" fill="#8A8377">Todo lo que no aparece acá es maquinaria: se crea el lead, se busca en el inventario</text>
+<text x="1560" y="2157" font-size="10.5" fill="#8A8377">vivo, se registra la consignación, nace el ticket con el brief de la llamada y sale el</text>
+<text x="1560" y="2172" font-size="10.5" fill="#8A8377">aviso de WhatsApp a Luis. La persona no ve nada de eso.</text>
+
+</svg>

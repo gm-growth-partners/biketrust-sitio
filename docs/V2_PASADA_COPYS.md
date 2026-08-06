@@ -25,11 +25,17 @@ renovaron). **Los cambios reales son DOS pegas + una verificación:**
 
 | # | Cambio | Dónde | Estado |
 |---|---|---|---|
-| 1 | **B3 nuevo** (reemplaza al «¿Te gustaría hablar…?») | Las 4 automatizaciones de comentarios + el quiz (5 lugares) | ⬜ pegar |
-| 2 | **C-2 de CONTACTO se acorta** (hoy pide confirmar el número y B4 lo vuelve a pedir) | Puerta DM, ruta CONTACTO | ⬜ pegar |
-| 3 | Verificar que **C2 (guard viejo) no siga montado** en ninguna automatización | Comentarios + quiz | ⬜ mirar |
+| 1 | **B3 nuevo** (reemplaza al «¿Te gustaría hablar…?») | Las 4 automatizaciones de comentarios + el quiz (5 lugares) | ✅ pegado y publicado 2026-08-05 |
+| 2 | **C-2 de CONTACTO se acorta** (hoy pide confirmar el número y B4 lo vuelve a pedir) | Puerta DM, ruta CONTACTO | ✅ pegado 2026-08-05 |
+| 3 | Verificar que **C2 (guard viejo) no siga montado** en ninguna automatización | Comentarios + quiz | ✅ verificado 2026-08-05 |
 
 Todo lo demás: SE QUEDA (detalle abajo).
+
+> **Pendiente que dejó esta pasada:** las automatizaciones por-reel más antiguas heredaron
+> las **respuestas públicas de fábrica de ManyChat** («¡Inofrmación enviada! Revisa tus DMs 🌱»
+> — con falta de ortografía, visible en el comentario público), no las 5 rotadas del estándar.
+> Corregidas en la de la Levo SL2 el 2026-08-06; **falta revisarlas en epic 8 pro, Turbo Creo
+> y Levo SL 21/07**.
 
 ---
 

@@ -10,6 +10,82 @@
 
 ## V2 · El embudo que apunta a la llamada — EN CONSTRUCCIÓN (desde 2026-07-27)
 
+### 2026-08-06 · Auditoría de cierre P1/P2: un duplicado cazado, la huérfana apagada y el catch-all descubierto
+
+**Auditoría completa de las dos puertas** (repo + Airtable + backend + ManyChat en pantalla)
+para responder «qué falta para cerrar». Lo que apareció:
+
+**🔴 Dos automatizaciones LIVE sobre el mismo reel — cazado y corregido.** El post
+`Dad9A_zJy0D` (Levo SL2) **ya tenía su flujo desde el 30-jul**, pero bautizado con el nombre
+de otra bici: «Levo SL S-Works 6/07/2026». Como el nombre no lo delataba, el 05-ago se le
+montó un segundo flujo encima. Verificado por dos vías independientes: misma imagen de post
+(`734973701_1704280974032621_…`) y mismo `"reel": "Dad9A_zJy0D"` en el body de `mc-evento`.
+Con 7 de 10 keywords solapadas, un comentario «precio» habría mandado **dos DMs y duplicado
+los registros**. No alcanzó a dispararse (0 ejecuciones). **El duplicado quedó borrado**
+(papelera de ManyChat, restaurable) y la original se renombró a «Levo SL2 S-Works 6/07/2026».
+Además se le reemplazaron las **respuestas públicas de fábrica** —una con falta de ortografía
+visible en el comentario público, «¡Inofrmación enviada!»— por las 5 rotadas del estándar.
+→ Runbook §4 reescrito con el mapa real y la lección: *el nombre no es evidencia; verificar
+el `reel` del body y la imagen del disparador antes de duplicar*.
+
+**Automatización huérfana «Tarmac S-Works SL6» APAGADA.** Estaba LIVE sobre el post
+`DawQ95EO5mn` sin bici en Airtable (la única Tarmac es una SL7 vendida): los `cf_bici_*`
+llegaban vacíos, B2 no se armaba y el lead quedaba colgado a mitad del flujo.
+
+**Descubierto: el catch-all any-word del quiz está ACTIVO y es enorme.** «Plantilla reel sin
+bici específica» tiene **~75 disparadores** «Publicación o Reel específico + cualquier
+comentario» (#20 a #95, todos ON salvo el #20). Si alguno pisa uno de los 4 reels con ficha
+propia, ese comentario dispara dos flujos. **No se resolvió por inspección** (75 posts) —
+lo resuelve la prueba del doble disparo con cuenta virgen que el diseño ya exigía.
+
+**Hallazgo de cobertura: el reel `DZ1O3ViO2Qz` (Levo 4G) no tiene automatización propia.**
+Los flujos por-reel LIVE son 4, no 6 como decía el runbook.
+
+**Airtable:** borrado el ticket de prueba «test» que estaba en la cola de Luis
+(`rec9kUvpajach4zfw`) — la cola queda con 4 leads reales, todos aún sin llamar.
+**`Atiende` expuesto y publicado** en el Kanban de Llamadas (8 campos visibles). Verificado
+que ya estaban hechos dos pendientes que los docs daban por abiertos: `Franja` oculta en la
+pantalla 2 y `Bicis para la visita` en los `watchFields` de «kanban a mensajes» (3 campos).
+⚠️ Los campos vacíos no se renderizan en las tarjetas del Kanban, así que para que Luis
+**escriba** `Atiende` hay que activar el panel de detalle del registro — queda a decisión de
+Gabriel porque cambia su flujo diario.
+
+**Tests:** `mc-clasifica.mjs` (45/45) y `mc-match-quiz.mjs` (10/10) estaban fuera de
+`npm test` — el enrutador de toda la puerta DM sin cobertura en CI. Agregados al script.
+
+### 2026-08-05 (PM) · Cierre del embudo: cadena de confirmación E2E, 5 salidas ahumadas, copys al estándar y el 6º reel LIVE
+
+**La cadena de confirmación quedó verificada punta a punta con WhatsApp real:** Gabriel
+agregó el `subscriber_id` que faltaba en la puerta DM y la corrida completa funcionó —
+fecha puesta en pantalla 2 → tarjeta pasa a «Agendada» → confirmación por WhatsApp →
+botón «Sí, confirmo» → `mc-evento` (`soloEstado`) → lead `visita_confirmada` → tarjeta
+«Confirmada». El eslabón que faltó en la prueba anterior no era el botón: era la
+automatización de pantalla 2, creada después de su prueba.
+
+**Humo de las 5 salidas de llamada con mensajes reales** (primera vez todas): confirmación
+de visita, encargo (crea Solicitud + aviso al staff), región (`region_gestionando` +
+Estado despacho), no contestado (vuelve a cola con sello), sin interés (cierra mudo).
+`aviso_equipo` publicado por Gabriel + env `FLOW_NS_AVISO_EQUIPO` + redeploy → probado
+en vivo. **4 tickets de rescate** creados para los leads perdidos del puente provisorio
+(Concha, Springmüller, Ayala, Briceño) con aviso WhatsApp a Luis y Roberto vía `mc-aviso`,
+registrados en `Avisos` con link al lead (el rollup dirá si terminaron en venta).
+
+**Pasada de copys ejecutada** (`docs/V2_PASADA_COPYS.md`): el B3 nuevo («mejor que te
+llame Luis 📞 Él inspeccionó personalmente cada bici…») quedó pegado y publicado en las
+4 automatizaciones de comentarios + el quiz; C-2 de CONTACTO acortado en la puerta DM
+(B4 ya pide el número); verificado que el guard viejo C2 no sigue conectado en ninguna.
+Plantillas Meta intocadas. Además: `docs/V2_SISTEMA_COMPLETO.md` (el sistema punta a
+punta en un solo doc) y 4 correcciones a la guía HTML del equipo.
+
+**El 6º reel quedó LIVE — duplicado «Levo SL2 S-Works»** (Claude vía Chrome, patrón
+runbook §4): trigger sobre el post `Dad9A_zJy0D` (verificado por fecha 2026-07-06 contra
+la fila `Reels`), 10 keywords, 5 respuestas públicas rotadas, `reel` corregido en
+`mc-evento` y `mc-llamado`, URL «Ver Ficha» ×2 → `/ficha/levo-sl2-s-works-s4` (curl 200).
+El B3 nuevo venía de fábrica (el master ya lo tenía publicado). **Pendiente: humo con
+cuenta ajena al equipo.** Ojo descubierto en el camino: quedó una automatización LIVE
+vieja «Tarmac S-Works SL6» sin bici en Airtable, y el quiz publicado incluía un borrador
+previo de Gabriel (que ya era el B3 — sin efecto adverso).
+
 ### 2026-08-05 · La confirmación de visita, auditada en vivo: un bug cazado y el flujo Pendiente→Agendada
 
 **Bug real cazado probando la cadena completa:** la puerta de DM **no manda `subscriber_id`**

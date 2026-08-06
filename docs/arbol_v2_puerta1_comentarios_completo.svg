@@ -1,0 +1,383 @@
+<svg width="1680" height="2470" viewBox="0 0 1680 2470" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="t d">
+<title id="t">Árbol de decisión completo — Puerta 1 · Comentarios (Bike Trust V2)</title>
+<desc id="d">Todos los mensajes que lee la persona y todas las condiciones del sistema, sin la maquinaria interna. Rama A: reel con bici protagonista. Rama B: reel sin bici, con cuestionario. Convergencia común hasta la confirmación de llamada.</desc>
+<defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0L8,4L0,8z" fill="#6E685D"/></marker></defs>
+<rect x="0" y="0" width="1680" height="2470" fill="#0A0A0A"/>
+
+<text x="60" y="44" font-size="19" font-weight="600" fill="#F3EEE4">Puerta 1 · Comentarios — árbol de decisión completo</text>
+<text x="60" y="66" font-size="12" fill="#8A8377">Solo lo que la persona lee y las decisiones que toma el sistema · la maquinaria interna (lead, ficha, ticket, brief, aviso a Luis) corre invisible entre medio · Bike Trust V2</text>
+
+<!-- ============ R1 · REGLA DE BAJA ============ -->
+<rect x="1300" y="86" width="360" height="104" rx="12" fill="#12100D" stroke="#43302A" stroke-width="1.3" stroke-dasharray="6 4"/>
+<text x="1480" y="106" font-size="9.5" letter-spacing="1" fill="#C08863" text-anchor="middle">R1 · REGLA DE BAJA — AUTOMATIZACIÓN APARTE</text>
+<text x="1480" y="125" font-size="10" fill="#8A8377" text-anchor="middle">stop · baja · no me escribas · no me escriban · no me molesten</text>
+<text x="1480" y="139" font-size="10" fill="#8A8377" text-anchor="middle">sácame · sacame · unsubscribe · no quiero · déjenme</text>
+<text x="1480" y="161" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Listo, no te escribimos más 👌»</text>
+<text x="1480" y="181" font-size="11" fill="#8FA98A" text-anchor="middle">corre ANTES que cualquier flujo · nunca intenta recuperar</text>
+
+<!-- ============ ENTRADA ============ -->
+<rect x="280" y="88" width="560" height="56" rx="12" fill="#1A1510" stroke="#4A3B27" stroke-width="1.5"/>
+<text x="560" y="111" font-size="13" font-weight="600" fill="#C9A26E" text-anchor="middle">💬 Comentario con palabra clave en un reel</text>
+<text x="560" y="130" font-size="11" fill="#8A8377" text-anchor="middle">10 palabras por reel: el modelo · «precio» · «valor» · «cuanto» · «$$$» · «disponible» · «queda»</text>
+
+<path d="M560,144 L560,196" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<text x="574" y="172" font-size="11" fill="#8FA98A">respuesta pública rotada (5 variantes): «Te escribí al DM 📩» · todo lo demás sigue en privado</text>
+
+<rect x="330" y="200" width="460" height="44" rx="22" fill="#17140F" stroke="#7A6A4A" stroke-width="1.3" stroke-dasharray="6 4"/>
+<text x="560" y="227" font-size="13" font-weight="600" fill="#C9A26E" text-anchor="middle">¿El reel muestra una bici protagonista?</text>
+
+<path d="M450,244 L310,286" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M670,244 L890,286" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="180" y="290" width="260" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="310" y="305" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">SÍ · 5 REELS DE BICI ESPECÍFICA</text>
+<text x="310" y="330" font-size="11" fill="#8FA98A" text-anchor="middle">⤵ RAMA A, acá abajo</text>
+
+<rect x="770" y="290" width="260" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="900" y="305" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">NO · REEL SIN BICI + CATCH-ALL</text>
+<text x="900" y="330" font-size="11" fill="#8FA98A" text-anchor="middle">⤵ RAMA B, más abajo</text>
+
+<!-- ============ RAMA A ============ -->
+<path d="M40,352 L1640,352" stroke="#221F1A" stroke-width="1"/>
+<text x="40" y="374" font-size="12" font-weight="600" fill="#C9A26E">RAMA A · REEL CON BICI PROTAGONISTA</text>
+<text x="352" y="374" font-size="11" fill="#8A8377">SL · Epic 8 Pro · Creo SL · Levo SL2 · Levo 4G — una automatización por reel, con su propia palabra clave</text>
+
+<rect x="350" y="392" width="420" height="44" rx="22" fill="#17140F" stroke="#7A6A4A" stroke-width="1.3" stroke-dasharray="6 4"/>
+<text x="560" y="419" font-size="13" font-weight="600" fill="#C9A26E" text-anchor="middle">¿La bici del video sigue disponible?</text>
+
+<path d="M450,436 L310,470" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M670,436 L1070,470" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="225" y="474" width="170" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="310" y="489" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">SÍ, DISPONIBLE</text>
+
+<rect x="995" y="474" width="170" height="22" rx="11" fill="#12100D" stroke="#43302A" stroke-width="1"/>
+<text x="1080" y="489" font-size="10" letter-spacing="1" fill="#C08863" text-anchor="middle">YA SE VENDIÓ</text>
+
+<!-- B1 -->
+<rect x="40" y="506" width="520" height="92" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="300" y="524" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">B1 · PRIMER DM — es terminal: sin botón, el hilo muere acá</text>
+<text x="300" y="545" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Hola 👋 Vi tu comentario en la {modelo}.</text>
+<text x="300" y="562" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">¿Quieres ver la ficha técnica con specs, precio y la nota</text>
+<text x="300" y="579" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">que sacó en nuestra inspección?»</text>
+
+<!-- B2-V -->
+<rect x="820" y="506" width="520" height="110" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="1080" y="524" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">B2-V · LA BICI YA SE VENDIÓ — reemplaza a B1, se confiesa de inmediato</text>
+<text x="1080" y="545" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Hola 👋 Te soy derecho: esa unidad ya se vendió. El video sigue</text>
+<text x="1080" y="562" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">dando vueltas 🙈 Pero si es la que andabas buscando, te la</text>
+<text x="1080" y="579" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">conseguimos. Todas las semanas salimos a buscar modelos</text>
+<text x="1080" y="596" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">específicos. ¿Te contactamos con nuestro especialista?»</text>
+
+<path d="M230,598 L150,626" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M400,598 L420,626" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="65" y="630" width="170" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="150" y="645" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«SÍ, MUÉSTRAMELA»</text>
+
+<rect x="328" y="630" width="185" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="420" y="645" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«TENGO UNA CONSULTA»</text>
+
+<path d="M1010,616 L950,644" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M1160,616 L1220,644" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="862" y="648" width="175" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="950" y="663" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«SÍ, QUE ME LLAMEN»</text>
+<text x="950" y="690" font-size="11.5" fill="#8FA98A" text-anchor="middle">⤵ salta directo al teléfono (B4)</text>
+
+<rect x="1122" y="648" width="195" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="1220" y="663" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«VER LO QUE HAY AHORA»</text>
+<text x="1220" y="690" font-size="11.5" fill="#8FA98A" text-anchor="middle">⤵ al catálogo (B2-C)</text>
+
+<!-- consulta -->
+<path d="M420,652 L460,672" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="310" y="676" width="320" height="66" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="470" y="694" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">B1-Q · ¿DE QUÉ ES LA CONSULTA?</text>
+<text x="470" y="715" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Dime 🙂 ¿tu consulta es sobre esta</text>
+<text x="470" y="732" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">bici o sobre la tienda?»</text>
+
+<path d="M420,742 L380,752" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M540,742 L600,752" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="310" y="756" width="140" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="380" y="771" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«SOBRE LA BICI»</text>
+<text x="380" y="798" font-size="11.5" fill="#8FA98A" text-anchor="middle">⤵ a la ficha (C1b)</text>
+
+<rect x="520" y="756" width="160" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="600" y="771" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«SOBRE LA TIENDA»</text>
+
+<path d="M600,778 L620,786" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="430" y="790" width="420" height="90" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="640" y="808" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">B1-W · LA TIENDA (provisorio: pasará al enrutador de DM)</text>
+<text x="640" y="829" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Estamos en Av. Las Condes 12461, Las Condes 📍</text>
+<text x="640" y="846" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Lunes a viernes de 9:00 a 20:00, sábado de 10:00 a 14:00.</text>
+<text x="640" y="863" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Y acá puedes ver todo lo que tenemos: biketrust.cl»</text>
+<text x="640" y="896" font-size="11.5" fill="#8FA98A" text-anchor="middle">⤵ a los 40 s → la oferta de llamada (B3)</text>
+
+<!-- C1b -->
+<path d="M150,652 L150,915 L400,915 L400,926" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<text x="162" y="716" font-size="11" fill="#8FA98A">⤵ a la ficha</text>
+<rect x="240" y="930" width="320" height="44" rx="22" fill="#17140F" stroke="#7A6A4A" stroke-width="1.3" stroke-dasharray="6 4"/>
+<text x="400" y="957" font-size="13" font-weight="600" fill="#C9A26E" text-anchor="middle">¿Es eléctrica? (¿trae batería?)</text>
+
+<path d="M330,974 L250,982" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M470,974 L700,982" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="170" y="986" width="160" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="250" y="1001" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">NO, ES MUSCULAR</text>
+
+<rect x="627" y="986" width="146" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="700" y="1001" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">SÍ, ES E-BIKE</text>
+
+<rect x="10" y="1020" width="480" height="158" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="250" y="1038" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">B2 · LA FICHA</text>
+<text x="250" y="1059" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«{modelo} · Talla {talla}</text>
+<text x="250" y="1076" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Certificación: {puntaje}/7 🔧</text>
+<text x="250" y="1093" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Donde perdió puntos: {el área más baja}</text>
+<text x="250" y="1110" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Estado honesto, tal cual está hoy: {texto}</text>
+<text x="250" y="1127" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Nueva hoy sale {precio nuevo}. Esta queda en {precio}</text>
+<text x="250" y="1144" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">→ te ahorras {ahorro}.»</text>
+<text x="250" y="1166" font-size="10.5" fill="#8A8377" text-anchor="middle">+ foto real de la bici · botón «Ver Ficha» → la ficha web completa</text>
+<text x="250" y="1202" font-size="11.5" fill="#8FA98A" text-anchor="middle">⤵ a los 40 s → la oferta de llamada (B3)</text>
+
+<rect x="520" y="1020" width="520" height="176" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="780" y="1038" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">B2-E · LA MISMA FICHA + EL DIAGNÓSTICO DE BATERÍA</text>
+<text x="780" y="1059" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«{modelo} · Talla {talla}</text>
+<text x="780" y="1076" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Certificación: {puntaje}/7 🔧 · Donde perdió puntos: {área}</text>
+<text x="780" y="1093" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Estado honesto, tal cual está hoy: {texto}</text>
+<text x="780" y="1110" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Diagnóstico de batería: {salud}% de salud · {ciclos} ciclos.</text>
+<text x="780" y="1127" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Regla nuestra: bajo 80% no la vendemos.</text>
+<text x="780" y="1144" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Nueva hoy sale {precio nuevo}. Esta queda en {precio}</text>
+<text x="780" y="1161" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">→ te ahorras {ahorro}.»</text>
+<text x="780" y="1184" font-size="10.5" fill="#8A8377" text-anchor="middle">+ foto real de la bici · botón «Ver Ficha» → la ficha web completa</text>
+<text x="780" y="1220" font-size="11.5" fill="#8FA98A" text-anchor="middle">⤵ a los 40 s → la oferta de llamada (B3)</text>
+
+<!-- ============ RAMA B ============ -->
+<path d="M40,1258 L1000,1258" stroke="#221F1A" stroke-width="1"/>
+<text x="40" y="1280" font-size="12" font-weight="600" fill="#C9A26E">RAMA B · REEL SIN BICI PROTAGONISTA</text>
+<text x="342" y="1280" font-size="11" fill="#8A8377">«Ruta» · testimonio · catch-all del catálogo viejo — una sola automatización con varios disparadores</text>
+
+<rect x="120" y="1300" width="560" height="92" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="400" y="1318" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">B1-G · PRIMER DM — también terminal</text>
+<text x="400" y="1339" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Hola 👋 Vi tu comentario. En este video no hay una sola bici</text>
+<text x="400" y="1356" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">protagonista — mejor te ayudo a encontrar la tuya.</text>
+<text x="400" y="1373" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">¿Te hago 3 preguntas cortas y te muestro la que más se acerca?»</text>
+
+<path d="M330,1392 L250,1410" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M500,1392 L540,1410" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="195" y="1414" width="110" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="250" y="1429" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«SÍ, DALE»</text>
+
+<rect x="442" y="1414" width="195" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="540" y="1429" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«VER LO QUE HAY AHORA»</text>
+<text x="540" y="1456" font-size="11.5" fill="#8FA98A" text-anchor="middle">⤵ al catálogo (B2-C)</text>
+
+<path d="M250,1436 L250,1456" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="30" y="1460" width="440" height="56" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="250" y="1478" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">QZ · 1/3 · EN QUÉ VA A ANDAR</text>
+<text x="250" y="1502" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«1/3 · ¿En qué vas a andar? 🚵»</text>
+
+<rect x="40" y="1526" width="130" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="105" y="1541" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«MTB / CERRO»</text>
+<rect x="182" y="1526" width="88" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="226" y="1541" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«RUTA»</text>
+<rect x="282" y="1526" width="100" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="332" y="1541" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«CIUDAD»</text>
+<rect x="394" y="1526" width="96" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="442" y="1541" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«OMITIR»</text>
+
+<path d="M250,1548 L250,1568" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="30" y="1572" width="440" height="70" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="250" y="1590" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">QZ · 2/3 · PRESUPUESTO (texto libre)</text>
+<text x="250" y="1611" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«2/3 · ¿En cuánto anda tu presupuesto? 💸</text>
+<text x="250" y="1631" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Escríbelo como quieras: 3.500.000 · 3,5 millones · flexible.»</text>
+
+<path d="M250,1642 L250,1662" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="30" y="1666" width="440" height="70" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="250" y="1684" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">QZ · 3/3 · ESTATURA (texto libre)</text>
+<text x="250" y="1705" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«3/3 · ¿Cuánto mides? 📏</text>
+<text x="250" y="1725" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">(1,75 o 175, como te acomode)»</text>
+
+<path d="M250,1736 L250,1756" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="60" y="1760" width="380" height="44" rx="22" fill="#17140F" stroke="#7A6A4A" stroke-width="1.3" stroke-dasharray="6 4"/>
+<text x="250" y="1787" font-size="13" font-weight="600" fill="#C9A26E" text-anchor="middle">¿Alguna del stock de hoy calza de verdad?</text>
+<text x="460" y="1778" font-size="10.5" fill="#8A8377">con umbral real: bajo el corte responde «ninguna calza»</text>
+<text x="460" y="1793" font-size="10.5" fill="#8A8377">en vez de forzar la mejor bici disponible</text>
+
+<path d="M170,1804 L140,1826" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M350,1804 L640,1826" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="70" y="1830" width="150" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="145" y="1845" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">SÍ, HAY UNA</text>
+
+<rect x="557" y="1830" width="166" height="22" rx="11" fill="#12100D" stroke="#43302A" stroke-width="1"/>
+<text x="640" y="1845" font-size="10" letter-spacing="1" fill="#C08863" text-anchor="middle">NINGUNA CALZA</text>
+
+<rect x="10" y="1864" width="540" height="180" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="280" y="1882" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">B2-Q · LA FICHA DEL HERO — con los 4 candados de honestidad</text>
+<text x="280" y="1903" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«De lo que tengo disponible HOY, la que más se acerca a lo tuyo es esta 👇</text>
+<text x="280" y="1920" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">{modelo} · Talla {talla}</text>
+<text x="280" y="1937" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Sacó {puntaje}/7 en nuestra inspección — y en la ficha te digo</text>
+<text x="280" y="1954" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">exactamente dónde perdió puntos, sin maquillaje.</text>
+<text x="280" y="1971" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Nueva hoy sale {precio nuevo}. Esta queda en {precio} → ahorras {ahorro}.</text>
+<text x="280" y="1988" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Fotos reales, diagnóstico completo y su estado honesto: {link ficha}</text>
+<text x="280" y="2005" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">La talla exacta se confirma contigo — Luis te lo dice al teléfono.»</text>
+<text x="280" y="2022" font-size="10.5" fill="#8A8377" text-anchor="middle">si es e-bike (B2-QE) se agrega: «Diagnóstico de batería: {salud}% de salud ·</text>
+<text x="280" y="2036" font-size="10.5" fill="#8A8377" text-anchor="middle">{ciclos} ciclos. Regla nuestra: bajo 80% no la vendemos.»</text>
+
+<path d="M280,2044 L280,2064" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="110" y="2068" width="340" height="44" rx="22" fill="#17140F" stroke="#7A6A4A" stroke-width="1.3" stroke-dasharray="6 4"/>
+<text x="280" y="2095" font-size="13" font-weight="600" fill="#C9A26E" text-anchor="middle">¿Hay una alternativa que ofrecer?</text>
+
+<path d="M200,2112 L170,2126" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M370,2112 L410,2126" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="130" y="2130" width="80" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="170" y="2145" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">SÍ</text>
+<rect x="370" y="2130" width="80" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="410" y="2145" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">NO</text>
+<text x="445" y="2172" font-size="11.5" fill="#8FA98A" text-anchor="middle">⤵ a los 40 s → la oferta (B3)</text>
+
+<rect x="10" y="2162" width="320" height="66" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="170" y="2180" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">B2-ALT · LA ALTERNATIVA</text>
+<text x="170" y="2201" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«También te podría servir:</text>
+<text x="170" y="2218" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">{modelo} · {precio} · {link ficha}»</text>
+<text x="170" y="2250" font-size="11.5" fill="#8FA98A" text-anchor="middle">⤵ a los 40 s → la oferta (B3)</text>
+
+<rect x="560" y="1864" width="495" height="106" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="807" y="1882" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">NM · LA SALIDA HONESTA — nunca dice «esa se vendió»: acá no hay unidad</text>
+<text x="807" y="1903" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Te soy derecho: de lo que tengo HOY, ninguna calza bien con lo</text>
+<text x="807" y="1920" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">que me dijiste 🙈 Pero si sabes lo que buscas, te la conseguimos.</text>
+<text x="807" y="1937" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Todas las semanas salimos a buscar modelos específicos para</text>
+<text x="807" y="1954" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">gente que nos los encarga. ¿Te contactamos con un especialista?»</text>
+
+<path d="M740,1970 L700,1990" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M880,1970 L920,1990" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="612" y="1994" width="175" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="700" y="2009" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«SÍ, QUE ME LLAMEN»</text>
+<text x="700" y="2036" font-size="11.5" fill="#8FA98A" text-anchor="middle">⤵ salta directo al teléfono (B4)</text>
+
+<rect x="822" y="1994" width="195" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="920" y="2009" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«VER LO QUE HAY AHORA»</text>
+<text x="900" y="2036" font-size="11.5" fill="#8FA98A" text-anchor="middle">⤵ al catálogo (B2-C)</text>
+
+<!-- ============ CONVERGENCIA ============ -->
+<path d="M1030,1258 L1640,1258" stroke="#221F1A" stroke-width="1"/>
+<text x="1030" y="1280" font-size="12" font-weight="600" fill="#C9A26E">CONVERGENCIA · las dos ramas terminan acá</text>
+<text x="1030" y="1298" font-size="11" fill="#8A8377">llega todo lo que no cerró antes: la ficha, la tienda, el catálogo, la alternativa y el «ninguna calza»</text>
+
+<rect x="1085" y="1312" width="490" height="86" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="1330" y="1330" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">B2-C · EL CATÁLOGO</text>
+<text x="1330" y="1351" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Acá puedes ver todo lo que tenemos disponible ahora</text>
+<text x="1330" y="1368" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">mismo 👉 biketrust.cl</text>
+<text x="1330" y="1385" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Todas pasaron por nuestra inspección, con su nota de 1 a 7.»</text>
+
+<path d="M1330,1398 L1330,1422" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="1180" y="1426" width="300" height="34" rx="17" fill="#12100D" stroke="#3A342B" stroke-width="1.2"/>
+<text x="1330" y="1448" font-size="12" font-weight="600" fill="#C9A26E" text-anchor="middle">⏱ Pausa de 40 segundos</text>
+
+<path d="M1330,1460 L1330,1484" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="1075" y="1488" width="510" height="106" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="1330" y="1506" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">B3 · LA OFERTA DE LLAMADA — el objetivo del bot es el teléfono, no la visita</text>
+<text x="1330" y="1527" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Oye, mejor que te llame Luis 📞 Él inspeccionó personalmente</text>
+<text x="1330" y="1544" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">cada bici que tenemos — nadie te va a responder más derecho.</text>
+<text x="1330" y="1561" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">En 5 minutos te dice cuál te calza según tu estatura, qué hay</text>
+<text x="1330" y="1578" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">dentro de tu presupuesto, y si quieres te la aparta mientras decides.»</text>
+
+<path d="M1260,1594 L1210,1614" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M1420,1594 L1470,1614" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="1122" y="1618" width="175" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="1210" y="1633" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«SÍ, QUE ME LLAMEN»</text>
+
+<rect x="1395" y="1618" width="150" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="1470" y="1633" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«POR AHORA NO»</text>
+
+<path d="M1470,1640 L1470,1656" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="1325" y="1660" width="290" height="84" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="1470" y="1678" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">B7 · SALIDA BLANDA — fin</text>
+<text x="1470" y="1699" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Dale, sin problema 👌 Cero llamadas.</text>
+<text x="1470" y="1716" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Cualquier duda me escribes por acá. Y si</text>
+<text x="1470" y="1733" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">alguien la aparta antes, te aviso.»</text>
+
+<path d="M1210,1640 L1210,1740 L1230,1740 L1230,1756" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="1005" y="1760" width="450" height="100" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="1230" y="1778" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">B4 · EL TELÉFONO — el único dato que la persona teclea</text>
+<text x="1230" y="1799" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Perfecto 🙌 ¿A qué número te llamamos?</text>
+<text x="1230" y="1816" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Escríbelo como quieras (9 1234 5678, +569…, da lo mismo).»</text>
+<text x="1230" y="1840" font-size="10.5" fill="#8A8377" text-anchor="middle">si viene mal: «Creo que se cortó un dígito 🙈 ¿me lo mandas de nuevo?</text>
+<text x="1230" y="1854" font-size="10.5" fill="#8A8377" text-anchor="middle">Así sirve: 9 1234 5678» · máximo 2 reintentos</text>
+
+<path d="M1230,1860 L1230,1884" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="1060" y="1888" width="340" height="56" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="1230" y="1906" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">B5 · EL ECO DE CONFIRMACIÓN</text>
+<text x="1230" y="1930" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Anotado: {teléfono} ✅»</text>
+
+<path d="M1160,1944 L1140,1962" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M1310,1944 L1340,1962" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="1080" y="1966" width="120" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="1140" y="1981" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«CORRECTO»</text>
+
+<rect x="1280" y="1966" width="120" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="1340" y="1981" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«CORREGIR»</text>
+<text x="1340" y="2008" font-size="11.5" fill="#8FA98A" text-anchor="middle">⤴ vuelve a pedir el número (B4)</text>
+
+<path d="M1140,1988 L1140,2010" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="975" y="2014" width="330" height="44" rx="22" fill="#17140F" stroke="#7A6A4A" stroke-width="1.3" stroke-dasharray="6 4"/>
+<text x="1140" y="2041" font-size="13" font-weight="600" fill="#C9A26E" text-anchor="middle">¿Se pudo prometer una hora?</text>
+<text x="1320" y="2036" font-size="10.5" fill="#8A8377">si el lead ya tenía un ticket</text>
+<text x="1320" y="2051" font-size="10.5" fill="#8A8377">abierto, no se crea otro</text>
+
+<path d="M1080,2058 L1060,2076" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M1240,2058 L1450,2076" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="1000" y="2080" width="120" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="1060" y="2095" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">SÍ, HAY HORA</text>
+
+<rect x="1365" y="2080" width="170" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="1450" y="2095" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">YA TENÍA TICKET</text>
+
+<rect x="940" y="2114" width="440" height="124" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="1160" y="2132" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">B6 · CONFIRMACIÓN FINAL — fin</text>
+<text x="1160" y="2153" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Listo ✅ Te va a llamar Luis Sulbarán, nuestro</text>
+<text x="1160" y="2170" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">especialista, {en los próximos minutos / mañana a las 10:00}.</text>
+<text x="1160" y="2187" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Te marca desde el +56 9 2181 5855 — guarda el número</text>
+<text x="1160" y="2204" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">así sabes que somos nosotros 😉</text>
+<text x="1160" y="2221" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Si no te pilla, te deja un WhatsApp a ese mismo número.»</text>
+
+<path d="M1450,2102 L1450,2248 L1300,2248 L1300,2262" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="940" y="2266" width="480" height="124" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="1180" y="2284" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">B6-D · CONFIRMACIÓN CUANDO YA TENÍA TICKET — fin</text>
+<text x="1180" y="2305" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Listo ✅ Ya tenía tu solicitud anotada — Luis te llama en cuanto pueda.</text>
+<text x="1180" y="2322" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Te marca desde el +56 9 2181 5855 — guarda el número así</text>
+<text x="1180" y="2339" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">sabes que somos nosotros 😉</text>
+<text x="1180" y="2356" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Si no te pilla, te deja un WhatsApp a ese mismo número.»</text>
+<text x="1180" y="2378" font-size="10.5" fill="#8A8377" text-anchor="middle">esa última línea no se saca: es donde se declara el permiso para escribirle después</text>
+
+<!-- ============ LEYENDA ============ -->
+<rect x="40" y="2296" width="620" height="112" rx="12" fill="#0E0D0B" stroke="#221F1A" stroke-width="1"/>
+<text x="60" y="2320" font-size="10" letter-spacing="1" fill="#6E685D">CÓMO SE LEE</text>
+<rect x="60" y="2334" width="150" height="26" rx="13" fill="#17140F" stroke="#7A6A4A" stroke-width="1.2" stroke-dasharray="6 4"/>
+<text x="135" y="2351" font-size="10.5" fill="#C9A26E" text-anchor="middle">decisión del sistema</text>
+<rect x="228" y="2334" width="150" height="26" rx="8" fill="#141210" stroke="#2A2620" stroke-width="1.2"/>
+<text x="303" y="2351" font-size="10.5" fill="#C5BDAF" text-anchor="middle">mensaje que se lee</text>
+<rect x="396" y="2336" width="130" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="461" y="2351" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">BOTÓN</text>
+<text x="546" y="2351" font-size="11" fill="#8FA98A">⤵ salto a otro bloque</text>
+<text x="60" y="2384" font-size="10.5" fill="#8A8377">Todo lo que no aparece acá es maquinaria: se crea el lead, se resuelve la bici desde el inventario, nace el ticket con el brief de la</text>
+<text x="60" y="2399" font-size="10.5" fill="#8A8377">llamada y sale el aviso de WhatsApp a Luis. La persona no ve nada de eso.</text>
+
+</svg>

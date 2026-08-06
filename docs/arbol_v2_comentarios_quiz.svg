@@ -1,0 +1,110 @@
+<svg width="1420" height="1250" viewBox="0 0 1420 1250" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="t d">
+<title id="t">Árbol de decisiones — Puerta de comentarios V2 · reel sin bici específica (quiz)</title>
+<desc id="d">Solo mensajes y condiciones. Del comentario al quiz de 3 preguntas, con umbral honesto de no-match y el mismo cierre telefónico del árbol de bici específica.</desc>
+<defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0L8,4L0,8z" fill="#6E685D"/></marker></defs>
+<rect x="0" y="0" width="1420" height="1250" fill="#0A0A0A"/>
+
+<text x="60" y="44" font-size="19" font-weight="600" fill="#F3EEE4">Puerta de comentarios V2 — reel sin bici específica (el quiz)</text>
+<text x="60" y="66" font-size="12" fill="#8A8377">Para videos de categoría o comparativas («¿Gravel o Rutera?») · mismo cierre telefónico; cambia la entrada · Bike Trust, semana 31</text>
+
+<!-- START -->
+<rect x="430" y="88" width="560" height="56" rx="12" fill="#1A1510" stroke="#4A3B27" stroke-width="1.5"/>
+<text x="710" y="111" font-size="13" font-weight="600" fill="#C9A26E" text-anchor="middle">💬 Comentario con palabra clave en el reel</text>
+<text x="710" y="130" font-size="11" fill="#8A8377" text-anchor="middle">respuesta pública: «Te escribí al DM 📩» — y sigue en privado</text>
+
+<path d="M710,144 L710,166" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<!-- B1-G -->
+<rect x="430" y="170" width="560" height="104" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="710" y="188" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">B1-G · LA INVITACIÓN</text>
+<text x="710" y="206" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Hola 👋 Vi tu comentario. En este video no hay una sola bici</text>
+<text x="710" y="222" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">protagonista — mejor te ayudo a encontrar la tuya.</text>
+<text x="710" y="238" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">¿Te hago 3 preguntas cortas y te muestro la que más</text>
+<text x="710" y="254" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">se acerca a lo que buscas?»</text>
+
+<path d="M600,274 L480,304" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M860,274 L1120,304" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<!-- rama derecha: catálogo -->
+<rect x="1030" y="308" width="180" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="1120" y="323" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«VER LO QUE HAY AHORA»</text>
+<rect x="970" y="338" width="300" height="76" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="1120" y="356" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">B2-C · CATÁLOGO</text>
+<text x="1120" y="374" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Acá puedes ver todo lo que tenemos</text>
+<text x="1120" y="390" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">disponible ahora mismo 👉 biketrust.cl</text>
+<text x="1120" y="406" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">Todas con su nota de 1 a 7 a la vista.»</text>
+<text x="1120" y="434" font-size="11.5" fill="#8FA98A" text-anchor="middle">⤵ a los 40 s → oferta de llamada (B3)</text>
+
+<!-- rama izquierda: quiz -->
+<rect x="436" y="308" width="88" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="480" y="323" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«SÍ, DALE»</text>
+
+<rect x="260" y="338" width="440" height="100" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="480" y="356" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">QZ 1·2·3 · EL CUESTIONARIO (un solo bloque)</text>
+<text x="480" y="376" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«1/3 ¿En qué vas a andar? 🚵» — MTB/cerro · Ruta · Ciudad</text>
+<text x="480" y="394" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«2/3 ¿En cuánto anda tu presupuesto? 💸» — texto libre:</text>
+<text x="480" y="410" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«3.500.000» · «3,5 millones» · «flexible»</text>
+<text x="480" y="428" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«3/3 ¿Cuánto mides? 📏» — 1,75 o 175, como acomode</text>
+
+<path d="M480,438 L480,458" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<rect x="270" y="462" width="420" height="58" rx="26" fill="#17140F" stroke="#7A6A4A" stroke-width="1.3" stroke-dasharray="6 4"/>
+<text x="480" y="486" font-size="12.5" font-weight="600" fill="#C9A26E" text-anchor="middle">¿Alguna bici del inventario calza DE VERDAD?</text>
+<text x="480" y="506" font-size="11" fill="#A89F90" text-anchor="middle">umbral real — el quiz ya no recomienda «cualquier cosa»</text>
+
+<path d="M380,520 L330,548" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M580,520 L700,548" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+
+<!-- match -->
+<rect x="256" y="552" width="150" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="331" y="567" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">SÍ, HAY CANDIDATA</text>
+<rect x="150" y="582" width="362" height="128" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="331" y="600" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">B2-Q · LA FICHA DEL HERO</text>
+<text x="331" y="618" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«De lo que tengo disponible HOY, la que más</text>
+<text x="331" y="634" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">se acerca a lo tuyo es esta 👇 La talla exacta</text>
+<text x="331" y="650" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">se confirma contigo — Luis te lo dice al</text>
+<text x="331" y="666" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">teléfono según tu estatura.»</text>
+<text x="331" y="688" font-size="11.5" fill="#A89F90" text-anchor="middle">+ la ficha completa (con batería si es e-bike)</text>
+
+<path d="M331,710 L331,728" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="150" y="732" width="362" height="58" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="331" y="750" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">SI HAY UNA 2ª OPCIÓN</text>
+<text x="331" y="768" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«También te podría servir: {modelo} · {precio}»</text>
+<text x="331" y="784" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">+ el link de su ficha</text>
+<text x="331" y="812" font-size="11.5" fill="#8FA98A" text-anchor="middle">⤵ a los 40 s → oferta de llamada (B3)</text>
+
+<!-- no-match -->
+<rect x="640" y="552" width="130" height="22" rx="11" fill="#12100D" stroke="#43302A" stroke-width="1"/>
+<text x="705" y="567" font-size="10" letter-spacing="1" fill="#C08863" text-anchor="middle">NINGUNA CALZA</text>
+<rect x="560" y="582" width="380" height="120" rx="12" fill="#141210" stroke="#2A2620" stroke-width="1.3"/>
+<text x="750" y="600" font-size="9.5" letter-spacing="1" fill="#6E685D" text-anchor="middle">NM · EL NO-MATCH HONESTO</text>
+<text x="750" y="618" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">«Te soy derecho: de lo que tengo HOY, ninguna</text>
+<text x="750" y="634" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">calza bien con lo que me dijiste 🙈 Pero si sabes</text>
+<text x="750" y="650" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">lo que buscas, te la conseguimos.</text>
+<text x="750" y="666" font-size="12" font-style="italic" fill="#C5BDAF" text-anchor="middle">¿Te contactamos con nuestro especialista?»</text>
+<text x="750" y="688" font-size="10.5" fill="#6E685D" text-anchor="middle">nunca dice «esa se vendió»: acá no hay ninguna unidad concreta</text>
+
+<path d="M660,702 L636,726" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<path d="M840,702 L876,726" stroke="#6E685D" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+<rect x="546" y="730" width="164" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="628" y="745" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«SÍ, QUE ME LLAMEN»</text>
+<text x="628" y="772" font-size="11.5" fill="#8FA98A" text-anchor="middle">⤵ directo al teléfono (B4)</text>
+<rect x="796" y="730" width="180" height="22" rx="11" fill="#12100D" stroke="#3A342B" stroke-width="1"/>
+<text x="886" y="745" font-size="10" letter-spacing="1" fill="#C9A26E" text-anchor="middle">«VER LO QUE HAY AHORA»</text>
+<text x="886" y="772" font-size="11.5" fill="#8FA98A" text-anchor="middle">⤵ catálogo → 40 s → oferta (B3)</text>
+
+<!-- cierre -->
+<text x="710" y="856" font-size="12" fill="#8A8377" text-anchor="middle">▼ desde aquí, el cierre es idéntico al árbol de bici específica ▼</text>
+<rect x="310" y="872" width="800" height="76" rx="12" fill="#141210" stroke="#4A3B27" stroke-width="1.4"/>
+<text x="710" y="892" font-size="9.5" letter-spacing="1" fill="#C9A26E" text-anchor="middle">EL CIERRE TELEFÓNICO (ver árbol 1)</text>
+<text x="710" y="912" font-size="12" fill="#C5BDAF" text-anchor="middle">B3 oferta de llamada → B4 teléfono (con reintento) → B5 corroboración del número («Anotado ✅»)</text>
+<text x="710" y="930" font-size="12" fill="#C5BDAF" text-anchor="middle">→ B6 confirmación con hora prometida y el número de Luis (o B6-D si ya tenía un llamado pendiente)</text>
+
+<!-- candados -->
+<rect x="60" y="1000" width="1300" height="130" rx="12" fill="none" stroke="#2A2620" stroke-width="1.2" stroke-dasharray="7 5"/>
+<text x="84" y="1026" font-size="11" letter-spacing="1.5" fill="#8A8377">LOS CANDADOS DE HONESTIDAD DEL QUIZ (OBLIGATORIOS EN EL COPY)</text>
+<text x="84" y="1050" font-size="12" fill="#B8B0A2">· Nunca afirma calce: la única formulación es «la que más se acerca a lo tuyo» — jamás «tu bici ideal».</text>
+<text x="84" y="1072" font-size="12" fill="#B8B0A2">· Nunca promete talla: la talla es el dato de la bici, no un cálculo — siempre «la talla exacta se confirma contigo».</text>
+<text x="84" y="1094" font-size="12" fill="#B8B0A2">· El no-match es una rama real: antes del umbral, el quiz recomendaba siempre algo, aunque no calzara.</text>
+<text x="84" y="1116" font-size="12" fill="#B8B0A2">· Entre estos mensajes corre invisible la maquinaria: registro del lead, quiz iniciado, ticket con brief y aviso a Luis.</text>
+</svg>
