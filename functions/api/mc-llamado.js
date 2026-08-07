@@ -24,11 +24,18 @@
 // Lee con AIRTABLE_TOKEN, escribe con AIRTABLE_WRITE_TOKEN. Protegido por env
 // MC_KEY (?key=). Sin env → abierto (mismo criterio que los otros puentes ManyChat).
 
+import { enFranja, avisarStaff } from '../../lib/avisos.js';
+
 const JSONH = { 'Content-Type': 'application/json; charset=utf-8' };
 const reply = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: JSONH });
 
 const BASE_DEFAULT = 'appQUgk8aeD752923';
-const MC_API = 'https://api.manychat.com';
+
+// Si al equipo ya se le avisó de este lead hace menos de esto, la rama de dedup
+// no vuelve a sonar. La guarda es POR TIEMPO, no por «ya existe un ticket»: así
+// una ráfaga de tres reels seguidos produce un aviso, no tres — pero un lead que
+// vuelve a los tres días sí despierta a alguien.
+const REARME_MIN = 120;
 
 async function afetch(url, opts, tries = 3) {
   for (let i = 0; ; i++) {
@@ -43,34 +50,15 @@ function keyOk(env, url) {
   return need ? url.searchParams.get('key') === need : true;
 }
 
-// ── Horarios de aviso por destinatario ───────────────────────────────────────
-// ⚠️ ESTE HELPER ESTÁ DUPLICADO en `cron-briefing.js`. Si cambias uno, cambia el otro.
+// ── El horario de los avisos vive en `lib/avisos.js` ─────────────────────────
+// Hasta 2026-08-06 acá había una copia de `horarioOk` con ventanas por persona.
+// Había SEIS copias repartidas por `functions/api/`, en dos dialectos que ya no
+// coincidían. Se eliminaron todas: ahora la regla es una sola —franja 9–20, todos
+// los días, todos los destinatarios— y vive en `enFranja()`.
 //
-// Formato de `AVISO_HORARIOS`: `sid:DIAS@desde-hasta`, separados por coma.
-//   DIAS = dígitos de los días en que SÍ se avisa (0=domingo … 6=sábado).
-//   También acepta el formato antiguo `D-D@H-H` (rango contiguo) por compatibilidad.
-//
-// Cobertura real del negocio (2026-07-27):
-//   Luis    → lunes, miércoles, jueves, viernes, sábado  (NO martes ni domingo)
-//   Roberto → todos los días, y además cubre el martes
-// La ventana empieza a la hora del briefing: antes de eso el aviso inmediato no
-// hace falta porque el briefing matutino ya lista la cola completa del día.
-const HORARIOS_DEFAULT = '579628082:13456@9-20,302195575:0123456@9-20';
-// `ignorarHora` lo usa el briefing: SU hora la gobierna BRIEFING_HOUR, y aplicarle
-// además esta ventana lo bloquearía a sí mismo si alguien lo mueve a las 8:00.
-function horarioOk(env, sid, now = new Date(), ignorarHora = false) {
-  const entry = String(env.AVISO_HORARIOS || HORARIOS_DEFAULT)
-    .split(',').map(s => s.trim()).find(s => s.startsWith(String(sid) + ':'));
-  if (!entry) return true;
-  const m = /^([\d-]+)@(\d{1,2})-(\d{1,2})$/.exec(entry.slice(entry.indexOf(':') + 1));
-  if (!m) return true;
-  const p = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Santiago', hour: 'numeric', hour12: false, weekday: 'short' }).formatToParts(now);
-  const hora = Number(p.find(x => x.type === 'hour').value);
-  const dia = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }[p.find(x => x.type === 'weekday').value];
-  if (!ignorarHora && (hora < Number(m[2]) || hora >= Number(m[3]))) return false;
-  if (m[1].includes('-')) { const [a, b] = m[1].split('-').map(Number); return dia >= a && dia <= b; }
-  return m[1].includes(String(dia));
-}
+// Y lo importante: acá ya NO se decide si el aviso se pierde. Si estamos fuera de
+// franja, el ticket se crea igual y el sello `Aviso equipo enviado` queda VACÍO;
+// `cron-avisos` o el briefing de la mañana lo recogen. Nunca franja sin red.
 
 // ── Horario del especialista y promesa de llamada ────────────────────────────
 // El bot NO puede prometer «te llamamos al tiro» a las 2 AM ni un sábado a las
@@ -162,27 +150,11 @@ function diaLegible(f) {
   return new Intl.DateTimeFormat('es-CL', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long' }).format(d);
 }
 
-// ── ManyChat helpers (mismo patrón que mc-consigna / cron-recordatorios) ────
-async function mcPost(token, path, body) {
-  return afetch(`${MC_API}${path}`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify(body),
-  });
-}
-const mcSid = (s) => (/^\d+$/.test(s) ? Number(s) : s);
-async function mcSetField(token, sid, name, value) {
-  const r = await mcPost(token, '/fb/subscriber/setCustomFieldByName', {
-    subscriber_id: mcSid(sid), field_name: name, field_value: value,
-  });
-  if (!r.ok) throw new Error(`setField ${name}: ${r.status} ${await r.text()}`);
-}
-async function mcSendFlow(token, sid, flowNs) {
-  const r = await mcPost(token, '/fb/sending/sendFlow', {
-    subscriber_id: mcSid(sid), flow_ns: flowNs,
-  });
-  if (!r.ok) throw new Error(`sendFlow: ${r.status} ${await r.text()}`);
-}
+// Los helpers de ManyChat (setCustomFieldByName + sendFlow) vivían acá duplicados
+// en cada endpoint. Ahora están en `lib/avisos.js`, dentro de `avisarStaff`, que
+// además hace lo que ninguna de estas copias hacía: capturar el error POR
+// DESTINATARIO. Con el `try` afuera del bucle —como estaba— un solo sid roto
+// tumbaba el envío de todos los demás.
 
 const cfg = (env) => {
   const BASE = env.AIRTABLE_BASE || BASE_DEFAULT;
@@ -196,12 +168,9 @@ const cfg = (env) => {
     api: (t) => `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(t)}`,
     rH: { Authorization: `Bearer ${READ}` },
     wH: { Authorization: `Bearer ${WRITE}`, 'Content-Type': 'application/json' },
-    // Aviso al staff — se activa cuando MC_TOKEN + flow + destinatarios existen.
-    // Los destinatarios admiten varios ids separados por coma (Luis,Roberto).
-    MC_TOKEN: env.MANYCHAT_TOKEN || '',
-    FLOW_LLAMADO: env.FLOW_NS_LLAMADO || '',
-    STAFF_SIDS: String(env.AVISO_LLAMADO_SIDS || env.LUIS_SUBSCRIBER_ID || '')
-      .split(',').map(s => s.trim()).filter(Boolean),
+    // Los destinatarios ya no se resuelven acá: los da `sidsAviso(env, 'llamado')`
+    // dentro de `avisarStaff`, que centraliza las cadenas de fallback de las seis
+    // familias de aviso en un solo lugar visible.
   };
 };
 
@@ -347,8 +316,40 @@ export async function onRequestPost({ request, env }) {
       } }),
     });
     if (pr.ok) {
+      // LA RAMA DE DEDUP YA NO ES MUDA. Antes se limitaba a anotar la nota y
+      // devolver `omitido_ticket_abierto`: si el mismo lead volvía tres días
+      // después por otro reel, nadie del equipo se enteraba nunca.
+      //
+      // La guarda es POR TIEMPO, no por «ya existe un ticket»: una ráfaga de tres
+      // reels en la misma tarde produce UN aviso, pero el que vuelve pasado el
+      // rearme sí despierta a alguien. Y si el sello está vacío (entró de noche),
+      // se respeta: no se avisa, lo recoge el briefing.
+      const selloPrev = abierto.fields?.['Aviso equipo enviado'] ? new Date(abierto.fields['Aviso equipo enviado']).getTime() : 0;
+      const enfriando = selloPrev && (Date.now() - selloPrev) < REARME_MIN * 60000;
+      let avisoDedup = selloPrev ? 'omitido_rearme' : 'pendiente_de_briefing';
+
+      if (!enfriando && selloPrev && enFranja(env)) {
+        const res = await avisarStaff(env, {
+          cual: 'llamado', flowEnv: 'FLOW_NS_LLAMADO', campo: 'cf_llamado_datos',
+          texto: `🔁 VOLVIÓ · ${nombre} · ${telefono || abierto.fields?.['Teléfono'] || 'sin teléfono'}${biciNombre ? ` · ahora pregunta por ${biciNombre}` : ''}`,
+        });
+        if (res.enviados > 0) {
+          avisoDedup = 'enviado';
+          await afetch(`${C.api(C.LLAM)}/${abierto.id}`, {
+            method: 'PATCH', headers: C.wH,
+            body: JSON.stringify({ typecast: true, fields: { 'Aviso equipo enviado': now } }),
+          });
+        } else {
+          avisoDedup = `sin_enviar:${res.motivo}`;
+        }
+      }
+
+      const plDedup = promesaLlamada(env);
       return reply({ ok: true, llamadoId: abierto.id, leadId, leadCreado, dedup: true,
-        biciNombre: biciNombre || null, llamarEl: null, llamarElLegible: null, aviso: 'omitido_ticket_abierto' });
+        biciNombre: biciNombre || null, llamarEl: null, llamarElLegible: null, aviso: avisoDedup,
+        // Se devuelven también acá: ManyChat imprime la misma confirmación en los
+        // dos caminos, y antes la rama de dedup los omitía (bug B6 del runbook).
+        promesaLlamada: plDedup.promesa, dentroDeHorario: plDedup.abierto });
     }
     // si el PATCH falla, cae al camino normal y crea uno nuevo
   }
@@ -360,6 +361,11 @@ export async function onRequestPost({ request, env }) {
     body: JSON.stringify({ typecast: true, fields: {
       'Nombre': nombre,
       'Estado': 'Llamada pendiente',
+      // `Salida` gobierna el Kanban. Se escribe acá en vez de depender de la
+      // automatización «Kanban: Salida vacía → Llamada pendiente»: una pieza menos
+      // en el camino, y la tarjeta nace ya en su columna en vez de aparecer unos
+      // segundos en la pila «sin categoría».
+      'Salida': 'Llamada pendiente',
       'Origen': 'Bot DM',
       'Fecha': today,
       'Lead': [leadId],
@@ -380,32 +386,39 @@ export async function onRequestPost({ request, env }) {
   // ven exactamente el mismo compromiso.
   const pl = promesaLlamada(env);
 
-  let aviso = 'no_configurado';
-  if (C.MC_TOKEN && C.FLOW_LLAMADO && C.STAFF_SIDS.length) {
-    try {
-      // ⚠️ En V2 NO hay franja horaria: al lead no se le pregunta cuándo prefiere
-      // que lo llamen — deja su número y se le llama lo antes posible dentro del
-      // horario. Por eso el resumen NO la incluye. La plantilla `nuevo_llamado`
-      // todavía cierra con «contacta en la franja indicada»: esa frase quedó
-      // obsoleta y hay que reemplazarla (ver docs/V2_SALIDAS_LLAMADA.md).
-      // `llamarEl` sobrevive solo para tickets creados a mano por el staff.
-      const resumen = [
-        nombre,
-        ciudad ? `de ${ciudad}` : '',
-        biciNombre ? `interesado en ${biciNombre}` : '',
-        telefono || 'sin teléfono',
-        ...(llamarEl ? [`pidió que lo llamen el ${diaLegible(llamarEl)}`] : []),
-      ].filter(Boolean).join(' · ');
-      let enviados = 0, dormidos = 0;
-      for (const sid of C.STAFF_SIDS) {
-        if (!horarioOk(env, sid)) { dormidos++; continue; }
-        await mcSetField(C.MC_TOKEN, sid, 'cf_llamado_datos', resumen.slice(0, 900));
-        await mcSendFlow(C.MC_TOKEN, sid, C.FLOW_LLAMADO);
-        enviados++;
-      }
-      aviso = enviados ? 'enviado' + (dormidos ? ` (${dormidos} fuera de horario)` : '') : 'fuera_de_horario';
-    } catch (e) {
-      aviso = 'error: ' + String(e && e.message || e).slice(0, 200);
+  // AVISO AL EQUIPO + SELLO.
+  //
+  // Dentro de la franja se avisa AL TIRO y no por el barrido: la velocidad de la
+  // primera llamada es la métrica del negocio, y 15 minutos de latencia sobre un
+  // lead que acaba de dejar su número son caros.
+  //
+  // Fuera de la franja NO se manda nada y —esto es lo importante— el sello
+  // `Aviso equipo enviado` queda VACÍO. Ese vacío es lo que hace que el briefing
+  // de la mañana lo liste. Antes, fuera de horario el aviso simplemente se perdía.
+  //
+  // Si el envío falla, tampoco se sella: `cron-avisos` reintenta en el próximo
+  // tick. Antes un error de ManyChat era un lead perdido en silencio.
+  const resumen = [
+    nombre,
+    ciudad ? `de ${ciudad}` : '',
+    biciNombre ? `interesado en ${biciNombre}` : '',
+    telefono || 'sin teléfono',
+    ...(llamarEl ? [`pidió que lo llamen el ${diaLegible(llamarEl)}`] : []),
+  ].filter(Boolean).join(' · ');
+
+  let aviso = 'pendiente_de_briefing';
+  if (enFranja(env)) {
+    const res = await avisarStaff(env, {
+      cual: 'llamado', flowEnv: 'FLOW_NS_LLAMADO', campo: 'cf_llamado_datos', texto: resumen,
+    });
+    if (res.enviados > 0) {
+      aviso = 'enviado';
+      await afetch(`${C.api(C.LLAM)}/${llamadoId}`, {
+        method: 'PATCH', headers: C.wH,
+        body: JSON.stringify({ typecast: true, fields: { 'Aviso equipo enviado': now } }),
+      });
+    } else {
+      aviso = `sin_enviar:${res.motivo}`;
     }
   }
 

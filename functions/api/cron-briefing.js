@@ -1,26 +1,41 @@
 // Cloudflare Pages Function · GET/POST /api/cron-briefing
-// Briefing diario al staff (Luis): cada mañana a las 8:00 (hora Chile) le manda
-// por WhatsApp la agenda de visitas de HOY. Reutiliza la mecánica del motor de
-// recordatorios: arma el resumen del día, lo escribe en el campo `cf_agenda_hoy`
-// del contacto de Luis (setCustomFieldByName) y dispara el flow de la plantilla
-// `briefing_diario` (sendFlow). El {{1}} de la plantilla está mapeado a cf_agenda_hoy.
 //
-// La agenda va en UNA sola línea (WhatsApp no permite saltos de línea dentro de
-// una variable de plantilla). Si no hay visitas → "sin visitas agendadas 🌱".
+// EL BRIEFING DE LA MAÑANA. Sale a las 9:00 hora de Chile (env `BRIEFING_HOUR`),
+// TODOS los días, a Luis, Roberto y Gabriel (env `BRIEFING_SIDS`).
 //
-// Disparo: el worker-cron le pega en cada tick (*/15); este endpoint sólo envía
-// cuando en Chile son las 09:0x (hora pedida por Luis 2026-07-10; ajustable
-// con env BRIEFING_HOUR). Para probar: ?force=1 (ignora la hora) · ?dry=1
-// (arma el texto pero no envía).
+// QUÉ MANDA — dos variables, no una:
+//   {{1}} `cf_llamados_hoy` → la cola de llamados, marcando cuáles entraron
+//                             fuera de horario y nadie ha visto todavía.
+//   {{2}} `cf_agenda_hoy`   → las visitas agendadas para hoy.
+// Se usan DOS porque una variable de plantilla no admite saltos de línea: con una
+// sola, todo el briefing quedaba apelmazado en un párrafo. Los saltos viven en la
+// parte fija de `briefing_diario_v2`.
 //
-// Env: AIRTABLE_TOKEN/AIRTABLE_WRITE_TOKEN (aquí sólo lee), MANYCHAT_TOKEN,
-// FLOW_NS_BRIEFING, LUIS_SUBSCRIBER_ID. Protegido por CRON_KEY. Sin credenciales
-// de ManyChat/Luis → arma el resumen pero no envía (no-op seguro).
+// SU PAPEL EN EL SISTEMA (rediseño 2026-08-06)
+// El briefing es LA RED de la franja horaria. Todo lo que entra entre las 20:00 y
+// las 9:00 no dispara aviso individual: se acumula con el sello
+// `Aviso equipo enviado` vacío, y este barrido lo lista y lo sella.
+//
+// Y lista TODA la cola pendiente, no sólo lo nuevo. Es a propósito: si un aviso
+// individual salió un día que nadie estaba mirando, el lead igual reaparece acá
+// mañana. Ningún lead puede caerse por el hueco entre «ya se avisó» y «alguien
+// lo leyó».
+//
+// Env: AIRTABLE_TOKEN · MANYCHAT_TOKEN · FLOW_NS_BRIEFING · BRIEFING_SIDS ·
+// BRIEFING_HOUR (default 9) · BRIEFING_DIAS (default todos).
+// Protegido por CRON_KEY. Pruebas: ?dry=1 (arma y no manda) · ?force=1 (ignora la hora).
+
+import {
+  avisarStaff, unaLinea, hoyHayBriefing, briefingHora, chileHora, chileMin, chileFecha,
+} from '../../lib/avisos.js';
 
 const JSONH = { 'Content-Type': 'application/json; charset=utf-8' };
 const reply = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: JSONH });
 const BASE_DEFAULT = 'appQUgk8aeD752923';
-const MC_API = 'https://api.manychat.com';
+
+// Tope por variable de plantilla. Cada sección se arma ítem por ítem y se corta
+// en el último que cabe entero, para no mandar una línea partida a la mitad.
+const MAX_VAR = 880;
 
 async function afetch(url, opts, tries = 3) {
   for (let i = 0; ; i++) {
@@ -29,70 +44,43 @@ async function afetch(url, opts, tries = 3) {
     await new Promise(res => setTimeout(res, 1200 * (i + 1)));
   }
 }
+
 const keyOk = (env, url) => { const need = env.CRON_KEY; return need ? url.searchParams.get('key') === need : true; };
 const linkIds = (v) => (Array.isArray(v) ? v : []).map(x => (typeof x === 'string' ? x : x.id)).filter(Boolean);
-
-// Componentes de hora de Chile (DST-safe vía Intl).
-const chileDate = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
-const chileHour = (d) => Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Santiago', hour: '2-digit', hour12: false }).format(d));
-const chileMin  = (d) => Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Santiago', minute: '2-digit' }).format(d));
-
-// ── Horarios de aviso por destinatario ───────────────────────────────────────
-// ⚠️ ESTE HELPER ESTÁ DUPLICADO en `mc-llamado.js`. Si cambias uno, cambia el otro.
-//
-// Formato de `AVISO_HORARIOS`: `sid:DIAS@desde-hasta`, separados por coma.
-//   DIAS = dígitos de los días en que SÍ se avisa (0=domingo … 6=sábado).
-//   También acepta el formato antiguo `D-D@H-H` (rango contiguo) por compatibilidad.
-//
-// Cobertura real del negocio (2026-07-27):
-//   Luis    → lunes, miércoles, jueves, viernes, sábado  (NO martes ni domingo)
-//   Roberto → todos los días, y además cubre el martes
-// La ventana empieza a la hora del briefing: antes de eso el aviso inmediato no
-// hace falta porque el briefing matutino ya lista la cola completa del día.
-const HORARIOS_DEFAULT = '579628082:13456@9-20,302195575:0123456@9-20';
-// `ignorarHora` lo usa el briefing: SU hora la gobierna BRIEFING_HOUR, y aplicarle
-// además esta ventana lo bloquearía a sí mismo si alguien lo mueve a las 8:00.
-function horarioOk(env, sid, now = new Date(), ignorarHora = false) {
-  const entry = String(env.AVISO_HORARIOS || HORARIOS_DEFAULT)
-    .split(',').map(s => s.trim()).find(s => s.startsWith(String(sid) + ':'));
-  if (!entry) return true;
-  const m = /^([\d-]+)@(\d{1,2})-(\d{1,2})$/.exec(entry.slice(entry.indexOf(':') + 1));
-  if (!m) return true;
-  const p = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Santiago', hour: 'numeric', hour12: false, weekday: 'short' }).formatToParts(now);
-  const hora = Number(p.find(x => x.type === 'hour').value);
-  const dia = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }[p.find(x => x.type === 'weekday').value];
-  if (!ignorarHora && (hora < Number(m[2]) || hora >= Number(m[3]))) return false;
-  if (m[1].includes('-')) { const [a, b] = m[1].split('-').map(Number); return dia >= a && dia <= b; }
-  return m[1].includes(String(dia));
-}
 const chileHHMM = (iso) => new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(iso));
 
 const cfg = (env) => {
   const BASE = env.AIRTABLE_BASE || BASE_DEFAULT;
   const READ = env.AIRTABLE_TOKEN || env.AIRTABLE_WRITE_TOKEN;
   return {
-    BASE, READ,
+    BASE, READ, WRITE: env.AIRTABLE_WRITE_TOKEN,
     LEADS: env.AIRTABLE_LEADS_TABLE || 'Leads',
     INTER: env.AIRTABLE_INTERESES_TABLE || 'Intereses',
+    LLAM: env.AIRTABLE_LLAMADOS_TABLE || 'Llamados',
     api: (t) => `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(t)}`,
     rH: { Authorization: `Bearer ${READ}` },
-    MC_TOKEN: env.MANYCHAT_TOKEN || '',
-    FLOW_BRIEFING: env.FLOW_NS_BRIEFING || '',
-    // Destinatarios del briefing: ids de ManyChat separados por coma
-    // (BRIEFING_SIDS=Luis,Roberto; fallback LUIS_SUBSCRIBER_ID).
-    STAFF_SIDS: String(env.BRIEFING_SIDS || env.LUIS_SUBSCRIBER_ID || '')
-      .split(',').map(s => s.trim()).filter(Boolean),
+    wH: { Authorization: `Bearer ${env.AIRTABLE_WRITE_TOKEN}`, 'Content-Type': 'application/json' },
   };
 };
 
-async function mcPost(token, path, body) {
-  return afetch(`${MC_API}${path}`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify(body),
-  });
+// Lee TODAS las páginas. La versión anterior pedía `pageSize=25` y contaba
+// `recs.length`: con 30 pendientes el encabezado decía «25 pendientes» — o sea que
+// el número mentía HACIA ABAJO justo cuando el atraso crecía, que es cuando más
+// importa que no mienta.
+async function leerTodo(C, tabla, formula) {
+  const out = [];
+  let offset = '';
+  for (let i = 0; i < 10; i++) {
+    const u = `${C.api(tabla)}?pageSize=100&filterByFormula=${encodeURIComponent(formula)}${offset ? `&offset=${offset}` : ''}`;
+    const r = await afetch(u, { headers: C.rH });
+    if (!r.ok) break;
+    const j = await r.json();
+    out.push(...(j.records || []));
+    if (!j.offset) break;
+    offset = j.offset;
+  }
+  return out;
 }
-const mcSid = (s) => (/^\d+$/.test(s) ? Number(s) : s);
 
 // Modelo de la bici del lead: cache `MC bici` o fallback vía Intereses.
 async function biciDe(C, f) {
@@ -115,6 +103,23 @@ async function biciDe(C, f) {
   return bf.Modelo || bf.Etiqueta || '';
 }
 
+// Arma una sección respetando el presupuesto de caracteres y devuelve, además,
+// QUÉ ítems entraron de verdad. Esa lista es la que se sella: si un ticket no
+// cupo, no se sella y el barrido de las 09:15 lo manda como aviso individual.
+// Ni silencio ni duplicado.
+function armar(items, presupuesto = MAX_VAR) {
+  const dentro = [];
+  let txt = '';
+  for (const it of items) {
+    const pieza = (txt ? '   ' : '') + it.linea;
+    if (txt.length + pieza.length > presupuesto) break;
+    txt += pieza;
+    dentro.push(it);
+  }
+  const faltan = items.length - dentro.length;
+  return { texto: txt, dentro, faltan };
+}
+
 async function run(env, url) {
   const C = cfg(env);
   if (!C.READ) return reply({ error: 'not_configured (airtable)' }, 503);
@@ -122,85 +127,128 @@ async function run(env, url) {
   const force = url.searchParams.get('force') === '1';
   const now = new Date();
 
-  // Sólo a las HH:0x de Chile (salvo ?force=1) — 9:00 por pedido de Luis
-  // (2026-07-10), ajustable con env BRIEFING_HOUR sin tocar código. El worker
-  // pega cada 15 min; así sale una vez al día en el tick de la hora elegida.
-  const briefingHour = Number(env.BRIEFING_HOUR || 9);
-  if (!force && !(chileHour(now) === briefingHour && chileMin(now) < 15)) {
-    return reply({ ok: true, skipped: 'not_briefing_time', chileHour: chileHour(now), chileMin: chileMin(now) });
+  // Gate de hora y de día. `hoyHayBriefing` devuelve true los 7 días salvo que se
+  // acote con `BRIEFING_DIAS`: se decidió que salga todos los días (2026-08-06)
+  // porque un día sin briefing es un día en que nadie se entera de lo que entró
+  // de noche, y con Gabriel entre los destinatarios ya no hay razón para saltarlo.
+  if (!force) {
+    if (!hoyHayBriefing(env, now)) {
+      return reply({ ok: true, saltado: 'hoy_no_hay_briefing', dia: chileFecha(now) });
+    }
+    if (!(chileHora(now) === briefingHora(env) && chileMin(now) < 15)) {
+      return reply({ ok: true, saltado: 'no_es_la_hora', hora: chileHora(now), min: chileMin(now) });
+    }
   }
 
-  const today = chileDate(now);
-  const formula =
-    `AND({Fecha visita}, ` +
-    `DATETIME_FORMAT(SET_TIMEZONE({Fecha visita}, 'America/Santiago'), 'YYYY-MM-DD')='${today}', ` +
-    `OR({Estado}='visita_agendada', {Estado}='visita_confirmada'))`;
-  const listUrl = `${C.api(C.LEADS)}?pageSize=50&filterByFormula=${encodeURIComponent(formula)}`;
-  const rr = await afetch(listUrl, { headers: C.rH });
-  if (!rr.ok) return reply({ error: 'airtable_read', status: rr.status, detail: await rr.text() }, 502);
-  const records = (await rr.json()).records || [];
+  const hoy = chileFecha(now);
 
-  // Ordenar por hora y armar cada visita en una línea.
-  records.sort((a, b) => String(a.fields['Fecha visita']).localeCompare(String(b.fields['Fecha visita'])));
-  const items = [];
-  for (let i = 0; i < records.length; i++) {
-    const f = records[i].fields;
-    const hora = chileHHMM(f['Fecha visita']);
+  // ── 1 · VISITAS DE HOY ─────────────────────────────────────────────────────
+  const fVisitas =
+    `AND({Fecha visita}, ` +
+    `DATETIME_FORMAT(SET_TIMEZONE({Fecha visita}, 'America/Santiago'), 'YYYY-MM-DD')='${hoy}', ` +
+    `OR({Estado}='visita_agendada', {Estado}='visita_confirmada'))`;
+  const recVisitas = await leerTodo(C, C.LEADS, fVisitas);
+  recVisitas.sort((a, b) => String(a.fields['Fecha visita']).localeCompare(String(b.fields['Fecha visita'])));
+
+  const itemsVisitas = [];
+  for (let i = 0; i < recVisitas.length; i++) {
+    const f = recVisitas[i].fields;
     const nombre = f['Nombre'] || (f['@handle IG'] ? `@${f['@handle IG']}` : 'Sin nombre');
     const bici = (await biciDe(C, f)) || 'bici por confirmar';
-    const tel = f['WhatsApp'] || 's/tel';
-    items.push(`(${i + 1}) ${hora} · ${nombre} · ${bici} · ${tel}`);
+    itemsVisitas.push({
+      id: recVisitas[i].id,
+      linea: `(${i + 1}) ${chileHHMM(f['Fecha visita'])} · ${nombre} · ${bici} · ${f['WhatsApp'] || 's/tel'}`,
+    });
   }
-  const visitas = items.length ? items.join('   ') : 'sin visitas 🌱';
+  const visitas = armar(itemsVisitas);
+  const txtVisitas = visitas.texto
+    ? visitas.texto + (visitas.faltan ? `   (+${visitas.faltan} más)` : '')
+    : 'sin visitas hoy 🌱';
 
-  // ── La COLA DE LLAMADOS va PRIMERO ────────────────────────────────────────
-  // Es lo único accionable a primera hora y lo que el embudo V2 produce todo el
-  // día. Además es la red que atrapa los leads que entraron fuera de horario:
-  // esos no dispararon aviso inmediato, así que el briefing es la ÚNICA forma de
-  // que alguien se entere de ellos. Sin esto, un lead del domingo se pierde.
-  let llamados = 'sin llamados pendientes';
-  try {
-    const lu = `${C.api('Llamados')}?pageSize=25&filterByFormula=${encodeURIComponent(`{Estado}='Llamada pendiente'`)}`;
-    const lr = await afetch(lu, { headers: C.rH });
-    if (lr.ok) {
-      const recs = (await lr.json()).records || [];
-      // Más viejo primero: el que lleva más esperando es el que más se enfría.
-      recs.sort((a, b) => String(a.createdTime).localeCompare(String(b.createdTime)));
-      if (recs.length) {
-        const lineas = recs.slice(0, 12).map((r, i) => {
-          const f = r.fields || {};
-          const espera = Math.round((Date.now() - new Date(r.createdTime).getTime()) / 3600000);
-          const desde = espera >= 24 ? `${Math.round(espera / 24)}d` : `${espera}h`;
-          return `(${i + 1}) ${f['Nombre'] || 'sin nombre'} · ${f['Teléfono'] || 's/tel'} · esperando ${desde}`;
+  // ── 2 · LA COLA DE LLAMADOS ────────────────────────────────────────────────
+  // Toda la cola, no sólo lo nuevo. Los que traen el sello vacío son los que
+  // entraron fuera de horario y NADIE ha visto: van primero y marcados.
+  const recLlam = await leerTodo(C, C.LLAM, `{Estado}='Llamada pendiente'`);
+  const sinAvisar = recLlam.filter(r => !r.fields?.['Aviso equipo enviado']);
+  const yaAvisados = recLlam.filter(r => r.fields?.['Aviso equipo enviado']);
+  // Más viejo primero: el que lleva más esperando es el que más se enfría.
+  const porEdad = (a, b) => String(a.createdTime).localeCompare(String(b.createdTime));
+  sinAvisar.sort(porEdad); yaAvisados.sort(porEdad);
+
+  const espera = (creado) => {
+    const h = Math.round((Date.now() - new Date(creado).getTime()) / 3600000);
+    return h >= 24 ? `${Math.round(h / 24)}d` : `${h}h`;
+  };
+
+  const itemsLlam = [...sinAvisar, ...yaAvisados].map((r, i) => {
+    const f = r.fields || {};
+    const nuevo = !f['Aviso equipo enviado'];
+    return {
+      id: r.id,
+      nuevo,
+      linea: `(${i + 1}) ${f['Nombre'] || 'sin nombre'} · ${f['Teléfono'] || 's/tel'} · ${nuevo ? '🆕 nadie lo ha visto' : `esperando ${espera(r.createdTime)}`}`,
+    };
+  });
+
+  const llam = armar(itemsLlam);
+  const txtLlamados = llam.texto
+    ? `${recLlam.length} por llamar${sinAvisar.length ? ` (${sinAvisar.length} 🆕)` : ''}: ${llam.texto}${llam.faltan ? `   (+${llam.faltan} más)` : ''}`
+    : 'sin llamados pendientes 🌱';
+
+  // ── 3 · Enviar ─────────────────────────────────────────────────────────────
+  //
+  // ⚠️ INTERRUPTOR DE PLANTILLA. `briefing_diario` (v1, la que está viva hoy) tiene
+  // UNA sola variable: `cf_agenda_hoy`. `briefing_diario_v2` tiene dos.
+  //
+  // Si se mandaran las dos variables mientras la v1 sigue apuntada, el mensaje
+  // sólo imprimiría las visitas — y como más abajo se SELLAN los llamados que
+  // «salieron», quedarían marcados como avisados sin que nadie los haya visto.
+  // Eso es exactamente la pérdida silenciosa que este rediseño existe para
+  // eliminar. Por eso el default es compatible con la v1 (todo junto en
+  // `cf_agenda_hoy`) y las dos variables se activan con `BRIEFING_V2=1`, que se
+  // setea EN EL MISMO MOMENTO en que `FLOW_NS_BRIEFING` pasa a apuntar a la v2.
+  const v2 = String(env.BRIEFING_V2 || '') === '1';
+  let envio = { enviados: 0, errores: [], motivo: 'dry' };
+  if (!dry) {
+    envio = v2
+      ? await avisarStaff(env, {
+          cual: 'briefing', flowEnv: 'FLOW_NS_BRIEFING',
+          campo: 'cf_llamados_hoy', texto: txtLlamados,
+          extra: { campo: 'cf_agenda_hoy', texto: txtVisitas },
+        })
+      : await avisarStaff(env, {
+          cual: 'briefing', flowEnv: 'FLOW_NS_BRIEFING',
+          campo: 'cf_agenda_hoy',
+          texto: `📞 POR LLAMAR · ${txtLlamados}   ||   📅 VISITAS DE HOY · ${txtVisitas}`,
         });
-        const resto = recs.length > 12 ? `  (+${recs.length - 12} más)` : '';
-        llamados = `${recs.length} pendiente${recs.length > 1 ? 's' : ''}: ${lineas.join('   ')}${resto}`;
-      }
-    }
-  } catch { /* best-effort: si falla, el briefing igual sale con las visitas */ }
-
-  // Todo en UNA línea: WhatsApp no permite saltos dentro de una variable de plantilla.
-  const agenda = `📞 LLAMADOS · ${llamados}   ||   📅 VISITAS DE HOY · ${visitas}`.slice(0, 900);
-
-  const mcReady = !!(C.MC_TOKEN && C.FLOW_BRIEFING && C.STAFF_SIDS.length);
-  let enviado = false, error = null;
-  if (!dry && mcReady) {
-    try {
-      let enviadosN = 0;
-      for (const s of C.STAFF_SIDS) {
-        if (!horarioOk(env, s, now, true)) continue;   // Luis no recibe el briefing los martes ni domingos
-        const sid = mcSid(s);
-        const r1 = await mcPost(C.MC_TOKEN, '/fb/subscriber/setCustomFieldByName', { subscriber_id: sid, field_name: 'cf_agenda_hoy', field_value: agenda });
-        if (!r1.ok) throw new Error(`setField ${r1.status} ${await r1.text()}`);
-        const r2 = await mcPost(C.MC_TOKEN, '/fb/sending/sendFlow', { subscriber_id: sid, flow_ns: C.FLOW_BRIEFING });
-        if (!r2.ok) throw new Error(`sendFlow ${r2.status} ${await r2.text()}`);
-        enviadosN++;
-      }
-      enviado = enviadosN > 0;
-    } catch (e) { error = String(e.message || e); }
   }
 
-  return reply({ ok: true, dry, mcReady, force, fecha: today, visitas: records.length, agenda, enviado, error });
+  // ── 4 · Sellar SÓLO lo que entró de verdad en el mensaje ───────────────────
+  // Si el briefing no salió a nadie, no se sella nada: el barrido de las 09:15
+  // los recoge uno por uno. Degradación elegante — más mensajes, menos contexto,
+  // pero cero pérdida.
+  const aSellar = llam.dentro.filter(x => x.nuevo).map(x => x.id);
+  let sellados = 0;
+  if (!dry && envio.enviados > 0 && C.WRITE && aSellar.length) {
+    for (let i = 0; i < aSellar.length; i += 10) {
+      const lote = aSellar.slice(i, i + 10).map(id => ({ id, fields: { 'Aviso equipo enviado': now.toISOString() } }));
+      const r = await afetch(C.api(C.LLAM), {
+        method: 'PATCH', headers: C.wH,
+        body: JSON.stringify({ typecast: true, records: lote }),
+      });
+      if (r.ok) sellados += lote.length;
+    }
+  }
+
+  return reply({
+    ok: true, dry, force, fecha: hoy, plantilla: v2 ? 'v2 (2 variables)' : 'v1 (1 variable, todo junto)',
+    visitas: recVisitas.length,
+    llamados: { total: recLlam.length, sinAvisar: sinAvisar.length, enElMensaje: llam.dentro.length, noCupieron: llam.faltan },
+    cf_llamados_hoy: unaLinea(txtLlamados),
+    cf_agenda_hoy: unaLinea(txtVisitas),
+    enviados: envio.enviados, errores: envio.errores, motivo: envio.motivo, falta: envio.falta,
+    sellados,
+  });
 }
 
 export async function onRequestGet({ request, env }) {

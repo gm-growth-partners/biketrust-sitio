@@ -23,6 +23,8 @@
 // Lee con AIRTABLE_TOKEN, escribe con AIRTABLE_WRITE_TOKEN. Protegido por env
 // MC_KEY (?key=). Sin env → abierto (mismo criterio que los otros puentes ManyChat).
 
+import { enFranja, avisarStaff } from '../../lib/avisos.js';
+
 const JSONH = { 'Content-Type': 'application/json; charset=utf-8' };
 const reply = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: JSONH });
 
@@ -42,22 +44,12 @@ function keyOk(env, url) {
   return need ? url.searchParams.get('key') === need : true;
 }
 
-// ── Horario saludable por destinatario (hora Chile) ─────────────────────────
-// Env AVISO_HORARIOS: "sid:d1-d2@h1-h2,..." — días 0=Dom..6=Sáb; se envía desde
-// h1:00 hasta h2:00 (exclusivo). Un sid sin entrada recibe siempre. Default:
-// Luis (579628082) L-S 9-20 · Roberto (302195575) todos los días 8-20.
-const HORARIOS_DEFAULT = '579628082:1-6@9-20,302195575:0-6@8-20';
-function horarioOk(env, sid, now = new Date()) {
-  const entry = String(env.AVISO_HORARIOS || HORARIOS_DEFAULT)
-    .split(',').map(s => s.trim()).find(s => s.startsWith(String(sid) + ':'));
-  if (!entry) return true;
-  const m = entry.match(/:(\d)-(\d)@(\d{1,2})-(\d{1,2})$/);
-  if (!m) return true;
-  const p = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Santiago', hour: 'numeric', hour12: false, weekday: 'short' }).formatToParts(now);
-  const hora = Number(p.find(x => x.type === 'hour').value);
-  const dia = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }[p.find(x => x.type === 'weekday').value];
-  return dia >= Number(m[1]) && dia <= Number(m[2]) && hora >= Number(m[3]) && hora < Number(m[4]);
-}
+// El horario vive en `lib/avisos.js` (`enFranja`). Acá había una copia del
+// DIALECTO VIEJO de `horarioOk`, con un regex `:(\d)-(\d)@…` que sólo entendía
+// rangos contiguos. Era una mina: si `AVISO_HORARIOS` se hubiera seteado alguna
+// vez con el formato documentado —el de dígitos, `13456@9-20`— el regex no habría
+// calzado, habría caído en `if (!m) return true` y este endpoint habría avisado
+// 24/7, domingo a las 3 AM incluido, sin dar el menor síntoma.
 
 // ── ManyChat helpers (mismo patrón que mc-consigna / cron-recordatorios) ────
 // Para el AVISO A LUIS: setCustomFieldByName(cf_solicitud_datos) + sendFlow del
@@ -249,27 +241,34 @@ export async function onRequestPost({ request, env }) {
   //    creado — el staff igual lo ve en la página de Solicitudes).
   //    Requiere plantilla `nueva_solicitud` aprobada por Meta + 3 env:
   //    MANYCHAT_TOKEN · FLOW_NS_SOLICITUD (flow de 1 nodo) · LUIS_SUBSCRIBER_ID.
-  let aviso = 'no_configurado';
-  if (C.MC_TOKEN && C.FLOW_SOLICITUD && C.STAFF_SIDS.length) {
-    try {
-      const resumen = [
-        modelo || 'modelo no indicado',
-        talla ? `talla ${talla}` : '',
-        presupuesto != null ? `hasta $${Number(presupuesto).toLocaleString('es-CL')}` : (presupuestoRaw ? `presupuesto: ${presupuestoRaw}` : ''),
-        notas ? notas.slice(0, 120) : '',
-        `contacto: ${telefono || 'sin teléfono'}`,
-        handle ? `IG @${handle}` : '',
-      ].filter(Boolean).join(' · ');
-      let enviados = 0, dormidos = 0;
-      for (const sid of C.STAFF_SIDS) {
-        if (!horarioOk(env, sid)) { dormidos++; continue; }
-        await mcSetField(C.MC_TOKEN, sid, 'cf_solicitud_datos', resumen.slice(0, 900));
-        await mcSendFlow(C.MC_TOKEN, sid, C.FLOW_SOLICITUD);
-        enviados++;
-      }
-      aviso = enviados ? 'enviado' + (dormidos ? ` (${dormidos} fuera de horario)` : '') : 'fuera_de_horario';
-    } catch (e) {
-      aviso = 'error: ' + String(e && e.message || e).slice(0, 200);
+  // Formato unificado del resumen (2026-08-06): modelo primero y el resto entre
+  // paréntesis. La plantilla `solicitud_busqueda_v2` mete la variable a mitad de
+  // oración, y con el orden viejo la frase quedaba ilegible.
+  const detalleSol = [
+    talla ? `talla ${talla}` : '',
+    presupuesto != null ? `hasta $${Number(presupuesto).toLocaleString('es-CL')}` : (presupuestoRaw ? `presupuesto: ${presupuestoRaw}` : ''),
+    telefono || 'sin teléfono',
+    handle ? `IG @${handle}` : '',
+    notas ? notas.slice(0, 100) : '',
+  ].filter(Boolean).join(' · ');
+  const resumen = `${modelo || 'modelo no indicado'} (${detalleSol})`;
+
+  // Dentro de la franja se avisa al tiro; fuera, NO se manda nada y el sello
+  // `Aviso equipo enviado` queda vacío para que `cron-avisos` o el briefing lo
+  // recojan. El ticket ya quedó creado pase lo que pase.
+  let aviso = 'pendiente_de_briefing';
+  if (enFranja(env)) {
+    const res = await avisarStaff(env, {
+      cual: 'solicitud', flowEnv: 'FLOW_NS_SOLICITUD', campo: 'cf_solicitud_datos', texto: resumen,
+    });
+    if (res.enviados > 0) {
+      aviso = 'enviado';
+      await afetch(`${C.api(env.AIRTABLE_SOLICITUDES_TABLE || 'Solicitudes')}/${solicitudId}`, {
+        method: 'PATCH', headers: C.wH,
+        body: JSON.stringify({ typecast: true, fields: { 'Aviso equipo enviado': new Date().toISOString() } }),
+      });
+    } else {
+      aviso = `sin_enviar:${res.motivo}`;
     }
   }
 

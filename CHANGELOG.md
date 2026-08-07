@@ -10,6 +10,76 @@
 
 ## V2 · El embudo que apunta a la llamada — EN CONSTRUCCIÓN (desde 2026-07-27)
 
+### 2026-08-07 · El sistema de avisos, reescrito: «avisado» deja de ser un evento y pasa a ser un estado
+
+**La autopsia que lo motivó.** Se preguntó algo simple —«si entra un lead a llamado
+pendiente, ¿se le notifica a Luis?»— y la respuesta fue: sólo si lo crea el bot, sólo entre
+las 9 y las 20, y sólo si nada falla. Medido en la base real: de 5 tickets vivos, **4 eran
+`Origen=Manual` y ninguno disparó jamás un aviso**. Los 4 leads del puente provisorio
+estuvieron varados 10 días y hubo que rescatarlos a mano llamando a `/api/mc-aviso`.
+
+**La decisión de arquitectura: el sello es el estado.** «¿Alguien del equipo se enteró de
+este ticket?» dejó de vivir dentro del JSON que devuelve un endpoint —y que nadie lee— para
+vivir en Airtable: **`Aviso equipo enviado`**. Vacío = nadie se enteró. Ese vacío es a la vez
+la cola del briefing, el filtro del barrido y la condición de reintento, sin escribir un
+condicional extra. La regla que ordena todo: **nunca franja sin red** — ningún punto de envío
+recibe la guarda horaria si no tiene además sello y barrido que lo recuperen.
+
+**Una sola regla de horario en todo el sistema: franja 9–20, todos los días, todos los
+destinatarios** (decisión de Gabriel). Se eliminaron **6 copias de `horarioOk`** repartidas en
+`functions/api/`, **en dos dialectos incompatibles** cuyos defaults ya no coincidían (en el
+viejo, Luis SÍ recibía los martes), más una séptima ventana hardcodeada en `cron-reenganche`.
+🔴 **Mina desactivada:** las 3 copias del dialecto viejo parseaban `:(\d)-(\d)@…`; si
+`AVISO_HORARIOS` se hubiera seteado alguna vez con el formato **documentado** (el de dígitos),
+el regex no habría calzado, habrían caído en `if (!m) return true` y esos endpoints habrían
+avisado **24/7 en silencio**. Nunca se pisó sólo porque la env jamás se seteó.
+
+🔴 **Bug de tormenta cazado por los tres críticos adversariales, de forma independiente.** En
+`mc-llamado` y `cron-sourcing` el `try/catch` envolvía el **bucle entero de destinatarios**:
+si el segundo sid fallaba, el primero —que ya había recibido— se contaba como fallido y no se
+sellaba. Sin reintentos era inofensivo; **con el barrido nuevo habría reenviado a Luis y
+Roberto cada 15 minutos, para siempre**, y el disparador más probable era justo lo que se iba
+a hacer: agregar un sid nuevo copiado a mano. Ahora el `try` va **por destinatario** y se
+sella si `enviados > 0`.
+
+**Piezas nuevas:** `lib/avisos.js` (único dueño de horario, destinatarios y envío) ·
+`functions/api/cron-avisos.js` (barrido cada 15 min sobre `Llamados` + `Solicitudes` +
+`Consignaciones`, con gracia de madurez de 10 min para no avisar la fila vacía que Luis acaba
+de crear con el «+», tope de 10 por corrida y freno de 3 intentos) ·
+`functions/api/mc-rellamar.js` (el botón «Sí, llámenme» de `llamada_no_contestada_v2`).
+
+**Airtable:** 9 campos nuevos (`Aviso equipo enviado` + `Intentos aviso` en las tres colas;
+`Pidió rellamada`, `Reaperturas`, `_salida_desde` en `Llamados`) y **backfill de los 5
+registros existentes** — sin él, el primer barrido habría re-avisado tickets que Luis escribió
+él mismo.
+
+🔴 **Métrica rota descubierta y corregida:** `Espera (min)` y `Fecha primera llamada` quedaban
+**vacíos para siempre** en todo ticket marcado «No contestado», porque el sello colgaba de
+`Estado` y esa salida devuelve el Estado a «Llamada pendiente» a propósito. Experimento natural
+en los datos del 06-ago: Ayala y Briceño («Sin interés» → Cerrada) tienen sello; Springmüller
+(«No contestado») no, pese a que Luis lo llamó a las 18:41. O sea que **todo lead al que se
+llamó y no contestó figuraba como nunca llamado**. Campo nuevo `_salida_desde`
+(`LAST_MODIFIED_TIME({Salida})`) para colgarlo de `Salida`, que sí cambia siempre.
+
+**El borde de las 9:00, determinista:** `cron-avisos` arranca con
+`if (esTickBriefing()) return`. El briefing lista y sella toda la cola de la noche; el barrido
+no toca nada. La guarda **no depende del orden del worker** —a propósito, porque ese orden es
+fácil de romper al editar el array— aunque el worker igual se reordenó para que el briefing
+corra primero (su ventana es de un solo tick al día).
+
+**Verificado:** el bundler de Pages **sí resuelve imports fuera de `functions/`** (probe real
+compilado y borrado; bundle de 202 KB con `lib/` dentro) — era el único riesgo estructural del
+diseño. `test/avisos-horario.mjs` se **borró**: su premisa era falsa (decía cazar la
+divergencia y comparaba justo las dos copias idénticas). Lo reemplaza
+`test/guardas-avisos.mjs`, que falla si reaparece cualquiera de los errores de arriba.
+`test/salida-llamado.mjs` se convirtió a `import` real: con `readFileSync`+`new Function`
+habría reventado con `SyntaxError` al primer `import` y, por ir primero en la cadena `&&`,
+se habría llevado los otros 8 suites en silencio.
+
+**Tests: 9 suites, 133 aserciones + 7 guardas, todo verde.** Incluye los bordes de franja en
+**enero y julio** (Chile pasa a UTC-3 el primer sábado de septiembre) y la invariante de que
+`mc-rellamar` **jamás hace POST a la colección `Llamados`** en ninguna de sus 7 ramas.
+
 ### 2026-08-06 · Auditoría de cierre P1/P2: un duplicado cazado, la huérfana apagada y el catch-all descubierto
 
 **Auditoría completa de las dos puertas** (repo + Airtable + backend + ManyChat en pantalla)

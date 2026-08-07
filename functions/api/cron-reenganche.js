@@ -14,6 +14,8 @@
 // FLOW_NS_* esté seteado (lanzamiento por fases). Protegido por CRON_KEY.
 // ?dry=1 simula · ?force=1 ignora el horario.
 
+import { enFranja } from '../../lib/avisos.js';
+
 const JSONH = { 'Content-Type': 'application/json; charset=utf-8' };
 const reply = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: JSONH });
 const BASE_DEFAULT = 'appQUgk8aeD752923';
@@ -87,8 +89,12 @@ async function run(env, url) {
   const dry = url.searchParams.get('dry') === '1';
   const force = url.searchParams.get('force') === '1';
   const now = new Date();
-  if (!force && !(chileHour(now) >= 9 && chileHour(now) < 20)) {
-    return reply({ ok: true, skipped: 'fuera_de_horario', chileHour: chileHour(now) });
+  // Era el TERCER criterio de horario del repo (además de las 6 copias de
+  // `horarioOk` en dos dialectos): una ventana 9–20 escrita a mano acá. Ahora sale
+  // de `enFranja`, que es la única fuente. Este cron reintenta en cada tick, así
+  // que no necesita sello: lo que no sale ahora sale a las 9:00 del día siguiente.
+  if (!force && !enFranja(env, now)) {
+    return reply({ ok: true, skipped: 'fuera_de_franja', chileHour: chileHour(now) });
   }
   const mcReady = !!C.MC_TOKEN;
 

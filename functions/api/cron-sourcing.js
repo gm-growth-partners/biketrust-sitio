@@ -14,6 +14,8 @@
 //      AVISO_SOURCING_SIDS (ids ManyChat separados por coma; fallback BRIEFING_SIDS).
 // Protegido por CRON_KEY (?key=), igual que los otros cron-*.
 
+import { avisarStaff, sidsAviso } from '../../lib/avisos.js';
+
 const JSONH = { 'Content-Type': 'application/json; charset=utf-8' };
 const reply = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: JSONH });
 
@@ -28,21 +30,7 @@ async function afetch(url, opts, tries = 3) {
   }
 }
 
-async function mcSetField(token, sid, name, value) {
-  await afetch('https://api.manychat.com/fb/subscriber/setCustomFieldByName', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ subscriber_id: sid, field_name: name, field_value: value }),
-  });
-}
-async function mcSendFlow(token, sid, flowNs) {
-  const r = await afetch('https://api.manychat.com/fb/sending/sendFlow', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ subscriber_id: sid, flow_ns: flowNs }),
-  });
-  if (!r.ok) throw new Error(`sendFlow ${r.status}: ${(await r.text()).slice(0, 160)}`);
-}
+// Los helpers de ManyChat viven en `lib/avisos.js` (dentro de `avisarStaff`).
 
 const clp = (n) => (n == null || n === '') ? '' : '$' + Number(n).toLocaleString('es-CL');
 
@@ -62,8 +50,12 @@ export async function onRequest({ request, env }) {
 
   const MC_TOKEN = env.MANYCHAT_TOKEN || env.MC_TOKEN || '';
   const FLOW = env.FLOW_NS_BUSCANDO || '';
-  const SIDS = String(env.AVISO_SOURCING_SIDS || env.BRIEFING_SIDS || '')
-    .split(',').map(s => s.trim()).filter(Boolean);
+  // ⚠️ SIN fallback a `BRIEFING_SIDS`. Lo tenía, y era una trampa: sumar a alguien
+  // al briefing lo suscribía de rebote a los avisos de sourcing. Ahora `sidsAviso`
+  // resuelve la cadena de 'sourcing', que a propósito NO cae a nadie: si no hay
+  // destinatarios declarados, el aviso no sale. Mejor silencio que sonarle a quien
+  // no corresponde.
+  const SIDS = sidsAviso(env, 'sourcing');
 
   // 1) Encargos que pasaron a Buscando y todavía no se avisaron.
   const f = `AND({Estado}='Buscando', {Aviso buscando}=BLANK())`;
@@ -82,28 +74,37 @@ export async function onRequest({ request, env }) {
   const enviados = [], errores = [];
   for (const rec of pendientes) {
     const s = rec.fields || {};
-    const resumen = [
-      s['Modelo buscado'] || 'modelo sin especificar',
+    // Formato unificado (2026-08-06): modelo primero, resto entre paréntesis.
+    // De paso se arregla un bug cosmético que llevaba meses: la línea del contacto
+    // anteponía `· ` Y ADEMÁS el `join(' · ')` metía el suyo, así que cada aviso
+    // con teléfono salía con un `· ·` doble.
+    const detalle = [
       s['Talla'] ? `talla ${s['Talla']}` : '',
       s['Presupuesto'] != null ? `hasta ${clp(s['Presupuesto'])}` : '',
       s['Motorización'] || '',
       s['Disciplina'] || '',
-      s['Contacto'] ? `· ${s['Contacto']}` : '',
+      s['Contacto'] || 'sin teléfono',
     ].filter(Boolean).join(' · ');
+    const resumen = `${s['Modelo buscado'] || 'modelo sin especificar'} (${detalle})`;
 
-    try {
-      for (const sid of SIDS) {
-        await mcSetField(MC_TOKEN, sid, 'cf_solicitud_datos', resumen.slice(0, 900));
-        await mcSendFlow(MC_TOKEN, sid, FLOW);
-      }
-      // 3) Sellar SOLO si salió, para que un fallo se reintente en el próximo tick.
+    // `avisarStaff` captura el error POR DESTINATARIO. Antes el `try` envolvía el
+    // bucle entero: si el segundo sid fallaba, el primero —que ya había recibido—
+    // se contaba como fallido, no se sellaba, y el próximo tick le mandaba de
+    // nuevo. Con un destinatario roto de forma permanente eso es un reenvío cada
+    // 15 minutos, para siempre.
+    const res = await avisarStaff(env, {
+      cual: 'sourcing', flowEnv: 'FLOW_NS_BUSCANDO', campo: 'cf_solicitud_datos', texto: resumen,
+    });
+
+    if (res.enviados > 0) {
+      // Sellar SOLO si salió a alguien, para que un fallo se reintente solo.
       await afetch(`${api('Solicitudes')}/${rec.id}`, {
         method: 'PATCH', headers: wH,
         body: JSON.stringify({ fields: { 'Aviso buscando': now } }),
       });
       enviados.push(rec.id);
-    } catch (e) {
-      errores.push({ id: rec.id, error: String(e && e.message || e).slice(0, 160) });
+    } else {
+      errores.push({ id: rec.id, motivo: res.motivo, error: (res.errores || []).join(' | ').slice(0, 160), falta: res.falta });
     }
   }
 

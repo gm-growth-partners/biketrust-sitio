@@ -1,10 +1,12 @@
 // Prueba salida-llamado.js con Airtable y ManyChat simulados (fetch interceptado).
 // Ejecuta el CÓDIGO REAL del archivo — no una copia.
-import { readFileSync } from 'node:fs';
-
-const P = new URL('../functions/api/salida-llamado.js', import.meta.url);
-const src = readFileSync(P, 'utf-8').replace('export async function onRequestPost', 'async function onRequestPost');
-const mod = new Function(`${src}; return onRequestPost;`)();
+//
+// ⚠️ Se importa de verdad (no `readFileSync` + `new Function`, como era hasta
+// 2026-08-06). Aquel truco reventaba con SyntaxError en cuanto el endpoint
+// tuviera un `import`, y como este archivo va PRIMERO en la cadena `&&` de
+// `npm test`, se llevaba puestos los otros seis suites sin que nadie lo notara.
+// Mismo patrón que `test/mc-clasifica.mjs`.
+import { onRequestPost as mod } from '../functions/api/salida-llamado.js';
 
 const ENV = {
   AIRTABLE_TOKEN: 'r', AIRTABLE_WRITE_TOKEN: 'w', MC_TOKEN: 'mc',
