@@ -1006,12 +1006,12 @@ function homeHTML(bikes){
         <span class="n">03</span>
         <p class="t">Estado honesto</p>
         <p class="d">Cada rayón y detalle, declarado antes de que preguntes.</p>
-        <p class="f script">Revisada en el taller Bike Trust · Santiago</p>
+        <p class="f script">Revisada por Luis Sulbarán · Taller Bike Trust</p>
       </div>
     </div>
     <div class="figure3">
       <figure><div class="ph"><span>foto real pendiente · retrato del mecánico</span></div>
-        <figcaption><span class="t1">El mecánico certificador</span><span class="t2">TALLER BIKE TRUST</span></figcaption></figure>
+        <figcaption><span class="t1">Luis Sulbarán</span><span class="t2">MECÁNICO CERTIFICADOR</span></figcaption></figure>
       <figure><div class="ph"><span>foto real pendiente · manos y herramienta sobre un cuadro</span></div>
         <figcaption><span class="t1">Torque y ajuste, pieza por pieza</span><span class="t2">INSPECCIÓN MULTIPUNTO</span></figcaption></figure>
       <figure><div class="ph"><span>foto real pendiente · escáner de diagnóstico en pantalla</span></div>
