@@ -10,6 +10,37 @@
 
 ## V2 · El embudo que apunta a la llamada — EN CONSTRUCCIÓN (desde 2026-07-27)
 
+### 2026-08-13 · Rediseño del sitio («certificadas 3»): todo CTA converge en WhatsApp
+
+**Qué cambió.** Se reemplazó el frontend completo del sitio por el rediseño que entregó
+Gabriel (zip «Rediseño Bike Trust certificadas 3») — solo las plantillas dentro de
+`build.mjs`; el pipeline de datos, `functions/` (avisos, mc-*, crons), `lib/` y
+`worker-cron/` quedaron **intactos**. Páginas nuevas: portada con hero rotatorio de
+destacadas, catálogo con filtros (disciplina/talla/precio), ficha nueva, `/encargo`
+(nueva), `/como-certificamos`, `/consigna` y `/guias` (las 3 guías en una página con
+anclas). `/visitanos` y `/guias/*` viejas redirigen vía `_redirects`.
+
+**Decisiones clave:**
+- **WhatsApp por tipo de entrada** (pedido explícito): general («Busco una Specialized
+  usada certificada»), asesoría, ficha por bici (modelo+talla+ref), encargo (modelo/talla/
+  presupuesto armados en vivo), parte de pago, consigna, dudas de certificación y de guías.
+- **Vendidas se publican** (pedido explícito): al final del catálogo, en gris, chip
+  «Vendida», ficha con banner «¿Llegaste tarde? Te conseguimos una igual» → `/encargo?modelo=…`.
+  El build ahora lee la vista `Disponibles` + un fetch extra `Estado∈{Vendida,Reservada}`.
+- **El modal de reserva se conservó** (funcionalidad existente, restilizada): mismo payload
+  a `/api/reservar`, mismas reglas de fechas hábiles; correo sigue siendo obligatorio
+  porque el endpoint lo exige (el diseño lo marcaba opcional).
+- **Campo nuevo `Destacada`** (checkbox) en Inventario: gobierna el hero y «Cuatro
+  certificadas» de la portada. Marcadas: Kenevo Expert · Levo 4G S-Works · Epic 8 Pro ·
+  Creo SL S-Works (las mismas del diseño). Sin marcas, el build cae a las primeras 4 con
+  foto y puntaje.
+- **Contratos intocados:** slugs `modelo-talla` idénticos (mc-match reconstruye
+  `/ficha/<slug>` — la ficha imprimible se genera igual que antes, byte a byte).
+- **Apagado a propósito:** los 2 testimonios del diseño (flag `TESTIMONIOS_ON=false` en
+  build.mjs) hasta confirmar que son clientes reales — citaban bicis aún en vitrina. Los
+  copys con placeholders del diseño («[X] min», «[términos por definir]», el nombre del
+  mecánico «Nicolás Rojas») se neutralizaron a texto sin promesas inventadas.
+
 ### 2026-08-07 · El sistema de avisos, reescrito: «avisado» deja de ser un evento y pasa a ser un estado
 
 **La autopsia que lo motivó.** Se preguntó algo simple —«si entra un lead a llamado
