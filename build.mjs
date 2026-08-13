@@ -443,6 +443,12 @@ button{font-family:var(--sans)}
 .f-price .chip.vend{background:var(--vend)}
 .f-nota{margin:10px 0 0;font-size:12.5px;color:var(--muted)}
 .f-nota b{color:var(--bronce)}
+.buybox{margin-top:26px;background:var(--dark);padding:22px 22px 18px}
+.buybox .k{margin:0 0 14px;font-size:10px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:var(--bronce2)}
+.buybox .btn-gold{display:block;width:100%;padding:17px 20px;font-size:12px}
+.buybox .agendar{display:block;width:100%;cursor:pointer;margin-top:10px;background:none;border:1px solid var(--vend);color:var(--darktext);font-size:10.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;padding:14px 20px}
+.buybox .agendar:hover{border-color:var(--bronce2);color:#E8DCC6}
+.buybox .cap{margin:14px 0 0;font-size:12px;line-height:1.6;color:var(--darkmut)}
 .f-cert-mini{display:flex;align-items:center;gap:10px;margin-top:26px;border:1px solid var(--linea);background:var(--crema);padding:13px 16px}
 .f-cert-mini img{height:18px;width:auto}
 .f-cert-mini .c{font-size:10.5px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--bronce)}
@@ -1548,6 +1554,12 @@ ${vend?`<div class="vend-banner">
       ${vend?`<span class="chip vend">Vendida</span>`:(res?`<span class="chip">Reservada</span>`:'')}
     </div>
     ${notaEstado}
+    <div class="buybox">
+      <p class="k">${vend?'Se vendió — la cazamos por ti':'Un toque, sin formularios'}</p>
+      <a class="btn-gold" href="${vend?encHref:waF}"${vend?'':' target="_blank" rel="noopener"'}>${vend?'Te conseguimos una igual →':'Recibir la ficha por WhatsApp ↗'}</a>
+      ${vend?'':`<button type="button" class="agendar js-agendar" data-slug="${escA(b.slug)}">O agenda tu visita al taller</button>`}
+      <p class="cap">${vend?'Dinos modelo, talla y presupuesto: la buscamos, la certificamos y te avisamos primero.':'Te llega el certificado completo con tu nombre. El documento no se descarga desde el sitio.'}</p>
+    </div>
     <div class="f-cert-mini">
       <img src="/assets/brand/shield.png" alt="">
       <span class="c">${pj?`Certificada · ${pj}/7`:'Certificada Bike Trust'}</span>
@@ -1572,15 +1584,8 @@ ${honSection}
 ${specsSection}
 ${compacta}
 ${dispStrip}
-<section class="wrap" style="margin-top:26px">
+${vend?'':`<section class="wrap" style="margin-top:26px">
   <div class="cta2">
-    <div class="dark">
-      <p class="k">Un toque, sin formularios</p>
-      <h2>${vend?'Esta unidad ya se vendió.':'Recibe la ficha certificada en tu WhatsApp.'}</h2>
-      <p>${vend?'Dinos qué buscabas y la cazamos por ti: modelo, talla y presupuesto. Te avisamos primero cuando llegue.':'Te llega el certificado completo con tu nombre. El documento no se descarga desde el sitio.'}</p>
-      <a class="btn-gold" href="${vend?encHref:waF}"${vend?'':' target="_blank" rel="noopener"'}>${vend?'Te conseguimos una igual →':'Recibir la ficha por WhatsApp ↗'}</a>
-      ${vend?'':`<button type="button" class="agendar js-agendar" data-slug="${escA(b.slug)}">O agenda tu visita al taller</button>`}
-    </div>
     <div class="lite">
       <p class="k">Parte de pago</p>
       <h2>Tu bici vieja paga parte de esta.</h2>
@@ -1588,7 +1593,7 @@ ${dispStrip}
       <a href="${WA_PARTEPAGO}" target="_blank" rel="noopener">Cotiza tu parte de pago ↗</a>
     </div>
   </div>
-</section>
+</section>`}
 
 <div class="msticky-space"></div>
 <div class="msticky">
