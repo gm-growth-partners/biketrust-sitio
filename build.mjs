@@ -206,9 +206,6 @@ function waFicha(b){
 }
 const encargoHref = b => '/encargo' + (b && b.modelo ? '?modelo=' + encodeURIComponent(b.modelo) : '');
 
-// Testimonios del diseño: APAGADOS hasta confirmar que son clientes reales
-// (los modelos citados siguen en vitrina). Poner en true para publicarlos.
-const TESTIMONIOS_ON = false;
 
 // Línea «meta» de una bici: MTB · Eléctrica · Talla S3 · 2022
 const metaLine = b => [b.disciplina, b.electrica?'Eléctrica':null, b.talla?'Talla '+b.talla:null, b.anio||null]
@@ -1017,28 +1014,6 @@ function homeHTML(bikes){
     bars: b.desglose.slice(0,4).map(r=>{ const d=desgloseRow(r); return [d.label,d.val,d.pct]; })
   }));
   const b0 = heroData[0];
-  const testimonios = !TESTIMONIOS_ON ? '' : `
-<section data-reveal="1" class="wrap" style="margin-top:72px">
-  <p class="kicker">Compraron certificado</p>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;margin-top:24px">
-    <blockquote style="margin:0;background:var(--crema);border:1px solid var(--linea3);padding:30px 30px 26px">
-      <p style="margin:0;font-family:var(--serif);font-style:italic;font-size:20px;line-height:1.5;color:var(--ink)">«El estado honesto era tan detallado que encontré menos rayones de los que declaraba la ficha. Nunca había comprado usado tan tranquila.»</p>
-      <footer style="margin-top:18px;border-top:1px solid var(--linea);padding-top:14px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px">
-        <img src="/assets/brand/shield.png" alt="" style="height:16px;width:auto">
-        <span style="font-size:12.5px;font-weight:600;white-space:nowrap">María José P.</span>
-        <span class="mono" style="font-size:10px;letter-spacing:.12em;color:var(--meta)">LEVO SL S-WORKS · TALLA M</span>
-      </footer>
-    </blockquote>
-    <blockquote style="margin:0;background:var(--crema);border:1px solid var(--linea3);padding:30px 30px 26px">
-      <p style="margin:0;font-family:var(--serif);font-style:italic;font-size:20px;line-height:1.5;color:var(--ink)">«Me mostraron los kilómetros del motor en la pantalla del escáner antes de hablar de precio. Así da gusto comprar usado.»</p>
-      <footer style="margin-top:18px;border-top:1px solid var(--linea);padding-top:14px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px">
-        <img src="/assets/brand/shield.png" alt="" style="height:16px;width:auto">
-        <span style="font-size:12.5px;font-weight:600;white-space:nowrap">Cristóbal A.</span>
-        <span class="mono" style="font-size:10px;letter-spacing:.12em;color:var(--meta)">KENEVO COMP · TALLA S3</span>
-      </footer>
-    </blockquote>
-  </div>
-</section>`;
 
   return HEAD('Bike Trust · Specialized usadas certificadas · Santiago', {path:'/', image: dest[0]&&dest[0].fotos[0] ? dest[0].fotos[0] : undefined}) + TOPBAR('') + `
 <div style="min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden">
@@ -1189,7 +1164,6 @@ function homeHTML(bikes){
     ${dest.map(cardHTML).join('')}
   </div>
 </section>
-${testimonios}
 <section data-reveal="1" class="wrap" style="margin-top:72px">
   <div class="darkpanel">
     <img class="shadowlogo" src="/assets/brand/shield.png" alt="" style="right:-40px;bottom:-60px;top:auto;height:280px">
