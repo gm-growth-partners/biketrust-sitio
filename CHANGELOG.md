@@ -49,6 +49,48 @@ fecha, `Reservada` respetada y `401` con clave mala. Limpieza confirmada en 0 re
 endpoint queda ABIERTO, igual que los `mc-*`) y `DEPLOY_HOOK_URL` (sin ella el sitio no se
 reconstruye solo, que es todo el punto). Ver `docs/AILOO_INTEGRACION.md` §5.
 
+### 2026-08-14 · Las 110 fotos, con fondo blanco de catálogo
+
+**Qué se hizo.** Se le quitó el fondo real (vereda, seto, adoquines, muro del taller) a las
+**110 fotos** del inventario y quedaron sobre **blanco puro**, a 1200x1200, con la bici
+encuadrada al mismo tamaño y el mismo margen en todas. Modelo: **BiRefNet** (`rembg`,
+`birefnet-general`) corriendo local en CPU, ~20 s por foto, 30 min el lote completo.
+
+**El dato que define el límite (medido, no supuesto).** En estas fotos la bici ocupa ~680 px
+de ancho, así que **un radio de rueda mide 0,8 px**: no existe un solo píxel que sea «puro
+radio», todos son mezcla de radio y fondo. Se verificó además que los originales guardados en
+Airtable **también son 900x900** — no hay más resolución en ninguna parte. Conclusión: ninguna
+herramienta, gratis o pagada, puede recortar los radios de estas fotos. **Las ruedas quedan sin
+radios y es irreversible con este material.** En llanta de perfil alto (Creo, Roubaix, Diverge)
+casi no se nota; en MTB de llanta angosta (Epic) sí.
+
+**Mitigación aplicada:** limpieza de la máscara con `scipy.ndimage.label` — se descartan los
+fragmentos con menos del 0,4 % del área del objeto principal. Eso eliminó las **manchas negras
+sueltas** que quedaban donde estaban los radios (el peor defecto de la primera pasada). Queda un
+resto de radios pegado al buje delantero, que es donde el modelo sí alcanzó a verlos.
+
+**Efecto secundario bueno:** el sitio **pesa menos que antes** — 10,8 MB contra 13,3 MB — pese a
+que las imágenes son un tercio más grandes. El blanco plano comprime mucho mejor que un seto.
+Promedio por foto: 102 KB a 1200x1200, contra 123 KB a 900x900.
+
+**Arquitectura — dónde viven ahora.** `dist/` se borra y se re-descarga desde Airtable en cada
+compilación, así que el retoque se habría perdido al desplegar. Se agregó **`assets/fotos/<slug>/`**
+en el repo, que **manda por sobre Airtable**: si la carpeta existe, `resolveBikePhotos` la usa y
+no descarga nada. El retoque se hace una vez en el escritorio (no se puede hacer en el build de
+Cloudflare, que no procesa imágenes), viaja en el repo, y **Airtable conserva los originales
+intactos**. Revertir = borrar la carpeta y recompilar.
+
+⚠️ **Para la próxima tanda de bicis:** las fotos nuevas entran por Airtable sin retocar. Hay que
+correr el script del escritorio y dejar el resultado en `assets/fotos/<slug>/`, o esa bici va a
+salir con el fondo del taller mientras el resto está en blanco.
+
+📸 **Lo que de verdad resuelve esto a futuro: fotografiar sobre blanco.** La pantalla verde que
+se estaba considerando es **mala idea para bicicletas** — discos, bielas y aros pulidos son
+espejos que reflejan el verde, y un cuadro negro contra verde queda con halo. Lo correcto es
+fondo blanco mate con la bici a 1,5 m y el fondo sobreexpuesto: así el hueco del triángulo del
+cuadro y el espacio entre los radios **ya son blancos en la toma** y no hay nada que recortar.
+Truco más rentable: **pintar el pie de taller de blanco** (~$5.000).
+
 ### 2026-08-14 · La ficha de bici, rediseñada: vitrina + riel de compra que no se va
 
 **Cómo se decidió.** No se eligió a ojo: se corrieron 11 agentes en un workflow —4 auditorías

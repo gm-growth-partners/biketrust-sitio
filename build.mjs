@@ -5,7 +5,7 @@
 // escribe /dist (catálogo + ficha por bici + ficha técnica imprimible + SEO).
 // El token solo se usa aquí, en build (lado servidor). El sitio público es HTML estático.
 
-import { mkdir, writeFile, rm, cp } from 'node:fs/promises';
+import { mkdir, writeFile, rm, cp, readdir } from 'node:fs/promises';
 
 const TOKEN = process.env.AIRTABLE_TOKEN;                         // se crea en Cloudflare (read-only)
 const BASE  = process.env.AIRTABLE_BASE  || 'appQUgk8aeD752923'; // base "Bike Trust · Operaciones"
@@ -2332,9 +2332,32 @@ async function saveAttachment(a, slug, n){
 
 // Resuelve b.fotos: «Fotos galería» primero; respaldos: slots «Foto 1..13» y «Fotos URLs».
 // Defensivo: nunca rompe el build.
+// Fotos ya retocadas que viven en el repo (`assets/fotos/<slug>/`). Si existen,
+// MANDAN sobre las de Airtable: el retoque (fondo blanco, encuadre) se hace una
+// vez en el escritorio y no se puede rehacer en el build de Cloudflare, que no
+// procesa imágenes. Airtable conserva los originales intactos.
+async function fotosRetocadas(slug){
+  try{
+    const dir = `assets/fotos/${slug}`;
+    const archivos = (await readdir(dir))
+      .filter(f=>/\.(jpe?g|png|webp)$/i.test(f))
+      .sort((a,b)=>String(a).localeCompare(String(b), 'es', {numeric:true}));
+    if(!archivos.length) return [];
+    await mkdir(`${OUT}/assets/bikes/${slug}`,{recursive:true});
+    const rutas=[];
+    for(const f of archivos){
+      await cp(`${dir}/${f}`, `${OUT}/assets/bikes/${slug}/${f}`);
+      rutas.push(`/assets/bikes/${slug}/${f}`);
+    }
+    return rutas;
+  }catch{ return []; }   // no existe la carpeta → se sigue con Airtable
+}
+
 async function resolveBikePhotos(bikes){
-  let downloaded=0;
+  let downloaded=0, retocadas=0;
   for(const b of bikes){
+    const listas = await fotosRetocadas(b.slug);
+    if(listas.length){ b.fotos = listas; retocadas++; continue; }
     const out=[];
     // Prioridad: «Fotos galería» (campo único multi-adjunto que usan el form, la interfaz y el sitio).
     for(let i=0;i<b.fotosAdjuntos.length && i<13;i++){
@@ -2355,6 +2378,7 @@ async function resolveBikePhotos(bikes){
     if(!out.length) out.push(...b.fotosBulk);                     // respaldo: «Fotos URLs»
     b.fotos = out;
   }
+  if(retocadas) console.log(`  · ${retocadas} bici(s) usando fotos retocadas del repo (assets/fotos/)`);
   if(downloaded) console.log(`  · ${downloaded} foto(s) descargada(s) desde Airtable`);
 }
 
