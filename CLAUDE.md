@@ -271,6 +271,15 @@ Meta del dueño: **20–30 % de los leads entregan teléfono** (semana 30 = 3 %)
    *Sin fallback y por eso inofensivas:* `AIRTABLE_BASE`, los `AIRTABLE_*_TABLE`,
    `BRIEFING_HOUR` y `SITE_URL` no están seteadas pero todas tienen valor por defecto en el
    código. `SITE_URL` se setea recién al conectar el dominio (punto 6).
+   🔴 **PENDIENTES DEL PUENTE AILOO (2026-08-13) — el código ya está desplegado y funcionando
+   sin ellas, pero a medias.** Las pone Gabriel; **al setearlas hay que redesplegar** (las env
+   nuevas no aplican al despliegue en curso). Detalle en `docs/AILOO_INTEGRACION.md` §5.
+
+   | Env | Qué pasa mientras falte | Dónde se saca |
+   |---|---|---|
+   | **`AILOO_KEY`** | ⚠️ **El endpoint `/api/ailoo-bici` queda ABIERTO** (mismo criterio que los `mc-*`: sin env no exige clave). El propio endpoint lo grita en cada respuesta (`aviso_seguridad: sin_clave_configurada`) y en su `GET`. **Setearla antes de entregarle la URL a Ailoo.** | Un string aleatorio cualquiera |
+   | **`DEPLOY_HOOK_URL`** | La bici llega a Airtable pero **el sitio no se reconstruye solo**: queda esperando el próximo despliegue. Es justamente la pieza que hace que el circuito no dependa de nadie. | Pages → Settings → Builds & deployments → Deploy hooks → crear uno para `main` |
+
 5. ~~Confirmar que Luis tiene asiento con permiso de edición~~ ✅ confirmado (runbook §1.1).
 
 **Deuda anterior que sigue viva:**
