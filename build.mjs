@@ -216,7 +216,7 @@ const metaLine = b => [b.disciplina, b.electrica?'Eléctrica':null, b.talla?'Tal
 
 /* ---------- CSS (identidad del rediseño «certificadas 3») ---------- */
 const CSS = `
-:root{--bg:#FBF8F1;--panel:#FFFEFA;--crema:#F5EFE3;--dark:#16120D;--ink:#191512;--text:#4A443C;--text2:#33302B;--muted:#8A8074;--meta:#96876F;--bronce:#96744A;--bronce2:#AF8958;--bronce3:#C9AE87;--linea:#E6DFD1;--linea2:#EDE6D8;--linea3:#E0D7C4;--input:#D8CFBC;--darkline:#2B251C;--darktext:#CFC5B4;--darkmut:#9C9080;--darkmut2:#8F8065;--darkdeep:#6E6355;--vend:#5C5346;--verde:#7E9271;--ph1:#F3EDDF;--ph2:#EEE6D4;--imgbg:#F1EBDD;--serif:'Cormorant Garamond',Georgia,serif;--sans:Archivo,system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace}
+:root{--bg:#FBF8F1;--panel:#FFFEFA;--crema:#F5EFE3;--dark:#16120D;--ink:#191512;--text:#4A443C;--text2:#33302B;--muted:#8A8074;--meta:#96876F;--bronce:#96744A;--bronce2:#AF8958;--bronce3:#C9AE87;--linea:#E6DFD1;--linea2:#EDE6D8;--linea3:#E0D7C4;--input:#D8CFBC;--darkline:#2B251C;--darktext:#CFC5B4;--darkmut:#9C9080;--darkmut2:#8F8065;--darkdeep:#6E6355;--vend:#5C5346;--verde:#7E9271;--ph1:#F3EDDF;--ph2:#EEE6D4;--imgbg:#F1EBDD;--meta2:#756750;--bronceAA:#7E5F38;--vitrina:#FFFFFF;--serif:'Cormorant Garamond',Georgia,serif;--sans:Archivo,system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace}
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
@@ -294,8 +294,11 @@ button{font-family:var(--sans)}
 /* ── card de bici ── */
 .bc{display:block;text-decoration:none;color:var(--ink);background:var(--panel);border:1px solid var(--linea);font-family:var(--sans);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;height:100%}
 .bc:hover{transform:translateY(-3px);border-color:var(--bronce3);box-shadow:0 18px 40px rgba(25,21,18,.09);color:var(--ink)}
-.bc-img{position:relative;aspect-ratio:4/3;background:var(--imgbg);overflow:hidden}
-.bc-img img{width:100%;height:100%;object-fit:cover;display:block}
+/* Mismo tratamiento que la vitrina de la ficha: las fotos vienen 900x900 con
+   letterbox blanco en proporciones mixtas, así que el cover recortaba un 25%
+   arriba y abajo. 1:1 + contain + fondo blanco = ninguna card corta la bici. */
+.bc-img{position:relative;aspect-ratio:1/1;background:var(--vitrina);overflow:hidden}
+.bc-img img{width:100%;height:100%;object-fit:contain;display:block}
 .bc-ph{position:absolute;inset:0;background:repeating-linear-gradient(-45deg,var(--ph1) 0 14px,var(--ph2) 14px 28px);display:flex;align-items:center;justify-content:center}
 .bc-ph span{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:#A4977F;background:var(--bg);border:1px solid var(--linea3);padding:7px 12px}
 .bc-chip{position:absolute;top:12px;left:12px;background:var(--dark);color:#F5EFE3;font-size:9.5px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;padding:6px 11px}
@@ -411,11 +414,9 @@ button{font-family:var(--sans)}
 .enc-band p{margin:12px 0 0;font-size:14px;line-height:1.7;color:var(--text);max-width:52ch}
 
 /* ── ficha «vitrina» ── */
-/* Tokens propios de la ficha. --meta2 y --bronceAA suben el contraste de los
-   grises y del bronce sobre hueso; --vitrina es el blanco puro que funde el
-   letterbox de las fotos (todas 900x900 con relleno blanco en proporciones
-   mixtas → 1:1 + contain = ninguna foto recortada, ninguna costura). */
-:root{--meta2:#756750;--bronceAA:#7E5F38;--vitrina:#FFFFFF}
+/* --meta2 y --bronceAA suben el contraste de los grises y del bronce sobre
+   hueso; --vitrina es el blanco que funde el letterbox de las fotos. Los tres
+   viven en el :root principal porque la ficha y el catálogo los comparten. */
 .f-page{display:flex;flex-direction:column;min-height:100vh}
 .f-page a:focus-visible,.f-page button:focus-visible{outline:2px solid var(--bronceAA);outline-offset:3px}
 .lab{font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--meta2)}
