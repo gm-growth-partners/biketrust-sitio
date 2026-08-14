@@ -18,4 +18,5 @@ crons = ["*/15 * * * *"]   # cada 15 min; ventanas de 48h/2h toleran de sobra el
 
 [vars]
 CRON_URL = "https://biketrust-sitio.pages.dev/api/cron-recordatorios"
+TABLERO_URL = "https://biketrust-tablero.pages.dev"
 # CRON_KEY se setea como SECRET (no acá): npx wrangler secret put CRON_KEY

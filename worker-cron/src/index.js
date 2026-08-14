@@ -31,11 +31,29 @@ export default {
       ['avisos', u('cron-avisos')],
     ];
 
-    for (const [name, url] of CRONES) {
+    // ── Panel de Contenido (repo del tablero, otro dominio) ──
+    // Estos NO van cada 15 min. El snapshot corre UNA vez al día porque su trabajo es
+    // fotografiar el acumulado del día, y el refresco del token una vez por semana
+    // porque el token dura 60 días. La ventana se decide acá, en hora de Santiago,
+    // para que el horario de verano no la corra sola.
+    if (env.TABLERO_URL) {
+      const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: "America/Santiago",
+        hour: "2-digit", minute: "2-digit", weekday: "short", hour12: false })
+        .formatToParts(new Date()).map((x) => [x.type, x.value]));
+      const hora = Number(p.hour), minuto = Number(p.minute);
+      // 03:00–03:14 de Chile: un solo tick al día.
+      if (hora === 3 && minuto < 15) CRONES.push(["ig-sync", env.TABLERO_URL + "/api/ig-sync", env.TABLERO_KEY]);
+      // Lunes 03:15–03:29: el refresco semanal, después del snapshot.
+      if (p.weekday === "Mon" && hora === 3 && minuto >= 15 && minuto < 30) {
+        CRONES.push(["ig-token", env.TABLERO_URL + "/api/ig-token-refresh", env.TABLERO_KEY]);
+      }
+    }
+
+    for (const [name, url, claveAparte] of CRONES) {
       try {
         // Timeout por endpoint: sin esto, uno colgado se come el presupuesto de
         // la invocación y los que van detrás no llegan a correr.
-        const r = await fetch(`${url}?key=${key}`, {
+        const r = await fetch(`${url}?key=${claveAparte ? encodeURIComponent(claveAparte) : key}`, {
           method: 'GET',
           headers: { 'User-Agent': 'biketrust-cron' },
           signal: AbortSignal.timeout(60000),
