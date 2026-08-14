@@ -49,6 +49,58 @@ fecha, `Reservada` respetada y `401` con clave mala. Limpieza confirmada en 0 re
 endpoint queda ABIERTO, igual que los `mc-*`) y `DEPLOY_HOOK_URL` (sin ella el sitio no se
 reconstruye solo, que es todo el punto). Ver `docs/AILOO_INTEGRACION.md` §5.
 
+### 2026-08-14 · La ficha de bici, rediseñada: vitrina + riel de compra que no se va
+
+**Cómo se decidió.** No se eligió a ojo: se corrieron 11 agentes en un workflow —4 auditorías
+independientes (composición · conversión · contenido/datos · robustez), 3 direcciones de diseño
+opuestas y 3 jurados con criterios distintos (conversión al teléfono · oficio de diseño ·
+implementabilidad). Ganó **«La Vitrina»** con 2 de 3 votos. El jurado de oficio prefería la
+dirección «expediente» y vetó el punto débil de la ganadora —plegar la evidencia en acordeones—,
+veto que se respetó: certificación, diagnóstico y estado honesto quedan **siempre visibles**.
+*(El agente de síntesis murió antes de entregar; el plan final se reconstruyó desde el journal.)*
+
+**Los tres defectos medidos que motivaron todo:**
+1. 🔴 **Las fotos estaban mal montadas.** Las 900x900 de Ailoo traen **letterbox blanco** en
+   proporciones MIXTAS (7 bicis con contenido 3:4, 5 con 4:3, 4 casi cuadradas). El contenedor
+   era `4/4.2` + `cover` + fondo crema → recortaba contenido real en la mitad del inventario y
+   dejaba el rectángulo blanco de la foto flotando sobre el crema. → **1:1 + `contain` + fondo
+   blanco**: ninguna foto se recorta y el relleno se funde. La foto pasó de 508x533 a **622x622**.
+2. 🔴 **Un solo CTA en 3.385px.** Tras el buybox venían ~2.600px de prueba sin una sola acción.
+   → **riel `position:sticky`** que ocupa las dos filas del grid: el botón está en pantalla desde
+   los 442px hasta el final, **sin una línea de JavaScript**.
+3. 🔴 **Escala invertida.** La cifra del puntaje medía 130px contra un h1 de 58px. → h1 46 →
+   certificado 44 → precio 40 → puntaje del riel 38. Ninguna cifra por encima del h1.
+
+**Lo que se agregó:** ahorro real calculado contra `Precio nuevo` (la Creo muestra «Ahorras
+$5.500.000 · 52% bajo el valor de nueva» — nunca se calculaba) · el **calce** (`Rango altura`)
+como dato destacado del riel, y si falta, un enlace que pide la estatura por WhatsApp (el campo
+por el que rutea el quiz de ManyChat) · sección **«Lo que todos preguntan»** con las 4 objeciones
+caras (pago · prueba · regiones · garantía), cada una un toque a WhatsApp con mensaje propio ·
+**estado honesto anclado a fotos** de esa unidad que abren el lightbox · diagnóstico con clave de
+lectura por cifra y la batería como dato principal · **placa tipográfica** con datos reales y CTA
+dorado para las 6 fichas sin foto · lightbox con teclado (Escape/flechas), z-index 90 para no
+pelearse con el modal de reserva (100) · el WhatsApp del header sticky ahora lleva el mensaje de
+ESA unidad · vendidas: banner + cierre con encargo y 3 certificadas equivalentes.
+
+**Lo que se sacó por falso o vacío:** «EMITIDA · AGO 2026» (era la fecha del *build*, no de la
+certificación) · «TE LA PREPARAMOS PARA MAÑANA» / «RESPUESTA POR WHATSAPP HOY» (SLA que nadie
+garantiza) · las **barras del desglose** (los 48 datos reales caen entre 79% y 100%: no codificaban
+nada y dibujaban un 6,0 como media barra vacía) · «Lo declaramos antes de que preguntes» (el campo
+`Estado honesto` hoy trae elogios y repeticiones del diagnóstico, ningún defecto).
+
+🔴 **Bug de TODO el sitio cazado de paso:** el `.msticky-space` se emitía **antes** del `<footer>`
+en las 7 páginas, así que no compensaba nada y la barra fija móvil **tapaba la última línea del pie
+legal en todo el sitio**. Se eliminó el espaciador y la compensación pasó a `.ft{padding-bottom:78px}`
+bajo 920px — una sola mecánica para las 7 páginas, como exigió el jurado de ingeniería.
+
+**Contratos intactos (verificado):** slugs `/bici/<modelo-talla>` sin cambios (22 en `/bici` y 22 en
+`/ficha`), `fichaTecnicaHTML` byte a byte igual, payload de `/api/reservar` idéntico, `functions/`
+sin tocar, y `.hon-grid`/`.hon-card` **conservados** porque los usa `comoCertificamosHTML`.
+
+**Móvil:** la foto se capa a `50vh` para que el modelo entre en la primera pantalla (h1 a 747px de
+812), y la barra fija lleva precio + puntaje + CTA desde el primer píxel, con estado (en Vendida
+conmuta a «Una igual →»).
+
 ### 2026-08-13 · Rediseño del sitio («certificadas 3»): todo CTA converge en WhatsApp
 
 **Qué cambió.** Se reemplazó el frontend completo del sitio por el rediseño que entregó

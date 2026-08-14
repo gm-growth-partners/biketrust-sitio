@@ -52,7 +52,10 @@ function fmtPuntaje(v){
   return String(Math.round(x*10)/10);
 }
 // Una fila del desglose «Área: 6.3/7» → {label, val:'6.3/7', pct:90}
+// El campo es texto libre y trae typos reales («6. 9/7»): se colapsa el espacio
+// suelto tras el punto decimal, nada más. El resto se muestra tal cual se cargó.
 function desgloseRow([k,v]){
+  v = String(v||'').replace(/(\d)\.\s+(\d)/, '$1.$2');
   const m = String(v||'').match(/([\d.,]+)\s*\/\s*7/);
   let pct = null;
   if(m){ const n=Number(m[1].replace(',','.')); if(isFinite(n)) pct=Math.round(n/7*100); }
@@ -370,16 +373,18 @@ button{font-family:var(--sans)}
 .band-dark .bd-r{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--muted)}
 
 /* ── sticky móvil (WhatsApp) ── */
+/* La compensación del alto de la barra va sobre el FOOTER, que es el último
+   elemento del documento en las 7 páginas. Un espaciador antes del footer
+   (como estaba) no protege nada: la barra igual tapaba el pie legal. */
 .msticky{display:none}
-.msticky-space{height:0}
 @media (max-width:920px){
+  .ft{padding-bottom:78px}
   .msticky{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:70;background:var(--dark);align-items:center;gap:12px;padding:11px 16px;box-shadow:0 -12px 30px rgba(25,21,18,.25)}
   .msticky img{height:28px;width:auto}
   .msticky .info{display:flex;flex-direction:column;line-height:1.2;min-width:0}
   .msticky .info .p{font-family:var(--serif);font-weight:600;font-size:20px;color:#F5EFE3}
   .msticky .info .c{font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--bronce2)}
   .msticky a.cta{text-decoration:none;flex:1;background:var(--bronce2);color:var(--dark);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:15px 12px;text-align:center}
-  .msticky-space{height:78px}
 }
 
 /* ── catálogo ── */
@@ -405,81 +410,145 @@ button{font-family:var(--sans)}
 .enc-band h2{margin:12px 0 0;font-family:var(--serif);font-weight:500;font-size:clamp(26px,3.4vw,38px);line-height:1.15;max-width:24ch}
 .enc-band p{margin:12px 0 0;font-size:14px;line-height:1.7;color:var(--text);max-width:52ch}
 
-/* ── ficha ── */
+/* ── ficha «vitrina» ── */
+/* Tokens propios de la ficha. --meta2 y --bronceAA suben el contraste de los
+   grises y del bronce sobre hueso; --vitrina es el blanco puro que funde el
+   letterbox de las fotos (todas 900x900 con relleno blanco en proporciones
+   mixtas → 1:1 + contain = ninguna foto recortada, ninguna costura). */
+:root{--meta2:#756750;--bronceAA:#7E5F38;--vitrina:#FFFFFF}
+.f-page{display:flex;flex-direction:column;min-height:100vh}
+.f-page a:focus-visible,.f-page button:focus-visible{outline:2px solid var(--bronceAA);outline-offset:3px}
+.lab{font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--meta2)}
+.lab-s{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--meta2)}
+
 .vend-banner{background:var(--dark);color:var(--darktext);padding:16px 28px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 22px;text-align:center}
-.vend-banner .k{font-size:10.5px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:var(--bronce2)}
+.vend-banner .k{font-size:11px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:var(--bronce2)}
 .vend-banner .t{font-size:13.5px;color:#DED4C2}
-.vend-banner a{text-decoration:none;font-size:10.5px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#E8DCC6;border:1px solid var(--bronce2);padding:9px 16px}
+.vend-banner a{text-decoration:none;font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#E8DCC6;border:1px solid var(--bronce2);padding:9px 16px}
 .vend-banner a:hover{background:var(--bronce2);color:var(--dark)}
 .crumbs{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
-.crumbs a{text-decoration:none;font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--meta)}
-.crumbs a:hover{color:var(--bronce)}
-.crumbs .n{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;color:var(--meta)}
-.f-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:44px;align-items:start}
-.pgal .frame{background:var(--panel);border:1px solid var(--linea3);padding:10px}
-.pgal .main{aspect-ratio:4/4.2;overflow:hidden;background:var(--imgbg)}
-.pgal .main img{width:100%;height:100%;object-fit:cover;display:block}
-.pgal.is-vendida .main img{filter:grayscale(1) contrast(.92)}
-.pgal .thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
-.pgal .th{cursor:pointer;padding:4px;background:var(--panel);border:1px solid var(--linea3);display:block}
-.pgal .th:hover{border-color:var(--bronce2)}
-.pgal .th.on{border-color:var(--bronce2)}
-.pgal .th span{display:block;aspect-ratio:1/1;overflow:hidden;background:var(--imgbg)}
-.pgal .th img{width:100%;height:100%;object-fit:cover;display:block;opacity:.75}
+.crumbs a{text-decoration:none;font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--meta2)}
+.crumbs a:hover{color:var(--bronceAA)}
+.crumbs .n{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--meta2)}
+
+/* ── esqueleto: vitrina + riel sticky que acompaña todo el scroll ── */
+.f-shell{display:grid;grid-template-columns:minmax(0,1fr) 396px;grid-template-areas:"gal rail" "doc rail";column-gap:56px;row-gap:56px;align-items:start;margin-top:20px}
+.f-gal{grid-area:gal;min-width:0}
+.f-doc{grid-area:doc;min-width:0}
+.f-rail{grid-area:rail;position:sticky;top:104px;align-self:start;max-height:calc(100vh - 124px);overflow-y:auto;scrollbar-width:thin}
+
+/* ── vitrina ── */
+.pgal .stage{position:relative;background:var(--vitrina);border:1px solid var(--linea3);padding:14px}
+.pgal .main{display:block;width:100%;padding:0;border:0;background:var(--vitrina);aspect-ratio:1/1;overflow:hidden;cursor:zoom-in}
+.pgal .main img{width:100%;height:100%;object-fit:contain;display:block}
+.pgal .zoom{position:absolute;right:26px;bottom:26px;pointer-events:none;background:var(--bg);border:1px solid var(--linea3);padding:7px 11px;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--meta2)}
+.pgal .strip{display:flex;gap:10px;margin-top:10px;overflow-x:auto;padding-bottom:5px;scrollbar-width:thin}
+.pgal .th{flex:0 0 84px;cursor:pointer;padding:3px;background:var(--vitrina);border:1px solid var(--linea3)}
+.pgal .th span{display:block;aspect-ratio:1/1;overflow:hidden;background:var(--vitrina)}
+.pgal .th img{width:100%;height:100%;object-fit:contain;display:block;opacity:.62}
+.pgal .th:hover{border-color:var(--bronce3)}
+.pgal .th:hover img{opacity:.85}
+.pgal .th.on{border:2px solid var(--bronceAA);padding:2px}
 .pgal .th.on img{opacity:1}
-.pgal .cap{margin:12px 0 0;font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--meta)}
-.pgal-ph{border:1px solid var(--linea3);background:repeating-linear-gradient(-45deg,var(--ph1) 0 14px,var(--ph2) 14px 28px);aspect-ratio:4/3.4;display:flex;align-items:center;justify-content:center;padding:20px}
-.pgal-ph span{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#A4977F;background:var(--bg);border:1px solid var(--linea3);padding:10px 16px;text-align:center}
-.f-info .meta{margin:0;font-size:11px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:var(--bronce);min-height:13px}
-.f-info h1{margin:12px 0 0;font-family:var(--serif);font-weight:500;font-size:clamp(40px,4.6vw,58px);line-height:1.02}
-.f-info h1 .marca{display:block;font-size:.44em;letter-spacing:.22em;font-weight:600;color:var(--muted);margin-bottom:6px}
-.f-info .fitline{margin:14px 0 0;font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;color:var(--text)}
-.f-info .resumen{margin:16px 0 0;font-size:14.5px;line-height:1.7;color:var(--text);max-width:52ch}
-.f-price{display:flex;flex-wrap:wrap;align-items:baseline;gap:14px;margin-top:22px;border-top:1px solid var(--linea);padding-top:20px}
-.f-price .p{font-family:var(--serif);font-weight:600;font-size:42px;color:var(--ink)}
-.f-price .p.muted{color:var(--muted)}
-.f-price .pa{font-size:15px;color:#A4977F;text-decoration:line-through}
-.f-price .chip{background:var(--dark);color:#F5EFE3;font-size:9.5px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;padding:7px 12px}
-.f-price .chip.vend{background:var(--vend)}
-.f-nota{margin:10px 0 0;font-size:12.5px;color:var(--muted)}
-.f-nota b{color:var(--bronce)}
-.buybox{margin-top:26px;background:var(--dark);padding:22px 22px 18px}
-.buybox .k{margin:0 0 14px;font-size:10px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:var(--bronce2)}
-.buybox .btn-gold{display:block;width:100%;padding:17px 20px;font-size:12px}
-.buybox .agendar{display:block;width:100%;cursor:pointer;margin-top:10px;background:none;border:1px solid var(--vend);color:var(--darktext);font-size:10.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;padding:14px 20px}
-.buybox .agendar:hover{border-color:var(--bronce2);color:#E8DCC6}
-.buybox .cap{margin:14px 0 0;font-size:12px;line-height:1.6;color:var(--darkmut)}
-.f-cert-mini{display:flex;align-items:center;gap:10px;margin-top:26px;border:1px solid var(--linea);background:var(--crema);padding:13px 16px}
-.f-cert-mini img{height:18px;width:auto}
-.f-cert-mini .c{font-size:10.5px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--bronce)}
-.f-cert-mini a{margin-left:auto;text-decoration:none;font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
-.f-cert-mini a:hover{color:var(--bronce)}
-.certbox{background:var(--panel);border:1px solid var(--bronce3)}
-.certbox .hd2{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;padding:18px 28px;border-bottom:1px solid var(--linea2)}
-.certbox .hd2 .l{font-size:10.5px;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:var(--bronce)}
-.certbox .hd2 .r{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;color:var(--meta)}
-.certbox .bd{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:36px;padding:36px 28px;align-items:center}
-.certbox .big{text-align:center}
-.certbox .big .n{font-family:var(--serif);font-weight:500;font-size:clamp(96px,11vw,130px);line-height:.9;color:var(--ink)}
-.certbox .big .n small{font-size:.32em;color:var(--bronce2);font-weight:600}
-.certbox .big .sello{display:flex;align-items:center;justify-content:center;gap:9px;margin-top:18px}
-.certbox .big .sello img{height:20px;width:auto}
-.certbox .big .sello span{font-size:10.5px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--text)}
-.certbox .desg .k{margin:0 0 6px;font-size:10.5px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:var(--meta)}
-.certbox .row{display:flex;align-items:center;gap:16px;padding:13px 0;border-bottom:1px solid var(--linea2)}
-.certbox .row .lb{font-size:13.5px;color:var(--ink);flex:0 0 44%}
-.certbox .row .tr{flex:1;height:3px;background:#EFE8D9;position:relative;display:block}
-.certbox .row .fl{position:absolute;inset:0 auto 0 0;background:var(--bronce2);display:block}
-.certbox .row .vl{font-family:var(--mono);font-size:12px;color:var(--ink);flex:0 0 44px;text-align:right}
-.certbox .foot2{display:flex;justify-content:space-between;gap:10px;margin-top:14px}
-.certbox .foot2 a{text-decoration:none;font-size:10.5px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--bronce)}
-.certbox .foot2 .d{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--meta)}
-.diag3{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1px;background:var(--linea3);border:1px solid var(--linea3)}
-.diag3>div{background:var(--crema);padding:26px 24px;text-align:center}
-.diag3 .l{margin:0;font-family:var(--mono);font-size:10px;letter-spacing:.24em;color:var(--meta)}
-.diag3 .v{margin:10px 0 0;font-family:var(--serif);font-weight:500;font-size:52px;line-height:1}
-.diag3 .v small{font-size:.4em;color:var(--bronce)}
-.diag-note{margin:14px 0 0;text-align:center;font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--bronce)}
+.pgal.is-vendida .main img,.pgal.is-vendida .th img{filter:grayscale(1) contrast(.92)}
+.pgal .cap{margin:12px 0 0;display:flex;justify-content:space-between;gap:14px;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--meta2)}
+
+/* placa tipográfica: reemplaza la galería en las 6 fichas sin foto */
+.f-plate{background:var(--vitrina);border:1px solid var(--linea3);aspect-ratio:1/1;display:flex;flex-direction:column;justify-content:space-between;gap:22px;padding:clamp(24px,3.4vw,40px)}
+.f-plate .pl-n{margin:10px 0 0;font-family:var(--serif);font-weight:500;font-size:clamp(30px,4vw,46px);line-height:1.04}
+.f-plate .pl-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 28px;margin:0}
+.f-plate .pl-g div{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--linea2)}
+.f-plate .pl-g dt{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--meta2)}
+.f-plate .pl-g dd{margin:0;font-size:13.5px;color:var(--ink);text-align:right}
+.f-plate .pl-cta{text-decoration:none;display:block;text-align:center;background:var(--bronce2);color:var(--dark);font-size:11.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:16px 18px}
+.f-plate .pl-cta:hover{background:var(--bronce3);color:var(--dark)}
+.f-plate.is-vendida{opacity:.72}
+
+/* ── riel de compra ── */
+.f-rail .meta{margin:0;font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--bronceAA)}
+.f-rail h1{margin:10px 0 0;font-family:var(--serif);font-weight:500;font-size:clamp(34px,3.6vw,46px);line-height:1.03}
+.f-rail h1 .marca{display:block;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.34em;color:var(--meta2);margin-bottom:9px}
+.f-fit{margin:18px 0 0;padding:13px 0;border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:10px}
+.f-fit .v{font-size:15px;font-weight:600;color:var(--ink)}
+.f-fit a{text-decoration:none;font-size:12.5px;font-weight:600;color:var(--bronceAA);border-bottom:1px solid var(--bronce3)}
+.f-fit a:hover{color:var(--ink)}
+.f-deal{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:end;margin-top:20px}
+.f-deal .p{font-family:var(--serif);font-weight:600;font-size:40px;line-height:1;color:var(--ink)}
+.f-deal .p.muted{color:var(--muted)}
+.f-deal .ah{display:block;margin-top:7px;font-size:12.5px;font-weight:700;color:var(--bronceAA)}
+.f-deal .ah s{margin-right:8px;font-weight:500;color:var(--meta2)}
+.f-deal .pt{border-left:1px solid var(--linea);padding-left:22px;text-align:right}
+.f-deal .pt .n{font-family:var(--serif);font-weight:500;font-size:38px;line-height:1;color:var(--ink)}
+.f-deal .pt .n small{font-size:.38em;font-weight:600;color:var(--bronceAA)}
+.f-deal .pt .l{display:block;margin-top:7px;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--meta2)}
+.f-deal .pt.nopj .n{font-family:var(--mono);font-size:13px;letter-spacing:.14em;color:var(--meta2)}
+.f-chip{display:inline-block;margin-top:14px;background:var(--dark);color:#F5EFE3;font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;padding:7px 12px}
+.f-chip.vend{background:var(--vend)}
+.f-nota{margin:12px 0 0;font-size:12.5px;line-height:1.6;color:var(--muted)}
+.f-nota b{color:var(--bronceAA)}
+.buybox{margin-top:22px;background:var(--dark);padding:22px}
+.buybox .k{margin:0 0 14px;font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--bronce2)}
+.buybox .btn-gold{display:block;width:100%;padding:18px;font-size:12px}
+.buybox .agendar{display:block;width:100%;margin-top:10px;cursor:pointer;background:none;border:1px solid var(--bronce2);color:#E8DCC6;font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;padding:14px 18px}
+.buybox .agendar:hover{background:var(--bronce2);color:var(--dark)}
+.buybox .cap{margin:14px 0 0;font-size:12.5px;line-height:1.6;color:var(--darktext)}
+.f-unit{margin:14px 0 0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--meta2)}
+.f-unit b{color:var(--ink);font-weight:600}
+
+/* ── documento ── */
+.f-lead{margin:8px 0 0;font-family:var(--serif);font-size:19px;line-height:1.6;color:var(--text2);max-width:58ch}
+.f-sec{margin-top:44px;scroll-margin-top:112px}
+.f-sec>.hd{border-top:1px solid var(--ink);padding-top:14px;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:10px 18px}
+.f-sec>.hd .fo{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--meta2)}
+.f-sec>.hd h2{margin:0;font-family:var(--serif);font-weight:500;font-size:28px;line-height:1.1;flex:1 1 auto}
+.f-sec>.hd .rt{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--meta2)}
+.f-ask{display:inline-flex;align-items:center;gap:9px;margin-top:18px;text-decoration:none;padding-bottom:5px;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--bronceAA);border-bottom:1px solid var(--bronce3)}
+.f-ask:hover{color:var(--ink);border-bottom-color:var(--ink)}
+
+/* certificado: sin barras (los 48 datos reales caen entre 79% y 100%, la barra
+   no codificaba nada y dramatizaba un 6,0). Área + nota, tabulado. */
+.certbox{background:var(--panel);border:1px solid var(--bronce3);margin-top:18px}
+.certbox .hd2{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;padding:16px 24px;border-bottom:1px solid var(--linea2);font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase}
+.certbox .hd2 .l{color:var(--bronceAA)}
+.certbox .hd2 .r{color:var(--meta2)}
+.certbox .bd{padding:24px}
+.certbox .lead{display:flex;align-items:baseline;gap:14px;padding-bottom:18px;border-bottom:1px solid var(--linea2)}
+.certbox .lead .n{font-family:var(--serif);font-weight:500;font-size:44px;line-height:1;color:var(--ink)}
+.certbox .lead .n small{font-size:.34em;font-weight:600;color:var(--bronceAA)}
+.certbox .lead .sc{margin-left:auto;display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--meta2);text-align:right}
+.certbox .lead .sc img{height:20px;width:auto}
+.certbox .row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;gap:18px;padding:13px 0;border-bottom:1px solid var(--linea2)}
+.certbox .row:last-of-type{border-bottom:none}
+.certbox .row .lb{font-size:14px;color:var(--ink)}
+.certbox .row .vl{font-family:var(--mono);font-size:13px;color:var(--ink);white-space:nowrap}
+.certbox .gar{border-top:1px solid var(--linea3);background:var(--crema);padding:18px 24px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;font-size:13px;line-height:1.6;color:var(--text)}
+.certbox .gar b{font-weight:600;color:var(--ink)}
+.certbox .gar .lab-s{margin-left:auto}
+
+/* diagnóstico: batería manda, km y ciclos secundarios, cada cifra con su clave */
+.diag3{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:1px;background:var(--linea3);border:1px solid var(--linea3);margin-top:18px}
+.diag3>div{background:var(--crema);padding:22px 20px}
+.diag3 .l{margin:0;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--meta2)}
+.diag3 .v{margin:10px 0 0;font-family:var(--serif);font-weight:500;font-size:28px;line-height:1;color:var(--ink)}
+.diag3 .main .v{font-size:44px}
+.diag3 .v small{font-size:.4em;color:var(--bronceAA)}
+.diag3 .v.na{font-family:var(--mono);font-size:13px;color:var(--meta2)}
+.diag3 .k{margin:10px 0 0;font-size:12.5px;line-height:1.55;color:var(--text)}
+
+/* estado honesto: una columna legible + fotos de esa unidad ancladas al texto */
+.hon{display:grid;grid-template-columns:minmax(0,64ch) auto;gap:32px;align-items:start;margin-top:18px}
+.hon .it{display:grid;grid-template-columns:40px minmax(0,1fr);gap:14px;padding:15px 0;border-bottom:1px solid var(--linea2);font-size:14.5px;line-height:1.7;color:var(--ink)}
+.hon .it:last-of-type{border-bottom:none}
+.hon .it .n{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--meta2);padding-top:5px}
+.hon .ev{display:grid;grid-template-columns:repeat(2,84px);gap:8px;align-content:start}
+.hon .ev .lab-s{grid-column:1/-1}
+.hon .ev button{cursor:pointer;padding:3px;background:var(--vitrina);border:1px solid var(--linea3)}
+.hon .ev button:hover{border-color:var(--bronce3)}
+.hon .ev span{display:block;aspect-ratio:1/1;overflow:hidden;background:var(--vitrina)}
+.hon .ev img{width:100%;height:100%;object-fit:contain;display:block}
+
+/* .hon-grid/.hon-card ya NO los usa la ficha, pero sí «Cómo certificamos»
+   (comoCertificamosHTML, 2 tarjetas). Se conservan idénticos a propósito. */
 .hon-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
 .hon-card{border:1px solid var(--linea3);background:var(--crema);padding:30px 28px}
 .hon-card .k{margin:0;font-size:10.5px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:var(--bronce)}
@@ -487,36 +556,75 @@ button{font-family:var(--sans)}
 .hon-card .it{margin:14px 0 0;font-size:13.5px;line-height:1.65;color:var(--ink);border-bottom:1px solid var(--linea);padding-bottom:13px;display:flex;gap:12px}
 .hon-card .it:last-child{border-bottom:none;padding-bottom:0}
 .hon-card .it .n{font-family:var(--mono);font-size:11px;color:var(--meta);flex:0 0 auto;padding-top:2px}
-.specs .tabs{display:flex;gap:26px;border-bottom:1px solid var(--linea3);margin-top:18px}
-.specs .tabbtn{cursor:pointer;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-size:11.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;padding:12px 2px;margin-bottom:-1px}
-.specs .tabbtn:hover{color:var(--bronce)}
+
+/* preguntas abiertas: las 4 objeciones caras, cada una un toque a WhatsApp */
+.f-qs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:1px;background:var(--linea3);border:1px solid var(--linea3);margin-top:18px}
+.f-qs a{background:var(--panel);text-decoration:none;padding:20px 22px;display:flex;flex-direction:column;gap:8px;min-height:104px}
+.f-qs a:hover{background:var(--crema)}
+.f-qs .q{font-family:var(--serif);font-weight:600;font-size:19px;line-height:1.2;color:var(--ink)}
+.f-qs .a{margin-top:auto;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--bronceAA)}
+
+.specs{margin-top:18px}
+.specs .tabs{display:flex;gap:26px;border-bottom:1px solid var(--linea3);overflow-x:auto}
+.specs .tabbtn{cursor:pointer;background:none;border:none;border-bottom:2px solid transparent;color:var(--meta2);font-size:11.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;padding:12px 2px;margin-bottom:-1px;white-space:nowrap}
+.specs .tabbtn:hover{color:var(--bronceAA)}
 .specs .tabbtn.on{color:var(--ink);border-bottom-color:var(--bronce2)}
 .specs .panel{max-width:760px;display:none}
 .specs .panel.on{display:block}
 .specs .prow{display:flex;justify-content:space-between;gap:24px;padding:14px 0;border-bottom:1px solid var(--linea2)}
-.specs .prow .k{font-size:13px;color:var(--muted);flex:0 0 38%}
+.specs .prow .k{font-size:13.5px;color:var(--meta2);flex:0 0 38%}
 .specs .prow .v{font-size:13.5px;color:var(--ink);text-align:right}
-.compacta{border:1px dashed var(--bronce3);background:var(--panel);padding:40px 28px;text-align:center}
-.compacta .m{margin:0;font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--meta)}
-.compacta p{margin:12px auto 0;font-size:14px;line-height:1.7;color:var(--text);max-width:52ch}
-.disp-strip{border-top:2px solid var(--ink);border-bottom:1px solid var(--linea3);padding:16px 2px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 26px;font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--ink)}
-.disp-strip .dot{display:inline-flex;align-items:center;gap:9px}
-.disp-strip .dot i{width:8px;height:8px;border-radius:50%;background:var(--bronce2);display:inline-block}
-.disp-strip .sep{color:var(--input)}
-.cta2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:20px}
-.cta2 .dark{background:var(--dark);color:var(--darktext);padding:clamp(28px,4vw,44px);display:flex;flex-direction:column}
-.cta2 .dark .k{margin:0;font-size:10.5px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:var(--bronce2)}
-.cta2 .dark h2{margin:14px 0 0;font-family:var(--serif);font-weight:500;font-size:clamp(26px,3vw,36px);color:#F5EFE3;line-height:1.15}
-.cta2 .dark p{margin:12px 0 0;font-size:13px;line-height:1.65;color:var(--darkmut);max-width:46ch}
-.cta2 .dark .btn-gold{margin-top:24px}
-.cta2 .dark .agendar{cursor:pointer;margin-top:12px;background:none;border:1px solid var(--vend);color:var(--darktext);font-size:10.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;padding:13px 20px}
-.cta2 .dark .agendar:hover{border-color:var(--bronce2);color:#E8DCC6}
-.cta2 .lite{background:var(--crema);border:1px solid var(--linea3);padding:clamp(28px,4vw,44px);display:flex;flex-direction:column}
-.cta2 .lite .k{margin:0;font-size:10.5px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:var(--bronce)}
-.cta2 .lite h2{margin:14px 0 0;font-family:var(--serif);font-weight:500;font-size:clamp(26px,3vw,36px);line-height:1.15}
-.cta2 .lite p{margin:12px 0 0;font-size:13px;line-height:1.65;color:var(--text);max-width:46ch}
-.cta2 .lite a{text-decoration:none;margin-top:auto;padding-top:24px;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--bronce)}
+
+.compacta{border:1px dashed var(--bronce3);background:var(--panel);padding:32px 28px;margin-top:18px}
+.compacta .m{margin:0;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--meta2)}
+.compacta p{margin:12px 0 0;font-size:14.5px;line-height:1.7;color:var(--text);max-width:56ch}
+
+/* cierre */
+.cta2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:20px;margin-top:20px}
+.cta2 .dark{background:var(--dark);color:var(--darktext);padding:clamp(28px,4vw,40px);display:flex;flex-direction:column}
+.cta2 .dark .k{margin:0;font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--bronce2)}
+.cta2 .dark h2{margin:12px 0 0;font-family:var(--serif);font-weight:500;font-size:clamp(24px,2.8vw,32px);color:#F5EFE3;line-height:1.15}
+.cta2 .dark .recap{display:flex;align-items:center;gap:14px;margin-top:18px;padding-top:18px;border-top:1px solid var(--darkline)}
+.cta2 .dark .recap img{width:76px;height:76px;object-fit:contain;background:var(--vitrina);flex:0 0 auto}
+.cta2 .dark .recap .t{font-size:13px;line-height:1.6;color:var(--darkmut)}
+.cta2 .dark .recap .t b{display:block;color:#F5EFE3;font-weight:600;font-size:14.5px}
+.cta2 .dark .btn-gold{margin-top:22px}
+.cta2 .lite{background:var(--crema);border:1px solid var(--linea3);padding:clamp(28px,4vw,40px);display:flex;flex-direction:column}
+.cta2 .lite .k{margin:0;font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--bronceAA)}
+.cta2 .lite h2{margin:12px 0 0;font-family:var(--serif);font-weight:500;font-size:clamp(24px,2.8vw,32px);line-height:1.15}
+.cta2 .lite p{margin:12px 0 0;font-size:13.5px;line-height:1.65;color:var(--text);max-width:46ch}
+.cta2 .lite a{text-decoration:none;margin-top:auto;padding-top:22px;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--bronceAA)}
 .cta2 .lite a:hover{color:var(--ink)}
+
+/* lightbox — mismo patrón que .rsv-ov y SIEMPRE por debajo de su z-index 100 */
+.lb-ov{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;background:rgba(22,18,13,.93);padding:clamp(16px,4vw,48px)}
+.lb-ov.open{display:flex}
+.lb-ov img{max-width:100%;max-height:86vh;object-fit:contain;background:var(--vitrina)}
+.lb-ov button{position:absolute;cursor:pointer;background:none;border:1px solid var(--vend);color:var(--darktext);font-family:var(--mono);font-size:13px;padding:12px 15px}
+.lb-ov button:hover{border-color:var(--bronce2);color:#E8DCC6}
+.lb-ov .x{top:20px;right:20px}
+.lb-ov .prev{left:20px;top:50%}
+.lb-ov .next{right:20px;top:50%}
+.lb-ov .n{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--darktext)}
+
+@media (max-width:1080px){.f-shell{grid-template-columns:minmax(0,1fr) 340px;column-gap:36px}}
+@media (max-width:920px){
+  .f-shell{grid-template-columns:minmax(0,1fr);grid-template-areas:"gal" "rail" "doc";row-gap:28px}
+  .f-rail{position:static;max-height:none;overflow:visible}
+  .f-rail h1{font-size:clamp(32px,8vw,40px)}
+  /* la foto cede alto para que el modelo entre en la primera pantalla;
+     precio y CTA quedan siempre a mano en la barra fija de abajo */
+  .pgal .main{aspect-ratio:auto;height:50vh}
+  .pgal .th{flex:0 0 64px}
+  .f-deal{grid-template-columns:1fr;gap:14px;align-items:start}
+  .f-deal .pt{border-left:none;border-top:1px solid var(--linea);padding:14px 0 0;text-align:left;display:flex;align-items:baseline;gap:12px}
+  .f-deal .pt .l{margin-top:0}
+  .f-plate{aspect-ratio:auto}
+  .hon{grid-template-columns:minmax(0,1fr);gap:22px}
+  .hon .ev{grid-template-columns:repeat(4,1fr)}
+  .diag3{grid-template-columns:1fr}
+  .f-sec{margin-top:34px}
+}
 
 /* ── modal reserva ── */
 .rsv-ov{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:18px}
@@ -678,7 +786,9 @@ const NAV_JS = String.raw`(function(){
 })();`;
 
 // Header del rediseño. active: '' | 'catalogo' | 'encargo' | 'certificacion' | 'consigna' | 'guias'
-function TOPBAR(active=''){
+// waCtx: el WhatsApp del header. En una ficha lleva el mensaje de ESA unidad
+// (modelo + talla + referencia); si no, el genérico.
+function TOPBAR(active='', waCtx=WA_GENERAL){
   const items = [
     ['Catálogo','/catalogo','catalogo'],
     ['Encargo','/encargo','encargo'],
@@ -692,10 +802,10 @@ function TOPBAR(active=''){
   <div class="hd-bar">
     <a class="hd-logo" href="/"><img src="/assets/brand/shield.png" alt="Bike Trust"><span class="tx"><b>BIKE</b><i>TRUST</i></span></a>
     <nav class="hd-nav">${nav()}</nav>
-    <a class="hd-wa" href="${WA_GENERAL}" target="_blank" rel="noopener">WhatsApp <span style="font-size:13px">↗</span></a>
+    <a class="hd-wa" href="${waCtx}" target="_blank" rel="noopener">WhatsApp <span style="font-size:13px">↗</span></a>
     <button type="button" class="hd-burger" aria-label="Menú"><span></span><span></span></button>
   </div>
-  <div class="hd-panel">${nav()}<a class="wa" href="${WA_GENERAL}" target="_blank" rel="noopener">Escríbenos por WhatsApp ↗</a></div>
+  <div class="hd-panel">${nav()}<a class="wa" href="${waCtx}" target="_blank" rel="noopener">Escríbenos por WhatsApp ↗</a></div>
 </header>`;
 }
 
@@ -729,7 +839,7 @@ const FOOT = `<footer class="ft">
 <script>${NAV_JS}</script></body></html>`;
 
 // Barra fija móvil de WhatsApp (portada y páginas informativas).
-const MSTICKY = `<div class="msticky-space"></div><div class="msticky"><img src="/assets/brand/shield.png" alt="">
+const MSTICKY = `<div class="msticky"><img src="/assets/brand/shield.png" alt="">
   <a class="cta" href="${WA_GENERAL}" target="_blank" rel="noopener">Escríbenos por WhatsApp ↗</a></div>`;
 
 // Favicon: el escudo de la marca, en bronce.
@@ -1401,22 +1511,93 @@ function reservaModal(bikes){
 }
 
 /* ---------- ficha e-commerce ---------- */
+// Estado del documento: decide la COMPOSICIÓN de la ficha (no solo el relleno).
+// Una sola función para no dispersar la degradación en condicionales sueltos.
+//   completa = tiene puntaje y algo que mostrar además del hero
+//   parcial  = tiene puntaje pero poco más
+//   abierta  = sin puntaje ni specs ni estado honesto (2 de 22 hoy)
+function docEstado(b){
+  const pj = !!fmtPuntaje(b.puntaje);
+  const cuerpo = (b.estado.length ? 1 : 0) + (b.specs.length ? 1 : 0) + (b.geometria.length ? 1 : 0);
+  if (!pj && !cuerpo) return 'abierta';
+  return (pj && cuerpo) ? 'completa' : 'parcial';
+}
+// Ahorro real contra el valor de nueva. Sin `precioNuevo` no se inventa nada.
+function calcAhorro(b){
+  if (b.precio == null || !b.precioNuevo || b.precioNuevo <= b.precio) return null;
+  const abs = b.precioNuevo - b.precio;
+  return { abs, pct: Math.round(abs / b.precioNuevo * 100) };
+}
+// Mensajes de WhatsApp derivados de la unidad (la atribución modelo+talla+ref se conserva).
+const unidadTxt = b => 'la Specialized ' + b.modelo + (b.talla ? ' talla ' + b.talla : '') +
+                       (b.referencia ? ' (ref ' + b.referencia + ')' : '');
+const waFotos   = b => wa('Hola! ¿Me mandan las fotos y el detalle de ' + unidadTxt(b) + '?');
+const waFit     = b => wa('Hola! Mido ___ cm. ¿Me queda ' + unidadTxt(b) + '?');
+const waDetalle = b => wa('Hola! Tengo una consulta sobre ' + unidadTxt(b) + '.');
+// Las 4 objeciones caras de una compra de usado premium. Son PREGUNTAS, no
+// respuestas: no afirman nada que Airtable no tenga.
+function preguntasAbiertas(b){
+  return [
+    ['¿Cómo se paga?', 'Formas de pago', wa('Hola! ¿Cómo puedo pagar ' + unidadTxt(b) + '?')],
+    ['¿Puedo probarla antes?', 'Prueba en el taller', wa('Hola! ¿Puedo probar ' + unidadTxt(b) + ' antes de decidir?')],
+    ['Estoy fuera de Santiago', 'Compra desde regiones', wa('Hola! Estoy fuera de Santiago y me interesa ' + unidadTxt(b) + '. ¿Cómo lo hacemos?')],
+    ['¿Qué cubre la garantía?', 'Garantía Bike Trust', wa('Hola! ¿Qué cubre la garantía de ' + unidadTxt(b) + '?')]
+  ];
+}
+
+// JS de la ficha: galería (miniaturas + lightbox), pestañas de specs.
+// Conserva los selectores que ya existían (.pgal .main img, .pgal .th,
+// .pgal .cap .alt, .specs .tabbtn) para que el cambio sea aditivo.
 const FICHA_JS = String.raw`(function(){
   var main=document.querySelector('.pgal .main img'), cap=document.querySelector('.pgal .cap .alt');
-  [].forEach.call(document.querySelectorAll('.pgal .th'),function(t){
-    t.addEventListener('click',function(){
-      if(!main) return;
-      main.src=t.getAttribute('data-src'); main.alt=t.getAttribute('data-alt')||'';
-      if(cap) cap.textContent=(t.getAttribute('data-alt')||'').toUpperCase();
-      [].forEach.call(document.querySelectorAll('.pgal .th'),function(x){ x.classList.remove('on'); });
-      t.classList.add('on');
+  var ths=[].slice.call(document.querySelectorAll('.pgal .th'));
+  var FOTOS=[];
+  ths.forEach(function(t){ FOTOS.push({src:t.getAttribute('data-src'),alt:t.getAttribute('data-alt')||''}); });
+  var idx=0;
+  function pinta(i){
+    if(!FOTOS.length||!main) return;
+    idx=(i+FOTOS.length)%FOTOS.length;
+    main.src=FOTOS[idx].src; main.alt=FOTOS[idx].alt;
+    ths.forEach(function(x,k){ x.classList.toggle('on',k===idx); });
+    if(cap) cap.textContent=('0'+(idx+1)).slice(-2)+' / '+('0'+FOTOS.length).slice(-2);
+  }
+  ths.forEach(function(t,i){ t.addEventListener('click',function(){ pinta(i); }); });
+
+  /* lightbox: mismo patrón que el modal de reserva, siempre por debajo de su z-index */
+  var lb=document.querySelector('.lb-ov');
+  if(lb&&FOTOS.length){
+    var lbImg=lb.querySelector('img'), lbN=lb.querySelector('.n'), abierto=false;
+    function ver(i){
+      idx=(i+FOTOS.length)%FOTOS.length;
+      lbImg.src=FOTOS[idx].src; lbImg.alt=FOTOS[idx].alt;
+      if(lbN) lbN.textContent=('0'+(idx+1)).slice(-2)+' / '+('0'+FOTOS.length).slice(-2);
+    }
+    function abrir(i){ ver(i); lb.classList.add('open'); document.body.style.overflow='hidden'; abierto=true; }
+    function cerrar(){ lb.classList.remove('open'); document.body.style.overflow=''; abierto=false; pinta(idx); }
+    [].forEach.call(document.querySelectorAll('.js-lb'),function(el){
+      el.addEventListener('click',function(){
+        /* la foto grande abre la que se está viendo, no siempre la primera */
+        abrir(el.classList.contains('main') ? idx : parseInt(el.getAttribute('data-i')||'0',10));
+      });
     });
-  });
+    lb.querySelector('.x').addEventListener('click',cerrar);
+    lb.querySelector('.prev').addEventListener('click',function(e){ e.stopPropagation(); ver(idx-1); });
+    lb.querySelector('.next').addEventListener('click',function(e){ e.stopPropagation(); ver(idx+1); });
+    lb.addEventListener('click',function(e){ if(e.target===lb) cerrar(); });
+    document.addEventListener('keydown',function(e){
+      if(!abierto) return;
+      if(e.key==='Escape') cerrar();
+      else if(e.key==='ArrowLeft') ver(idx-1);
+      else if(e.key==='ArrowRight') ver(idx+1);
+    });
+  }
+
+  /* pestañas de especificaciones */
   [].forEach.call(document.querySelectorAll('.specs .tabbtn'),function(b){
     b.addEventListener('click',function(){
-      [].forEach.call(document.querySelectorAll('.specs .tabbtn'),function(x){ x.classList.remove('on'); });
+      [].forEach.call(document.querySelectorAll('.specs .tabbtn'),function(x){ x.classList.remove('on'); x.setAttribute('aria-selected','false'); });
       [].forEach.call(document.querySelectorAll('.specs .panel'),function(p){ p.classList.remove('on'); });
-      b.classList.add('on');
+      b.classList.add('on'); b.setAttribute('aria-selected','true');
       var p=document.getElementById(b.getAttribute('data-tab')); if(p) p.classList.add('on');
     });
   });
@@ -1426,181 +1607,259 @@ function fichaHTML(b, bikes){
   const vend = esVendida(b), res = esReservada(b);
   const pj = fmtPuntaje(b.puntaje);
   const fotos = b.fotos || [];
-  const fitline = [
-    b.talla ? 'TALLA '+esc(b.talla) : null,
-    b.rangoAltura ? 'CALZA '+esc(b.rangoAltura.toUpperCase()) : null,
-    b.referencia ? 'REF '+esc(b.referencia) : null
-  ].filter(Boolean).join(' · ');
+  const doc = docEstado(b);
+  const ahorro = calcAhorro(b);
   const waF = waFicha(b);
   const encHref = encargoHref(b);
-  const emitida = new Date().toLocaleDateString('es-CL',{month:'short',year:'numeric'}).replace('.','').toUpperCase();
+  const alt = (i) => 'Specialized ' + b.modelo + (b.talla ? ' ' + b.talla : '') + ' — foto ' + (i+1) + ' de ' + fotos.length;
 
+  /* ── vitrina: 1:1 + contain + blanco. Ninguna foto se recorta ── */
   const galeria = fotos.length ? `
-    <div class="pgal${vend?' is-vendida':''}">
-      <div class="frame"><div class="main"><img src="${esc(fotos[0])}" alt="${escA('Specialized '+b.modelo+' — foto 1')}"></div></div>
-      ${fotos.length>1?`<div class="thumbs">${fotos.slice(0,8).map((f,i)=>`<button type="button" class="th${i===0?' on':''}" data-src="${escA(f)}" data-alt="${escA('Foto '+(i+1))}"><span><img src="${esc(f)}" alt="${escA('Miniatura '+(i+1))}" loading="lazy"></span></button>`).join('')}</div>`:''}
-      <p class="cap">FOTOS REALES DE ESTA UNIDAD${b.fotoReferencial?' · FOTO REFERENCIAL DEL MODELO':''} · <span class="alt">FOTO 1</span></p>
-    </div>`
-  : `<div class="pgal-ph"><span>${vend?'unidad vendida':'fotos en preparación · pídelas por whatsapp'}</span></div>`;
-
-  const certSection = pj ? `
-<section id="certificacion" class="wrap" style="margin-top:56px">
-  <div class="certbox">
-    <div class="hd2"><span class="l">Puntaje de certificación</span><span class="r">${b.referencia?`CERTIFICADO Nº ${esc(b.referencia)}`:'CERTIFICADO BIKE TRUST'}</span></div>
-    <div class="bd">
-      <div class="big">
-        <div class="n">${pj}<small> /7</small></div>
-        <div class="sello"><img src="/assets/brand/shield.png" alt=""><span>Certificada por Bike Trust · Santiago</span></div>
-      </div>
-      <div class="desg">
-        ${b.desglose.length?`<p class="k">Desglose de la certificación</p>
-        ${b.desglose.map(r=>{ const d=desgloseRow(r); return `<div class="row"><span class="lb">${esc(d.label)}</span><span class="tr"><span class="fl" style="width:${d.pct}%"></span></span><span class="vl">${esc(d.val)}</span></div>`; }).join('')}`:''}
-        <div class="foot2"><a href="/como-certificamos">Cómo medimos el puntaje →</a><span class="d">EMITIDA · ${esc(emitida)}</span></div>
-      </div>
+  <div class="pgal${vend?' is-vendida':''}">
+    <div class="stage">
+      <button type="button" class="main js-lb" data-i="0" aria-label="Ampliar foto">
+        <img src="${esc(fotos[0])}" width="900" height="900" fetchpriority="high" decoding="async" alt="${escA(alt(0))}">
+      </button>
+      <span class="zoom">Ampliar ⤢</span>
     </div>
-  </div>
-</section>` : '';
-
-  const hayDiag = b.electrica && (b.diagKm!=null || b.diagBat!=null || b.diagCic!=null);
-  const diagSection = hayDiag ? `
-<section class="wrap" style="margin-top:22px">
-  <div class="diag3">
-    <div><p class="l">KM DEL MOTOR</p><p class="v">${b.diagKm!=null?Math.round(b.diagKm).toLocaleString('es-CL'):'—'}<small> km</small></p></div>
-    <div><p class="l">SALUD DE BATERÍA</p><p class="v">${b.diagBat!=null?b.diagBat+'%':'—'}</p></div>
-    <div><p class="l">CICLOS DE CARGA</p><p class="v">${b.diagCic!=null?esc(b.diagCic):'—'}</p></div>
-  </div>
-  <p class="diag-note">DATOS REALES MEDIDOS SOBRE ESTA BICI. NADA ESTIMADO.</p>
-</section>` : '';
-
-  // Detalles (campos base) + Componentes (Specs clave) + Geometría — pestañas.
-  const detalles = [
-    ['Marca', b.marca], ['Modelo', b.modelo], ['Año', b.anio], ['Disciplina', b.disciplina],
-    ['Motorización', b.electrica?'Eléctrica':'Muscular'], ['Talla', b.talla],
-    ['Rango de altura', b.rangoAltura], ['Material del cuadro', b.material],
-    ['Referencia', b.referencia], ['Precio Bike Trust', b.precio!=null?clp(b.precio):null],
-    ['Valor de nueva', b.precioNuevo?clp(b.precioNuevo):null]
-  ].filter(([,v])=>v!=null&&v!=='');
-  const flatRows = g => g.flatMap(x=>x.filas);
-  const tabs = [
-    ['detalles','Detalles', detalles],
-    ['componentes','Componentes', flatRows(b.specs)],
-    ['geometria','Geometría', flatRows(b.geometria)]
-  ].filter(([, ,rows])=>rows.length);
-  const specsSection = tabs.length ? `
-  <section class="wrap specs" style="margin-top:56px">
-    <p class="kicker">Especificaciones</p>
-    <div class="tabs">${tabs.map(([id,l],i)=>`<button type="button" class="tabbtn${i===0?' on':''}" data-tab="tab-${id}">${l}</button>`).join('')}</div>
-    ${tabs.map(([id, ,rows],i)=>`<div class="panel${i===0?' on':''}" id="tab-${id}">${rows.map(([k,v])=>`<div class="prow"><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>`).join('')}</div>`).join('')}
-  </section>` : '';
-
-  const honSection = b.estado.length ? `
-  <section class="wrap" style="margin-top:56px">
-    <div class="hon-grid">
-      <div class="hon-card">
-        <p class="k">Estado honesto</p>
-        <p class="q">«Lo declaramos antes de que preguntes.»</p>
-        ${b.estado.map((t,i)=>`<p class="it"><span class="n">0${i+1}</span><span>${esc(t)}</span></p>`).join('')}
-      </div>
+    ${fotos.length>1?`<div class="strip">${fotos.map((f,i)=>`<button type="button" class="th${i===0?' on':''}" data-src="${escA(f)}" data-i="${i}" data-alt="${escA(alt(i))}" aria-label="${escA('Ver foto '+(i+1))}"><span><img src="${esc(f)}" width="900" height="900" loading="lazy" decoding="async" alt=""></span></button>`).join('')}</div>`:''}
+    <p class="cap"><span>${b.fotoReferencial?'Foto referencial del modelo':'Fotos reales de esta unidad'}</span><span class="alt" aria-live="polite">01 / ${('0'+fotos.length).slice(-2)}</span></p>
+  </div>`
+  /* placa tipográfica cuando no hay ninguna foto: mismo marco, datos reales y un CTA de verdad */
+  : (() => {
+      const filas = [
+        ['Año', b.anio], ['Disciplina', b.disciplina], ['Motorización', b.electrica?'Eléctrica':'Muscular'],
+        ['Talla', b.talla], ['Calce', b.rangoAltura], ['Material', b.material],
+        ['Referencia', b.referencia], ['Valor de nueva', b.precioNuevo?clp(b.precioNuevo):null]
+      ].filter(([,v])=>v!=null && v!=='');
+      return `
+  <div class="f-plate${vend?' is-vendida':''}">
+    <div>
+      <p class="lab">${vend?'Unidad vendida':'Sin fotografía publicada'}</p>
+      <p class="pl-n">${esc(b.modelo)}</p>
     </div>
-  </section>` : '';
+    <dl class="pl-g">${filas.map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
+    ${vend?'':`<a class="pl-cta" href="${waFotos(b)}" target="_blank" rel="noopener">Pídenos las fotos de esta unidad ↗</a>`}
+  </div>`;
+    })();
 
-  const full = tabs.length>1 || b.estado.length;   // con solo «Detalles» base la tratamos como compacta
-  const compacta = (!full && !vend) ? `
-  <section class="wrap" style="margin-top:56px">
-    <div class="compacta">
-      <p class="m">FICHA EN PUBLICACIÓN</p>
-      <p>El detalle completo de esta unidad —notas del mecánico, estado honesto y especificaciones— se comparte por WhatsApp mientras terminamos de publicarla.</p>
-    </div>
-  </section>` : '';
+  /* ── riel de compra (sticky en escritorio) ── */
+  const calce = b.rangoAltura
+    ? `<div class="f-fit"><span class="lab">Te calza si mides</span><span class="v">${esc(b.rangoAltura)}</span></div>`
+    : `<div class="f-fit"><span class="lab">¿Te queda?</span><a href="${waFit(b)}" target="_blank" rel="noopener">Dinos tu estatura ↗</a></div>`;
 
-  const dispStrip = (!vend && !res) ? `
-<section class="wrap" style="margin-top:56px">
-  <div class="disp-strip">
-    <span class="dot"><i></i>DISPONIBLE HOY</span>
-    <span class="sep">—</span><span>TE LA PREPARAMOS PARA MAÑANA</span>
-    <span class="sep">—</span><span>RESPUESTA POR WHATSAPP HOY</span>
-  </div>
-</section>` : '';
+  const celdaPuntaje = pj
+    ? `<div class="pt"><span class="n">${pj}<small>/7</small></span><span class="l">Puntaje de certificación</span></div>`
+    : (b.referencia ? `<div class="pt nopj"><span class="n">Nº ${esc(b.referencia)}</span><span class="l">Puntaje en publicación</span></div>` : '');
 
+  const estadoChip = vend ? `<span class="f-chip vend">Vendida</span>`
+    : (res ? `<span class="f-chip">Reservada con seña</span>` : '');
   const notaEstado = res
     ? `<p class="f-nota">Reservada con seña. <b>Déjanos tus datos</b> por si se libera.</p>`
-    : (b.reservada && !vend
-      ? `<p class="f-nota"><b>Alguien agendó una visita para verla.</b> Sigue disponible — agéndala tú también.</p>` : '');
+    : (b.reservada && !vend ? `<p class="f-nota"><b>Alguien agendó una visita para verla.</b> Sigue disponible — agéndala tú también.</p>` : '');
+
+  const riel = `
+  <aside class="f-rail">
+    <p class="meta">${esc(metaLine(b))}</p>
+    <h1><span class="marca">Specialized</span>${esc(b.modelo)}</h1>
+    ${calce}
+    <div class="f-deal">
+      <div>
+        <span class="p${vend?' muted':''}">${b.precio!=null?clp(b.precio):'—'}</span>
+        ${ahorro?`<span class="ah"><s>${clp(b.precioNuevo)}</s>Ahorras ${clp(ahorro.abs)} · ${ahorro.pct}% bajo el valor de nueva</span>`:''}
+      </div>
+      ${celdaPuntaje}
+    </div>
+    ${estadoChip}${notaEstado}
+    <div class="buybox">
+      <p class="k">${vend?'Se vendió — la cazamos por ti':'Escríbenos'}</p>
+      <a class="btn-gold" href="${vend?encHref:waF}"${vend?'':' target="_blank" rel="noopener"'}>${vend?'Te conseguimos una igual →':'Recibir la ficha por WhatsApp ↗'}</a>
+      ${vend?'':`<button type="button" class="agendar js-agendar" data-slug="${escA(b.slug)}">Agendar visita al taller</button>`}
+      <p class="cap">${vend?'Dinos modelo, talla y presupuesto: la buscamos, la certificamos y te avisamos primero.'
+        :(pj?'Te llega el certificado completo con tu nombre.':'Te mandamos las fotos y el detalle de esta unidad por WhatsApp.')}</p>
+    </div>
+    ${b.referencia?`<p class="f-unit">Unidad única · Certificado Nº <b>${esc(b.referencia)}</b></p>`:''}
+  </aside>`;
+
+  /* ── documento ── */
+  let folio = 0;
+  const secciones = [];
+
+  if(b.porQue) secciones.push(`<p class="lab">Por qué amarla</p><p class="f-lead">${esc(b.porQue)}</p>`);
+
+  if(doc === 'abierta'){
+    secciones.push(`
+    <div class="compacta">
+      <p class="m">Ficha en publicación</p>
+      <p>Esta unidad todavía no tiene publicado su puntaje ni el detalle técnico. Te mandamos las fotos, el estado real y las respuestas que necesites por WhatsApp, sin esperar a que terminemos de publicarla.</p>
+      <a class="f-ask" href="${waFotos(b)}" target="_blank" rel="noopener">Pídenos el detalle de esta unidad ↗</a>
+    </div>`);
+  }
+
+  if(pj){
+    folio++;
+    const filas = b.desglose.map(desgloseRow);
+    secciones.push(`
+    <section class="f-sec" id="certificacion">
+      <div class="hd"><span class="fo">${('0'+folio).slice(-2)}</span><h2>Certificación</h2><span class="rt">${b.referencia?'Certificado Nº '+esc(b.referencia):'Bike Trust · Santiago'}</span></div>
+      <div class="certbox">
+        <div class="hd2"><span class="l">Puntaje de certificación</span><span class="r">Escala 1 a 7</span></div>
+        <div class="bd">
+          <div class="lead">
+            <span class="n">${pj}<small> /7</small></span>
+            <span class="sc"><img src="/assets/brand/shield.png" alt="">Certificada por<br>Bike Trust · Santiago</span>
+          </div>
+          ${filas.length?filas.map(f=>`<div class="row"><span class="lb">${esc(f.label)}</span><span class="vl">${esc(f.val)}</span></div>`).join(''):''}
+        </div>
+        <div class="gar"><span><b>Garantía Bike Trust</b> — por escrito, firmada junto al certificado${b.referencia?' Nº '+esc(b.referencia):''}.</span><span class="lab-s">SE ENTREGA CON LA BICI</span></div>
+      </div>
+      <a class="f-ask" href="${waDetalle(b)}" target="_blank" rel="noopener">Pregúntanos por el certificado ↗</a>
+    </section>`);
+  }
+
+  const hayDiag = b.electrica && (b.diagKm!=null || b.diagBat!=null || b.diagCic!=null);
+  if(hayDiag){
+    folio++;
+    secciones.push(`
+    <section class="f-sec" id="diagnostico">
+      <div class="hd"><span class="fo">${('0'+folio).slice(-2)}</span><h2>Diagnóstico de motor y batería</h2><span class="rt">Medido en el taller</span></div>
+      <div class="diag3">
+        <div class="main">
+          <p class="l">Salud de batería</p>
+          <p class="v${b.diagBat==null?' na':''}">${b.diagBat!=null?b.diagBat+'<small>%</small>':'No se pudo leer'}</p>
+          <p class="k">Cuánta capacidad conserva respecto a una batería nueva. Sobre 90% es excelente; bajo 85% conviene reflejarlo en el precio.</p>
+        </div>
+        <div>
+          <p class="l">Km del motor</p>
+          <p class="v${b.diagKm==null?' na':''}">${b.diagKm!=null?Math.round(b.diagKm).toLocaleString('es-CL'):'No se pudo leer'}</p>
+          <p class="k">El uso real acumulado. Importa más que el año de la bici.</p>
+        </div>
+        <div>
+          <p class="l">Ciclos de carga</p>
+          <p class="v${b.diagCic==null?' na':''}">${b.diagCic!=null?esc(b.diagCic):'No se pudo leer'}</p>
+          <p class="k">Cargas completas equivalentes. Junto a la salud, cuenta cómo se cuidó.</p>
+        </div>
+      </div>
+      <a class="f-ask" href="${wa('Hola! ¿Me muestran el escaneo completo de '+unidadTxt(b)+'?')}" target="_blank" rel="noopener">Pregunta por el escaneo completo ↗</a>
+    </section>`);
+  }
+
+  if(b.estado.length){
+    folio++;
+    // Las fotos de la unidad anclan lo escrito: la honestidad se vuelve mirable.
+    const ev = fotos.length>1 ? `<div class="ev"><span class="lab-s">FOTOS DE ESTA UNIDAD</span>${fotos.slice(0,4).map((f,i)=>`<button type="button" class="js-lb" data-i="${i}" aria-label="${escA('Ampliar foto '+(i+1))}"><span><img src="${esc(f)}" loading="lazy" decoding="async" alt=""></span></button>`).join('')}</div>` : '';
+    secciones.push(`
+    <section class="f-sec" id="estado-honesto">
+      <div class="hd"><span class="fo">${('0'+folio).slice(-2)}</span><h2>Estado honesto</h2><span class="rt">${b.estado.length} ${b.estado.length===1?'nota':'notas'}</span></div>
+      <div class="hon">
+        <div>${b.estado.map((t,i)=>`<p class="it"><span class="n">${('0'+(i+1)).slice(-2)}</span><span>${esc(t)}</span></p>`).join('')}</div>
+        ${ev}
+      </div>
+      <a class="f-ask" href="${waDetalle(b)}" target="_blank" rel="noopener">Pregúntanos por cualquier detalle ↗</a>
+    </section>`);
+  }
+
+  // Pestañas: sin «Detalles» (repetía el riel). Componentes → Geometría → Ficha.
+  const flat = g => g.flatMap(x=>x.filas);
+  const extra = [
+    ['Material del cuadro', b.material], ['Valor de nueva', b.precioNuevo?clp(b.precioNuevo):null],
+    ['Año', b.anio], ['Referencia', b.referencia]
+  ].filter(([,v])=>v!=null && v!=='');
+  const tabs = [
+    ['componentes','Componentes', flat(b.specs)],
+    ['geometria','Geometría', flat(b.geometria)],
+    ['ficha','Ficha', extra]
+  ].filter(([,,rows])=>rows.length);
+  if(tabs.length && (b.specs.length || b.geometria.length)){
+    folio++;
+    const nDatos = tabs.reduce((n,t)=>n+t[2].length,0);
+    secciones.push(`
+    <section class="f-sec specs" id="especificaciones">
+      <div class="hd"><span class="fo">${('0'+folio).slice(-2)}</span><h2>Especificaciones y geometría</h2><span class="rt">${nDatos} datos</span></div>
+      <div class="tabs" role="tablist">${tabs.map(([id,l],i)=>`<button type="button" class="tabbtn${i===0?' on':''}" role="tab" aria-selected="${i===0}" aria-controls="tab-${id}" data-tab="tab-${id}">${l}</button>`).join('')}</div>
+      ${tabs.map(([id,,rows],i)=>`<div class="panel${i===0?' on':''}" id="tab-${id}" role="tabpanel">${rows.map(([k,v])=>`<div class="prow"><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>`).join('')}</div>`).join('')}
+    </section>`);
+  }
+
+  // Las 4 objeciones caras que hoy quedaban en silencio.
+  folio++;
+  secciones.push(`
+    <section class="f-sec" id="preguntas">
+      <div class="hd"><span class="fo">${('0'+folio).slice(-2)}</span><h2>Lo que todos preguntan</h2><span class="rt">Te responde una persona</span></div>
+      <div class="f-qs">${preguntasAbiertas(b).map(([q,a,href])=>`<a href="${href}" target="_blank" rel="noopener"><span class="q">${esc(q)}</span><span class="a">${esc(a)} ↗</span></a>`).join('')}</div>
+    </section>`);
+
+  /* ── cierre ── */
+  const equivalentes = vend
+    ? bikes.filter(x=>!esVendida(x) && x.slug!==b.slug && x.disciplina===b.disciplina).slice(0,3)
+    : [];
+  const cierre = vend ? `
+  <section class="wrap" style="margin-top:56px">
+    <div class="enc-band">
+      <div>
+        <p class="kicker">Encargo</p>
+        <h2>Esta se vendió. Te conseguimos una igual.</h2>
+        <p>Dinos modelo, talla y presupuesto: la buscamos en nuestra red, la certificamos y te avisamos primero.</p>
+      </div>
+      <a class="btn-dark" href="${encHref}" style="white-space:nowrap">Dejar un encargo →</a>
+    </div>
+    ${equivalentes.length?`
+    <div class="sec-head" style="margin-top:56px"><div><p class="kicker">En vitrina</p><h2>Certificadas parecidas, disponibles hoy</h2></div><a class="lnk" href="/catalogo">Ver todo el catálogo →</a></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;margin-top:28px">${equivalentes.map(cardHTML).join('')}</div>`:''}
+  </section>` : `
+  <section class="wrap" style="margin-top:56px">
+    <div class="cta2">
+      <div class="dark">
+        <p class="k">El siguiente paso</p>
+        <h2>Recibe la ficha certificada en tu WhatsApp.</h2>
+        <div class="recap">
+          ${fotos.length?`<img src="${esc(fotos[0])}" alt="" loading="lazy">`:''}
+          <span class="t"><b>${esc(b.modelo)}</b>${esc(metaLine(b))}${b.precio!=null?' · '+clp(b.precio):''}${pj?' · Certificada '+pj+'/7':''}</span>
+        </div>
+        <a class="btn-gold" href="${waF}" target="_blank" rel="noopener">Recibir la ficha por WhatsApp ↗</a>
+      </div>
+      <div class="lite">
+        <p class="k">Parte de pago</p>
+        <h2>Tu bici vieja paga parte de esta.</h2>
+        <p>La evaluamos con el mismo estándar y su valor se descuenta aquí mismo. Un solo trámite.</p>
+        <a href="${WA_PARTEPAGO}" target="_blank" rel="noopener">Cotiza tu parte de pago ↗</a>
+      </div>
+    </div>
+  </section>`;
 
   const titulo = `Specialized ${b.modelo} · Ficha certificada · Bike Trust`;
   return HEAD(titulo, {path:'/bici/'+b.slug, image: fotos[0], type:'product',
-    desc:`Specialized ${b.modelo}${b.talla?' talla '+b.talla:''} usada certificada${pj?' · Puntaje '+pj+'/7':''}${b.precio!=null?' · '+clp(b.precio):''} · Santiago.`}) + TOPBAR('catalogo') + `
-<div style="min-height:100vh;display:flex;flex-direction:column">
+    desc:`Specialized ${b.modelo}${b.talla?' talla '+b.talla:''} usada certificada${pj?' · Puntaje '+pj+'/7':''}${b.precio!=null?' · '+clp(b.precio):''} · Santiago.`})
+    + TOPBAR('catalogo', vend ? WA_GENERAL : waF) + `
+<div class="f-page">
 ${vend?`<div class="vend-banner">
   <span class="k">Vendida</span>
   <span class="t">¿Llegaste tarde? Te conseguimos una igual.</span>
   <a href="${encHref}">Encargar una igual →</a>
+</div>`:''}
+${res?`<div class="vend-banner">
+  <span class="k">Reservada</span>
+  <span class="t">Está con seña. Si se libera, avisamos primero a quien dejó sus datos.</span>
+  <a href="${wa('Hola! Quiero que me avisen si se libera '+unidadTxt(b)+'.')}" target="_blank" rel="noopener">Avísame si se libera ↗</a>
 </div>`:''}
 <section class="wrap crumbs" style="margin-top:26px">
   <a href="/catalogo">← Catálogo</a>
   <span class="n">FICHA TÉCNICA${b.referencia?` · CERTIFICADO Nº ${esc(b.referencia)}`:''}</span>
 </section>
 
-<section class="wrap f-grid" style="margin-top:22px">
-  <div>${galeria}</div>
-  <div class="f-info">
-    <p class="meta">${esc(metaLine(b))}</p>
-    <h1><span class="marca">SPECIALIZED</span>${esc(b.modelo)}</h1>
-    ${fitline?`<p class="fitline">${fitline}</p>`:''}
-    ${b.porQue?`<p class="resumen">${esc(b.porQue)}</p>`:''}
-    <div class="f-price">
-      <span class="p${vend?' muted':''}">${b.precio!=null?clp(b.precio):'—'}</span>
-      ${b.precioNuevo?`<span class="pa">${clp(b.precioNuevo)}</span>`:''}
-      ${vend?`<span class="chip vend">Vendida</span>`:(res?`<span class="chip">Reservada</span>`:'')}
-    </div>
-    ${notaEstado}
-    <div class="buybox">
-      <p class="k">${vend?'Se vendió — la cazamos por ti':'Un toque, sin formularios'}</p>
-      <a class="btn-gold" href="${vend?encHref:waF}"${vend?'':' target="_blank" rel="noopener"'}>${vend?'Te conseguimos una igual →':'Recibir la ficha por WhatsApp ↗'}</a>
-      ${vend?'':`<button type="button" class="agendar js-agendar" data-slug="${escA(b.slug)}">O agenda tu visita al taller</button>`}
-      <p class="cap">${vend?'Dinos modelo, talla y presupuesto: la buscamos, la certificamos y te avisamos primero.':'Te llega el certificado completo con tu nombre. El documento no se descarga desde el sitio.'}</p>
-    </div>
-    <div class="f-cert-mini">
-      <img src="/assets/brand/shield.png" alt="">
-      <span class="c">${pj?`Certificada · ${pj}/7`:'Certificada Bike Trust'}</span>
-      ${pj?`<a href="#certificacion">Ver desglose ↓</a>`:''}
-    </div>
-  </div>
+<section class="wrap f-shell">
+  <div class="f-gal">${galeria}</div>
+  ${riel}
+  <div class="f-doc">${secciones.join('\n')}</div>
 </section>
-${certSection}
-${diagSection}
-<section class="wrap" style="margin-top:22px">
-  <div class="band-dark">
-    <svg width="30" height="38" viewBox="0 0 24 30" fill="none" aria-hidden="true"><path d="M2 1h13l7 7v21H2z" stroke="#AF8958" stroke-width="1.4"></path><path d="M15 1v7h7" stroke="#AF8958" stroke-width="1.4"></path><path d="M7 14h10M7 19h10M7 24h6" stroke="#AF8958" stroke-width="1.4"></path></svg>
-    <div style="flex:1;min-width:240px">
-      <p class="bd-k">RESPALDO CON NOMBRE PROPIO</p>
-      <p class="bd-t">Garantía Bike Trust</p>
-      <p class="bd-s">Por escrito, firmada junto al certificado${b.referencia?' Nº '+esc(b.referencia):''}.</p>
-    </div>
-    <span class="bd-r">SE ENTREGA CON LA BICI</span>
-  </div>
-</section>
-${honSection}
-${specsSection}
-${compacta}
-${dispStrip}
-${vend?'':`<section class="wrap" style="margin-top:26px">
-  <div class="cta2">
-    <div class="lite">
-      <p class="k">Parte de pago</p>
-      <h2>Tu bici vieja paga parte de esta.</h2>
-      <p>La evaluamos con el mismo estándar y su valor se descuenta aquí mismo. Un solo trámite.</p>
-      <a href="${WA_PARTEPAGO}" target="_blank" rel="noopener">Cotiza tu parte de pago ↗</a>
-    </div>
-  </div>
-</section>`}
+${cierre}
 
-<div class="msticky-space"></div>
 <div class="msticky">
   <div class="info"><span class="p">${b.precio!=null?clp(b.precio):''}</span><span class="c">${pj?`Certificada ${pj}/7`:'Certificada'}</span></div>
-  <a class="cta" href="${vend?encHref:waF}"${vend?'':' target="_blank" rel="noopener"'}>${vend?'Te conseguimos una igual →':'Recibir ficha por WhatsApp ↗'}</a>
+  <a class="cta" href="${vend?encHref:waF}"${vend?'':' target="_blank" rel="noopener"'}>${vend?'Una igual →':'Pedir ficha ↗'}</a>
 </div>
 </div>
+${fotos.length?`<div class="lb-ov" aria-hidden="true"><img src="" alt=""><button type="button" class="x" aria-label="Cerrar">✕</button><button type="button" class="prev" aria-label="Anterior">←</button><button type="button" class="next" aria-label="Siguiente">→</button><span class="n"></span></div>`:''}
 ${vend?'':reservaModal(bikes)}
 <script>${FICHA_JS}</script>
 ` + FOOT;
