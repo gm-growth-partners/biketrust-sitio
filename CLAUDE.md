@@ -295,6 +295,11 @@ Meta del dueño: **20–30 % de los leads entregan teléfono** (semana 30 = 3 %)
    | Binding **`DB`** → base `biketrust-medicion` | Functions → D1 database bindings | `/api/clic` devuelve 204 y **descarta** cada evento. El sitio funciona igual. `GET /api/clic` lo dice en su respuesta. |
    | Env **`MEDICION_KEY`** (string aleatorio) | Environment variables | El resumen responde `falta_env:MEDICION_KEY`; el tablero no puede leer los agregados. |
 
+   ⚠️ **La MISMA `MEDICION_KEY` hay que ponerla también en el proyecto Pages del tablero**
+   (`biketrust-tablero` → Environment variables), porque su build llama a este endpoint para
+   llenar la Puerta 3. Sin ella el tablero se genera igual, avisando en el log, y esa puerta
+   vuelve a mostrar «—».
+
    La base D1 **`biketrust-medicion`** (`12910ae9-ec8e-4806-a53d-fc3b5b36e3a6`) ya está creada
    y con el esquema aplicado en remoto.
 

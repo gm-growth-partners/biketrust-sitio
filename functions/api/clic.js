@@ -146,7 +146,7 @@ export async function onRequestGet({ request, env }) {
 
   const q = (sql) => env.DB.prepare(sql).bind(desde).all();
   try {
-    const [porCta, fichas, porDia, sesiones] = await Promise.all([
+    const [porCta, fichas, porDia, sesiones, flujos] = await Promise.all([
       q(`SELECT cta, COUNT(*) n, COUNT(DISTINCT sesion) personas
            FROM eventos WHERE tipo='clic' AND dia>=?1 GROUP BY cta ORDER BY n DESC`),
       q(`SELECT ref,
@@ -164,12 +164,35 @@ export async function onRequestGet({ request, env }) {
                 COUNT(DISTINCT CASE WHEN pagina LIKE '/bici/%' THEN sesion END) sesiones_ficha,
                 SUM(CASE WHEN tipo='vista' AND pagina LIKE '/bici/%' THEN 1 ELSE 0 END) vistas_ficha
            FROM eventos WHERE dia>=?1`),
+      // Los 4 flujos de la puerta web, contados en PERSONAS (sesiones distintas) y no en
+      // clics. Se agrupa acá y no en el tablero porque 'ficha' y 'ficha_top' son dos
+      // botones para lo MISMO: sumarlos por fuera contaría dos veces a quien apretó ambos.
+      q(`SELECT
+           -- Los totales se acotan a los CTA de los 4 flujos. Si contaran todos los
+           -- botones (certificado, preguntas, parte de pago…) el TOTAL no cuadraría
+           -- con la suma de las filas y se leería como un error.
+           COUNT(DISTINCT CASE WHEN cta IN ('ficha','ficha_top','encargo','consigna',
+                 'general','general_top','general_barra','general_pie') THEN sesion END) personas,
+           SUM(CASE WHEN cta IN ('ficha','ficha_top','encargo','consigna',
+                 'general','general_top','general_barra','general_pie') THEN 1 ELSE 0 END) clics,
+           COUNT(DISTINCT CASE WHEN cta IN ('ficha','ficha_top') THEN sesion END) ficha,
+           COUNT(DISTINCT CASE WHEN cta='encargo'  THEN sesion END)               encargo,
+           COUNT(DISTINCT CASE WHEN cta='consigna' THEN sesion END)               consigna,
+           COUNT(DISTINCT CASE WHEN cta IN ('general','general_top','general_barra','general_pie')
+                 THEN sesion END)                                                 general,
+           SUM(CASE WHEN cta IN ('ficha','ficha_top') THEN 1 ELSE 0 END)          ficha_clics,
+           SUM(CASE WHEN cta='encargo'  THEN 1 ELSE 0 END)                        encargo_clics,
+           SUM(CASE WHEN cta='consigna' THEN 1 ELSE 0 END)                        consigna_clics,
+           SUM(CASE WHEN cta IN ('general','general_top','general_barra','general_pie')
+                 THEN 1 ELSE 0 END)                                               general_clics
+         FROM eventos WHERE tipo='clic' AND dia>=?1`),
     ]);
 
     return json({
       desde,
       generado: new Date().toISOString(),
       totales: sesiones.results[0] || {},
+      flujos: flujos.results[0] || {},
       porCta: porCta.results,
       porBici: fichas.results,
       porDia: porDia.results,
