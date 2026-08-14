@@ -10,6 +10,45 @@
 
 ## V2 · El embudo que apunta a la llamada — EN CONSTRUCCIÓN (desde 2026-07-27)
 
+### 2026-08-13 · Puente Ailoo → Inventario: se acaba la digitación doble
+
+**Qué cambió.** Se escribió el requerimiento técnico para los desarrolladores de Ailoo
+(`…/2. Fragua/Requerimiento_tecnico_Ailoo.docx`) y **el lado nuestro completo**:
+`functions/api/ailoo-bici.js`. Cuando Luis carga una bicicleta en el ERP, esta llega a
+Airtable con todos los campos de la ficha mapeados y el sitio se reconstruye solo.
+
+**Las decisiones que importan:**
+- **`Referencia` es la llave.** Ya existía y es pública: número de 7 dígitos único **por
+  unidad**, verificado 12/12 contra Inventario. No hubo que pedirle a Ailoo que inventara un
+  identificador, y el upsert queda idempotente (reintentar es seguro).
+- **Ailoo manda datos planos; nosotros componemos los strings con formato.** `Rango altura`,
+  `Desglose puntaje` y `Specs clave` son texto con estructura que leen `build.mjs` y
+  `mc-match`. Pedirle a Ailoo que respetara esos formatos era volver a depender de digitación
+  perfecta. Al recibir números sueltos y una línea por ítem, **el contrato con Airtable no
+  cambia en nada**. Detalle en [`docs/AILOO_INTEGRACION.md`](docs/AILOO_INTEGRACION.md) §2.
+- **`test/ailoo-bici.mjs` extrae los parsers REALES** de `build.mjs` y `mc-match.js` y les
+  pasa lo que componemos. Si alguien toca `parseSpecs`, `desgloseRow` o `parseRangoAltura`,
+  el test cae antes de que se rompa una ficha en producción.
+- **El estado nunca pisa una `Reservada`** (hay una seña de por medio). El stock solo mueve
+  `→ Vendida` y el regreso desde `Vendida`/`Borrador`/`En reacondicionamiento`.
+- **Las fotos solo se ingieren si la galería está vacía**, para no borrar las curadas a mano,
+  y van en `waitUntil`: bajar seis imágenes no cabe en los 3 segundos de respuesta
+  prometidos. Recordar que Airtable **no puede** bajarlas por URL desde el CDN de Ailoo (falla
+  en silencio) — hay que subir el binario por `uploadAttachment`.
+- **Campo `Color` creado** en Inventario (`fldM4X0iqZY22BeZp`): Ailoo ya lo tiene y no había
+  dónde recibirlo.
+
+**Alcance del requerimiento enviado:** solo el alta y la actualización. Quedaron **fuera** a
+pedido de Gabriel el traspaso del dominio y la venta con teléfono del comprador.
+
+**Verificado.** `npm test` en verde (226 asserts) + E2E contra Airtable de producción con una
+bici sembrada y borrada por id: alta, idempotencia, cambio de precio, `stock 0 → Vendida` con
+fecha, `Reservada` respetada y `401` con clave mala. Limpieza confirmada en 0 registros.
+
+**⚠️ Falta para que esté vivo:** desplegar, y setear en Cloudflare `AILOO_KEY` (sin ella el
+endpoint queda ABIERTO, igual que los `mc-*`) y `DEPLOY_HOOK_URL` (sin ella el sitio no se
+reconstruye solo, que es todo el punto). Ver `docs/AILOO_INTEGRACION.md` §5.
+
 ### 2026-08-13 · Rediseño del sitio («certificadas 3»): todo CTA converge en WhatsApp
 
 **Qué cambió.** Se reemplazó el frontend completo del sitio por el rediseño que entregó
