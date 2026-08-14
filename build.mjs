@@ -775,7 +775,7 @@ const HEAD = (t, o={}) => {
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles.css"></head><body>`;
+<link rel="stylesheet" href="/styles.css"></head><body${o.ref ? ` data-ref="${escA(o.ref)}"` : ''}>`;
 };
 
 const NAV_JS = String.raw`(function(){
@@ -786,7 +786,7 @@ const NAV_JS = String.raw`(function(){
 // Header del rediseño. active: '' | 'catalogo' | 'encargo' | 'certificacion' | 'consigna' | 'guias'
 // waCtx: el WhatsApp del header. En una ficha lleva el mensaje de ESA unidad
 // (modelo + talla + referencia); si no, el genérico.
-function TOPBAR(active='', waCtx=WA_GENERAL){
+function TOPBAR(active='', waCtx=WA_GENERAL, waCta='general_top'){
   const items = [
     ['Catálogo','/catalogo','catalogo'],
     ['Encargo','/encargo','encargo'],
@@ -800,12 +800,62 @@ function TOPBAR(active='', waCtx=WA_GENERAL){
   <div class="hd-bar">
     <a class="hd-logo" href="/"><img src="/assets/brand/shield.png" alt="Bike Trust"><span class="tx"><b>BIKE</b><i>TRUST</i></span></a>
     <nav class="hd-nav">${nav()}</nav>
-    <a class="hd-wa" href="${waCtx}" target="_blank" rel="noopener">WhatsApp <span style="font-size:13px">↗</span></a>
+    <a class="hd-wa" href="${waCtx}" data-cta="${waCta}" target="_blank" rel="noopener">WhatsApp <span style="font-size:13px">↗</span></a>
     <button type="button" class="hd-burger" aria-label="Menú"><span></span><span></span></button>
   </div>
-  <div class="hd-panel">${nav()}<a class="wa" href="${waCtx}" target="_blank" rel="noopener">Escríbenos por WhatsApp ↗</a></div>
+  <div class="hd-panel">${nav()}<a class="wa" href="${waCtx}" data-cta="${waCta}" target="_blank" rel="noopener">Escríbenos por WhatsApp ↗</a></div>
 </header>`;
 }
+
+// Medición del sitio: manda una 'vista' al cargar y un 'clic' por cada CTA con data-cta.
+// Sin cookies: el id de sesión vive en la pestaña (sessionStorage) y muere al cerrarla.
+// Todo va envuelto en try/catch — que la medición falle no puede romper la página.
+const MEDIR_JS = String.raw`(function(){
+  try{
+    var EP='/api/clic', s;
+    try{
+      s=sessionStorage.getItem('bt_s');
+      if(!s){ s=Math.random().toString(36).slice(2,10)+Math.random().toString(36).slice(2,6); sessionStorage.setItem('bt_s',s); }
+    }catch(e){ s='sin-storage'; }
+
+    var refPagina=(document.body&&document.body.getAttribute('data-ref'))||'';
+    var origen='';
+    try{
+      if(document.referrer){
+        var h=new URL(document.referrer).hostname;
+        if(h&&h!==location.hostname) origen=h.replace(/^www\./,'');
+      }
+    }catch(e){}
+    var disp=(window.matchMedia&&window.matchMedia('(max-width:920px)').matches)?'movil':'escritorio';
+
+    function envia(o){
+      try{
+        o.s=s; o.p=location.pathname; o.d=disp;
+        if(origen) o.o=origen;
+        var cuerpo=JSON.stringify(o);
+        if(navigator.sendBeacon) navigator.sendBeacon(EP,new Blob([cuerpo],{type:'application/json'}));
+        else fetch(EP,{method:'POST',body:cuerpo,keepalive:true,headers:{'content-type':'application/json'}});
+      }catch(e){}
+    }
+
+    envia(refPagina?{t:'vista',r:refPagina}:{t:'vista'});
+
+    document.addEventListener('click',function(ev){
+      try{
+        var t=ev.target, a=(t&&t.closest)?t.closest('a[href]'):null;
+        if(!a) return;
+        var c=a.getAttribute('data-cta');
+        if(!c){
+          // Red de seguridad: un enlace a WhatsApp sin etiquetar igual se cuenta.
+          if((a.getAttribute('href')||'').indexOf('wa.me')<0) return;
+          c='otro_wa';
+        }
+        var r=a.getAttribute('data-ref')||refPagina;
+        envia(r?{t:'clic',c:c,r:r}:{t:'clic',c:c});
+      }catch(e){}
+    },true);
+  }catch(e){}
+})();`;
 
 const FOOT = `<footer class="ft">
   <div class="grid">
@@ -828,17 +878,17 @@ const FOOT = `<footer class="ft">
     <div><h4>Visítanos</h4><div class="col">
       <span>Av. Las Condes 12461<br>Las Condes · Santiago de Chile</span>
       <a href="tel:+56985232895">+56 9 8523 2895</a>
-      <a href="https://wa.me/${WA_NUM}" target="_blank" rel="noopener">WhatsApp ↗</a>
+      <a href="https://wa.me/${WA_NUM}" data-cta="general_pie" target="_blank" rel="noopener">WhatsApp ↗</a>
       <a href="https://instagram.com/biketrust.cl" target="_blank" rel="noopener">Instagram · @biketrust.cl</a>
     </div></div>
   </div>
   <div class="legal"><span>© 2026 Bike Trust · Santiago de Chile</span><span class="r">La confianza de comprar usado, sin el riesgo.</span></div>
 </footer>
-<script>${NAV_JS}</script></body></html>`;
+<script>${NAV_JS}</script><script>${MEDIR_JS}</script></body></html>`;
 
 // Barra fija móvil de WhatsApp (portada y páginas informativas).
 const MSTICKY = `<div class="msticky"><img src="/assets/brand/shield.png" alt="">
-  <a class="cta" href="${WA_GENERAL}" target="_blank" rel="noopener">Escríbenos por WhatsApp ↗</a></div>`;
+  <a class="cta" href="${WA_GENERAL}" data-cta="general_barra" target="_blank" rel="noopener">Escríbenos por WhatsApp ↗</a></div>`;
 
 // Favicon: el escudo de la marca, en bronce.
 const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 36"><path d="M4 6 Q4 3 7 3 H25 Q28 3 28 6 V20 Q28 23.5 25.4 25.2 L16 32 L6.6 25.2 Q4 23.5 4 20 Z" fill="#A88454"/></svg>`;
@@ -1027,7 +1077,7 @@ function homeHTML(bikes){
       <span class="rule"></span>
       <p class="sub">La Kenevo, la Levo, la Epic que mirabas de lejos — a una fracción de su precio de vitrina, lista para tu primera salida desde el día uno.</p>
       <div class="ctas">
-        <a class="btn-dark" href="${WA_GENERAL}" target="_blank" rel="noopener" style="padding:17px 28px;font-size:12px">Escríbenos por WhatsApp <span style="font-size:14px">↗</span></a>
+        <a class="btn-dark" href="${WA_GENERAL}" data-cta="general" target="_blank" rel="noopener" style="padding:17px 28px;font-size:12px">Escríbenos por WhatsApp <span style="font-size:14px">↗</span></a>
         <a class="lnk" href="/catalogo" style="border-bottom-width:1px;padding-bottom:5px;font-size:12px">Ver catálogo</a>
       </div>
       <p class="dir">AV. LAS CONDES 12461 · SANTIAGO · +56 9 8523 2895</p>
@@ -1059,7 +1109,7 @@ function homeHTML(bikes){
         <span style="font-size:13.5px;line-height:1.6;color:#A99C86;margin-top:8px">Revisa las certificadas en vitrina, con puntaje y precio a la vista.</span>
         <span style="margin-top:auto;padding-top:18px;font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--bronce3)">Ir al catálogo →</span>
       </a>
-      <a href="${WA_ASESORIA}" target="_blank" rel="noopener" style="text-decoration:none;color:#F5EFE3;background:var(--ink);padding:30px 28px 26px;display:flex;flex-direction:column;min-height:190px;transition:transform .2s ease, box-shadow .2s ease" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+      <a href="${WA_ASESORIA}" data-cta="asesoria" target="_blank" rel="noopener" style="text-decoration:none;color:#F5EFE3;background:var(--ink);padding:30px 28px 26px;display:flex;flex-direction:column;min-height:190px;transition:transform .2s ease, box-shadow .2s ease" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
         <span class="mono" style="font-size:11px;letter-spacing:.2em;color:var(--bronce2)">02</span>
         <span style="font-family:var(--serif);font-weight:600;font-size:29px;margin-top:14px">Te asesoramos</span>
         <span style="font-size:13.5px;line-height:1.6;color:#A99C86;margin-top:8px">Cuéntanos cómo pedaleas y elegimos contigo, sin compromiso.</span>
@@ -1170,7 +1220,7 @@ function homeHTML(bikes){
     <p class="kicker gold">Parte de pago</p>
     <h2 style="max-width:20ch">Tu bici vieja paga parte de la nueva.</h2>
     <p>La evaluamos con el mismo estándar de certificación y su valor se descuenta de la que te llevas. Un solo trámite, en el mismo taller.</p>
-    <a class="btn-linegold" href="${WA_PARTEPAGO}" target="_blank" rel="noopener" style="margin-top:30px">Cotiza tu parte de pago ↗</a>
+    <a class="btn-linegold" href="${WA_PARTEPAGO}" data-cta="parte_pago" target="_blank" rel="noopener" style="margin-top:30px">Cotiza tu parte de pago ↗</a>
   </div>
 </section>
 
@@ -1183,7 +1233,7 @@ function homeHTML(bikes){
     </div>
     <div style="display:flex;flex-direction:column;gap:14px;justify-self:start">
       <a class="btn-dark" href="/consigna" style="font-size:11.5px;padding:15px 26px">Cómo funciona la consigna</a>
-      <a href="${WA_CONSIGNA}" target="_blank" rel="noopener" style="text-decoration:none;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--bronce);text-align:center">Conversemos por WhatsApp ↗</a>
+      <a href="${WA_CONSIGNA}" data-cta="consigna" target="_blank" rel="noopener" style="text-decoration:none;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--bronce);text-align:center">Conversemos por WhatsApp ↗</a>
     </div>
   </div>
 </section>
@@ -1614,14 +1664,14 @@ function fichaHTML(b, bikes){
       <p class="pl-n">${esc(b.modelo)}</p>
     </div>
     <dl class="pl-g">${filas.map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
-    ${vend?'':`<a class="pl-cta" href="${waFotos(b)}" target="_blank" rel="noopener">Pídenos las fotos de esta unidad ↗</a>`}
+    ${vend?'':`<a class="pl-cta" href="${waFotos(b)}" data-cta="fotos_placa" target="_blank" rel="noopener">Pídenos las fotos de esta unidad ↗</a>`}
   </div>`;
     })();
 
   /* ── riel de compra (sticky en escritorio) ── */
   const calce = b.rangoAltura
     ? `<div class="f-fit"><span class="lab">Te calza si mides</span><span class="v">${esc(b.rangoAltura)}</span></div>`
-    : `<div class="f-fit"><span class="lab">¿Te queda?</span><a href="${waFit(b)}" target="_blank" rel="noopener">Dinos tu estatura ↗</a></div>`;
+    : `<div class="f-fit"><span class="lab">¿Te queda?</span><a href="${waFit(b)}" data-cta="calce" target="_blank" rel="noopener">Dinos tu estatura ↗</a></div>`;
 
   const celdaPuntaje = pj
     ? `<div class="pt"><span class="n">${pj}<small>/7</small></span><span class="l">Puntaje de certificación</span></div>`
@@ -1667,7 +1717,7 @@ function fichaHTML(b, bikes){
     <div class="compacta">
       <p class="m">Ficha en publicación</p>
       <p>Esta unidad todavía no tiene publicado su puntaje ni el detalle técnico. Te mandamos las fotos, el estado real y las respuestas que necesites por WhatsApp, sin esperar a que terminemos de publicarla.</p>
-      <a class="f-ask" href="${waFotos(b)}" target="_blank" rel="noopener">Pídenos el detalle de esta unidad ↗</a>
+      <a class="f-ask" href="${waFotos(b)}" data-cta="detalle_fotos" target="_blank" rel="noopener">Pídenos el detalle de esta unidad ↗</a>
     </div>`);
   }
 
@@ -1688,7 +1738,7 @@ function fichaHTML(b, bikes){
         </div>
         <div class="gar"><span><b>Garantía Bike Trust</b> — por escrito, firmada junto al certificado${b.referencia?' Nº '+esc(b.referencia):''}.</span><span class="lab-s">SE ENTREGA CON LA BICI</span></div>
       </div>
-      <a class="f-ask" href="${waDetalle(b)}" target="_blank" rel="noopener">Pregúntanos por el certificado ↗</a>
+      <a class="f-ask" href="${waDetalle(b)}" data-cta="certificado" target="_blank" rel="noopener">Pregúntanos por el certificado ↗</a>
     </section>`);
   }
 
@@ -1715,7 +1765,7 @@ function fichaHTML(b, bikes){
           <p class="k">Cargas completas equivalentes. Junto a la salud, cuenta cómo se cuidó.</p>
         </div>
       </div>
-      <a class="f-ask" href="${wa('Hola! ¿Me muestran el escaneo completo de '+unidadTxt(b)+'?')}" target="_blank" rel="noopener">Pregunta por el escaneo completo ↗</a>
+      <a class="f-ask" href="${wa('Hola! ¿Me muestran el escaneo completo de '+unidadTxt(b)+'?')}" data-cta="escaneo" target="_blank" rel="noopener">Pregunta por el escaneo completo ↗</a>
     </section>`);
   }
 
@@ -1730,7 +1780,7 @@ function fichaHTML(b, bikes){
         <div>${b.estado.map((t,i)=>`<p class="it"><span class="n">${('0'+(i+1)).slice(-2)}</span><span>${esc(t)}</span></p>`).join('')}</div>
         ${ev}
       </div>
-      <a class="f-ask" href="${waDetalle(b)}" target="_blank" rel="noopener">Pregúntanos por cualquier detalle ↗</a>
+      <a class="f-ask" href="${waDetalle(b)}" data-cta="detalle" target="_blank" rel="noopener">Pregúntanos por cualquier detalle ↗</a>
     </section>`);
   }
 
@@ -1761,7 +1811,7 @@ function fichaHTML(b, bikes){
   secciones.push(`
     <section class="f-sec" id="preguntas">
       <div class="hd"><span class="fo">${('0'+folio).slice(-2)}</span><h2>Lo que todos preguntan</h2><span class="rt">Te responde una persona</span></div>
-      <div class="f-qs">${preguntasAbiertas(b).map(([q,a,href])=>`<a href="${href}" target="_blank" rel="noopener"><span class="q">${esc(q)}</span><span class="a">${esc(a)} ↗</span></a>`).join('')}</div>
+      <div class="f-qs">${preguntasAbiertas(b).map(([q,a,href])=>`<a href="${href}" data-cta="pregunta" target="_blank" rel="noopener"><span class="q">${esc(q)}</span><span class="a">${esc(a)} ↗</span></a>`).join('')}</div>
     </section>`);
 
   /* ── cierre ── */
@@ -1791,21 +1841,21 @@ function fichaHTML(b, bikes){
           ${fotos.length?`<img src="${esc(fotos[0])}" alt="" loading="lazy">`:''}
           <span class="t"><b>${esc(b.modelo)}</b>${esc(metaLine(b))}${b.precio!=null?' · '+clp(b.precio):''}${pj?' · Certificada '+pj+'/7':''}</span>
         </div>
-        <a class="btn-gold" href="${waF}" target="_blank" rel="noopener">Recibir la ficha por WhatsApp ↗</a>
+        <a class="btn-gold" href="${waF}" data-cta="ficha" target="_blank" rel="noopener">Recibir la ficha por WhatsApp ↗</a>
       </div>
       <div class="lite">
         <p class="k">Parte de pago</p>
         <h2>Tu bici vieja paga parte de esta.</h2>
         <p>La evaluamos con el mismo estándar y su valor se descuenta aquí mismo. Un solo trámite.</p>
-        <a href="${WA_PARTEPAGO}" target="_blank" rel="noopener">Cotiza tu parte de pago ↗</a>
+        <a href="${WA_PARTEPAGO}" data-cta="parte_pago" target="_blank" rel="noopener">Cotiza tu parte de pago ↗</a>
       </div>
     </div>
   </section>`;
 
   const titulo = `Specialized ${b.modelo} · Ficha certificada · Bike Trust`;
-  return HEAD(titulo, {path:'/bici/'+b.slug, image: fotos[0], type:'product',
+  return HEAD(titulo, {path:'/bici/'+b.slug, image: fotos[0], type:'product', ref: b.referencia,
     desc:`Specialized ${b.modelo}${b.talla?' talla '+b.talla:''} usada certificada${pj?' · Puntaje '+pj+'/7':''}${b.precio!=null?' · '+clp(b.precio):''} · Santiago.`})
-    + TOPBAR('catalogo', vend ? WA_GENERAL : waF) + `
+    + TOPBAR('catalogo', vend ? WA_GENERAL : waF, vend ? 'general_top' : 'ficha_top') + `
 <div class="f-page">
 ${vend?`<div class="vend-banner">
   <span class="k">Vendida</span>
@@ -1815,7 +1865,7 @@ ${vend?`<div class="vend-banner">
 ${res?`<div class="vend-banner">
   <span class="k">Reservada</span>
   <span class="t">Está con seña. Si se libera, avisamos primero a quien dejó sus datos.</span>
-  <a href="${wa('Hola! Quiero que me avisen si se libera '+unidadTxt(b)+'.')}" target="_blank" rel="noopener">Avísame si se libera ↗</a>
+  <a href="${wa('Hola! Quiero que me avisen si se libera '+unidadTxt(b)+'.')}" data-cta="avisame" target="_blank" rel="noopener">Avísame si se libera ↗</a>
 </div>`:''}
 <section class="wrap crumbs" style="margin-top:26px">
   <a href="/catalogo">← Catálogo</a>
@@ -1935,7 +1985,7 @@ function comoCertificamosHTML(bikes){
       <h2 class="h-serif" style="margin:0;font-size:clamp(26px,3.2vw,36px)">¿Dudas sobre una bici en particular?</h2>
       <p style="margin:10px 0 0;font-size:13.5px;color:var(--text)">Te explicamos su certificado punto por punto, sin apuro.</p>
     </div>
-    <a class="btn-dark" href="${WA_CERT}" target="_blank" rel="noopener">Pregunta por WhatsApp ↗</a>
+    <a class="btn-dark" href="${WA_CERT}" data-cta="cert" target="_blank" rel="noopener">Pregunta por WhatsApp ↗</a>
   </div>
 </section>
 ${MSTICKY}
@@ -1986,13 +2036,13 @@ function consignaHTML(){
     <p class="kicker gold">Empieza hoy</p>
     <h2>¿Tienes una Specialized para vender?</h2>
     <p>Cuéntanos qué tienes y te damos una orientación de precio, sin compromiso.</p>
-    <a class="btn-gold" href="${WA_CONSIGNA}" target="_blank" rel="noopener" style="margin-top:28px;align-self:flex-start;display:inline-flex;align-items:center;gap:10px">Conversemos por WhatsApp ↗</a>
+    <a class="btn-gold" href="${WA_CONSIGNA}" data-cta="consigna" target="_blank" rel="noopener" style="margin-top:28px;align-self:flex-start;display:inline-flex;align-items:center;gap:10px">Conversemos por WhatsApp ↗</a>
   </div>
 </section>
 
 <section class="wrap" style="margin-top:56px">
   <div style="border-top:1px solid var(--linea3);padding-top:24px;display:flex;flex-wrap:wrap;gap:18px 40px;justify-content:space-between;align-items:baseline">
-    <p style="margin:0;font-size:13px;color:var(--muted);max-width:52ch;line-height:1.7">¿Prefieres descontarla de tu próxima bici? También la recibimos <a href="${WA_PARTEPAGO}" target="_blank" rel="noopener">en parte de pago</a>.</p>
+    <p style="margin:0;font-size:13px;color:var(--muted);max-width:52ch;line-height:1.7">¿Prefieres descontarla de tu próxima bici? También la recibimos <a href="${WA_PARTEPAGO}" data-cta="parte_pago" target="_blank" rel="noopener">en parte de pago</a>.</p>
     <a class="lnk" href="/catalogo">Ver lo que ya está en vitrina →</a>
   </div>
 </section>
@@ -2071,7 +2121,7 @@ function encargoHTML(){
           </select>
         </label>
       </div>
-      <a class="btn-dark" id="enc-wa" href="${wa('Hola! Quiero encargar una Specialized (modelo por definir), talla No estoy seguro, presupuesto Abierto. ¿Me avisan cuando la tengan?')}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:18px 24px;margin-top:6px;font-size:12px">Enviar encargo por WhatsApp <span style="font-size:14px">↗</span></a>
+      <a class="btn-dark" id="enc-wa" data-cta="encargo" href="${wa('Hola! Quiero encargar una Specialized (modelo por definir), talla No estoy seguro, presupuesto Abierto. ¿Me avisan cuando la tengan?')}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:18px 24px;margin-top:6px;font-size:12px">Enviar encargo por WhatsApp <span style="font-size:14px">↗</span></a>
       <p class="fine">TE AVISAMOS PRIMERO · SIN COMPROMISO</p>
     </div>
   </div>
@@ -2115,7 +2165,7 @@ function guiasHTML(){
   <h2>Eléctrica o muscular: cómo elegir</h2>
   <p class="body first">No es una discusión de purismo: es una pregunta sobre tu semana real. ¿Cuánto desnivel tienen tus rutas y cuánto tiempo tienes para pedalear? Si la respuesta es «mucho cerro, poco tiempo», la asistencia eléctrica te multiplica las salidas: subes en la mitad del tiempo y repites bajada.</p>
   <p class="body">La muscular gana en simpleza: menos mantención, menos peso, menor precio de entrada, y ninguna dependencia de batería. Si tus rutas son planas o el rito de subir es parte del gusto, sigue siendo la elección honesta.</p>
-  <p class="body">El presupuesto cambia el tablero en usado: una e-bike certificada de segunda mano suele costar lo mismo que una muscular nueva de gama media. Por eso conviene mirar el diagnóstico digital antes que el año del modelo. Y si dudas entre dos, <a href="${WA_ASESORIA}" target="_blank" rel="noopener">cuéntanos cómo pedaleas</a> y te asesoramos.</p>
+  <p class="body">El presupuesto cambia el tablero en usado: una e-bike certificada de segunda mano suele costar lo mismo que una muscular nueva de gama media. Por eso conviene mirar el diagnóstico digital antes que el año del modelo. Y si dudas entre dos, <a href="${WA_ASESORIA}" data-cta="asesoria" target="_blank" rel="noopener">cuéntanos cómo pedaleas</a> y te asesoramos.</p>
 </article>
 
 <article id="honesto" style="max-width:760px;margin:72px auto 0;padding:0 28px;width:100%;box-sizing:border-box">
@@ -2130,7 +2180,7 @@ function guiasHTML(){
   <div style="border:1px solid var(--linea3);background:var(--crema);padding:32px 30px;text-align:center">
     <h2 class="h-serif" style="margin:0;font-size:clamp(24px,3vw,32px)">¿Te quedó una duda concreta?</h2>
     <p style="margin:10px auto 0;font-size:13.5px;color:var(--text);max-width:44ch">Pregúntanos directo. Respondemos con datos, no con discurso de venta.</p>
-    <a class="btn-dark" href="${WA_GUIAS}" target="_blank" rel="noopener" style="margin-top:22px;padding:15px 28px">Pregunta por WhatsApp ↗</a>
+    <a class="btn-dark" href="${WA_GUIAS}" data-cta="guias" target="_blank" rel="noopener" style="margin-top:22px;padding:15px 28px">Pregunta por WhatsApp ↗</a>
   </div>
 </section>
 ${MSTICKY}

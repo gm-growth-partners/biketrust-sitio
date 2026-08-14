@@ -10,6 +10,35 @@
 
 ## V2 · El embudo que apunta a la llamada — EN CONSTRUCCIÓN (desde 2026-07-27)
 
+### 2026-08-14 · Medición del sitio: la Puerta 3 deja de ser una fila de guiones
+
+El tablero mostraba `—` en las cuatro etapas de la cadena de la ficha. No era un bug: **nada
+en el sitio las emitía**. Este cambio construye la fuente.
+
+- **`/api/clic` + D1 `biketrust-medicion`.** Una tabla, dos tipos de evento: `vista` (con la
+  `Referencia` de la bici cuando la página es una ficha) y `clic` (con el `cta`). Eso responde
+  las dos primeras preguntas de la cadena: *cuánta gente entra por bicicleta* y *cuántos
+  aprietan «recibir la ficha»*.
+- **Los 4 botones quedaron separados** — `ficha`, `encargo`, `consigna`, `general` — porque
+  tres de ellos cortan ahí y derivan a la llamada de Luis, y solo el de la ficha sigue la
+  cadena larga. La ficha además distingue el botón grande del riel (`ficha`) del de la barra
+  superior (`ficha_top`): son dos botones para lo mismo y ahora se sabe cuál trabaja.
+- **El beacon vive en `FOOT`**, que cierra las 8 páginas, así que no hay página sin medir.
+  23 CTA etiquetados con `data-cta` en `build.mjs`.
+- **Sin dato personal, a propósito.** Ni IP, ni cookie, ni user-agent guardado, ni huella. El
+  id de sesión vive en `sessionStorage` y muere al cerrar la pestaña. Por eso esto no obliga a
+  banner de consentimiento ni cae bajo la ley 21.719 — y por eso tampoco sirve para seguir a
+  una persona entre visitas, que es el precio aceptado.
+- **No puede romper el sitio.** Sin binding, con JSON malo o con la escritura caída responde
+  204 igual. Probado: SQL en el cuerpo queda guardado como texto (bind parametrizado), un
+  `cta` inventado cae en `otro` en vez de perderse, una página de 400 caracteres se recorta a
+  120, y Googlebot no escribe.
+
+⚠️ **Todavía no guarda nada**: faltan el binding `DB` y la env `MEDICION_KEY`, que son de
+panel. Ver `CLAUDE.md` §8. Y ojo: **las dos etapas siguientes de la cadena** («se les envió la
+ficha» y «aceptaron que los llame un experto») pasan por ManyChat, no por el sitio — este
+endpoint no las puede llenar.
+
 ### 2026-08-13 · Puente Ailoo → Inventario: se acaba la digitación doble
 
 **Qué cambió.** Se escribió el requerimiento técnico para los desarrolladores de Ailoo

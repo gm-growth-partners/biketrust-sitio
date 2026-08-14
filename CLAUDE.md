@@ -110,6 +110,7 @@ Meta del dueño: **20–30 % de los leads entregan teléfono** (semana 30 = 3 %)
   - `functions/api/mc-aviso.js` — **aviso genérico «humano requerido» (2026-08-03)**. Lo llaman AB-2 (anti-bucle) y T-2 (TECNICA por chat): manda la plantilla `aviso_equipo` a `AVISO_EQUIPO_SIDS` (fallback llamados→Luis), **sin filtro de horario a propósito**, y **registra cada aviso en la tabla `Avisos`** (link al Lead por `@handle IG`; el registro corre aunque falten las envs de WhatsApp). 🟡 espera plantilla Meta + env `FLOW_NS_AVISO_EQUIPO` + campo `cf_aviso_datos`. POST, protegida por `MC_KEY`.
   - `functions/api/cron-avisos.js` — **LA RED DEL SISTEMA DE AVISOS (2026-08-07)**. Barrido cada 15 min sobre las tres colas (`Llamados` `Llamada pendiente` · `Solicitudes` `Llamada pendiente` · `Consignaciones` `Nueva`) buscando registros con el sello **`Aviso equipo enviado` vacío**. Dentro de la franja avisa y sella; fuera no hace nada; en el tick del briefing se hace a un lado (`if (esTickBriefing()) return`). Gracia de madurez de 10 min (no avisar la fila vacía que Luis acaba de crear con el «+»), tope de 10 por corrida y freno de 3 intentos con escalamiento. Protegido por `CRON_KEY`; `?dry=1` y `?force=1`.
   - `functions/api/mc-rellamar.js` — **el botón «Sí, llámenme»** de `llamada_no_contestada_v2`. **NUNCA crea un registro**: mueve el ticket existente a `Llamada pendiente` (Salida + Estado), limpia `Aviso salida enviado` para que el rescate pueda repetirse, cuenta `Reaperturas` y deja el sello resuelto en UN solo PATCH. Segundo toque → `ya_en_cola` sin re-avisar; ticket ya avanzado (visita/región/encargo/cerrado) → **no lo toca** y deriva a humano (evita sacar una visita del Kanban y disparar una segunda `confirmacion_visita`). Rearme de 2 h y tope de 3 reaperturas. POST, `MC_KEY`.
+  - `functions/api/clic.js` — **MEDICIÓN DEL SITIO (2026-08-14)**. Es la instrumentación de la **Puerta 3**: sin ella el tablero muestra `—` en las etapas de la cadena de la ficha, porque nada las emite. `POST` registra dos tipos de evento en **D1** (`vista` de página, con `ref` = `Inventario.Referencia` si es una ficha; `clic` con `cta`), y el `GET ?resumen=1&key=` devuelve los agregados que consumirá el build del tablero. Los 23 CTA del sitio van etiquetados con `data-cta` en `build.mjs`; el beacon vive en `FOOT`, así que entra solo en las 8 páginas. **Diseñado para no romper nada:** sin binding D1, con JSON malo o con la escritura fallando responde **204 igual** — la medición es un accesorio. **Sin dato personal a propósito** (ni IP, ni cookie, ni user-agent): el id de sesión vive en `sessionStorage` y muere al cerrar la pestaña, y por eso esto no cae bajo la ley 21.719. Listas blancas en `tipo` y `cta`; un `data-cta` no registrado cae en `otro` en vez de perderse. Filtra bots por user-agent. 📕 esquema y decisiones en `d1/schema.sql`.
   - **`lib/avisos.js`** (fuera de `functions/`, para que Pages no lo rutee) — **el único dueño del horario, los destinatarios y el envío a ManyChat**: `enFranja` · `esTickBriefing` · `hoyHayBriefing` · `sidsAviso` · `avisarStaff` · `unaLinea` · helpers de hora vía `Intl`. Reemplazó **6 copias de `horarioOk` en dos dialectos** (ver CHANGELOG 2026-08-07). ⚠️ Verificado que el bundler de Pages resuelve el import; no duplicar la lógica «por si acaso».
   - **Gotcha API (nuevo):** el GET de **un registro único** (`/Tabla/{recId}`) **NO acepta `?fields[]=`** (da 422); eso solo va en el endpoint de LISTADO. Leer el registro completo.
 - **Tokens (SOLO env, NUNCA en repo):** `AIRTABLE_TOKEN` (read) y `AIRTABLE_WRITE_TOKEN` (write) en Cloudflare. Para que Claude trabaje datos/esquema por API hay un **PAT en `.dev.vars`** (gitignored) como `AIRTABLE_PAT`. **El PAT se pegó una vez en el chat — conviene rotarlo.**
@@ -282,6 +283,20 @@ Meta del dueño: **20–30 % de los leads entregan teléfono** (semana 30 = 3 %)
    | **`DEPLOY_HOOK_URL`** | La bici llega a Airtable pero **el sitio no se reconstruye solo**: queda esperando el próximo despliegue. Es justamente la pieza que hace que el circuito no dependa de nadie. | Pages → Settings → Builds & deployments → Deploy hooks → crear uno para `main` |
 
 5. ~~Confirmar que Luis tiene asiento con permiso de edición~~ ✅ confirmado (runbook §1.1).
+
+   🔴 **PENDIENTES DE LA MEDICIÓN DEL SITIO (2026-08-14) — el código está desplegado y no
+   guarda nada hasta que se hagan estos dos pasos**, que son de panel y **no se pueden hacer
+   por código**: agregar un `wrangler.toml` al repo para declararlos apagaría TODAS las env
+   del panel (`MC_KEY`, `AIRTABLE_*`, los `FLOW_NS_*`). Los hace Gabriel en Pages →
+   `biketrust-sitio` → Settings.
+
+   | Paso | Dónde | Qué pasa mientras falte |
+   |---|---|---|
+   | Binding **`DB`** → base `biketrust-medicion` | Functions → D1 database bindings | `/api/clic` devuelve 204 y **descarta** cada evento. El sitio funciona igual. `GET /api/clic` lo dice en su respuesta. |
+   | Env **`MEDICION_KEY`** (string aleatorio) | Environment variables | El resumen responde `falta_env:MEDICION_KEY`; el tablero no puede leer los agregados. |
+
+   La base D1 **`biketrust-medicion`** (`12910ae9-ec8e-4806-a53d-fc3b5b36e3a6`) ya está creada
+   y con el esquema aplicado en remoto.
 
 **Deuda anterior que sigue viva:**
 6. **Dominio `biketrust.cl`** → Cloudflare Pages + setear `SITE_URL` (para que OG, canonical
