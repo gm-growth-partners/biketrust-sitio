@@ -18,6 +18,7 @@
 | La pantalla de Luis (Kanban) | [`docs/V2_OPERACION_KANBAN.md`](docs/V2_OPERACION_KANBAN.md) |
 | El copy exacto de la puerta de comentarios | [`docs/V2_PLANTILLA_COMENTARIOS.md`](docs/V2_PLANTILLA_COMENTARIOS.md) |
 | El copy de la puerta de DM + anti-bucle | [`docs/V2_PLANTILLA_DM.md`](docs/V2_PLANTILLA_DM.md) |
+| **Montar WhatsApp entrante (Puertas 3 y 4)** | [`docs/V2_MONTAJE_WHATSAPP.md`](docs/V2_MONTAJE_WHATSAPP.md) — **se DUPLICA la puerta de DM, no se construye de cero** |
 | Qué mensaje sale en cada salida de la llamada | [`docs/V2_SALIDAS_LLAMADA.md`](docs/V2_SALIDAS_LLAMADA.md) |
 | Qué dice Luis por teléfono | [`docs/V2_GUION_LLAMADA.md`](docs/V2_GUION_LLAMADA.md) |
 | Modelo de datos, endpoints, gotchas | §3–§5 de este archivo |
