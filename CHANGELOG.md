@@ -39,6 +39,33 @@ Pedidos de Gabriel, todos sobre la portada. Tres commits.
   su bici a propósito** (`og:type=product`) porque es el link que manda el embudo y ahí el
   preview de la unidad sí sirve.
 
+### 2026-08-15 · La garantía entra al sitio (portada y ficha) y el certificado pasa a oscuro
+
+Gabriel entregó el documento oficial **«Garantía Biketrust v2»** y pidió que el sitio la
+muestre. Se agregó en dos lugares, con el contenido del doc y sin inventar plazos.
+
+- **Orden de la portada en teléfono:** se eliminó `@media (max-width:920px){.hero-txt{order:2}
+  .hero-visual{order:1}}`. Ahora manda el orden natural del DOM: titular y CTAs primero, el
+  **carrusel justo debajo**, después «Te ayudamos a encontrar…», la vitrina y la garantía.
+  Desktop sigue lado a lado.
+- **Sección «Garantía Bike Trust» en la portada**, después de «Cuatro certificadas»: tres
+  cifras (6 meses de reparación sin costo · 18 meses de recompra · Ley 19.496, que la
+  voluntaria no reemplaza) + qué cubre / qué no cubre + pie legal. CTA propio a WhatsApp con
+  `data-cta="garantia"`, valor que se agregó a la lista blanca de `functions/api/clic.js`.
+- **Sección «Garantía» en la ficha de bici** (`#garantia`), inmediatamente después de
+  Certificación y con folio propio, así que los números de sección se corrieron (01
+  Certificación · 02 Garantía · 03 Diagnóstico…). En las fichas sin puntaje la garantía queda
+  como 01: aplica igual.
+- **El certificado ahora es oscuro** (`.certbox` sobre `--dark` con textos en `--darktext` y
+  acentos bronce). Era crema sobre crema y no destacaba; es la pieza que la ficha debe hacer
+  brillar. **Se le quitó el link a WhatsApp** («Pregúntanos por el certificado») a pedido de
+  Gabriel: el certificado se lee, no se conversa. El riel sticky de la ficha conserva su CTA.
+- ⚠️ **Lo que NO se publicó, a propósito:** el doc trae `[plazo, por ejemplo: 5 días hábiles]`
+  para responder la recompra y `[dirección / teléfono / correo]` en el punto 5 — sin llenar,
+  no se publica una promesa de tiempo. Y el propio documento dice **«sujeto a revisión legal»**:
+  el sitio muestra los términos resumidos, no el texto íntegro. Cuando esté revisado
+  corresponde una página `/garantia` con el documento completo.
+
 ### 2026-08-14 · Medición del sitio: la Puerta 3 deja de ser una fila de guiones
 
 El tablero mostraba `—` en las cuatro etapas de la cadena de la ficha. No era un bug: **nada

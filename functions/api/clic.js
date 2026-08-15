@@ -32,7 +32,7 @@ const CTAS = new Set([
   // WhatsApp general según dónde se apretó
   'general_top', 'general_barra', 'general_pie',
   // CTA secundarios de la ficha y las páginas informativas
-  'asesoria', 'parte_pago', 'cert', 'guias', 'fotos_placa', 'detalle_fotos',
+  'asesoria', 'parte_pago', 'cert', 'garantia', 'guias', 'fotos_placa', 'detalle_fotos',
   'detalle', 'certificado', 'escaneo', 'calce', 'pregunta', 'avisame',
   'otro_wa', 'otro',
 ]);

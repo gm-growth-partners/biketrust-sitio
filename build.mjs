@@ -197,6 +197,7 @@ const WA_PARTEPAGO = wa('Hola! Quiero dejar mi bici actual en parte de pago.');
 const WA_CONSIGNA  = wa('Hola! Quiero consignar mi Specialized.');
 const WA_CERT      = wa('Hola! Tengo dudas sobre la certificación de una bici.');
 const WA_GUIAS     = wa('Hola! Tengo una duda antes de comprar.');
+const WA_GARANTIA  = wa('Hola! Tengo una consulta sobre la garantía Bike Trust.');
 // Ficha de una bici concreta: modelo + talla + referencia (si existen).
 function waFicha(b){
   let m = 'Hola! Quiero recibir la ficha certificada de la Specialized ' + b.modelo;
@@ -361,7 +362,7 @@ button{font-family:var(--sans)}
 .hero-dots button{cursor:pointer;border:none;padding:6px 0;background:none;display:block}
 .hero-dots button span{display:block;width:24px;height:3px;background:rgba(25,21,18,.22);transition:background .3s}
 .hero-dots button.on span{background:var(--bronce2)}
-@media (max-width:920px){ .hero-txt{order:2} .hero-visual{order:1} }
+/* en teléfono el titular va primero y el carrusel justo debajo (orden natural del DOM) */
 /* en teléfono el chip tapaba la bici (75% del ancho) y los dots le caían encima */
 @media (max-width:640px){
   .hero-chip{left:12px;bottom:12px;width:min(248px,calc(100% - 44px))}
@@ -515,23 +516,40 @@ button{font-family:var(--sans)}
 
 /* certificado: sin barras (los 48 datos reales caen entre 79% y 100%, la barra
    no codificaba nada y dramatizaba un 6,0). Área + nota, tabulado. */
-.certbox{background:var(--panel);border:1px solid var(--bronce3);margin-top:18px}
-.certbox .hd2{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;padding:16px 24px;border-bottom:1px solid var(--linea2);font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase}
-.certbox .hd2 .l{color:var(--bronceAA)}
-.certbox .hd2 .r{color:var(--meta2)}
+/* el certificado va en oscuro: es la pieza que debe destacar sobre la página crema */
+.certbox{background:var(--dark);border:1px solid var(--bronce3);margin-top:18px}
+.certbox .hd2{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;padding:16px 24px;border-bottom:1px solid var(--darkline);font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase}
+.certbox .hd2 .l{color:var(--bronce2)}
+.certbox .hd2 .r{color:var(--darkmut)}
 .certbox .bd{padding:24px}
-.certbox .lead{display:flex;align-items:baseline;gap:14px;padding-bottom:18px;border-bottom:1px solid var(--linea2)}
-.certbox .lead .n{font-family:var(--serif);font-weight:500;font-size:44px;line-height:1;color:var(--ink)}
-.certbox .lead .n small{font-size:.34em;font-weight:600;color:var(--bronceAA)}
-.certbox .lead .sc{margin-left:auto;display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--meta2);text-align:right}
+.certbox .lead{display:flex;align-items:baseline;gap:14px;padding-bottom:18px;border-bottom:1px solid var(--darkline)}
+.certbox .lead .n{font-family:var(--serif);font-weight:500;font-size:44px;line-height:1;color:#F5EFE3}
+.certbox .lead .n small{font-size:.34em;font-weight:600;color:var(--bronce2)}
+.certbox .lead .sc{margin-left:auto;display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--darkmut);text-align:right}
 .certbox .lead .sc img{height:20px;width:auto}
-.certbox .row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;gap:18px;padding:13px 0;border-bottom:1px solid var(--linea2)}
+.certbox .row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;gap:18px;padding:13px 0;border-bottom:1px solid var(--darkline)}
 .certbox .row:last-of-type{border-bottom:none}
-.certbox .row .lb{font-size:14px;color:var(--ink)}
-.certbox .row .vl{font-family:var(--mono);font-size:13px;color:var(--ink);white-space:nowrap}
-.certbox .gar{border-top:1px solid var(--linea3);background:var(--crema);padding:18px 24px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;font-size:13px;line-height:1.6;color:var(--text)}
-.certbox .gar b{font-weight:600;color:var(--ink)}
-.certbox .gar .lab-s{margin-left:auto}
+.certbox .row .lb{font-size:14px;color:var(--darktext)}
+.certbox .row .vl{font-family:var(--mono);font-size:13px;color:#F5EFE3;white-space:nowrap}
+.certbox .gar{border-top:1px solid var(--darkline);background:#1E1811;padding:18px 24px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;font-size:13px;line-height:1.6;color:var(--darktext)}
+.certbox .gar b{font-weight:600;color:#F5EFE3}
+.certbox .gar .lab-s{margin-left:auto;color:var(--bronce2)}
+.garbox{border:1px solid var(--bronce3);background:var(--panel);margin-top:18px;padding:24px}
+.garbox .g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,185px),1fr));gap:18px}
+.garbox .g3>div{border-top:2px solid var(--ink);padding-top:14px}
+.garbox .k{margin:0;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--meta2)}
+.garbox .v{margin:8px 0 0;font-family:var(--serif);font-weight:600;font-size:30px;line-height:1;color:var(--ink)}
+.garbox .d{margin:8px 0 0;font-size:12.5px;line-height:1.6;color:var(--text)}
+.garbox .g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px;margin-top:22px}
+.garbox .g2>div{border:1px solid var(--linea3);padding:18px 20px}
+.garbox .g2 .si{border-color:var(--bronce3);background:var(--bg)}
+.garbox .g2 .no{background:var(--crema)}
+.garbox .si .k{color:var(--bronceAA)}
+.garbox .it{margin:12px 0 0;font-size:13.5px;line-height:1.6;display:flex;gap:10px;color:var(--ink)}
+.garbox .no .it{color:#6B6156}
+.garbox .it i{font-style:normal;font-weight:700;color:var(--bronce);flex:0 0 auto}
+.garbox .no .it i{font-weight:400;color:#A4977F}
+.garbox .fine{margin:20px 0 0;border-top:1px solid var(--linea2);padding-top:14px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;line-height:1.8;color:var(--meta2)}
 
 /* diagnóstico: batería manda, km y ciclos secundarios, cada cifra con su clave */
 .diag3{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:1px;background:var(--linea3);border:1px solid var(--linea3);margin-top:18px}
@@ -1075,6 +1093,48 @@ function homeHTML(bikes){
   </div>
 </section>
 <section data-reveal="1" class="wrap" style="margin-top:72px">
+  <div class="sec-head">
+    <div><p class="kicker">Respaldo por escrito</p><h2>Garantía Bike Trust</h2></div>
+    <a class="lnk" href="${WA_GARANTIA}" data-cta="garantia" target="_blank" rel="noopener">Consultar por la garantía ↗</a>
+  </div>
+  <div style="border:1px solid var(--bronce3);background:var(--panel);margin-top:26px;padding:clamp(22px,3.4vw,36px)">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:20px">
+      <div style="border-top:2px solid var(--ink);padding-top:16px">
+        <p class="mono" style="margin:0;font-size:10px;letter-spacing:.22em;color:var(--meta)">GARANTÍA VOLUNTARIA</p>
+        <p class="h-serif" style="margin:8px 0 0;font-size:34px;font-weight:600">6 meses</p>
+        <p style="margin:8px 0 0;font-size:13.5px;line-height:1.6;color:var(--text)">Reparación sin costo —repuesto y mano de obra— desde la fecha de tu boleta o factura.</p>
+      </div>
+      <div style="border-top:2px solid var(--ink);padding-top:16px">
+        <p class="mono" style="margin:0;font-size:10px;letter-spacing:.22em;color:var(--meta)">TE LA COMPRAMOS DE VUELTA</p>
+        <p class="h-serif" style="margin:8px 0 0;font-size:34px;font-weight:600">18 meses</p>
+        <p style="margin:8px 0 0;font-size:13.5px;line-height:1.6;color:var(--text)">Garantía de recompra: en dinero o como abono a tu próxima bici. El valor sale de una inspección al momento de recomprarla.</p>
+      </div>
+      <div style="border-top:2px solid var(--ink);padding-top:16px">
+        <p class="mono" style="margin:0;font-size:10px;letter-spacing:.22em;color:var(--meta)">ADEMÁS DE TUS DERECHOS</p>
+        <p class="h-serif" style="margin:8px 0 0;font-size:34px;font-weight:600">Ley 19.496</p>
+        <p style="margin:8px 0 0;font-size:13.5px;line-height:1.6;color:var(--text)">Esta garantía es voluntaria y se suma: no reemplaza ni limita la garantía legal del consumidor.</p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:20px;margin-top:26px">
+      <div style="border:1px solid var(--bronce3);background:var(--bg);padding:clamp(20px,2.6vw,26px)">
+        <p class="mono" style="margin:0;font-size:10px;letter-spacing:.22em;color:var(--bronce)">QUÉ CUBRE</p>
+        <p style="margin:14px 0 0;font-size:13.5px;line-height:1.6;color:var(--ink);display:flex;gap:12px"><i style="font-style:normal;color:var(--bronce);font-weight:700">✓</i>Defectos y fallas de funcionamiento de los componentes.</p>
+        <p style="margin:12px 0 0;font-size:13.5px;line-height:1.6;color:var(--ink);display:flex;gap:12px"><i style="font-style:normal;color:var(--bronce);font-weight:700">✓</i>Repuesto y mano de obra, sin costo para ti.</p>
+        <p style="margin:12px 0 0;font-size:13.5px;line-height:1.6;color:var(--ink);display:flex;gap:12px"><i style="font-style:normal;color:var(--bronce);font-weight:700">✓</i>Reemplazo por un componente de igual o similar gama y marca.</p>
+      </div>
+      <div style="border:1px solid var(--linea3);background:var(--crema);padding:clamp(20px,2.6vw,26px)">
+        <p class="mono" style="margin:0;font-size:10px;letter-spacing:.22em;color:var(--meta)">QUÉ NO CUBRE</p>
+        <p style="margin:14px 0 0;font-size:13.5px;line-height:1.6;color:#6B6156;display:flex;gap:12px"><i style="font-style:normal;color:#A4977F">—</i>Accidentes, golpes o caídas.</p>
+        <p style="margin:12px 0 0;font-size:13.5px;line-height:1.6;color:#6B6156;display:flex;gap:12px"><i style="font-style:normal;color:#A4977F">—</i>Uso incorrecto o falta de mantención.</p>
+        <p style="margin:12px 0 0;font-size:13.5px;line-height:1.6;color:#6B6156;display:flex;gap:12px"><i style="font-style:normal;color:#A4977F">—</i>Defectos o marcas de pintura.</p>
+        <p style="margin:12px 0 0;font-size:13.5px;line-height:1.6;color:#6B6156;display:flex;gap:12px"><i style="font-style:normal;color:#A4977F">—</i>Desgaste de uso: neumáticos, pastillas, rodamientos, transmisión y centrado de ruedas.</p>
+      </div>
+    </div>
+    <p class="mono" style="margin:20px 0 0;border-top:1px solid var(--linea2);padding-top:14px;font-size:10px;letter-spacing:.16em;line-height:1.8;color:var(--meta)">APLICA AL COMPRADOR ORIGINAL Y ES INTRANSFERIBLE · LAS REPARACIONES SE HACEN EN EL TALLER OFICIAL BIKE TRUST O EN UNO APROBADO POR NOSOTROS · PARA HACERLA EFECTIVA, TRAE LA BOLETA O FACTURA DE COMPRA</p>
+  </div>
+</section>
+
+<section data-reveal="1" class="wrap" style="margin-top:72px">
   <div class="darkpanel">
     <img class="shadowlogo" src="/assets/brand/shield.png" alt="" style="right:-40px;bottom:-60px;top:auto;height:280px">
     <p class="kicker gold">Parte de pago</p>
@@ -1598,9 +1658,50 @@ function fichaHTML(b, bikes){
         </div>
         <div class="gar"><span><b>Garantía Bike Trust</b> — por escrito, firmada junto al certificado${b.referencia?' Nº '+esc(b.referencia):''}.</span><span class="lab-s">SE ENTREGA CON LA BICI</span></div>
       </div>
-      <a class="f-ask" href="${waDetalle(b)}" data-cta="certificado" target="_blank" rel="noopener">Pregúntanos por el certificado ↗</a>
     </section>`);
   }
+
+  // La garantía va pegada a la certificación: el puntaje dice cómo llegó, esto dice quién responde.
+  folio++;
+  secciones.push(`
+    <section class="f-sec" id="garantia">
+      <div class="hd"><span class="fo">${('0'+folio).slice(-2)}</span><h2>Garantía</h2><span class="rt">Se firma junto al certificado</span></div>
+      <div class="garbox">
+        <div class="g3">
+          <div>
+            <p class="k">Garantía voluntaria</p>
+            <p class="v">6 meses</p>
+            <p class="d">Reparación sin costo —repuesto y mano de obra— desde la fecha de tu boleta o factura.</p>
+          </div>
+          <div>
+            <p class="k">Te la compramos de vuelta</p>
+            <p class="v">18 meses</p>
+            <p class="d">Garantía de recompra, en dinero o como abono a tu próxima bici. El valor sale de una inspección al momento de recomprarla.</p>
+          </div>
+          <div>
+            <p class="k">Además de tus derechos</p>
+            <p class="v">Ley 19.496</p>
+            <p class="d">Es voluntaria y se suma: no reemplaza ni limita la garantía legal del consumidor.</p>
+          </div>
+        </div>
+        <div class="g2">
+          <div class="si">
+            <p class="k">Qué cubre</p>
+            <p class="it"><i>✓</i>Defectos y fallas de funcionamiento de los componentes.</p>
+            <p class="it"><i>✓</i>Repuesto y mano de obra, sin costo para ti.</p>
+            <p class="it"><i>✓</i>Reemplazo por un componente de igual o similar gama y marca.</p>
+          </div>
+          <div class="no">
+            <p class="k">Qué no cubre</p>
+            <p class="it"><i>—</i>Accidentes, golpes o caídas.</p>
+            <p class="it"><i>—</i>Uso incorrecto o falta de mantención.</p>
+            <p class="it"><i>—</i>Defectos o marcas de pintura.</p>
+            <p class="it"><i>—</i>Desgaste de uso: neumáticos, pastillas, rodamientos, transmisión y centrado de ruedas.</p>
+          </div>
+        </div>
+        <p class="fine">APLICA AL COMPRADOR ORIGINAL Y ES INTRANSFERIBLE · LAS REPARACIONES SE HACEN EN EL TALLER OFICIAL BIKE TRUST O EN UNO APROBADO POR NOSOTROS · PARA HACERLA EFECTIVA, TRAE LA BOLETA O FACTURA DE COMPRA</p>
+      </div>
+    </section>`);
 
   const hayDiag = b.electrica && (b.diagKm!=null || b.diagBat!=null || b.diagCic!=null);
   if(hayDiag){
