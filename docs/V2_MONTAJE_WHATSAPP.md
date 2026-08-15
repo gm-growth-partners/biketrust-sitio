@@ -1,111 +1,160 @@
 # Montaje · WhatsApp entrante (Puertas 3 y 4)
 
-> Diagrama: [`flujo_whatsapp_entrante.svg`](flujo_whatsapp_entrante.svg) — ⚠️ el SVG dibuja
-> el diseño VIEJO, de cascada propia. Vale como referencia de los 4 botones del sitio, no
-> de la arquitectura. Manda este documento.
->
 > **Cuenta ManyChat:** `fb5169713` · canal WhatsApp **ya conectado** (verificado 2026-08-15).
-> Todas las Solicitudes externas son `POST`, `Content-Type: application/json`, y llevan la
-> misma `MC_KEY` que ya usan las del DM.
+> Todas las Solicitudes externas son `POST`, `Content-Type: application/json`, con la misma
+> `MC_KEY` que ya usan las del DM.
+>
+> ⚠️ El SVG `flujo_whatsapp_entrante.svg` dibuja una versión **anterior y descartada** de
+> esta arquitectura. Sirve para ver los 4 botones del sitio, nada más. Manda este documento.
 
 ---
 
-## 0. La idea, en una frase
+## 0 · El principio
 
-**El sitio no necesita un embudo propio: necesita entrar al que ya existe con la intención
-ya resuelta.**
+**El sitio no necesita un embudo propio: entra al que ya existe.** La cascada del DM
+(`mc-clasifica` → `R-1..R-12`) ya resuelve el problema difícil, que es qué hacer con un
+mensaje cualquiera.
 
-La puerta de DM ya resuelve el problema difícil —qué hacer con un mensaje cualquiera— con
-`mc-clasifica` y la cascada `R-1..R-12`. Un mensaje que llega del sitio trae el texto
-prellenado, así que **ya sabemos la intención sin clasificar nada**. Es un atajo, no una
-excepción.
+Y de ahí sale la regla que gobierna todo lo demás:
+
+> **Solo se justifica un atajo cuando aportamos información que el clasificador NO puede
+> deducir del texto.**
+
+| Botón del sitio | ¿Atajo? | Por qué |
+|---|---|---|
+| **Ficha de una bici** | **SÍ** → `MODELO` + la bici | traemos la **referencia exacta**; el clasificador solo podría adivinar el modelo por su nombre |
+| **Consignación** | **SÍ** → `VENDER` | intención explícita e inequívoca |
+| **Encargo** | **NO** | el texto ya trae el modelo elegido en el formulario; `mc-clasifica` devuelve `MODELO` o `BICI_SUELTA` según corresponda |
+| **WhatsApp general** | **NO** | sin criterios en el texto → el clasificador dice `BICI_SUELTA`, que es lo correcto |
+
+🔴 **Por qué encargo y general NO se atajan.** Forzarlos a `ASESORIA` (el quiz) manda al
+cuestionario a alguien que **acaba de llenar un formulario en el sitio** con modelo, talla y
+presupuesto. Le vuelve a preguntar lo que ya respondió. El atajo ahí no agrega información:
+la quita.
+
+**Lo único que necesitan encargo y general es que su Lead quede con `Canal origen = Web`**,
+para que cuenten en la Puerta 3. Eso se resuelve con un campo, no con una rama.
+
+---
+
+## 1 · Lo que el diseño ya resuelve — no reinventarlo
+
+Antes de agregar cualquier bloque, estos ya existen en la cascada y cubren los casos:
+
+| Bloque | Qué es | Cuándo se usa |
+|---|---|---|
+| **`BICI_SUELTA`** | «quiere una bici pero no dice cuál» — ofrece escribir el nombre, *Ayúdenme a elegir* (quiz) o *Que me llamen mejor* (B4) | el general del sitio cae acá vía clasificador |
+| **`NM`** | la salida honesta del quiz: *«de lo que tengo HOY ninguna calza… si sabes lo que buscas, te la conseguimos»* → *Sí, que me llamen* | **es el encargo**, y también el destino de una bici vendida |
+| **Grupo A (`MODELO`)** | 54 % del tráfico: resuelve la bici y entrega la ficha rica | la ficha del sitio entra acá |
+| **`E-1`** | guarda de `cf_modo_humano` | **toda** entrada pasa por acá |
+| **`B4`** | captura del teléfono → `mc-llamado` | convergencia final |
+
+---
+
+## 2 · Campos
+
+Configuración → Campos → Nuevo campo de usuario, todos **Texto**:
+
+```
+cf_web_msg      cf_web_canal     cf_web_bici_id   cf_web_modelo
+cf_web_precio   cf_web_puntaje   cf_web_ficha_url cf_web_disponible
+```
+
+`cf_web_ref` ya no hace falta: `mc-bici` extrae la referencia del mensaje completo.
+
+⚠️ `cf_intencion`, `cf_modelo_buscado`, `cf_telefono` y `cf_ciudad` **ya existen** del DM.
+No los dupliques: el atajo escribe en los MISMOS campos que lee la cascada.
+
+---
+
+## 3 · La arquitectura
 
 ```
 Mensaje entrante por WhatsApp
-        │
-        ├─ ¿el texto es de uno de los 4 botones del sitio?
-        │       SÍ → se setea cf_intencion directo (se salta el clasificador)
-        │       NO → mc-clasifica  ──→ cf_intencion
-        │
-        └──────────────→ R-1 .. R-12   ← LA MISMA CASCADA DEL DM
+        ↓
+ [A] Acciones · guardar y limpiar
+        ↓
+ [B] ¿contiene alguno de los 4 textos del sitio?   (una condición, con OR)
+        Sí → cf_web_canal = Web
+        ↓
+ [C] ¿es la de la ficha?
+        Sí → mc-bici → ¿disponible?
+                 sí → cf_intencion = MODELO  ─┐
+                 no → NM (salida honesta)      │
+        ↓                                      │
+ [D] ¿es la de consignación?                   │
+        Sí → cf_intencion = VENDER  ───────────┤
+        ↓                                      │
+     (encargo · general · texto libre:         │
+      cf_intencion queda VACÍO)  ──────────────┤
+                                               ↓
+                                             E-1
+                                               ↓
+                              … guardas … → ¿cf_intencion vacío?
+                                       sí → mc-clasifica → R-1
+                                       no → R-1 directo
 ```
 
-⚠️ **Esto NO se construye de cero.** Se **duplica la automatización de DM**, se **convierte
-al canal WhatsApp** (ambas opciones están en el menú «⋮» de la automatización) y se le
-antepone el atajo del sitio. Construir una cascada paralela sería mantener dos cerebros
-para el mismo problema.
+**Tres condiciones, no cinco.** Y ninguna decisión inventada.
 
-**De paso resuelve la Puerta 4.** Cualquiera que escriba libre —QR en tienda, boca a boca—
-entra por `mc-clasifica` igual que en el DM. Esa puerta deja de estar «en construcción».
+### [A] · Acciones — guardar y limpiar
 
----
+- `cf_web_msg` = variable **Last Text Input** (botón `{}`)
+- `cf_web_canal` = `WhatsApp` ← valor por defecto
+- **BORRAR** `cf_intencion`
+- **BORRAR** `cf_modelo_buscado`
 
-## 1. Los campos
+🔴 **El borrado no es opcional.** Sin él, alguien que ya conversó antes llega con la
+intención de la vez pasada; la condición «`cf_intencion` vacío» la ve llena, se salta el
+clasificador, y lo rutea por lo que quiso la semana pasada. Le pasa **solo a los que
+vuelven** —la gente que más importa— y es invisible: el flujo no falla, contesta cualquier
+cosa. La cascada de DM hace lo mismo en su bloque A-2 por esta misma razón.
 
-Configuración → Campos → Nuevo campo de usuario, todos **Texto**. Siete ya creados
-(2026-08-15) más uno nuevo:
+⚠️ El canal por defecto tampoco es opcional: un `canal` vacío llega a `mc-lead` con
+`typecast` y **crea una opción en blanco** en `Canal origen`. Ya hay dos de esas de deuda.
+
+### [B] · ¿Viene del sitio?
+
+**UNA** condición sobre `cf_web_msg`, operador **contiene**, con las cuatro en **OR**:
 
 ```
-cf_web_ref     cf_web_bici_id   cf_web_modelo    cf_web_precio
-cf_web_puntaje cf_web_ficha_url cf_web_disponible
-cf_web_msg     ← el que falta: guarda el texto entrante para poder evaluarlo
+ficha certificada de la Specialized
+```
+```
+Quiero encargar una Specialized
+```
+```
+Quiero consignar mi Specialized
+```
+```
+Busco una Specialized usada certificada
 ```
 
-⚠️ `cf_intencion`, `cf_modelo_buscado`, `cf_telefono` y `cf_ciudad` **ya existen** del DM.
-No los dupliques: el atajo del sitio escribe en los MISMOS campos que lee la cascada.
-
----
-
-## 2. El atajo del sitio — los 3 nodos que se anteponen
-
-### 2.1 · Guardar el mensaje
-
-Nodo **Acciones** → *Establecer valor de campo personalizado*:
-`cf_web_msg` = variable **Last Text Input** (botón `{}`).
-
-> `{{last_input}}` sirve para escribir en mensajes pero NO aparece como campo evaluable en
-> una Condición. Por eso hay que guardarlo primero.
-
-### 2.2 · ¿Viene del sitio?
-
-Nodo **Condición** sobre `cf_web_msg`, operador **contiene**, en este orden:
-
-| # | Texto a pegar | Intención que se setea |
-|---|---|---|
-| 1 | `ficha certificada de la Specialized` | `MODELO` |
-| 2 | `Quiero encargar una Specialized` | `ASESORIA` |
-| 3 | `Quiero consignar mi Specialized` | `VENDER` |
-| 4 | `Busco una Specialized usada certificada` | `ASESORIA` |
-| 5 | *(else)* → **`mc-clasifica`**, igual que el DM | — |
+**Sí** → Acciones: `cf_web_canal` = `Web`. **No** → sigue con el valor por defecto.
 
 Los cuatro fragmentos están verificados contra el sitio en producción, son estables (no
-cambian por bici ni por formulario) y **ninguno lleva tilde ni signos raros**, a propósito:
-un problema de codificación no puede romperlos.
+cambian por bici ni por formulario) y **ninguno lleva tilde**, a propósito: un problema de
+codificación no puede romperlos.
 
-**Por qué esas intenciones:**
+Su única función es la atribución. El ruteo se decide más abajo.
 
-- **Ficha → `MODELO`**: la persona ya eligió una bici concreta. Entra al Grupo A, que es el
-  54 % del tráfico del DM y ya sabe entregar la ficha rica.
-- **Consigna → `VENDER`**: calce exacto. Va a V-1, y `mc-consigna` crea el Lead con
-  `Canal = Consignación`.
-- **Encargo y General → `ASESORIA`**: van al quiz. El que pide un encargo casi siempre
-  quiere algo que no está en vitrina; el quiz o le encuentra algo que sí existe, o cae en
-  no-match y ahí la rama de waitlist ya ofrece «Consíganmela». No hay que construir nada.
+### [C] · La ficha
 
-### 2.3 · Resolver la bici (solo la rama de la ficha)
+Condición sobre `cf_web_msg` **contiene** `ficha certificada de la Specialized`.
 
-Antes de entrar a la cascada, la rama FICHA necesita saber de qué bici habla.
-
-Extraer el número de `(ref 4082552)` → `cf_web_ref`. Después, **Solicitud externa**:
+**Solicitud externa:**
 
 ```
 POST https://biketrust-sitio.pages.dev/api/mc-bici?key=<MC_KEY>
-{ "ref": "{{cf_web_ref}}" }
+{ "texto": "{{cf_web_msg}}" }
 ```
 
-Mapeo de la respuesta:
+Se le manda el **mensaje completo**: ManyChat no tiene funciones de texto ni regex, así que
+no puede recortar `4082552` de `(ref 4082552)`. El endpoint lo extrae.
 
-| Campo de la respuesta | Campo de ManyChat |
+**Mapeo de la respuesta:**
+
+| Respuesta | Campo de ManyChat |
 |---|---|
 | `bici` | `cf_web_bici_id` |
 | `modelo` | **`cf_modelo_buscado`** ← el que lee la cascada |
@@ -115,20 +164,71 @@ Mapeo de la respuesta:
 | `ficha_url` | `cf_web_ficha_url` |
 | `disponible` | `cf_web_disponible` |
 
-🔴 **Guarda de disponibilidad.** Si `cf_web_disponible` **no** es `true`, NO mandar la ficha:
-avisar que se vendió y derivar al quiz. Sin esto alguien recibe la ficha de una bici que
-ya no está.
+**Guarda de disponibilidad** — condición `cf_web_disponible` es `true`:
+
+- **Sí** → Acciones: `cf_intencion` = `MODELO` → **E-1**
+- **No** → **NM**, la salida honesta que ya existe
+
+🔴 Sin esa guarda alguien recibe la ficha de una bici vendida. Y el destino del «no» es
+**NM y no el quiz**: NM ya dice *«de lo que tengo hoy ninguna calza… te la conseguimos»* con
+el copy trabajado, que es exactamente la situación.
+
+### [D] · La consignación
+
+Condición sobre `cf_web_msg` **contiene** `Quiero consignar mi Specialized`
+→ Acciones: `cf_intencion` = `VENDER` → **E-1**.
+
+### El resto
+
+Encargo, general y cualquier texto libre **no tocan `cf_intencion`**: llegan a E-1 con el
+campo vacío y el clasificador los rutea. Es su trabajo.
 
 ---
 
-## 3. Los dos sellos que faltaban
+## 4 · Dentro de la cascada duplicada
 
-Estos son los que hacen visible la cadena de la Puerta 3 en el tablero. Van **dentro** de
-la cascada, no antes.
+### 4.1 · La condición que protege el atajo 🔴
 
-### 3.1 · «Se les envió la ficha»
+Justo **antes** de la Solicitud externa a `mc-clasifica`, una **Condición**:
 
-Justo después del bloque que manda la ficha (la *ficha rica* compartida del DM):
+```
+cf_intencion está vacío
+```
+
+- **Vacío** → `mc-clasifica` → `R-1`
+- **Con valor** → **`R-1` directo**
+
+Sin esto, las ramas del sitio pasan por el clasificador y **se les pisa la intención** que
+acabamos de resolver — incluida la bici exacta de la ficha. Todo el atajo se pierde.
+
+### 4.2 · Entrar por E-1, nunca por R-1
+
+Las tres salidas convergen en **E-1**, no en R-1. E-1 es el guarda de `cf_modo_humano`:
+si Luis está conversando a mano con esa persona, impide que el bot se le meta encima.
+
+### 4.3 · El identificador, en las 11 Solicitudes externas
+
+```json
+{ "subscriber_id": "{{user_id}}", ... }
+```
+
+⚠️ **En WhatsApp NO existe `{{ig_username}}`.** Los diez endpoints aceptan `subscriber_id`.
+
+### 4.4 · El canal, en todos los `mc-lead`
+
+```json
+{ "subscriber_id": "{{user_id}}", "canal": "{{cf_web_canal}}" }
+```
+
+🔴 **No lo fijes en `Web`.** A-1 lo usan dos caminos: el atajo de la ficha **y** quien
+escribe libre y cae en `MODELO`. Con `Web` fijo marcarías como venido del sitio a alguien
+que nunca lo vio — y `Canal origen` se sella una sola vez.
+
+### 4.5 · Los dos sellos que faltaban
+
+Hacen visible la cadena de la Puerta 3 en el tablero.
+
+**Después del bloque que manda la ficha rica:**
 
 ```
 POST https://biketrust-sitio.pages.dev/api/mc-evento?key=<MC_KEY>
@@ -136,9 +236,7 @@ POST https://biketrust-sitio.pages.dev/api/mc-evento?key=<MC_KEY>
   "resultado": "Ficha entregada", "origen": "Web (ficha)", "bici": "{{cf_web_bici_id}}" }
 ```
 
-### 3.2 · «Aceptaron que te llamen»
-
-En la rama del **sí** de la oferta de llamada (B3), **antes** de pedir el teléfono:
+**En la rama del «sí» de la oferta de llamada (B3), ANTES de pedir el teléfono:**
 
 ```
 POST https://biketrust-sitio.pages.dev/api/mc-acepta?key=<MC_KEY>
@@ -146,67 +244,50 @@ POST https://biketrust-sitio.pages.dev/api/mc-acepta?key=<MC_KEY>
 ```
 
 ⚠️ **En ese orden.** Si se sella después de pedir el número, quien acepta y no lo deja
-desaparece — y esa es exactamente la fuga que se quiere medir.
+desaparece — y esa es justamente la fuga que se quiere medir.
 
 ---
 
-## 4. El canal de origen
+## 5 · Lo que rompió la conversión de canal
 
-Para que la persona cuente en la **Puerta 3** y no en otra, su Lead necesita
-`Canal origen = Web`.
-
-- La cascada ya llama a `mc-lead` en A-1. Basta con que en la rama del sitio se le pase
-  `"canal": "Web"`.
-- En la rama de mensaje libre (Puerta 4), `"canal": "WhatsApp"`.
-
-```
-POST https://biketrust-sitio.pages.dev/api/mc-lead?key=<MC_KEY>
-{ "subscriber_id": "{{user_id}}", "canal": "Web", "nombre": "{{first_name}} {{last_name}}" }
-```
-
-⚠️ **En WhatsApp NO existe `{{ig_username}}`.** El identificador es siempre
-`subscriber_id` = `{{user_id}}`. Todos los endpoints lo aceptan.
+- **`{{ig_username}}` dentro de los mensajes**, no solo en las Solicitudes: en WhatsApp sale
+  vacío. Reemplazar por `{{first_name}}`.
+- **Botones**: WhatsApp permite **máximo 3** por mensaje, **20 caracteres** cada uno. Un
+  bloque con 4+ botones no se envía. *(El diseño del DM ya respeta este límite: los copys
+  anotan los chars de cada botón.)*
+- **Galerías y tarjetas** de Instagram: convertir a texto con enlace.
+- **La entrada de teléfono**: dejar activado «Guardar como ID de WhatsApp».
+- **El AI Step suelto** en el lienzo: confirmar que **no tenga ningún cable de entrada**.
+  Nunca finaliza (bug conocido) y mata el flujo en silencio.
 
 ---
 
-## 5. Orden de construcción
+## 6 · Prueba de humo — antes de publicar
 
-1. Crear `cf_web_msg`.
-2. **Duplicar** la automatización de DM → **Convertir canales** → WhatsApp. Renombrar
-   `V3 · WhatsApp entrante`. **Dejar en DRAFT.**
-3. Anteponer los 3 nodos del atajo (§2) delante de la entrada a `R-1`.
-4. Agregar los dos sellos (§3) dentro de la cascada.
-5. Ajustar el `canal` de `mc-lead` (§4).
-6. Prueba de humo (§6).
-7. Recién ahí, publicar.
+Usa **Vista previa**, que corre el flujo sin ponerlo en vivo.
 
----
-
-## 6. Prueba de humo
-
-**Camino del sitio:** entra a una ficha, aprieta «Recibir la ficha por WhatsApp», sigue el
-flujo, di que **sí** a la llamada y deja tu número.
-
-**Camino libre:** desde otro número, escribe algo suelto («tienen algo para el cerro?») y
-comprueba que `mc-clasifica` lo rutea igual que en el DM.
-
-| Dónde | Qué debe estar |
+| Camino | Qué debe pasar |
 |---|---|
-| `Leads` | `Canal origen = Web` · `Fecha aceptó llamada` · `Aceptó llamada = 1` · `Fecha teléfono` |
-| `Intereses` | `Resultado = Ficha entregada`, `Origen = Web (ficha)`, **bici enlazada** |
-| `Llamados` | ticket en `Llamada pendiente` con teléfono y bici |
-| Tablero → Puertas → Sitio web | las 6 etapas con números |
+| Sitio → botón de ficha | Lead `Canal origen = Web` · Interés `Ficha entregada` + bici enlazada · ticket en `Llamados` |
+| Sitio → botón de encargo | Lead `Canal origen = Web` · ruteado por el clasificador, **sin** pasar por el quiz si nombró modelo |
+| Otro número → texto libre | Lead `Canal origen = WhatsApp` · ruteado por `mc-clasifica` |
+| Ficha de una bici **vendida** | NO se manda la ficha; cae en NM |
 
-Después **márcate `DEMO` en Leads e Intereses**. ⚠️ Marcarlo en el Lead **no se propaga**
-al Interés: hay que marcarlo en los dos.
+⚠️ **Tu propio contacto no sirve para validar la Puerta 3**: ya existe como `DM IG` (el
+origen no se pisa) y está marcado `DEMO` (el embudo los excluye). Para ver números en el
+tablero hace falta un teléfono que no esté en el CRM.
+
+Al terminar, marcar `DEMO` en **Leads e Intereses** — marcarlo en el Lead **no se propaga**.
 
 ---
 
-## 7. Lo que NO hay que hacer
+## 7 · Lo que NO hay que hacer
 
-- **No construir una cascada paralela para WhatsApp.** Dos cerebros para el mismo problema
-  se desincronizan en semanas.
-- **No inventar intenciones nuevas.** Los 12 códigos de `mc-clasifica` ya cubren el tráfico
-  real; el atajo del sitio solo *pre-rellena* uno de ellos.
-- **No borrar la rama `else`** de la cascada. Sin ella, un valor inesperado mata el flujo en
-  silencio: ni mensaje, ni Lead, ni métrica.
+- **No construir una cascada paralela.** Dos cerebros para el mismo problema se
+  desincronizan en semanas.
+- **No atajar lo que el clasificador ya resuelve.** Un atajo sin información nueva es
+  precisión perdida y flujo de más que mantener.
+- **No inventar destinos.** Antes de conectar una salida a algo, buscar si el diseño ya
+  tiene un bloque para ese caso — `BICI_SUELTA` y `NM` cubren más de lo que parece.
+- **No borrar la rama `else`** de la cascada: sin ella, un valor inesperado mata el flujo en
+  silencio, sin mensaje, sin Lead y sin métrica.
