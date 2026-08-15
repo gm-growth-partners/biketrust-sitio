@@ -362,6 +362,21 @@ button{font-family:var(--sans)}
 .hero-dots button span{display:block;width:24px;height:3px;background:rgba(25,21,18,.22);transition:background .3s}
 .hero-dots button.on span{background:var(--bronce2)}
 @media (max-width:920px){ .hero-txt{order:2} .hero-visual{order:1} }
+/* en teléfono el chip tapaba la bici (75% del ancho) y los dots le caían encima */
+@media (max-width:640px){
+  .hero-chip{left:12px;bottom:12px;width:min(248px,calc(100% - 44px))}
+  .hero-chip .top{padding:12px 14px 9px}
+  .hero-chip .mod{font-size:19px}
+  .hero-chip .pr{font-size:13.5px}
+  .hero-chip .pa{font-size:10.5px}
+  .hero-chip .score{padding:10px 14px 6px;gap:9px}
+  .hero-chip .score img{height:21px}
+  .hero-chip .sn{font-size:24px}
+  .hero-chip .sl{font-size:7.5px}
+  .hero-chip .bars{padding:2px 14px 11px}
+  .hero-chip .bars .bar{display:none}
+  .hero-dots{top:12px;right:12px;bottom:auto}
+}
 
 /* ── secciones compartidas ── */
 .sec-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:14px}
@@ -711,7 +726,7 @@ button{font-family:var(--sans)}
 const HEAD = (t, o={}) => {
   const desc  = escA(o.desc || SITE_DESC);
   const url   = absUrl(o.path || '/');
-  const image = absUrl(o.image || '/assets/img/hero-trail.jpg');
+  const image = absUrl(o.image || '/assets/brand/og-card.png');   // al compartir manda el logo, no una bici
   const type  = o.type || 'website';
   return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -990,7 +1005,7 @@ function homeHTML(bikes){
   }));
   const b0 = heroData[0];
 
-  return HEAD('Bike Trust · Specialized usadas certificadas · Santiago', {path:'/', image: dest[0]&&dest[0].fotos[0] ? dest[0].fotos[0] : undefined}) + TOPBAR('') + `
+  return HEAD('Bike Trust · Specialized usadas certificadas · Santiago', {path:'/'}) + TOPBAR('') + `
 <div style="min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden">
 
 <section class="hero">

@@ -10,6 +10,35 @@
 
 ## V2 · El embudo que apunta a la llamada — EN CONSTRUCCIÓN (desde 2026-07-27)
 
+### 2026-08-15 · Portada más corta, chip del hero usable en teléfono y el logo al compartir
+
+Pedidos de Gabriel, todos sobre la portada. Tres commits.
+
+- **Fuera tres secciones** (`421d180`): «El sello lo firman personas» (con la banda de
+  Garantía Bike Trust y las 3 fotos pendientes de taller), «48 horas» y «La diferencia».
+  Con ellas se fueron el JS de contadores de `#bt-strip`, las variables de la bici de
+  muestra (`bikeMuestra` sigue viva en `/como-certificamos`) y, después, **43 líneas de CSS
+  huérfano** (`.strip3` · `.figure3` · `.steps3` · `.vs` · `.band-dark`) que se emitían en
+  las 8 páginas. ⚠️ La portada ya **no menciona la garantía** en ninguna parte.
+- **Titular nuevo en las tres vías de compra** (`8ee796e`): el kicker «Delega lo que
+  quieras» pasó a ser un `h2` centrado, «Te ayudamos a encontrar la bici de tus sueños», y
+  las cards se renombraron a «Búscala en el catálogo» · «Te ayudamos a elegir» · «Si no
+  está, la conseguimos». Enlaces y `data-cta` intactos.
+- **El chip del hero tapaba la bici en teléfono.** Medido en 375px: **283×258 px = 75% del
+  ancho y 60% del alto** de la foto, y los puntos del carrusel le caían encima (se cruzaban
+  entre 244 y 297 px). Nuevo bloque `@media (max-width:640px)`: se ocultan las **4 barras
+  del desglose por área** (a 9px eran ilegibles y costaban ~110px de alto), baja la
+  tipografía (modelo 23→19, puntaje 30→24) y los dots se van **arriba a la derecha**.
+  Queda en **248×135 px (66% × 31%)**, con modelo, talla, precio, puntaje /7 y el link a la
+  ficha. Desktop sin tocar.
+- **Al compartir sale el logo, no una bici.** El `og:image` por defecto era
+  `/assets/img/hero-trail.jpg` (foto de stock) y la portada lo pisaba con la foto de la
+  primera destacada — por eso WhatsApp mostraba una bicicleta. Ahora hay una tarjeta
+  **`assets/brand/og-card.png`** (1200×630, lockup bronce sobre `--dark`, 81 KB) y es el
+  default de `HEAD()`. Las 7 páginas generales la usan; **`/bici/<slug>` conserva la foto de
+  su bici a propósito** (`og:type=product`) porque es el link que manda el embudo y ahí el
+  preview de la unidad sí sirve.
+
 ### 2026-08-14 · Medición del sitio: la Puerta 3 deja de ser una fila de guiones
 
 El tablero mostraba `—` en las cuatro etapas de la cadena de la ficha. No era un bug: **nada
