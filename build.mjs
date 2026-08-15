@@ -329,7 +329,6 @@ button{font-family:var(--sans)}
 .hero .rule{display:block;width:68px;height:2px;background:var(--bronce2);margin-top:26px;transform-origin:left;animation:bt-draw .7s cubic-bezier(.22,1,.36,1) .5s both}
 .hero .sub{margin:22px 0 0;font-size:16px;line-height:1.7;color:var(--text);max-width:44ch;animation:bt-rise .6s ease .45s both}
 .hero .ctas{display:flex;flex-wrap:wrap;align-items:center;gap:18px;margin-top:32px;animation:bt-rise .6s ease .58s both}
-.hero .dir{margin:30px 0 0;font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--meta);animation:bt-rise .6s ease .68s both}
 .hero-visual{flex:1.25 1 520px;min-width:min(100%,520px);order:2;position:relative;min-height:clamp(430px,54vw,660px);background:var(--imgbg)}
 .hv-float{position:absolute;inset:0;animation:bt-float 8s ease-in-out infinite}
 .hv-layer{position:absolute;inset:0;display:block;opacity:0;transition:opacity .9s ease;pointer-events:none;text-decoration:none}
@@ -577,7 +576,10 @@ button{font-family:var(--sans)}
 .hon .ev .lab-s{grid-column:1/-1}
 .hon .ev button{cursor:pointer;padding:3px;background:var(--vitrina);border:1px solid var(--linea3)}
 .hon .ev button:hover{border-color:var(--bronce3)}
-.hon .ev span{display:block;aspect-ratio:1/1;overflow:hidden;background:var(--vitrina)}
+/* SOLO el marco de la miniatura. Con el selector abierto (.hon .ev span) el rótulo
+   «Fotos de esta unidad» también heredaba el cuadrado 1:1 y salía como una foto en
+   blanco de 176px en todas las fichas. */
+.hon .ev button>span{display:block;aspect-ratio:1/1;overflow:hidden;background:var(--vitrina)}
 .hon .ev img{width:100%;height:100%;object-fit:contain;display:block}
 
 /* .hon-grid/.hon-card ya NO los usa la ficha, pero sí «Cómo certificamos»
@@ -1046,7 +1048,6 @@ function homeHTML(bikes){
         <a class="btn-dark" href="${WA_GENERAL}" data-cta="general" target="_blank" rel="noopener" style="padding:17px 28px;font-size:12px">Escríbenos por WhatsApp <span style="font-size:14px">↗</span></a>
         <a class="lnk" href="/catalogo" style="border-bottom-width:1px;padding-bottom:5px;font-size:12px">Ver catálogo</a>
       </div>
-      <p class="dir">AV. LAS CONDES 12461 · SANTIAGO · +56 9 8523 2895</p>
     </div>
     <div class="hero-visual" id="bt-hero-visual">
       <div class="hv-float">${dest.map(heroLayerHTML).join('')}</div>

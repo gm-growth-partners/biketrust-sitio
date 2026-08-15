@@ -69,6 +69,14 @@ muestre. Se agregó en dos lugares, con el contenido del doc y sin inventar plaz
   «Compra con confianza.» partía en dos líneas: la columna del hero mide ~460px sin importar
   el ancho de pantalla (el padding izquierdo crece con la ventana), así que el tope manda.
 - **«Te calza si mides» → «Ideal si mides»** en el calce de la ficha.
+- 🔴 **El cuadro en blanco de las fichas: un selector demasiado abierto.** `.hon .ev span`
+  estaba pensado para el marco 1:1 de cada miniatura, pero también alcanzaba al
+  `<span class="lab-s">` del rótulo «Fotos de esta unidad» — que además está en
+  `grid-column:1/-1`. Resultado: un **cuadrado blanco de 176×176 px** encabezando la columna
+  de fotos en **15 de las 22 fichas**. Ahora la regla es `.hon .ev button>span`. El rótulo
+  pasó de 176px a 14px de alto y el bloque de fotos de ~374px a 198px.
+- **Fuera la línea de dirección del hero** (`AV. LAS CONDES 12461 · SANTIAGO · +56 9 8523 2895`)
+  y su CSS `.hero .dir`, sin otro uso. La dirección sigue en la barra superior y en el pie.
 - 🔴 **Scroll trabado en teléfono (reporte de Gabriel) — cuatro causas removidas.** La de fondo
   es real y estaba a la vista: el envoltorio de la portada llevaba `overflow-x:hidden`, y en
   CSS basta que **un** eje deje de ser `visible` para que el otro compute `auto` → ese `div`
