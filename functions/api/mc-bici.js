@@ -50,6 +50,24 @@ const slugDe = (b) => norm(`${b['Modelo'] || ''}-${b['Talla'] || ''}`) || 'bici'
 const clp = (n) => (n == null || n === '' ? null
   : '$' + Number(n).toLocaleString('es-CL', { maximumFractionDigits: 0 }));
 
+/**
+ * Saca la referencia del mensaje entero.
+ *
+ * 🔴 ManyChat NO tiene funciones de texto ni regex: no puede recortar «4082552» de
+ * «…(ref 4082552).». Si el parseo viviera en el flujo, ese paso sería imposible de
+ * construir. Se hace acá y el flujo manda el mensaje completo tal como llegó.
+ *
+ * Acepta las dos formas: «(ref 4082552)» y un mensaje que sea solo el número.
+ */
+const refDelTexto = (t) => {
+  const s = String(t || '');
+  const m = s.match(/\(\s*ref\s*[:\s]?\s*([A-Za-z0-9_-]{3,40})\s*\)/i)
+        || s.match(/\bref\s*[:\s]\s*([A-Za-z0-9_-]{3,40})\b/i);
+  if (m) return m[1];
+  const solo = s.trim();
+  return /^[0-9]{3,20}$/.test(solo) ? solo : '';
+};
+
 async function resolver(env, ref, slugPedido) {
   const BASE = env.AIRTABLE_BASE || BASE_DEFAULT;
   const READ = env.AIRTABLE_TOKEN || env.AIRTABLE_WRITE_TOKEN;
@@ -109,7 +127,7 @@ async function resolver(env, ref, slugPedido) {
 export async function onRequestGet({ request, env }) {
   const url = new URL(request.url);
   if (!keyOk(env, url)) return reply({ error: 'unauthorized' }, 401);
-  const ref = url.searchParams.get('ref');
+  const ref = url.searchParams.get('ref') || refDelTexto(url.searchParams.get('texto'));
   const slug = url.searchParams.get('slug');
   if (!ref && !slug) {
     return reply({
@@ -129,9 +147,14 @@ export async function onRequestPost({ request, env }) {
   if (!keyOk(env, url)) return reply({ error: 'unauthorized' }, 401);
   let data;
   try { data = await request.json(); } catch { return reply({ error: 'bad_json' }, 400); }
-  const ref = data?.ref != null ? String(data.ref).trim() : '';
+  // El flujo puede mandar la referencia ya limpia, o el mensaje completo tal como
+  // llegó por WhatsApp — ManyChat no sabe recortarlo, así que se acepta crudo.
+  const texto = String(data?.texto || data?.mensaje || '').trim();
+  const ref = data?.ref != null && String(data.ref).trim()
+    ? String(data.ref).trim()
+    : refDelTexto(texto);
   const slug = data?.slug ? String(data.slug).trim() : '';
-  if (!ref && !slug) return reply({ error: 'missing_fields (ref o slug)' }, 422);
+  if (!ref && !slug) return reply({ error: 'missing_fields (ref, texto o slug)', texto_recibido: texto.slice(0, 120) }, 422);
   const r = await resolver(env, ref, slug);
   return reply(r, r.status && r.status !== 200 ? r.status : 200);
 }
