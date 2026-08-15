@@ -4,11 +4,29 @@
 > Todo lo del lado servidor está construido, desplegado y probado. Esto es solo el
 > montaje en ManyChat.
 
+**Cuenta ManyChat:** `fb5169713` · **canal WhatsApp: ya conectado** (verificado 2026-08-15)
 **Base:** `https://biketrust-sitio.pages.dev` · **Clave:** la misma `MC_KEY` que ya usan
 las otras Solicitudes externas · **Todas** son `POST` con `Content-Type: application/json`.
 
 ⚠️ En WhatsApp **no existe `{{ig_username}}`**. El identificador es siempre
 **`{{user_id}}`** → campo `subscriber_id`.
+
+---
+
+## Paso 0 · Crear los campos (antes que nada)
+
+Configuración → Campos → **Nuevo campo de usuario**. Los siete de tipo **Texto**:
+
+```
+cf_web_ref          cf_web_bici_id     cf_web_modelo      cf_web_precio
+cf_web_puntaje      cf_web_ficha_url   cf_web_disponible
+```
+
+El prefijo `cf_web_` los agrupa en la lista y evita choques con los del flujo de DM.
+`cf_web_disponible` va en **Texto** y no en booleano: el mapeo de respuestas de
+ManyChat es más confiable así.
+
+⚠️ **`cf_telefono` y `cf_ciudad` ya existen** del flujo de DM — reúsalos, no los dupliques.
 
 ---
 
@@ -41,33 +59,33 @@ POST /api/mc-lead?key=<MC_KEY>
 
 ### 3 · Resolver la bici
 
-Extraer el número de `(ref 4082552)` del mensaje → guardarlo en `cf_ref`.
+Extraer el número de `(ref 4082552)` del mensaje → guardarlo en `cf_web_ref`.
 
 ```
 POST /api/mc-bici?key=<MC_KEY>
-{ "ref": "{{cf_ref}}" }
+{ "ref": "{{cf_web_ref}}" }
 ```
 
-Mapear la respuesta a campos: `bici` → `cf_bici_id` · `modelo` → `cf_modelo` ·
-`precio_texto` → `cf_precio` · `puntaje` → `cf_puntaje` · `ficha_url` → `cf_ficha_url` ·
-`disponible` → `cf_disponible`.
+Mapear la respuesta a campos: `bici` → `cf_web_bici_id` · `modelo` → `cf_web_modelo` ·
+`precio_texto` → `cf_web_precio` · `puntaje` → `cf_web_puntaje` · `ficha_url` → `cf_web_ficha_url` ·
+`disponible` → `cf_web_disponible`.
 
 ### 4 · Guarda de disponibilidad
 
-**Si `cf_disponible` es falso → NO mandar la ficha.** Avisar que se vendió y ofrecer
+**Si `cf_web_disponible` es falso → NO mandar la ficha.** Avisar que se vendió y ofrecer
 buscar algo parecido (deriva a la rama ENCARGO). Sin esta guarda alguien recibe la ficha
 de una bici que ya no está.
 
 ### 5 · Mandar la ficha
 
-Mensaje con `{{cf_ficha_url}}` + puntaje, precio y rango de altura.
+Mensaje con `{{cf_web_ficha_url}}` + puntaje, precio y rango de altura.
 
 ### 6 · Registrar que se entregó
 
 ```
 POST /api/mc-evento?key=<MC_KEY>
 { "subscriber_id": "{{user_id}}", "estado": "ficha_entregada",
-  "resultado": "Ficha entregada", "origen": "Web (ficha)", "bici": "{{cf_bici_id}}" }
+  "resultado": "Ficha entregada", "origen": "Web (ficha)", "bici": "{{cf_web_bici_id}}" }
 ```
 
 ### 7 · «¿Quieres que un experto te llame?»
@@ -87,7 +105,7 @@ Luego: entrada **tipo teléfono** → `cf_telefono` (✅ «Guardar como ID de Wh
 ```
 POST /api/mc-llamado?key=<MC_KEY>
 { "subscriber_id": "{{user_id}}", "telefono": "{{cf_telefono}}", "optin": true,
-  "ciudad": "{{cf_ciudad}}", "bici": "{{cf_bici_id}}" }
+  "ciudad": "{{cf_ciudad}}", "bici": "{{cf_web_bici_id}}" }
 ```
 
 **Rama NO** — cierre suave. El lead ya quedó registrado con su ficha entregada.
