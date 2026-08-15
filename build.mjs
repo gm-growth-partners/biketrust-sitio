@@ -1018,36 +1018,6 @@ const HOME_JS = dest => String.raw`(function(){
     els.forEach(function(el){ io.observe(el); });
     setTimeout(function(){ if(!live){ io.disconnect(); els.forEach(function(el){ el.style.opacity='1'; el.style.transform='none'; }); } },1200);
   }
-  /* contadores del sello */
-  var strip=document.getElementById('bt-strip');
-  if(strip){
-    var nums=strip.querySelectorAll('[data-n]');
-    function fmt(n,f){ n=Math.round(n); return f==='miles'?String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'.'):String(n); }
-    function final(){ nums.forEach(function(el){
-      var f=el.getAttribute('data-fmt'), n=parseFloat(el.getAttribute('data-n'));
-      el.textContent = f==='dec1' ? n.toFixed(1) : fmt(n,f);
-    }); }
-    if(reduced||!('IntersectionObserver' in window)){ final(); }
-    else{
-      var done=false, ioLive=false;
-      var io2=new IntersectionObserver(function(es){ ioLive=true;
-        es.forEach(function(e){ if(e.isIntersecting&&!done){ done=true; io2.disconnect();
-          var t0=performance.now(), dur=1100, fin=false;
-          function step(t){ var p=Math.min(1,(t-t0)/dur), ease=1-Math.pow(1-p,3);
-            nums.forEach(function(el){
-              var f=el.getAttribute('data-fmt'), n=parseFloat(el.getAttribute('data-n'));
-              el.textContent = f==='dec1' ? (n*ease).toFixed(1) : fmt(n*ease,f);
-            });
-            if(p<1) requestAnimationFrame(step); else fin=true;
-          }
-          requestAnimationFrame(step);
-          setTimeout(function(){ if(!fin) final(); },dur+400);
-        }});
-      },{threshold:0.3});
-      io2.observe(strip);
-      setTimeout(function(){ if(!ioLive){ io2.disconnect(); final(); } },1200);
-    }
-  }
 })();`;
 
 function homeHTML(bikes){
@@ -1055,8 +1025,6 @@ function homeHTML(bikes){
   let dest = disponibles.filter(b=>b.destacada);
   if(!dest.length) dest = disponibles.filter(b=>b.fotos.length && fmtPuntaje(b.puntaje));
   dest = dest.slice(0,4);
-  const m = bikeMuestra(bikes);
-  const mPj = m ? fmtPuntaje(m.puntaje) : '';
   const heroData = dest.map(b=>({
     href:'/bici/'+b.slug, modelo:b.modelo, talla:b.talla,
     precio:b.precio!=null?clp(b.precio):'', antes:b.precioNuevo?clp(b.precioNuevo):null,
@@ -1121,86 +1089,6 @@ function homeHTML(bikes){
         <span style="font-size:13.5px;line-height:1.6;color:#A99C86;margin-top:8px">Nos dices modelo y talla. La encontramos, la certificamos y te avisamos primero.</span>
         <span style="margin-top:auto;padding-top:18px;font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--bronce3)">Dejar un encargo →</span>
       </a>
-    </div>
-  </div>
-</section>
-
-<section data-reveal="1" class="wrap" style="margin-top:64px">
-  <div class="sec-head">
-    <div><p class="kicker">Qué respalda el sello</p><h2>El sello lo firman personas.</h2></div>
-    <a class="lnk" href="/como-certificamos">Cómo certificamos →</a>
-  </div>
-  <div style="border:1px solid var(--bronce3);background:var(--panel);margin-top:26px;padding:clamp(22px,3.4vw,36px)">
-    <div id="bt-strip" class="strip3">
-      <div class="card">
-        <span class="n">01</span>
-        <p class="t">Puntaje <small>/7</small></p>
-        <p class="d">Cada bici se califica área por área con una nota pública.</p>
-        <p class="f">${m&&mPj?`EJEMPLO REAL · <span class="gold"><span data-n="${mPj}" data-fmt="dec1">${mPj}</span>/7</span>`:'EN CADA FICHA'}</p>
-      </div>
-      <div class="card">
-        <span class="n">02</span>
-        <p class="t">Diagnóstico real</p>
-        <p class="d">Km de motor, salud de batería y ciclos, medidos. Nada estimado.</p>
-        <p class="f">${m&&m.diagKm!=null?`<span data-n="${Math.round(m.diagKm)}" data-fmt="miles">${Math.round(m.diagKm).toLocaleString('es-CL')}</span> KM · <span data-n="${m.diagBat}" data-fmt="int">${m.diagBat}</span>% BAT · <span data-n="${m.diagCic}" data-fmt="int">${m.diagCic}</span> CICLOS`:'MEDIDO EN CADA E-BIKE'}</p>
-      </div>
-      <div class="card">
-        <span class="n">03</span>
-        <p class="t">Estado honesto</p>
-        <p class="d">Cada rayón y detalle, declarado antes de que preguntes.</p>
-        <p class="f script">Revisada por Luis Sulbarán · Taller Bike Trust</p>
-      </div>
-    </div>
-    <div class="figure3">
-      <figure><div class="ph"><span>foto real pendiente · retrato del mecánico</span></div>
-        <figcaption><span class="t1">Luis Sulbarán</span><span class="t2">MECÁNICO CERTIFICADOR</span></figcaption></figure>
-      <figure><div class="ph"><span>foto real pendiente · manos y herramienta sobre un cuadro</span></div>
-        <figcaption><span class="t1">Torque y ajuste, pieza por pieza</span><span class="t2">INSPECCIÓN MULTIPUNTO</span></figcaption></figure>
-      <figure><div class="ph"><span>foto real pendiente · escáner de diagnóstico en pantalla</span></div>
-        <figcaption><span class="t1">La lectura que va en tu ficha</span><span class="t2">DIAGNÓSTICO DIGITAL</span></figcaption></figure>
-    </div>
-    <div class="band-dark" style="margin-top:22px">
-      <svg width="30" height="38" viewBox="0 0 24 30" fill="none" aria-hidden="true"><path d="M2 1h13l7 7v21H2z" stroke="#AF8958" stroke-width="1.4"></path><path d="M15 1v7h7" stroke="#AF8958" stroke-width="1.4"></path><path d="M7 14h10M7 19h10M7 24h6" stroke="#AF8958" stroke-width="1.4"></path></svg>
-      <div style="flex:1;min-width:240px">
-        <p class="bd-k">RESPALDO CON NOMBRE PROPIO</p>
-        <p class="bd-t">Garantía Bike Trust</p>
-        <p class="bd-s">Por escrito, firmada junto al certificado.</p>
-      </div>
-      <span class="bd-r">SE ENTREGA CON CADA BICI</span>
-    </div>
-    <p style="margin:20px 0 0;border-top:1px solid var(--linea2);padding-top:14px" class="mono"><span style="font-size:10px;letter-spacing:.18em;color:var(--meta)">CADA IMAGEN DE ESTE SITIO ES EVIDENCIA · BICIS REALES, TALLER REAL, PERSONAS REALES</span></p>
-  </div>
-</section>
-
-<section data-reveal="1" class="wrap" style="margin-top:64px">
-  <p class="kicker">Del mensaje al primer pedaleo</p>
-  <h2 class="h-serif" style="margin:12px 0 0;font-size:clamp(34px,4.2vw,52px)">48 horas.</h2>
-  <div class="steps3">
-    <div class="st"><i></i><p class="k">PASO 01</p><p class="big">Hoy</p><p class="d">Te respondemos y coordinamos tu visita.</p></div>
-    <div class="st"><i></i><p class="k">PASO 02</p><p class="big">24 h</p><p class="d">La pruebas mañana, preparada para ti.</p></div>
-    <div class="st"><i></i><p class="k">PASO 03</p><p class="big">48 h</p><p class="d">Te la llevas lista para rodar.</p></div>
-  </div>
-  <p class="mono" style="margin:22px 0 0;font-size:10px;letter-spacing:.18em;color:var(--meta)">TIEMPOS REFERENCIALES</p>
-</section>
-
-<section data-reveal="1" class="wrap" style="margin-top:64px">
-  <p class="kicker" style="display:block;margin-bottom:24px">La diferencia</p>
-  <div class="vs">
-    <div class="colA">
-      <p class="k">POR TU CUENTA</p>
-      <h3>Comprar usado por tu cuenta</h3>
-      <p class="it"><i>—</i>Vendedor desconocido, sin taller detrás.</p>
-      <p class="it"><i>—</i>Batería y motor sin verificar.</p>
-      <p class="it"><i>—</i>Regateo a ciegas, sin referencia de estado.</p>
-      <p class="it"><i>—</i>Las sorpresas aparecen después, en el taller.</p>
-    </div>
-    <div class="colB">
-      <div class="hdr"><p class="k">CON BIKE TRUST</p><img src="/assets/brand/shield.png" alt=""></div>
-      <h3>Comprar certificado</h3>
-      <p class="it"><i>✓</i>Taller con nombre, cara y dirección.</p>
-      <p class="it"><i>✓</i>Diagnóstico digital medido, por escrito.</p>
-      <p class="it"><i>✓</i>Precio anclado a un puntaje público /7.</p>
-      <p class="it"><i>✓</i>Sale afinada y con Garantía Bike Trust.</p>
     </div>
   </div>
 </section>
