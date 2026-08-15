@@ -310,7 +310,14 @@ Meta del dueño: **20–30 % de los leads entregan teléfono** (semana 30 = 3 %)
 6. **Dominio `biketrust.cl`** → Cloudflare Pages + setear `SITE_URL` (para que OG, canonical
    y sitemap usen el dominio real).
 7. **Walk-in** (venta sin lead) → form mínimo que pegue a `/api/registrar-venta`.
-8. **Rotar el PAT de Airtable** (se pegó una vez en un chat) y la `MC_KEY` (en el D1 de la V2).
+8. **Rotar DOS tokens de Airtable** y la `MC_KEY` (en el D1 de la V2):
+   - el PAT de `.dev.vars` (se pegó una vez en un chat);
+   - el **`AIRTABLE_WRITE_TOKEN` del tablero** (2026-08-15: se pegó en el chat para instalarlo
+     en `biketrust-tablero`; quedó en la transcripción `.jsonl` del disco, que NO se borra al
+     borrar la conversación en la app).
+   Rotar = regenerar en Airtable → Developer hub, y volver a subirlo con
+   `npx wrangler pages secret put AIRTABLE_WRITE_TOKEN --project-name biketrust-tablero`
+   (lee de stdin) + **Retry deployment**.
 9. **Registrar a los 5 comentaristas que no están en el CRM** — fueron respondidos a mano en
    los comentarios pero quedaron sin seguimiento (detalle en el CHANGELOG).
 10. **Limpiar inconsistencias de facturación demo** y las 2 opciones con nombre vacío del
