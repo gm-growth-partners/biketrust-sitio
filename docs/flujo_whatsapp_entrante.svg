@@ -1,0 +1,172 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1180" font-family="'IBM Plex Sans',system-ui,sans-serif">
+  <defs>
+    <marker id="f" viewBox="0 0 9 9" refX="8" refY="4.5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0 0 L9 4.5 L0 9 z" fill="#4A443A"/>
+    </marker>
+    <marker id="fv" viewBox="0 0 9 9" refX="8" refY="4.5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0 0 L9 4.5 L0 9 z" fill="#6E9E6A"/>
+    </marker>
+  </defs>
+  <style>
+    .t  { fill:#F3EEE4; font-size:14px; font-weight:600 }
+    .s  { fill:#8A8377; font-size:11px }
+    .m  { fill:#C9A26E; font-size:11px; font-family:'IBM Plex Mono',monospace }
+    .lbl{ fill:#6E685D; font-size:11px }
+    .ey { fill:#8A8377; font-size:10px; font-weight:600; letter-spacing:1.4px }
+    .ln { stroke:#4A443A; stroke-width:1.4; fill:none }
+    .lv { stroke:#6E9E6A; stroke-width:1.6; fill:none }
+  </style>
+
+  <rect width="1500" height="1180" fill="#12100D"/>
+  <text x="46" y="46" class="ey">BIKE TRUST · PUERTA 3 (SITIO) + PUERTA 4 (WHATSAPP DIRECTO)</text>
+  <text x="46" y="76" fill="#F3EEE4" font-size="24" font-weight="600">Flujo de WhatsApp entrante</text>
+  <text x="46" y="100" class="s">Todo mensaje nuevo entra por acá. El texto prellenado del sitio decide la rama; lo demás cae al enrutador que ya existe.</text>
+
+  <!-- leyenda -->
+  <g transform="translate(1040,40)">
+    <rect x="0" y="0" width="420" height="86" rx="10" fill="#17140F" stroke="#2A2620"/>
+    <rect x="16" y="16" width="13" height="13" rx="3" fill="#1D2A22" stroke="#6E9E6A"/><text x="38" y="27" class="lbl">Endpoint que ya existe y no se toca</text>
+    <rect x="16" y="38" width="13" height="13" rx="3" fill="#241D13" stroke="#C9A26E"/><text x="38" y="49" class="lbl">Endpoint construido hoy</text>
+    <rect x="16" y="60" width="13" height="13" rx="3" fill="#1D1914" stroke="#4A443A"/><text x="38" y="71" class="lbl">Paso de ManyChat (mensaje, pregunta, condición)</text>
+  </g>
+
+  <!-- ENTRADA -->
+  <rect x="600" y="140" width="300" height="62" rx="10" fill="#1D1914" stroke="#8A8377"/>
+  <text x="750" y="167" class="t" text-anchor="middle">Mensaje nuevo en WhatsApp</text>
+  <text x="750" y="187" class="s" text-anchor="middle">disparador del flujo</text>
+
+  <path class="ln" d="M750 202 V 236" marker-end="url(#f)"/>
+
+  <!-- CLASIFICAR -->
+  <rect x="520" y="238" width="460" height="76" rx="10" fill="#1D1914" stroke="#4A443A"/>
+  <text x="750" y="264" class="t" text-anchor="middle">¿Qué dice el primer mensaje?</text>
+  <text x="750" y="284" class="m" text-anchor="middle">condición sobre {{last_input}}</text>
+  <text x="750" y="302" class="s" text-anchor="middle">los 4 textos del sitio son distintos y reconocibles</text>
+
+  <!-- bus a las 5 ramas -->
+  <path class="ln" d="M750 314 V 340"/>
+  <path class="ln" d="M180 340 H 1320"/>
+  <path class="ln" d="M180 340 V 372" marker-end="url(#f)"/>
+  <path class="ln" d="M465 340 V 372" marker-end="url(#f)"/>
+  <path class="ln" d="M750 340 V 372" marker-end="url(#f)"/>
+  <path class="ln" d="M1035 340 V 372" marker-end="url(#f)"/>
+  <path class="ln" d="M1320 340 V 372" marker-end="url(#f)"/>
+
+  <!-- las 5 ramas -->
+  <g>
+    <rect x="60" y="374" width="240" height="84" rx="9" fill="#1D1914" stroke="#C9A26E"/>
+    <text x="180" y="400" class="t" text-anchor="middle">Ficha de una bici</text>
+    <text x="180" y="420" class="s" text-anchor="middle">«…la ficha certificada…</text>
+    <text x="180" y="437" class="s" text-anchor="middle">(ref 4082552)»</text>
+    <text x="180" y="452" class="m" text-anchor="middle">canal = Web</text>
+  </g>
+  <g>
+    <rect x="345" y="374" width="240" height="84" rx="9" fill="#1D1914" stroke="#4A443A"/>
+    <text x="465" y="400" class="t" text-anchor="middle">Encargo</text>
+    <text x="465" y="420" class="s" text-anchor="middle">«…quiero encargar</text>
+    <text x="465" y="437" class="s" text-anchor="middle">una Specialized…»</text>
+    <text x="465" y="452" class="m" text-anchor="middle">canal = Web</text>
+  </g>
+  <g>
+    <rect x="630" y="374" width="240" height="84" rx="9" fill="#1D1914" stroke="#4A443A"/>
+    <text x="750" y="400" class="t" text-anchor="middle">Consignación</text>
+    <text x="750" y="420" class="s" text-anchor="middle">«…quiero consignar</text>
+    <text x="750" y="437" class="s" text-anchor="middle">mi Specialized.»</text>
+    <text x="750" y="452" class="m" text-anchor="middle">canal = Web</text>
+  </g>
+  <g>
+    <rect x="915" y="374" width="240" height="84" rx="9" fill="#1D1914" stroke="#4A443A"/>
+    <text x="1035" y="400" class="t" text-anchor="middle">WhatsApp general</text>
+    <text x="1035" y="420" class="s" text-anchor="middle">«Busco una Specialized</text>
+    <text x="1035" y="437" class="s" text-anchor="middle">usada certificada.»</text>
+    <text x="1035" y="452" class="m" text-anchor="middle">canal = Web</text>
+  </g>
+  <g>
+    <rect x="1200" y="374" width="240" height="84" rx="9" fill="#1D1914" stroke="#8FA98A" stroke-dasharray="5 4"/>
+    <text x="1320" y="400" class="t" text-anchor="middle">Escribe libre</text>
+    <text x="1320" y="420" class="s" text-anchor="middle">QR en tienda, boca a boca,</text>
+    <text x="1320" y="437" class="s" text-anchor="middle">cualquier otro texto</text>
+    <text x="1320" y="452" class="m" text-anchor="middle">canal = WhatsApp</text>
+  </g>
+
+  <!-- mc-lead -->
+  <path class="ln" d="M180 458 V 496" marker-end="url(#f)"/>
+  <path class="ln" d="M465 458 V 496" marker-end="url(#f)"/>
+  <path class="ln" d="M750 458 V 496" marker-end="url(#f)"/>
+  <path class="ln" d="M1035 458 V 496" marker-end="url(#f)"/>
+  <path class="ln" d="M1320 458 V 496" marker-end="url(#f)"/>
+  <rect x="60" y="498" width="1380" height="58" rx="9" fill="#1D2A22" stroke="#6E9E6A"/>
+  <text x="750" y="522" class="t" text-anchor="middle">mc-lead · nace o se “toca” el lead, con SU canal</text>
+  <text x="750" y="542" class="m" text-anchor="middle">POST /api/mc-lead  ·  { subscriber_id, canal, nombre }   ←  sin esto la persona cuenta en la puerta equivocada</text>
+
+  <!-- ficha: cadena larga -->
+  <path class="ln" d="M180 556 V 592" marker-end="url(#f)"/>
+  <rect x="60" y="594" width="240" height="66" rx="9" fill="#241D13" stroke="#C9A26E"/>
+  <text x="180" y="618" class="t" text-anchor="middle">mc-bici</text>
+  <text x="180" y="637" class="m" text-anchor="middle">ref → recId + datos</text>
+  <text x="180" y="653" class="s" text-anchor="middle">¿está disponible?</text>
+
+  <path class="ln" d="M180 660 V 696" marker-end="url(#f)"/>
+  <rect x="60" y="698" width="240" height="62" rx="9" fill="#1D1914" stroke="#4A443A"/>
+  <text x="180" y="722" class="t" text-anchor="middle">Manda la ficha</text>
+  <text x="180" y="741" class="m" text-anchor="middle">ficha_url + resumen</text>
+  <text x="180" y="755" class="s" text-anchor="middle">puntaje · precio · calce</text>
+
+  <path class="ln" d="M180 760 V 796" marker-end="url(#f)"/>
+  <rect x="60" y="798" width="240" height="62" rx="9" fill="#1D2A22" stroke="#6E9E6A"/>
+  <text x="180" y="822" class="t" text-anchor="middle">mc-evento</text>
+  <text x="180" y="841" class="m" text-anchor="middle">ficha_entregada</text>
+  <text x="180" y="855" class="s" text-anchor="middle">+ bici → atribución por unidad</text>
+
+  <path class="ln" d="M180 860 V 896" marker-end="url(#f)"/>
+  <rect x="40" y="898" width="280" height="62" rx="9" fill="#1D1914" stroke="#4A443A"/>
+  <text x="180" y="922" class="t" text-anchor="middle">¿Quieres que un experto</text>
+  <text x="180" y="941" class="t" text-anchor="middle">te llame?</text>
+
+  <!-- sí / no -->
+  <path class="lv" d="M180 960 V 990" marker-end="url(#fv)"/>
+  <text x="196" y="980" class="lbl" fill="#6E9E6A">sí</text>
+  <rect x="40" y="992" width="280" height="58" rx="9" fill="#241D13" stroke="#C9A26E"/>
+  <text x="180" y="1016" class="t" text-anchor="middle">mc-acepta</text>
+  <text x="180" y="1035" class="m" text-anchor="middle">sella «aceptó la llamada»</text>
+
+  <path class="ln" d="M320 1021 H 396" marker-end="url(#f)"/>
+  <rect x="398" y="992" width="250" height="58" rx="9" fill="#1D1914" stroke="#4A443A"/>
+  <text x="523" y="1016" class="t" text-anchor="middle">Pide el teléfono</text>
+  <text x="523" y="1035" class="s" text-anchor="middle">entrada tipo teléfono</text>
+
+  <path class="ln" d="M648 1021 H 724" marker-end="url(#f)"/>
+  <rect x="726" y="992" width="250" height="58" rx="9" fill="#1D2A22" stroke="#6E9E6A"/>
+  <text x="851" y="1016" class="t" text-anchor="middle">mc-llamado</text>
+  <text x="851" y="1035" class="m" text-anchor="middle">ticket + aviso a Luis</text>
+
+  <!-- las otras 3 ramas cortan derecho al teléfono -->
+  <path class="ln" d="M465 556 V 700"/>
+  <path class="ln" d="M750 556 V 700"/>
+  <path class="ln" d="M1035 556 V 700"/>
+  <path class="ln" d="M465 700 H 1035"/>
+  <path class="ln" d="M750 700 V 748" marker-end="url(#f)"/>
+  <rect x="560" y="750" width="380" height="70" rx="9" fill="#1D1914" stroke="#4A443A"/>
+  <text x="750" y="775" class="t" text-anchor="middle">Cortan acá: piden el teléfono</text>
+  <text x="750" y="795" class="s" text-anchor="middle">encargo · consignación · general no tienen etapas intermedias</text>
+  <text x="750" y="812" class="s" text-anchor="middle">se rutean directo a la llamada de Luis</text>
+  <path class="ln" d="M940 785 H 1010 V 1021 H 726" marker-end="url(#f)"/>
+
+  <!-- libre -->
+  <path class="ln" d="M1320 556 V 592" marker-end="url(#f)"/>
+  <rect x="1200" y="594" width="240" height="66" rx="9" fill="#1D2A22" stroke="#6E9E6A"/>
+  <text x="1320" y="618" class="t" text-anchor="middle">mc-clasifica</text>
+  <text x="1320" y="637" class="m" text-anchor="middle">el enrutador del DM</text>
+  <text x="1320" y="653" class="s" text-anchor="middle">se reusa tal cual</text>
+  <path class="ln" d="M1320 660 V 900" />
+  <path class="ln" d="M1320 900 H 1120 V 1021 H 982" marker-end="url(#f)"/>
+
+  <!-- no -->
+  <path class="ln" d="M40 1021 H 20 V 1100 H 300" marker-end="url(#f)"/>
+  <text x="26" y="1060" class="lbl">no</text>
+  <rect x="302" y="1072" width="300" height="56" rx="9" fill="#1D1914" stroke="#4A443A"/>
+  <text x="452" y="1095" class="t" text-anchor="middle">Cierre suave</text>
+  <text x="452" y="1114" class="s" text-anchor="middle">queda con la ficha · el lead ya está registrado</text>
+
+  <text x="750" y="1160" class="s" text-anchor="middle">La cadena larga es la de la ficha. Las otras tres puertas del sitio terminan en el clic y van directo a la llamada.</text>
+</svg>
