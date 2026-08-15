@@ -322,7 +322,7 @@ button{font-family:var(--sans)}
 .hero-in{position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:stretch}
 .hero-txt{flex:1 1 440px;min-width:min(100%,440px);max-width:720px;order:1;display:flex;flex-direction:column;justify-content:center;padding:56px 44px 64px max(28px,calc((100vw - 1200px)/2 + 28px))}
 .hero-txt .k{animation:bt-rise .5s ease both}
-.hero h1{margin:22px 0 0;font-family:var(--serif);font-weight:500;font-size:clamp(42px,4.8vw,70px);line-height:1.04;letter-spacing:-.01em;text-wrap:balance}
+.hero h1{margin:22px 0 0;font-family:var(--serif);font-weight:500;font-size:clamp(40px,4.4vw,55px);line-height:1.04;letter-spacing:-.01em;text-wrap:balance}
 .hero h1 span{display:inline-block;animation:bt-rise .6s ease both}
 .hero h1 .l2{animation-delay:.22s}
 .hero h1 em{display:inline-block;font-style:italic;color:var(--bronce);animation:bt-rise .6s ease .34s both}
@@ -396,6 +396,13 @@ button{font-family:var(--sans)}
   .msticky .info .p{font-family:var(--serif);font-weight:600;font-size:20px;color:#F5EFE3}
   .msticky .info .c{font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--bronce2)}
   .msticky a.cta{text-decoration:none;flex:1;background:var(--bronce2);color:var(--dark);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:15px 12px;text-align:center}
+  /* Scroll en teléfono: nada translúcido ni animado de forma permanente sobre el
+     recorrido. El blur de la barra pegajosa obliga a recomponer la franja de arriba
+     en CADA cuadro, y el flotado del hero mantiene una capa viva aunque no se mire:
+     juntos hacen que el scroll se sienta trabado en gama media. */
+  .hd-bar{backdrop-filter:none;background:var(--bg)}
+  .hero-chip{backdrop-filter:none;background:var(--panel)}
+  .hv-float{animation:none}
 }
 
 /* ── catálogo ── */
@@ -978,8 +985,9 @@ const HOME_JS = dest => String.raw`(function(){
     vis.addEventListener('mouseenter',function(){paused=true});
     vis.addEventListener('mouseleave',function(){paused=false});
     set(0); arm();
-    /* parallax suave */
-    if(!reduced){ var pr=null;
+    /* parallax suave — solo en escritorio: en teléfono transformar la foto del hero
+       en cada cuadro de scroll es justo lo que se siente como que el sitio se traba */
+    if(!reduced && window.matchMedia('(min-width:921px)').matches){ var pr=null;
       window.addEventListener('scroll',function(){
         if(pr) return;
         pr=requestAnimationFrame(function(){ pr=null;
@@ -1024,16 +1032,16 @@ function homeHTML(bikes){
   const b0 = heroData[0];
 
   return HEAD('Bike Trust · Specialized usadas certificadas · Santiago', {path:'/'}) + TOPBAR('') + `
-<div style="min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden">
+<div style="min-height:100vh;display:flex;flex-direction:column;overflow-x:clip">
 
 <section class="hero">
   <img class="shadowlogo" src="/assets/brand/shield.png" alt="">
   <div class="hero-in">
     <div class="hero-txt">
-      <p class="kicker k">Specialized usadas · Certificadas en Santiago</p>
-      <h1><span>La Specialized que</span> <span class="l2">siempre quisiste.</span> <em>Certificada, y a la mitad.</em></h1>
+      <p class="kicker k">Taller propio · Las Condes, Santiago</p>
+      <h1><span>Specialized usadas,</span> <span class="l2">certificadas.</span> <em>Compra con confianza.</em></h1>
       <span class="rule"></span>
-      <p class="sub">La Kenevo, la Levo, la Epic que mirabas de lejos — a una fracción de su precio de vitrina, lista para tu primera salida desde el día uno.</p>
+      <p class="sub">Se acabaron los días de comprarle a un desconocido en un estacionamiento oscuro. Acá cada bici pasa por nuestro taller, se califica de 1 a 7 y sale con garantía por escrito.</p>
       <div class="ctas">
         <a class="btn-dark" href="${WA_GENERAL}" data-cta="general" target="_blank" rel="noopener" style="padding:17px 28px;font-size:12px">Escríbenos por WhatsApp <span style="font-size:14px">↗</span></a>
         <a class="lnk" href="/catalogo" style="border-bottom-width:1px;padding-bottom:5px;font-size:12px">Ver catálogo</a>
@@ -1590,7 +1598,7 @@ function fichaHTML(b, bikes){
 
   /* ── riel de compra (sticky en escritorio) ── */
   const calce = b.rangoAltura
-    ? `<div class="f-fit"><span class="lab">Te calza si mides</span><span class="v">${esc(b.rangoAltura)}</span></div>`
+    ? `<div class="f-fit"><span class="lab">Ideal si mides</span><span class="v">${esc(b.rangoAltura)}</span></div>`
     : `<div class="f-fit"><span class="lab">¿Te queda?</span><a href="${waFit(b)}" data-cta="calce" target="_blank" rel="noopener">Dinos tu estatura ↗</a></div>`;
 
   const celdaPuntaje = pj

@@ -60,6 +60,29 @@ muestre. Se agregó en dos lugares, con el contenido del doc y sin inventar plaz
   acentos bronce). Era crema sobre crema y no destacaba; es la pieza que la ficha debe hacer
   brillar. **Se le quitó el link a WhatsApp** («Pregúntanos por el certificado») a pedido de
   Gabriel: el certificado se lee, no se conversa. El riel sticky de la ficha conserva su CTA.
+- **Copy del hero, reescrito** (opción elegida por Gabriel entre tres): kicker «Taller propio ·
+  Las Condes, Santiago», titular «Specialized usadas, certificadas. *Compra con confianza.*» y
+  bajada que **nombra al enemigo** — «Se acabaron los días de comprarle a un desconocido en un
+  estacionamiento oscuro. Acá cada bici pasa por nuestro taller, se califica de 1 a 7 y sale
+  con garantía por escrito». Referencia: la tienda gringa (The Pro's Closet) que se investigó
+  para el rediseño. El `h1` bajó de `clamp(42px,4.8vw,70px)` a `clamp(40px,4.4vw,55px)` porque
+  «Compra con confianza.» partía en dos líneas: la columna del hero mide ~460px sin importar
+  el ancho de pantalla (el padding izquierdo crece con la ventana), así que el tope manda.
+- **«Te calza si mides» → «Ideal si mides»** en el calce de la ficha.
+- 🔴 **Scroll trabado en teléfono (reporte de Gabriel) — cuatro causas removidas.** La de fondo
+  es real y estaba a la vista: el envoltorio de la portada llevaba `overflow-x:hidden`, y en
+  CSS basta que **un** eje deje de ser `visible` para que el otro compute `auto` → ese `div`
+  era un **contenedor de scroll de 7.146px** envolviendo casi toda la página, dentro de un
+  documento de 8.257px. Un contenedor anidado que no puede scrollear se traga el gesto táctil
+  y el scroll se siente pegado. Ahora usa **`overflow-x:clip`**, que recorta igual pero **no**
+  crea contenedor de scroll (verificado: `overflow-y` volvió a `visible` y no queda ningún
+  contenedor scrolleable en la página). Además, bajo 920px se apagaron tres cosas que en gama
+  media obligan a recomponer en cada cuadro: el **`backdrop-filter:blur(10px)` de la barra
+  pegajosa** (ahora fondo opaco), el **blur del chip del hero** y la **animación infinita
+  `bt-float`** de la foto; y el **parallax por scroll** quedó restringido a ≥921px.
+  ⚠️ No se pudo reproducir en un teléfono real (el navegador de la herramienta no compone
+  frames y no scrollea ni en páginas sanas): esto elimina las causas conocidas, no es una
+  verificación en dispositivo. Si sigue pasando, hay que identificar la sección exacta.
 - ⚠️ **Lo que NO se publicó, a propósito:** el doc trae `[plazo, por ejemplo: 5 días hábiles]`
   para responder la recompra y `[dirección / teléfono / correo]` en el punto 5 — sin llenar,
   no se publica una promesa de tiempo. Y el propio documento dice **«sujeto a revisión legal»**:
