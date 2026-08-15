@@ -43,8 +43,17 @@ export async function onRequestPost({ request, env }) {
   try { data = await request.json(); }
   catch { return reply({ error: 'bad_json' }, 400); }
 
+  // 🔴 TRES identificadores, igual que `mc-evento`, y el orden importa.
+  // En Instagram el estable es `@handle`; **en WhatsApp NO existe `ig_username`**, así
+  // que ahí la única vía fiable es el `subscriber_id` de ManyChat. Como la puerta web
+  // desemboca justamente en WhatsApp, aceptar solo `handle` habría devuelto `sin_lead`
+  // en el 100% de los casos de esa puerta — el escenario para el que se construyó esto.
+  const leadIn = String(data?.lead || '').trim();
   const handle = String(data?.handle || '').trim().replace(/^@/, '');
-  if (!handle) return reply({ error: 'missing_fields (handle)' }, 422);
+  const subId  = String(data?.subscriber_id || '').trim();
+  if (!leadIn && !handle && !subId) {
+    return reply({ error: 'missing_fields (lead, handle o subscriber_id)' }, 422);
+  }
 
   const BASE  = env.AIRTABLE_BASE || BASE_DEFAULT;
   const READ  = env.AIRTABLE_TOKEN || env.AIRTABLE_WRITE_TOKEN;
@@ -56,26 +65,37 @@ export async function onRequestPost({ request, env }) {
   const rH  = { Authorization: `Bearer ${READ}` };
   const wH  = { Authorization: `Bearer ${WRITE}`, 'Content-Type': 'application/json' };
   const now = new Date().toISOString();
-  const lowerHandle = handle.toLowerCase().replace(/'/g, "\\'");
+  const esc = (s) => String(s).replace(/'/g, "\\'");
 
-  // 1) El lead por @handle IG, el identificador de dedup del funnel.
+  // 1) Resolver el lead. Se prueba en orden de fiabilidad: recId explícito →
+  //    subscriber_id (WhatsApp) → @handle (Instagram).
   let lead = null;
-  try {
-    const u = `${api(LEADS)}?maxRecords=1&filterByFormula=${encodeURIComponent(`LOWER({@handle IG})='${lowerHandle}'`)}`;
+  const buscar = async (formula) => {
+    const u = `${api(LEADS)}?maxRecords=1&filterByFormula=${encodeURIComponent(formula)}`;
     const rr = await afetch(u, { headers: rH });
-    if (!rr.ok && rr.status !== 404) {
-      return reply({ error: 'airtable_read', status: rr.status, detail: await rr.text() }, 502);
+    if (!rr.ok) {
+      if (rr.status === 404) return null;
+      throw new Error(`airtable_read ${rr.status}`);
     }
-    if (rr.ok) lead = ((await rr.json()).records || [])[0] || null;
-  } catch {
-    return reply({ error: 'network' }, 502);
+    return ((await rr.json()).records || [])[0] || null;
+  };
+
+  try {
+    if (leadIn) {
+      const rr = await afetch(`${api(LEADS)}/${leadIn}`, { headers: rH });
+      if (rr.ok) lead = await rr.json();
+    }
+    if (!lead && subId)  lead = await buscar(`{MC subscriber id}='${esc(subId)}'`);
+    if (!lead && handle) lead = await buscar(`LOWER({@handle IG})='${esc(handle.toLowerCase())}'`);
+  } catch (e) {
+    return reply({ error: String(e.message || 'network') }, 502);
   }
 
   // 2) Sin lead NO se crea uno. A esta altura del flujo `mc-lead` ya corrió: si no
   //    está, es un bug del flujo, y crear acá un lead sin `Canal origen` lo mandaría
   //    a la puerta «Sin canal registrado» y taparía el problema. Se responde 200 para
   //    que ManyChat no entre en bucle de reintentos, pero marcado.
-  if (!lead) return reply({ ok: false, motivo: 'sin_lead', handle });
+  if (!lead) return reply({ ok: false, motivo: 'sin_lead', busque: { lead: leadIn || null, subscriber_id: subId || null, handle: handle || null } });
 
   // 3) Se sella UNA sola vez. Si el lead vuelve a pasar por el flujo, la fecha
   //    original manda: la cohorte de la semana no se puede reescribir hacia adelante.
@@ -103,7 +123,7 @@ export async function onRequestGet() {
   return reply({
     endpoint: '/api/mc-acepta',
     que_hace: 'Sella Leads.Fecha aceptó llamada cuando la persona acepta que un experto la llame.',
-    contrato: { metodo: 'POST', query: 'key=<MC_KEY>', body: { handle: '{{ig_username}}' } },
+    contrato: { metodo: 'POST', query: 'key=<MC_KEY>', body: { 'uno de': ['lead (recId)', 'subscriber_id (WhatsApp)', 'handle (Instagram)'] } },
     no_hace: 'NO toca Leads.Estado. NO crea leads.',
     respuestas: ['ok+sellado', 'ok+ya_sellado', 'ok:false+sin_lead', 'unauthorized', 'not_configured'],
   });
