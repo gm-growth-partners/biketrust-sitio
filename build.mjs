@@ -366,11 +366,6 @@ button{font-family:var(--sans)}
 /* ── secciones compartidas ── */
 .sec-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:14px}
 .sec-head h2{margin:12px 0 0;font-family:var(--serif);font-weight:500;font-size:clamp(28px,3.4vw,40px)}
-.band-dark{background:var(--dark);color:var(--darktext);padding:clamp(22px,3vw,30px) clamp(22px,3vw,34px);display:flex;flex-wrap:wrap;align-items:center;gap:18px 26px}
-.band-dark .bd-k{margin:0;font-family:var(--mono);font-size:10px;letter-spacing:.24em;color:var(--bronce2)}
-.band-dark .bd-t{margin:8px 0 0;font-family:var(--serif);font-weight:600;font-size:clamp(22px,2.6vw,30px);color:#F5EFE3}
-.band-dark .bd-s{margin:6px 0 0;font-size:13px;line-height:1.6;color:var(--darkmut)}
-.band-dark .bd-r{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--muted)}
 
 /* ── sticky móvil (WhatsApp) ── */
 /* La compensación del alto de la barra va sobre el FOOTER, que es el último
@@ -708,44 +703,6 @@ button{font-family:var(--sans)}
 .formbox input[type=text]{cursor:text}
 .formbox .g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
 .formbox .fine{margin:0;text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--meta)}
-.figure3{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:20px;margin-top:22px}
-.figure3 figure{margin:0}
-.figure3 .ph{aspect-ratio:4/4.4;border:1px solid var(--linea3);background:repeating-linear-gradient(-45deg,var(--ph1) 0 14px,var(--ph2) 14px 28px);display:flex;align-items:center;justify-content:center;padding:16px}
-.figure3 .ph span{font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:#A4977F;background:var(--bg);border:1px solid var(--linea3);padding:7px 11px;text-align:center}
-.figure3 figcaption{margin-top:12px}
-.figure3 .t1{display:block;font-size:13px;font-weight:600;color:var(--ink)}
-.figure3 .t2{display:block;margin-top:3px;font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--meta)}
-.strip3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:14px}
-.strip3 .card{border:1px solid var(--linea3);background:var(--bg);padding:22px 22px 18px;display:flex;flex-direction:column;min-height:190px}
-.strip3 .n{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--bronce2)}
-.strip3 .t{margin:12px 0 0;font-family:var(--serif);font-weight:600;font-size:26px}
-.strip3 .t small{color:var(--bronce);font-size:1em}
-.strip3 .d{margin:8px 0 0;font-size:12.5px;line-height:1.6;color:var(--text)}
-.strip3 .f{margin:auto 0 0;padding-top:14px;border-top:1px solid var(--linea2);font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--ink)}
-.strip3 .f .gold{color:var(--bronce)}
-.strip3 .f.script{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--bronce);letter-spacing:0}
-.steps3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:clamp(20px,3vw,36px);margin-top:30px}
-.steps3 .st{border-top:2px solid var(--ink);position:relative;padding-top:20px}
-.steps3 .st i{position:absolute;top:-6px;left:0;width:10px;height:10px;background:var(--bronce2);border-radius:50%}
-.steps3 .k{margin:0;font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--meta)}
-.steps3 .big{margin:10px 0 0;font-family:var(--mono);font-size:clamp(30px,3.6vw,42px);color:var(--ink);letter-spacing:-.02em}
-.steps3 .d{margin:8px 0 0;font-size:13.5px;line-height:1.6;color:var(--text)}
-.vs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:20px}
-.vs .colA{border:1px solid var(--linea3);background:var(--crema);padding:clamp(26px,3.4vw,38px)}
-.vs .colB{border:1px solid var(--bronce3);background:var(--panel);padding:clamp(26px,3.4vw,38px)}
-.vs .k{margin:0;font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--meta)}
-.vs .colB .k{color:var(--bronce)}
-.vs h3{margin:10px 0 0;font-family:var(--serif);font-weight:500;font-size:clamp(24px,2.8vw,30px)}
-.vs .colA h3{color:var(--vend)}
-.vs .it{margin:14px 0 0;padding-bottom:14px;border-bottom:1px solid var(--linea);font-size:13.5px;line-height:1.6;display:flex;gap:12px}
-.vs .it:first-of-type{margin-top:18px}
-.vs .it:last-child{border-bottom:none;padding-bottom:0}
-.vs .colA .it{color:#6B6156}
-.vs .colA .it i{font-style:normal;color:#A4977F;flex:0 0 auto}
-.vs .colB .it{color:var(--ink)}
-.vs .colB .it i{font-style:normal;color:var(--bronce);font-weight:700;flex:0 0 auto}
-.vs .hdr{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.vs .hdr img{height:20px;width:auto}
 .reveal-init [data-reveal]{opacity:0;transform:translateY(16px);transition:opacity .3s ease,transform .3s ease}
 `;
 
@@ -1069,23 +1026,23 @@ function homeHTML(bikes){
 
 <section data-reveal="1" style="background:var(--crema);border-top:1px solid var(--linea);border-bottom:1px solid var(--linea)">
   <div class="wrap" style="padding-top:64px;padding-bottom:64px">
-    <p class="kicker">Delega lo que quieras</p>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin-top:26px">
+    <h2 class="h-serif" style="margin:0 auto;max-width:22ch;text-align:center;font-size:clamp(28px,3.4vw,42px);line-height:1.15">Te ayudamos a encontrar la bici de tus sueños</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin-top:34px">
       <a href="/catalogo" style="text-decoration:none;color:#F5EFE3;background:var(--ink);padding:30px 28px 26px;display:flex;flex-direction:column;min-height:190px;transition:transform .2s ease, box-shadow .2s ease" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
         <span class="mono" style="font-size:11px;letter-spacing:.2em;color:var(--bronce2)">01</span>
-        <span style="font-family:var(--serif);font-weight:600;font-size:29px;margin-top:14px">Búscala tú</span>
+        <span style="font-family:var(--serif);font-weight:600;font-size:29px;margin-top:14px">Búscala en el catálogo</span>
         <span style="font-size:13.5px;line-height:1.6;color:#A99C86;margin-top:8px">Revisa las certificadas en vitrina, con puntaje y precio a la vista.</span>
         <span style="margin-top:auto;padding-top:18px;font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--bronce3)">Ir al catálogo →</span>
       </a>
       <a href="${WA_ASESORIA}" data-cta="asesoria" target="_blank" rel="noopener" style="text-decoration:none;color:#F5EFE3;background:var(--ink);padding:30px 28px 26px;display:flex;flex-direction:column;min-height:190px;transition:transform .2s ease, box-shadow .2s ease" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
         <span class="mono" style="font-size:11px;letter-spacing:.2em;color:var(--bronce2)">02</span>
-        <span style="font-family:var(--serif);font-weight:600;font-size:29px;margin-top:14px">Te asesoramos</span>
+        <span style="font-family:var(--serif);font-weight:600;font-size:29px;margin-top:14px">Te ayudamos a elegir</span>
         <span style="font-size:13.5px;line-height:1.6;color:#A99C86;margin-top:8px">Cuéntanos cómo pedaleas y elegimos contigo, sin compromiso.</span>
         <span style="margin-top:auto;padding-top:18px;font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--bronce3)">Asesoría por WhatsApp ↗</span>
       </a>
       <a href="/encargo" style="text-decoration:none;color:#F5EFE3;background:var(--ink);padding:30px 28px 26px;display:flex;flex-direction:column;min-height:190px;transition:transform .2s ease, box-shadow .2s ease" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
         <span class="mono" style="font-size:11px;letter-spacing:.2em;color:var(--bronce2)">03</span>
-        <span style="font-family:var(--serif);font-weight:600;font-size:29px;margin-top:14px">La cazamos por ti</span>
+        <span style="font-family:var(--serif);font-weight:600;font-size:29px;margin-top:14px">Si no está, la conseguimos</span>
         <span style="font-size:13.5px;line-height:1.6;color:#A99C86;margin-top:8px">Nos dices modelo y talla. La encontramos, la certificamos y te avisamos primero.</span>
         <span style="margin-top:auto;padding-top:18px;font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--bronce3)">Dejar un encargo →</span>
       </a>
