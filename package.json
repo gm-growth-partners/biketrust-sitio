@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
-    "test": "node test/franja.mjs && node test/guardas-avisos.mjs && node test/mc-rellamar.mjs && node test/salida-llamado.mjs && node test/mc-evento-bici.mjs && node test/mc-match-modelo.mjs && node test/mc-match-quiz.mjs && node test/mc-clasifica.mjs && node test/promesa-llamada.mjs && node test/ailoo-bici.mjs && node test/puerta-web.mjs"
+    "test": "node test/franja.mjs && node test/guardas-avisos.mjs && node test/mc-rellamar.mjs && node test/salida-llamado.mjs && node test/mc-evento-bici.mjs && node test/mc-match-modelo.mjs && node test/mc-match-quiz.mjs && node test/mc-clasifica.mjs && node test/promesa-llamada.mjs && node test/ailoo-bici.mjs && node test/puerta-web.mjs && node test/mc-lead-canales.mjs"
   },
   "engines": {
     "node": ">=18"

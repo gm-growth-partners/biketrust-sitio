@@ -41,7 +41,14 @@ export async function onRequestPost({ request, env }) {
   const canal  = String(data?.canal  || '').trim();
   const nombre = data?.nombre ? String(data.nombre).slice(0, 200) : '';
   const estado = data?.estado ? String(data.estado).trim() : 'nuevo';
-  if (!handle || !canal) return reply({ error: 'missing_fields (handle, canal)' }, 422);
+  // 🔴 En WhatsApp NO existe `{{ig_username}}`: el único identificador estable es el
+  // `subscriber_id` de ManyChat. Este endpoint es el PRIMER paso de la cascada, así que
+  // sin esto la puerta de WhatsApp devolvía 422 en el nodo uno, no nacía ningún Lead, y
+  // todo lo de abajo —ficha, teléfono, ticket— caía en `sin_lead` sin avisar.
+  const subId = String(data?.subscriber_id || '').trim();
+  if ((!handle && !subId) || !canal) {
+    return reply({ error: 'missing_fields (handle o subscriber_id, y canal)' }, 422);
+  }
 
   const BASE  = env.AIRTABLE_BASE || BASE_DEFAULT;
   const READ  = env.AIRTABLE_TOKEN || env.AIRTABLE_WRITE_TOKEN;
@@ -55,18 +62,33 @@ export async function onRequestPost({ request, env }) {
   const now = new Date().toISOString();
   const lowerHandle = handle.toLowerCase().replace(/'/g, "\\'");
 
-  // 1) Buscar por @handle IG (case-insensitive) — es el identificador de dedup.
-  let leadId = null, hadNombre = false;
-  const formula = `LOWER({@handle IG})='${lowerHandle}'`;
+  // 1) Buscar por los DOS identificadores, en orden de fiabilidad.
+  //
+  // 🔴 Buscar solo por uno crea duplicados en el caso más común: alguien que comentó un
+  // reel (nació con `@handle IG`) y semanas después aprieta el botón del sitio, llegando
+  // por WhatsApp (trae `subscriber_id`). Mirando solo el subscriber_id no lo encuentra y
+  // nace un SEGUNDO Lead de la misma persona — y con él se parte su historia en dos.
+  let leadId = null, hadNombre = false, recFields = {};
+  const escOne = (x) => String(x).replace(/'/g, "\\'");
+  const formulas = [];
+  if (subId)  formulas.push(`{MC subscriber id}='${escOne(subId)}'`);
+  if (handle) formulas.push(`LOWER({@handle IG})='${lowerHandle}'`);
+  let formula = formulas[0];
+
   try {
-    const u = `${api(LEADS)}?maxRecords=1&filterByFormula=${encodeURIComponent(formula)}`;
-    const rr = await afetch(u, { headers: rH });
-    if (rr.ok) {
-      const j = await rr.json();
-      const rec = j.records && j.records[0];
-      if (rec) { leadId = rec.id; hadNombre = !!rec.fields.Nombre; }
-    } else if (rr.status !== 404) {
-      return reply({ error: 'airtable_read', status: rr.status, detail: await rr.text() }, 502);
+    for (const f of formulas) {
+      const u = `${api(LEADS)}?maxRecords=1&filterByFormula=${encodeURIComponent(f)}`;
+      const rr = await afetch(u, { headers: rH });
+      if (!rr.ok) {
+        if (rr.status === 404) continue;
+        return reply({ error: 'airtable_read', status: rr.status, detail: await rr.text() }, 502);
+      }
+      const rec = ((await rr.json()).records || [])[0];
+      if (rec) {
+        leadId = rec.id; hadNombre = !!rec.fields.Nombre; recFields = rec.fields;
+        formula = f;   // la que acertó — la reusa la resolución de carrera de abajo
+        break;
+      }
     }
   } catch {
     return reply({ error: 'network' }, 502);
@@ -77,6 +99,10 @@ export async function onRequestPost({ request, env }) {
   if (leadId) {
     const fields = { 'Fecha última interacción': now };
     if (nombre && !hadNombre) fields['Nombre'] = nombre;   // enriquece si faltaba
+    // Le pega el identificador del canal por el que llegó, si no lo tenía. Así la misma
+    // persona en IG y en WhatsApp queda en UN registro. Nunca pisa uno que ya existía.
+    if (subId  && !recFields['MC subscriber id']) fields['MC subscriber id'] = subId;
+    if (handle && !recFields['@handle IG'])       fields['@handle IG'] = handle;
     const pr = await afetch(`${api(LEADS)}/${leadId}`, {
       method: 'PATCH', headers: wH,
       body: JSON.stringify({ typecast: true, fields }),
@@ -89,7 +115,8 @@ export async function onRequestPost({ request, env }) {
   const cr = await afetch(api(LEADS), {
     method: 'POST', headers: wH,
     body: JSON.stringify({ typecast: true, fields: {
-      '@handle IG': handle,
+      ...(handle ? { '@handle IG': handle } : {}),
+      ...(subId  ? { 'MC subscriber id': subId } : {}),
       ...(nombre ? { 'Nombre': nombre } : {}),
       'Canal origen': canal,
       'Estado': estado,
