@@ -26,11 +26,19 @@ const clp = (n) => (n == null || n === '') ? '' : '$' + Number(n).toLocaleString
 // Del "Desglose puntaje" saca el área con nota más baja: "Frenos 6,8 · Suspensión 5,9"
 // o una por línea. Devuelve { area, nota, linea } — es el dato que abre el mensaje
 // de honestidad ("dónde perdió puntos") sin que nadie tenga que redactarlo a mano.
+//
+// 🔴 Devuelve VACÍO cuando todas las áreas empatan (2026-08-18). Con un desglose
+// 7/7 en las cuatro áreas no hay "dónde perdió puntos" que contar, y el mínimo
+// caía siempre en la PRIMERA línea: el DM decía «Donde perdió puntos: Cuadro y
+// Estructura» de una bici impecable — justo el mensaje de honestidad diciendo una
+// tontera. Vacío es el mismo contrato que biciBateria en las musculares: el campo
+// no viene y ManyChat omite el renglón (condición: cf_bici_area_baja no vacío).
 function areaMasBaja(desglose) {
+  const VACIO = { area: '', nota: null, linea: '' };
   const txt = String(desglose || '');
-  if (!txt.trim()) return { area: '', nota: null, linea: '' };
+  if (!txt.trim()) return VACIO;
   const partes = txt.split(/[\n·;|]+/).map(s => s.trim()).filter(Boolean);
-  let best = null;
+  let best = null, maxNota = null;
   for (const p of partes) {
     const m = /(\d+(?:[.,]\d+)?)\s*$|(\d+(?:[.,]\d+)?)\s*\/\s*7/.exec(p);
     if (!m) continue;
@@ -38,8 +46,12 @@ function areaMasBaja(desglose) {
     if (!isFinite(nota)) continue;
     const area = p.replace(/[:\-–]?\s*\d+(?:[.,]\d+)?\s*(\/\s*7)?\s*$/, '').replace(/[:\-–]\s*$/, '').trim();
     if (!best || nota < best.nota) best = { area, nota, linea: p };
+    if (maxNota == null || nota > maxNota) maxNota = nota;
   }
-  return best || { area: '', nota: null, linea: '' };
+  // Sin al menos un área POR DEBAJO de otra, no hay área más baja que nombrar.
+  // (Cubre también el desglose de una sola línea: no hay con qué compararla.)
+  if (!best || best.nota === maxNota) return VACIO;
+  return best;
 }
 
 // Orden de la máquina de 13 estados (ver CLAUDE.md). 99 = terminal, siempre

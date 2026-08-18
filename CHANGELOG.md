@@ -10,6 +10,48 @@
 
 ## V2 · El embudo que apunta a la llamada — EN CONSTRUCCIÓN (desde 2026-07-27)
 
+### 2026-08-18 · El DM vacío del reel nuevo, y «Donde perdió puntos» en una bici 7/7
+
+**El síntoma.** Se duplicó la automatización de comentarios para un reel nuevo
+(`DcKeikhxRcf`) cambiando las fotos y la URL de la ficha, y el DM grande salió casi vacío:
+todos los `cf_bici_*` en blanco.
+
+**La causa: faltaba la fila en `Reels`.** Es el paso 1 de la duplicación (§6 de
+`docs/V2_PLANTILLA_COMENTARIOS.md`) y el único que no vive en ManyChat, así que es el que se
+olvida. `mc-evento` resuelve la bici **solo** por ahí: `body.reel` → `Reels.{Post ID
+Instagram}` → link `Bici` → `Inventario`. Sin esa fila no encuentra nada, **no falla**, y
+responde `200 OK` sin ningún campo `bici*`; el mapeo de ManyChat no tiene qué copiar y los
+campos quedan vacíos. 🔴 **Es una falla silenciosa por diseño** (best-effort: el evento igual
+se registra). La huella queda en Airtable: un Interés de Puerta 1 con «Ficha entregada» y
+**sin `Reel` ni `Bici`** — así se reconoce desde el CRM sin mirar ManyChat.
+
+**Enlazadas de paso**, porque tenían el mismo problema latente: `Dbe7BA3BY3l` → Kenevo Expert
+6Fattie · S3 (identificada por las specs del caption: ZEB Ultimate + Super Deluxe Coil +
+frenos Hope, que solo calzan con esa unidad) y `DawQ95EO5mn` → Tarmac SL6 S-Works · 54 (el
+caption dice **SL6**; la SL7 está vendida). ⚠️ **`Dbe7E81ByNL` sigue SIN bici**: su caption es
+de una **Levo Comp Carbon** y en Inventario las dos Levo Comp son **Alloy**. Enlazarla a la
+Alloy mandaría la ficha de otra bici —otro cuadro, otro precio— a quien preguntó por esa.
+
+**El fix de código — `areaMasBaja` devuelve vacío cuando no hay área más baja.** El desglose
+de las unidades impecables trae 7/7 en las cuatro áreas; el mínimo caía siempre en la
+**primera línea** y el DM decía «Donde perdió puntos: Cuadro y Estructura» de una bici
+perfecta — el mensaje de honestidad diciendo una tontera. Ahora, si ninguna área está por
+debajo de otra, el campo va vacío (mismo contrato que `biciBateria` en las musculares: el
+campo no viene y ManyChat omite el renglón). El empate en el mínimo **sí** nombra área
+(Kenevo: 6.9/6.9/6.8/6.8 → «Suspensiones»). Cubre también el desglose de una sola línea: no
+hay con qué compararla. Tests reales en `test/mc-evento-bici.mjs` (Stumpjumper 7/7 → vacío ·
+Kenevo → Suspensiones). ⏳ **Falta montar la condición en ManyChat** (`cf_bici_area_baja` no
+vacío), o queda un «Donde perdió puntos:» colgando.
+
+**Lo que NO era el problema, y confunde:** cambiar la foto y la URL de la ficha a mano en los
+bloques. La foto sale de `Fotos galería` y `cf_bici_ficha` la calcula el endpoint como
+`slug(Modelo-Talla)`. La URL sí hay que cambiarla, pero **solo** porque el botón «Ver Ficha»
+de B2 quedó as-built con URL fija (ver `docs/V2_CONSTRUCCION_COMENTARIOS.md`) — eso no
+alimenta nada del texto.
+
+**Pendiente de dato:** las 5 unidades cargadas hoy tienen **`Precio nuevo` vacío**, así que
+«Nueva hoy sale ___ → te ahorras ___» sale mocho en los tres reels recién enlazados.
+
 ### 2026-08-18 · Las 5 que faltaban de biketrust.cl, y `/bicis.json` para el tablero
 
 **El cruce.** Se comparó el inventario de `biketrust.cl` (el sitio Ailoo) contra el nuestro,

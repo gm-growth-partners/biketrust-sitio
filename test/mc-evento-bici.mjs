@@ -47,6 +47,21 @@ const CASOS = [
     Precio: 6000000, Estado: 'Vendida', 'Motorización': 'Muscular', 'Puntaje certificación': 6.2,
   }},
   { nombre: 'Ficha incompleta (no debe romper)', f: { Modelo: 'Kenevo Comp', Talla: 'S3', Estado: 'Disponible' } },
+  // Registros REALES cargados 2026-08-18. El desglose perfecto es el caso que
+  // rompía el copy: decía «Donde perdió puntos: Cuadro y Estructura» de una 7/7.
+  { nombre: 'Stumpjumper 15 Alloy · S4 (7/7 en TODO → sin área más baja)', f: {
+    Etiqueta: 'Specialized Stumpjumper 15 Alloy · S4', Modelo: 'Stumpjumper 15 Alloy', Talla: 'S4',
+    Precio: 2000000, Estado: 'Disponible', 'Motorización': 'Muscular', 'Puntaje certificación': 7,
+    'Desglose puntaje': 'Cuadro y Estructura: 7/7\nTransmisión y Componentes: 7/7\nSuspensiones: 7/7\nFrenos: 7/7',
+    'Estado honesto': 'Prácticamente nueva: una sola salida real de uso.', 'Rango altura': '173 a 188 cm',
+  }},
+  { nombre: 'Kenevo Expert 6Fattie · S3 (empate en el mínimo → sí hay área más baja)', f: {
+    Etiqueta: 'Specialized Kenevo Expert 6Fattie · S3', Modelo: 'Kenevo Expert 6Fattie', Talla: 'S3',
+    Precio: 3900000, Estado: 'Disponible', 'Motorización': 'Eléctrica', 'Puntaje certificación': 6.8,
+    'Desglose puntaje': 'Cuadro y Estructura: 6.9/7\nMotor y Electrónica: 6.9/7\nSuspensiones: 6.8/7\nFrenos y Componentes: 6.8/7',
+    'Estado honesto': 'Cuadro en muy buen estado, con mejoras premium.', 'Rango altura': '165 a 180 cm',
+    'Diag · salud batería': 0.99, 'Diag · ciclos': 34, 'Diag · km motor': 1401.22,
+  }},
 ];
 
 let fail = 0;
@@ -62,11 +77,21 @@ const sl = build(CASOS[0].f, 'https://s');
 const epic = build(CASOS[1].f, 'https://s');
 const vend = build(CASOS[2].f, 'https://s');
 const inc = build(CASOS[3].f, 'https://s');
+const perfecta = build(CASOS[4].f, 'https://s');
+const kenevo = build(CASOS[5].f, 'https://s');
 const check = (ok, msg) => { if (!ok) { console.log('FALLO: ' + msg); fail++; } };
 
 console.log('\n--- ASERCIONES ---');
 check(sl.biciAreaBaja === 'Suspensión' && sl.biciAreaBajaLinea.includes('5,9'), 'area mas baja con separador ·');
 check(epic.biciAreaBaja === 'Suspensión', 'area mas baja con saltos de linea');
+// Fix 2026-08-18: sin un área por debajo de otra, el campo va vacío y ManyChat
+// omite el renglón. Antes salía «Donde perdió puntos: Cuadro y Estructura» en 7/7.
+check(perfecta.biciAreaBaja === '' && perfecta.biciAreaBajaLinea === '',
+  'desglose 7/7 parejo NO nombra area, dio "' + perfecta.biciAreaBaja + '"');
+check(perfecta.biciPuntaje === '7', 'la 7/7 igual trae puntaje, dio ' + perfecta.biciPuntaje);
+check(kenevo.biciAreaBaja === 'Suspensiones',
+  'empate en el minimo igual nombra area, dio "' + kenevo.biciAreaBaja + '"');
+check(kenevo.biciBateria === '99' && kenevo.biciCiclos === '34', 'diagnostico e-bike Kenevo');
 check(sl.biciAhorro === '$3.700.000', 'ahorro e-bike, dio ' + sl.biciAhorro);
 check(epic.biciAhorro === '$3.300.000', 'ahorro muscular, dio ' + epic.biciAhorro);
 check(sl.biciPuntaje === '6,4', 'puntaje con coma, dio ' + sl.biciPuntaje);

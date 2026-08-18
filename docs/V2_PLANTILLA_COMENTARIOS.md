@@ -121,6 +121,14 @@ Nueva hoy sale {{cf_bici_precio_nuevo}}.
 Esta queda en {{cf_bici_precio}} → te ahorras {{cf_bici_ahorro}}.
 ```
 
+> ⚠️ **«Donde perdió puntos» necesita condición** (fix 2026-08-18). En unidades con el
+> desglose parejo —ej. 7/7 en las cuatro áreas— `mc-evento` ahora devuelve
+> `cf_bici_area_baja` **vacío a propósito**: antes nombraba la primera área y el DM decía
+> «Donde perdió puntos: Cuadro y Estructura» de una bici impecable, que es exactamente lo
+> contrario de lo que el mensaje de honestidad quiere lograr. Se monta igual que la variante
+> e-bike: **condición `cf_bici_area_baja` no vacío** → bloque con la línea; vacío → el mismo
+> bloque sin ella. Sin la condición queda un «Donde perdió puntos:» colgando.
+
 **Bloque 3 — link:** `Ficha completa con todas las fotos: {{cf_bici_ficha}}`
 
 **Variante e-bike** (condición: `cf_bici_bateria` no está vacío) — agregar antes del precio:

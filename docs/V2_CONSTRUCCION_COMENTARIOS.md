@@ -158,6 +158,11 @@ Estado honesto, tal cual está hoy:
 Nueva hoy sale {{cf_bici_precio_nuevo}}.
 Esta queda en {{cf_bici_precio}} → te ahorras {{cf_bici_ahorro}}.
 ```
+   ⚠️ **La línea «Donde perdió puntos» quedó pendiente de condicionar** (fix 2026-08-18):
+   con desglose parejo (7/7 en las cuatro áreas) `mc-evento` devuelve `cf_bici_area_baja`
+   **vacío a propósito** — antes nombraba la primera área y el DM decía «Donde perdió puntos:
+   Cuadro y Estructura» de una bici impecable. Falta montar la variante en ManyChat:
+   condición `cf_bici_area_baja` no vacío → bloque con la línea; vacío → sin ella.
 3. **El link de la ficha** — *as-built 2026-07-30: quedó como botón «Ver Ficha» con URL
    **FIJA** (la ficha del reel de esa automatización), válido en paso normal (el botón URL
    no interfiere con el Next Step; la restricción de botones-URL era solo para B1)*.

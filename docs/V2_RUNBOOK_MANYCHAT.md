@@ -363,6 +363,11 @@ Nueva hoy sale {{cf_bici_precio_nuevo}}.
 Esta queda en {{cf_bici_precio}} → te ahorras {{cf_bici_ahorro}}.
 ```
 
+> ⚠️ **«Donde perdió puntos» necesita condición** (fix 2026-08-18). Si el desglose es parejo
+> (7/7 en las cuatro áreas), `mc-evento` devuelve `cf_bici_area_baja` **vacío a propósito**.
+> Condición `cf_bici_area_baja` no vacío → bloque con la línea; vacío → el mismo bloque sin
+> ella. Igual que la variante e-bike.
+
 **Bloque 3 — link:**
 
 ```
