@@ -53,7 +53,12 @@ como *In stock* en `biketrust.cl` (refs 3945820, 4047084, 4047085, 4051339, 4060
 solo acá — **y están `Disponible` sin ninguna foto**.
 
 **`/bicis.json`.** El build publica ahora un manifiesto del catálogo: `ref`, `slug`, modelo,
-talla, año, disciplina, precio, puntaje, estado, foto de portada y URL de ficha. Existe
+talla, año, disciplina, precio, puntaje, estado, foto de portada y **las dos URLs de página**.
+🔴 **`pagina` (`/bici/<slug>`) y `fichaTecnica` (`/ficha/<slug>`) NO son lo mismo** —
+la primera es la vitrina pública con galería y CTA, la segunda es la imprimible con todos los
+datos, la que manda el bot. La primera versión de esto publicó solo una clave llamada `ficha`
+que apuntaba a `/bici/`, y el tablero terminó abriendo la vitrina cuando el botón decía
+«ficha técnica». `ficha` quedó como alias histórico de `pagina`. Existe
 porque el tablero necesita foto y link, y **ninguno de los dos se puede reconstruir afuera**:
 el slug se desambigua por ORDEN del catálogo (`-2`, `-3` cuando dos comparten modelo+talla) y
 la extensión de la portada depende del archivo que subieron a Airtable. Encima, las URLs de

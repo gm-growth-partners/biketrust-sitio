@@ -2214,7 +2214,13 @@ function bicisJSON(bikes){
       estado: esVendida(b) ? 'Vendida' : (b.reservada || esReservada(b) ? 'Reservada' : 'Disponible'),
       foto: url((b.fotos || [])[0]),
       fotos: (b.fotos || []).length,
-      ficha: `${SITE}/bici/${b.slug}`,
+      // ⚠ SON DOS PÁGINAS DISTINTAS y confundirlas es fácil (ya pasó):
+      //   · `pagina`       = /bici/<slug>  → la vitrina pública, con galería y CTA de compra.
+      //   · `fichaTecnica` = /ficha/<slug> → la ficha imprimible con todos los datos,
+      //                                      la misma que manda el bot por WhatsApp.
+      pagina: `${SITE}/bici/${b.slug}`,
+      fichaTecnica: `${SITE}/ficha/${b.slug}`,
+      ficha: `${SITE}/bici/${b.slug}`,   // alias histórico de `pagina`; no usar en código nuevo
     })),
   }, null, 1);
 }
