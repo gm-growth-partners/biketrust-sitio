@@ -2180,6 +2180,45 @@ function sitemapXML(bikes){
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
 }
 
+// Manifiesto público del inventario: /bicis.json.
+//
+// POR QUÉ EXISTE. La pantalla «Inventario» del tablero necesita, por cada bici, la
+// foto de portada y el link a su ficha. Ninguna de las dos se puede reconstruir
+// afuera: el slug se desambigua por ORDEN del catálogo (`-2`, `-3` cuando dos
+// comparten modelo+talla) y la extensión de la portada depende del archivo que
+// subieron a Airtable. Y las URLs de adjuntos de Airtable expiran, así que
+// hornearlas en otro repo daría fotos rotas a las pocas horas.
+//
+// Acá el slug y la ruta de la foto son los REALES, porque los acaba de escribir
+// este mismo build. Todo lo que se publica ya es visible en el catálogo: no
+// agrega ni un dato que no esté a la vista de cualquiera.
+function bicisJSON(bikes){
+  const url = f => !f ? null : (/^https?:/i.test(f) ? f : SITE + f);
+  return JSON.stringify({
+    generado: new Date().toISOString(),
+    sitio: SITE,
+    total: bikes.length,
+    bicis: bikes.map(b => ({
+      ref: b.referencia || null,
+      slug: b.slug,
+      marca: b.marca || null,
+      modelo: b.modelo || null,
+      talla: b.talla || null,
+      anio: b.anio || null,
+      disciplina: b.disciplina || null,
+      electrica: !!b.electrica,
+      precio: b.precio ?? null,
+      puntaje: b.puntaje ?? null,
+      // `reservada` (visita agendada) manda sobre el estado de inventario, igual
+      // que en el catálogo: es la señal más fresca de que esa bici está tomada.
+      estado: esVendida(b) ? 'Vendida' : (b.reservada || esReservada(b) ? 'Reservada' : 'Disponible'),
+      foto: url((b.fotos || [])[0]),
+      fotos: (b.fotos || []).length,
+      ficha: `${SITE}/bici/${b.slug}`,
+    })),
+  }, null, 1);
+}
+
 // URLs del sitio anterior → sus equivalentes en el rediseño (Cloudflare Pages _redirects).
 const REDIRECTS = `# Rediseño 2026-08: páginas que cambiaron de lugar
 /visitanos / 301
@@ -2411,8 +2450,9 @@ async function main(){
   await writeFile(`${OUT}/favicon.svg`, FAVICON);
   await writeFile(`${OUT}/robots.txt`, `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n`);
   await writeFile(`${OUT}/sitemap.xml`, sitemapXML(bikes));
+  await writeFile(`${OUT}/bicis.json`, bicisJSON(bikes));      // manifiesto que lee el tablero
   await writeFile(`${OUT}/404.html`, notFoundHTML());
   await writeFile(`${OUT}/_redirects`, REDIRECTS);
-  console.log(`✓ ${bikes.length} bici(s) (${disponibles.length} disponibles · ${vendidas.length} vendidas) · 6 páginas + fichas · +SEO (og, sitemap, robots, favicon, 404, _redirects) · sitio en /${OUT}`);
+  console.log(`✓ ${bikes.length} bici(s) (${disponibles.length} disponibles · ${vendidas.length} vendidas) · 6 páginas + fichas · +SEO (og, sitemap, robots, favicon, 404, _redirects) · bicis.json · sitio en /${OUT}`);
 }
 main().catch(e=>{ console.error(e); process.exit(1); });

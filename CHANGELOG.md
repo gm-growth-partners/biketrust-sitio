@@ -10,6 +10,57 @@
 
 ## V2 · El embudo que apunta a la llamada — EN CONSTRUCCIÓN (desde 2026-07-27)
 
+### 2026-08-18 · Las 5 que faltaban de biketrust.cl, y `/bicis.json` para el tablero
+
+**El cruce.** Se comparó el inventario de `biketrust.cl` (el sitio Ailoo) contra el nuestro,
+**por `Referencia`**, que es la única llave común (ver `docs/AILOO_INTEGRACION.md`). Ailoo
+tenía **25 bicis vivas** (13 e-bikes + 6 MTB + 6 ruta, sin paginación; el link a «Turbo Levo
+L rojo» de su portada da 404). De esas, 14 emparejaron por `Referencia` exacta y 6 por
+nombre — las vendidas antiguas, que en Airtable nunca tuvieron `Referencia` cargada; en 5 de
+esas 6 el precio coincide al peso, así que el emparejamiento es firme.
+
+**Faltaban 5**, todas cargadas hoy como `Disponible`:
+
+| Referencia | Modelo | Talla | Precio | Slug |
+|---|---|---|---|---|
+| 4104032 | Turbo Creo 2 Comp 2024 | M | $4.400.000 | `turbo-creo-2-comp-m` |
+| 4104027 | Stumpjumper 15 Alloy 2025 | S4 | $2.000.000 | `stumpjumper-15-alloy-s4` |
+| 4100676 | Epic 7 S-Works 2022 | M | $4.500.000 | `epic-7-s-works-m` |
+| 4100649 | Tarmac SL6 S-Works | 54 | $5.500.000 | `tarmac-sl6-s-works-54` |
+| 4099956 | Kenevo Expert 6Fattie 2021 | S3 | $3.900.000 | `kenevo-expert-6fattie-s3` |
+
+Detalles que valen para la próxima carga desde Ailoo:
+
+- **La talla la manda la DESCRIPCIÓN, no el atributo del producto.** Ailoo trae un `Tamaño`
+  genérico que contradice el texto: la Kenevo dice `M` en el atributo y **S3** en la ficha, y
+  la SJ 15 dice `L` y **S4**. Se usó el S-Sizing de la descripción, que es el que Specialized
+  imprime en el cuadro.
+- **Los modelos se nombraron para no chocar de slug** con los que ya existían (`Kenevo
+  Expert S3`, `Stumpjumper 15 Comp Alloy M`, `Tarmac SL7 S-Works`). Ninguna quedó con
+  sufijo `-2`.
+- **Fotos sin blanquear, por pedido.** Las 34 vienen del CDN de Ailoo (`biggy.cl`, `_900` es
+  el máximo que sirve; 900×900) y **no** se creó carpeta en `assets/fotos/`, así que el build
+  las toma de Airtable tal cual. Verificado por MD5: el archivo que publica el sitio es
+  byte-idéntico al de `biketrust.cl`.
+- **`Origen` y `Precio nuevo` quedaron vacíos**: no existen en la ficha de Ailoo.
+- **La ficha de la Creo 2 en `biketrust.cl` está publicada con los placeholders sin llenar**
+  (dice literalmente `[Insertar Talla Aquí]` y `[Insertar Altura Aquí]`, a la vista del
+  público). La talla salió del atributo; **`Rango altura` se dejó vacío** en vez de inventarlo.
+
+**Desincronización detectada, sin tocar:** 8 bicis marcadas `Vendida` acá siguen publicadas
+como *In stock* en `biketrust.cl` (refs 3945820, 4047084, 4047085, 4051339, 4060064, 4060065,
+4082599, 4095015). Y al revés: `Aethos Comp L` (4097779) y `Tero 4.0 M` (4097781) existen
+solo acá — **y están `Disponible` sin ninguna foto**.
+
+**`/bicis.json`.** El build publica ahora un manifiesto del catálogo: `ref`, `slug`, modelo,
+talla, año, disciplina, precio, puntaje, estado, foto de portada y URL de ficha. Existe
+porque el tablero necesita foto y link, y **ninguno de los dos se puede reconstruir afuera**:
+el slug se desambigua por ORDEN del catálogo (`-2`, `-3` cuando dos comparten modelo+talla) y
+la extensión de la portada depende del archivo que subieron a Airtable. Encima, las URLs de
+adjuntos de Airtable **expiran**, así que hornearlas en otro repo daría fotos rotas en horas.
+Acá el dato es el real porque lo acaba de escribir este mismo build. No expone nada que no
+esté ya en `/catalogo`.
+
 ### 2026-08-15 · Portada más corta, chip del hero usable en teléfono y el logo al compartir
 
 Pedidos de Gabriel, todos sobre la portada. Tres commits.
