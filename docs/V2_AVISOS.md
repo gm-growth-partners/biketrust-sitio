@@ -1,399 +1,252 @@
-# El sistema de avisos al equipo — as-built
+# El sistema de avisos de Bike Trust
 
-> Reescrito el **2026-08-19** a partir de la auditoría que disparó Gabriel:
-> *«¿por qué le está llegando este mensaje a Luis, si esas personas ya fueron
-> contactadas y están marcadas como sin interés?»*.
+> **Qué es esto.** El documento único del sistema que le avisa al equipo cuando algo
+> necesita a una persona. Sirve para dos lectores a la vez:
 >
-> Este documento es la fuente de verdad operativa. El histórico está en el
+> - **Si eres del equipo:** lee de la §1 a la §7. Están en castellano normal y
+>   explican qué hace el sistema, qué significa cada aviso y qué tienes que hacer tú.
+> - **Si eres Claude Code (o cualquiera que vaya a tocar el código):** la §8 es la
+>   sección técnica. **Léela entera antes de modificar nada**, sobre todo §8.6, que
+>   son las reglas que ya se rompieron una vez y costaron caro.
+>
+> Estado: **en producción** desde el 2026-08-20. Historial y porqués en
 > [`CHANGELOG.md`](../CHANGELOG.md).
 
 ---
 
-## 1 · La idea en una frase
+## 1 · Para qué existe
+
+Bike Trust vende bicicletas usadas caras. El negocio se cierra por teléfono: alguien
+comenta un reel, el bot le muestra la ficha, y si deja su número, **Luis lo llama**.
+La velocidad de esa llamada es la métrica del negocio.
+
+Todo el sistema de avisos existe para responder una sola pregunta:
+
+> **¿Hay alguien esperando que nadie del equipo ha visto todavía?**
+
+Y para garantizar que la respuesta nunca sea «sí, pero no nos dimos cuenta».
+
+## 2 · La idea en una frase
 
 **«Avisado» no es un evento: es un estado escrito en Airtable.**
 
 Cada cosa que necesita a una persona nace con el campo **`Aviso equipo enviado`
 vacío**. Ese vacío *es* la cola. Tres mecanismos la vacían:
 
-| Cuándo | Qué |
+| Cuándo | Qué pasa |
 |---|---|
-| Al instante, si alguien está en su turno | el emisor (`aviso-llamada`, `aviso-humano`, …) manda y sella |
-| Cada 15 min | `cron-avisos` barre lo que quedó sin sello y lo manda |
-| 9:00 de la mañana | `cron-briefing` lista **todo** lo pendiente y lo sella |
+| Al instante, si hay alguien de turno que va a actuar | sale el WhatsApp y se sella |
+| Cada 15 minutos | un barrido manda lo que quedó sin sello |
+| 9:00 de la mañana | el briefing lista **todo** lo pendiente y lo sella |
 
-**La regla que lo hace seguro: nunca franja sin red.** Ningún punto del sistema
-puede callarse por horario si no existe algo que recupere después lo que calló.
+**La regla que lo sostiene: nunca franja sin red.** Ningún punto del sistema puede
+callarse por horario si no existe algo que recupere después lo que calló.
 
----
+Esto no es una preferencia de diseño: es la corrección de un problema real. Antes,
+«avisarle al equipo» ocurría —o no— en el instante exacto en que entraba el lead. Si
+en ese momento no era horario, si fallaba una conexión, o si el ticket lo había
+creado una persona a mano, el aviso se perdía **para siempre y sin dejar rastro**.
+Medido en su momento: de 5 tickets vivos, 4 nunca dispararon un aviso, y hubo que
+rescatar 4 leads a mano después de diez días varados.
 
-## 2 · Las dos entradas comunes
+## 3 · Las dos puertas de entrada
 
-Antes cada puerta del embudo tenía su propio camino para avisar. Ahora hay **dos
-entradas, una por tipo de necesidad**, y da igual por qué canal entró la persona.
+Da igual por dónde llegue la persona —comentario de Instagram, DM, WhatsApp, la web—
+y da igual si mañana se agrega otro canal. Sólo hay **dos** entradas, una por tipo de
+necesidad:
 
-### 📞 `POST /api/aviso-llamada` — «alguien dejó su teléfono»
+### 📞 «Alguien dejó su teléfono»
 
-Alias histórico: `/api/mc-llamado` (los flujos de ManyChat ya montados siguen
-funcionando sin tocarlos).
+Alguien entregó su número. Se le crea un ticket en la tabla `Llamados`, aparece en el
+Kanban de Luis, y sale el aviso con **el número y el contexto**.
 
-```json
-{
-  "handle": "nspringm2020",          // Instagram, sin arroba
-  "subscriber_id": "1979973583",     // ManyChat — el único id estable en WhatsApp
-  "telefono": "+56942327952",        // el número a llamar (y respaldo de identidad)
-  "canal": "WhatsApp",               // DM IG · Comentario IG · WhatsApp · Web · Quiz
-  "mensaje": "¿el precio es conversable?",
-  "ciudad": "Puerto Varas",
-  "dia": "mañana",                   // hoy · mañana · lunes… · YYYY-MM-DD
-  "franja": "Tarde",
-  "bici": "recXXX",                  // o "reel": "DbCLcpEB4aT", o "ref": "4082552"
-  "notas": ""
-}
-```
+### 🆘 «Esto necesita a una persona»
 
-**Basta UNO de los tres identificadores.** Antes exigía `handle` o
-`subscriber_id`, así que un formulario de la web —que sólo tiene teléfono— no
-podía entrar.
+El bot no pudo resolverlo: no entendió el mensaje, o alguien pidió que le respondan
+por chat. Queda registrado en la tabla `Avisos` y sale el aviso.
 
-Qué hace: resuelve o crea el Lead → sella `Fecha teléfono` (la métrica #1) →
-crea el ticket en `Llamados` ya en su columna del Kanban → **deduplica** contra
-el ticket abierto del mismo lead → avisa al equipo **con contexto** → sella.
+> **Lo importante:** cualquiera de las dos acepta el `@handle` de Instagram, el id de
+> ManyChat **o el teléfono**. Antes exigían el handle de Instagram, así que un lead
+> que llegaba por WhatsApp o desde la web se caía o nacía huérfano — sin ficha
+> enlazada y fuera de las métricas.
 
-Devuelve `promesaLlamada` («en los próximos minutos» / «mañana a partir de las
-10:00») para que el bot nunca prometa una llamada que el horario no permite.
+## 4 · El contexto viaja con el aviso
 
-### 🆘 `POST /api/aviso-humano` — «el bot no pudo, esto necesita a una persona»
-
-Alias histórico: `/api/mc-aviso`. Lo llaman AB-2 (anti-bucle), T-2 (pregunta
-técnica por chat) y, desde ahora, también el backend (`mc-rellamar` cuando
-alguien aprieta un botón sobre un ticket que ya avanzó).
-
-```json
-{
-  "subscriber_id": "99887766",
-  "canal": "WhatsApp",
-  "motivo": "el bot no entendió el mensaje",
-  "mensaje": "tienen algo para mi hijo de 12"
-}
-```
-
-Registra en la tabla `Avisos` y avisa. **El registro ocurre siempre**, aunque el
-WhatsApp no salga: la métrica de «cuántas veces el bot necesitó a un humano» no
-puede depender de que el mensaje se haya entregado.
-
----
-
-## 3 · El contexto que viaja con el aviso
-
-> *«Sería ideal agregar contexto a ese mensaje para que quien llame supiera más
-> de la conversación que el bot tuvo con la persona, qué bicicleta vio o cuáles
-> han sido sus consultas.»*
-
-Lo arma `contextoLead()` en `lib/avisos.js`, **desde el CRM** — no desde
-ManyChat: lo que el bot hizo ya está escrito en Airtable.
+Un aviso que sólo dice «llama a este número» obliga a Luis a reconstruir la
+conversación antes de marcar. Así que el aviso lleva lo que el sistema ya sabe:
 
 ```
 📞 LLAMAR · Nicolás Springmuller · +56942327952 · por WhatsApp · de Puerto Varas
- · pregunta por Kenevo Expert · vio: Kenevo Expert (match 02/08), Levo SL (ficha 27/07)
+ · pregunta por Kenevo Expert
+ · vio: Kenevo Expert (match 02/08), Levo SL (ficha 27/07)
  · 2 tickets de llamada · 2º aviso · estado match_entregado
  · dijo: «¿el precio es conversable?»
 ```
 
-Los segmentos van **del más accionable al menos**, porque el texto se corta por
-el final si excede el tope de la plantilla: lo que se pierde al truncar es lo
-prescindible.
+Sale del CRM, no de ManyChat: lo que el bot hizo ya está escrito en Airtable.
 
----
+Los datos van **del más accionable al menos**, porque si el texto excede el largo que
+permite WhatsApp se corta por el final — y lo que se pierde tiene que ser lo
+prescindible, nunca el teléfono.
 
-## 4 · Horario por persona — la tabla `Equipo`
+## 5 · Quién recibe qué, y a qué hora
 
-Hasta ahora había **una franja 9–20 pareja para todos**. Ahora cada persona
-declara su turno y qué tipos de aviso recibe.
+Todo esto se configura en la tabla **`Equipo`** de Airtable. **El sistema la lee en
+cada aviso**, así que editarla cambia el comportamiento al instante, sin que nadie
+tenga que desplegar código.
 
-| Campo | Qué |
+| Campo | Qué es |
 |---|---|
 | `Nombre` | quién es |
 | `SID ManyChat` | su id de suscriptor. Sin esto no se le puede mandar nada |
-| `Horario` | `días@desde-hasta`, hora de Chile, separados por `\|`. **Vacío = la franja general** |
-| `Recibe` | Llamadas · Humano · Solicitudes · Consignaciones · Sourcing · Reagendo · Briefing |
-| `Activo` | apagado = la fila no existe para el sistema |
-| **`Atiende clientes`** | **quién le CONTESTA a la persona.** De esta gente sale la promesa que el bot le hace al cliente — ver §4-bis |
+| `Horario` | cuándo recibe avisos (formato abajo). **Vacío = de 9 a 20 todos los días** |
+| `Recibe` | qué tipos de aviso le llegan |
+| `Activo` | apagado = esta fila no existe para el sistema |
+| `Atiende clientes` | **quién le CONTESTA a la persona.** Ver §5.3 — no es lo mismo que `Recibe` |
 
-### El turno real del equipo (Gabriel, 2026-08-20)
+### 5.1 · El formato del horario
 
-| Quién | Horario | Recibe | Atiende | SID |
-|---|---|---|---|---|
-| **Luis** | `1,3-5@9-20\|6@9-15` — lun, mié a vie 9–20 · sáb 9–15 | todo | ✅ | `579628082` |
-| **Juan Alfonso** | `2@9-20` — cubre el martes | todo | ✅ | ⚠️ **falta** |
-| **Roberto** | `*@8-20` — todos los días | todo + Sourcing | ❌ | `302195575` |
-| **Gabriel** | `*@8-20` — todos los días | todo + Sourcing | ❌ | ⚠️ **falta** |
-
-**Nadie atiende los domingos**, y el martes lo cubre sólo Juan Alfonso. Mientras
-falte su SID, el martes el aviso le llega únicamente a Roberto — pero la promesa
-al cliente **sí** cuenta el martes, porque Juan Alfonso trabaja aunque todavía no
-esté cableado en ManyChat.
-
-## 4-ter · 🔴 Recibir no es sellar
-
-El sello `Aviso equipo enviado` significa **«este caso está cubierto, no lo vuelvas
-a mandar»**. Se escribía en cuanto CUALQUIERA recibía el aviso — y con el equipo
-real eso resultó estar mal.
-
-Gabriel y Roberto reciben los avisos de llamadas todos los días de 8 a 20 para
-mirar el negocio, pero **no llaman**. Un lead que entraba un domingo a las 13:00
-les llegaba a ellos, el ticket quedaba sellado, y el lunes le aparecía a Luis
-marcado «esperando 20h» y **ordenado DESPUÉS de los que nadie había visto**: los
-leads más frescos quedaban sepultados bajo los más viejos. Son ~16 horas por
-semana, y son las de más tráfico orgánico — el fin de semana.
-
-**La regla:** para los avisos de cara al cliente (`llamada` y `humano`), el sello
-exige que se haya enterado alguien con **`Atiende clientes`**. Que lo reciba un
-observador está bien —es lo que se pidió— pero **no descuenta la cola**.
+Bloques `días@desde-hasta`, separados por `|`. Días: `0`=domingo … `6`=sábado.
+La hora de cierre es **exclusiva**: `9-20` significa que a las 20:00 en punto ya es
+fuera.
 
 ```
-dom          gr        ← reciben Gabriel y Roberto · NO se sella · sigue 🆕
-lun–vie 9h  Lgr →1     ← Luis puede sellar
-mar     9h  Jgr →1     ← Juan Alfonso cubre el martes
-sáb    15h   gr        ← Luis ya cerró · NO se sella
+1-5@9-20|6@9-15      lunes a viernes de 9 a 20, sábado de 9 a 15
+*@8-20               todos los días de 8 a 20
+1,3-5@9-20           lunes, y de miércoles a viernes
 ```
 
-⚠️ **Sólo aplica a `llamada` y `humano`.** En `solicitud`, `consigna` y `sourcing`
-el que actúa es justamente Roberto, que no atiende clientes: exigirle el flag ahí
-dejaría esas colas sin sellar nunca y el barrido reenviaría para siempre.
+### 5.2 · El turno real hoy
 
-Y para que eso no se convierta en una tormenta, **`cron-avisos` no corre una cola
-si no hay nadie que pueda sellarla** (`hayQuienActue`). Si corriera, le mandaría a
-los observadores el mismo WhatsApp cada 15 minutos hasta que entrara Luis.
+| Quién | Horario | Recibe | Atiende |
+|---|---|---|---|
+| **Luis** | `1,3-5@9-20` + `6@9-15` — lun, mié a vie 9–20 · sáb 9–15 | todo | ✅ |
+| **Juan Alfonso** | `2@9-20` — cubre el martes | todo | ✅ |
+| **Roberto** | `*@8-20` — todos los días | todo | ❌ |
+| **Gabriel** | `*@8-20` — todos los días | todo | ❌ |
 
-## 4-bis · Quién atiende ≠ quién recibe el aviso
+**Nadie atiende los domingos.** El martes lo cubre sólo Juan Alfonso.
 
-Parecen lo mismo y no lo son, y confundirlos hace que el bot mienta.
+### 5.3 · 🔴 Recibir no es lo mismo que atender
 
-Gabriel y Roberto reciben avisos **todos los días de 8 a 20** para mirar el
-negocio. El que le contesta a la persona es **Luis** (y **Juan Alfonso** los
-martes). Si la promesa saliera de «quién recibe el aviso», un domingo a las 10:00
-el bot prometería respuesta ese mismo día porque Roberto está de turno.
+Ésta es la distinción más importante de toda la configuración, y confundirla tiene
+dos consecuencias caras.
 
-Por eso el checkbox **`Atiende clientes`**: sólo esas filas entran en el cálculo
-de la promesa. Y a propósito **no se exige `SID ManyChat`** para contar: el
-horario que se le promete al cliente depende de quién **trabaja**, no de quién
-está registrado para recibir WhatsApp.
+**Gabriel y Roberto reciben los avisos todos los días de 8 a 20 para mirar el
+negocio, pero no llaman a nadie.** De ahí salen dos reglas:
 
-### Lo que el bot le dice a la persona
+**(a) La promesa que el bot le hace al cliente sale de quien ATIENDE.**
+Si saliera de quien recibe, un domingo a las 10:00 el bot prometería respuesta ese
+mismo día porque Roberto está de turno. Sería mentira.
 
-`promesaAtencion()` en `lib/avisos.js` — una sola función para los dos usos, que
-sólo cambian el texto de «hay alguien ahora»:
+**(b) Recibir un aviso no lo saca de la cola.**
+El sello significa «este caso está cubierto». Si lo escribiera cualquiera que recibe,
+un lead que entra un domingo quedaría sellado por la recepción de Gabriel y Roberto,
+y el lunes le aparecería a Luis marcado *«esperando 20h»* y **ordenado después de los
+que nadie vio**. Los leads más frescos quedarían sepultados bajo los más viejos.
 
-| Cuándo escribe | Llamada (`aviso-llamada`) | Respuesta por chat (`aviso-humano`) |
-|---|---|---|
-| lunes 11:00 | «en los próximos minutos» | «en un rato» |
-| lunes 07:00 | «hoy a partir de las 9:00» | ídem |
-| **domingo 03:00** | **«mañana lunes a partir de las 9:00»** | ídem |
-| lunes 21:00 | «mañana martes a partir de las 9:00» | ídem |
-| sábado 16:00 | «el lunes a partir de las 9:00» | ídem |
+Por eso: **el sello exige que se entere alguien con `Atiende clientes`.** El
+observador recibe su WhatsApp igual —lo pidió— pero la cola no se descuenta.
 
-La promesa **nombra el día** cuando no es hoy. Pedido de Gabriel: *«si alguien
-escribe un domingo a las 3 AM, se le dice: ok, perfecto, nuestro especialista te
-responderá mañana (lunes) apenas llegue»*.
+> ⚠️ Esta regla aplica sólo a los avisos de cara al cliente (llamadas y «necesita una
+> persona»). En consignaciones, búsquedas y sourcing el que actúa es Roberto:
+> exigirle ahí el flag dejaría esas colas sin sellar nunca.
 
-⚠️ **`aviso-humano` devuelve `promesa` en su respuesta, pero ManyChat todavía no
-la imprime.** Hay que mapear `$.promesa` a un campo del contacto y usarlo en el
-copy de AB-3 y T-2, que hoy dicen «Espérame un poco 🙌» sin plazo. Es trabajo
-manual en ManyChat.
+## 6 · El briefing de la mañana
 
-**Formato del horario.** Días `0`=domingo … `6`=sábado, con rangos y comas.
-`hasta` es **exclusivo** (a las 20:00 en punto ya es fuera).
-
-```
-1-5@9-20|6@10-15     lunes a viernes 9 a 20, sábado 10 a 15
-*@8-22               todos los días
-1,3,5@10-18          lunes, miércoles y viernes
-```
-
-### La red de seguridad, y por qué importa
-
-El 2026-08-06 se **borró** la lógica por persona justamente porque vivía copiada
-seis veces en dos dialectos incompatibles. Volver a tenerla sólo es seguro con
-tres condiciones, y las tres se cumplen:
-
-1. **Vive en un solo archivo** (`lib/avisos.js`). Ningún endpoint decide horarios.
-2. **Sin la tabla, o con todos inactivos, el sistema se comporta EXACTAMENTE como
-   antes**: envs `AVISO_*_SIDS` + franja global. Probado en `test/equipo-horarios.mjs`.
-3. **El fallback es por tipo**: si nadie está suscrito a `Briefing` en la tabla,
-   ese aviso cae a `BRIEFING_SIDS` aunque otros tipos sí tengan gente.
-
-### Dos excepciones al filtro por hora
-
-| Tipo | Regla | Por qué |
-|---|---|---|
-| `Briefing` | mira el **día**, no la hora | Si mirara la hora, quien entra a las 10:00 nunca recibiría el de las 9:00. Si no mirara nada, quien cubre sólo los martes recibiría **seis resúmenes inútiles por semana**. La pregunta correcta es «¿trabajas hoy?» |
-| `Reagendo` | no mira **nada** | Avisa que una visita de **hoy** se movió, y es el único aviso que **no deja sello**: sin red, silenciarlo es perderlo |
-
-Con el equipo real, el briefing de las 9:00 sale así:
-
-```
-dom  Gabriel, Roberto
-lun  Gabriel, Roberto, Luis
-mar  Gabriel, Roberto, Juan Alfonso     ← Luis no trabaja el martes
-mié–sáb  Gabriel, Roberto, Luis
-```
-
-Y un escape: `AVISO_HUMANO_24H=1` devuelve los avisos de «humano requerido» al
-comportamiento anterior (sonar siempre, sin mirar el turno).
-
-### La promesa al cliente sale del mismo lugar
-
-`promesaLlamada` se calcula con la **unión de los turnos de quien recibe
-Llamadas**. «Cuándo te llamamos» debe ser «cuándo hay alguien a quien le llega el
-aviso»; mantener dos horarios separados es la enfermedad que produjo las seis
-copias. La env `HORARIO_ESPECIALISTA`, si está seteada, sigue mandando (escape
-manual).
-
----
-
-## 5 · El briefing de la mañana
-
-Sale a las **9:00** de Chile, todos los días, a quien esté suscrito a `Briefing`.
-
-Ahora lista **cinco secciones**, y el título de cada una **es la acción pendiente**:
+Sale a las **9:00** de Chile, todos los días, a quien **trabaja ese día**.
 
 ```
 📞 POR LLAMAR · 3: (1) Ana · +56911 · WhatsApp · 🆕 nadie lo ha visto  …
-🆘 SIN RESPONDER · 2: (1) @paljaro · DM IG · «Quiero una de entrada…» · esperando 1d  …
+🆘 FALTA RESPONDER · 2: (1) @paljaro · DM IG · «Quiero una de entrada…» · esperando 1d
 🔎 POR BUSCAR · 1: (1) Epic 8 talla M · hasta $3.500.000 · +56922 · esperando 2d
 🚲 POR EVALUAR · 1: (1) Tarmac SL7 · pide $3.500.000 · +56933 · esperando 1d
 📅 VISITAS DE HOY · 2: (1) 11:00 · Juan · Levo SL · +56944  …
 ```
 
-Antes sólo sabía de llamados y visitas. Las otras tres colas se acumulaban sin
-que ningún briefing las nombrara: **si el bot no entendía un mensaje a las 23:00,
-a la mañana siguiente no se enteraba nadie.**
+**El título de cada sección es la acción pendiente.** Nadie tiene que deducir qué
+hacer con cada línea.
 
 Detalles que importan:
 
-- **Lista TODA la cola, no sólo lo nuevo.** Si un aviso individual salió un día
-  que nadie estaba mirando, el registro igual reaparece mañana. Los que nadie ha
-  visto van primero y marcados `🆕`.
-- **Sella las cuatro colas**, no sólo los llamados. Lo que entra al mensaje se
-  sella; **lo que no cupo se deja sin sellar a propósito** para que el barrido de
-  las 09:15 lo mande individualmente. Ni silencio ni duplicado.
-- **Si el briefing no le llegó a nadie, no sella nada.** Degradación elegante:
-  más mensajes, menos contexto, cero pérdida.
-- **Presupuesto compartido en orden de urgencia.** Si la cola de llamadas está
-  desbordada se come el espacio y las demás dicen honestamente cuántas quedaron
-  fuera. Una llamada que se enfría cuesta más que una consignación que espera un día.
-- **Ventana de 7 días** para «SIN RESPONDER» (`AVISOS_VENTANA_DIAS`). Sin esto,
-  un aviso que nadie marcó `Resuelto` se quedaría para siempre y el equipo
-  aprendería a ignorar la sección — que es como muere un tablero.
+- **Lista toda la cola, no sólo lo nuevo.** Si un aviso salió un día que nadie estaba
+  mirando, el caso reaparece mañana. Los que nadie ha visto van primero y marcados 🆕.
+- **Mira el día, no la hora.** Quien entra a las 10:00 igual recibe el de las 9:00;
+  quien cubre sólo los martes no recibe seis resúmenes inútiles por semana.
+- **Lo que entra al mensaje se sella; lo que no cupo, no.** Así el barrido de las
+  09:15 manda individualmente lo que quedó fuera. Ni silencio ni duplicado.
+- **Si el briefing no le llegó a nadie, no sella nada.** Más mensajes, menos
+  contexto, cero pérdida.
+- **Ventana de 7 días** para «FALTA RESPONDER». Sin eso, un aviso que nadie marcó
+  resuelto se quedaría para siempre y el equipo aprendería a ignorar la sección — que
+  es como muere un tablero.
+- **Si una tabla no se puede leer, lo dice** («⚠️ NO SE PUDO LEER Solicitudes»). Un
+  briefing que dice «nada pendiente» porque falló una lectura es peor que no mandarlo.
 
-⚠️ **Interruptor de plantilla.** `briefing_diario` (v1) tiene UNA variable;
-`briefing_diario_v2` tiene dos. `BRIEFING_V2=1` se setea **en el mismo momento**
-en que `FLOW_NS_BRIEFING` pasa a apuntar a la v2. Con la v1 apuntada y dos
-variables, el mensaje imprimiría sólo las visitas… y se sellaría igual.
+## 7 · Los dos tableros, y qué hacer en cada uno
 
----
+### 📞 «1 · Llamadas» — el Kanban de Luis
 
-## 5-bis · El Kanban «6 · Falta responder»
+Todo lead que entrega su teléfono cae acá. **Arrastrar la tarjeta ES marcar la salida
+ES disparar el mensaje al cliente.** No hay un segundo paso que se pueda olvidar.
 
-> Pedido de Gabriel (2026-08-20): *«una cola de todas las solicitudes que requieran
-> la intervención de un humano, tipo kanban, y así podemos dejar registrado el hecho
-> de que un humano haya respondido y marcar qué pasa con ese lead»*.
-
-El hueco que tapa: una conversación que el bot no pudo resolver se registraba en
-`Avisos`, alguien la respondía a mano… **y ahí se acababa el rastro**. Si esa
-persona terminaba en la cola de llamados y quedaba sin interés, eso no quedaba
-escrito en ninguna parte.
-
-**Pantalla 6 de la interfaz «Operación Llamadas (V2)»** (`pag4VY9lp3n8LpZzr`),
-Kanban sobre la tabla `Avisos` agrupado por **`Salida`**. Mismo principio que el
-Kanban de Luis: **arrastrar la tarjeta ES registrar lo que pasó**, un solo gesto.
-
-| Columna | Cuándo | Qué implica |
+| Columna | Cuándo | Qué dispara |
 |---|---|---|
-| **Pendiente** | nadie respondió todavía | sigue en el briefing bajo `🆘 FALTA RESPONDER` |
-| **Respondido** | le contestaron y ahí quedó | sale de la cola |
-| **Pasó a llamada** | entró a la cola de llamados | se enlaza el ticket en `Llamado` |
-| **Sin interés** | habló y no va a avanzar | el motivo real va en `Notas` |
-| **Spam / no aplica** | no era un lead | — |
+| 📞 Llamada pendiente | la crea el bot | — |
+| 🏬 Visita agendada | vive en Santiago y viene | confirmación + recordatorios |
+| 📍 Coordinación región | fuera de Santiago | mensaje de gestión |
+| 🔎 Encargo de búsqueda | no tenemos lo que busca | crea el ticket de búsqueda |
+| ↩️ No contestado | no se pudo hablar | mensaje de rescate · **vuelve a la cola** |
+| ✖️ Sin interés | habló y no avanza | nada. El motivo va en `Notas` |
 
-Campos de la tarjeta: `@handle IG` · `Canal` · **`Mensaje`** (lo que escribió) ·
-`Creado` · `Subscriber ID` (cómo encontrarlo en ManyChat cuando no hay handle) ·
-`Atendido por` · `Notas` · `Llamado` · `Lead` · `Respuesta (min)`.
+### 🆘 «6 · Falta responder» — las conversaciones que el bot no pudo
 
-**`Respuesta (min)`** mide cuánto tardó un humano en atender, y **no necesita
-ninguna automatización**: cuelga de `LAST_MODIFIED_TIME({Salida})`. El precio es
-que si se re-arrastra la tarjeta el número se recalcula — aceptable para lo que
-mide. (La alternativa sería otra automatización de Airtable, y ya hay una
-esperando publicación.)
+Mismo principio: arrastrar **es** registrar qué pasó con ese lead.
 
-Ordenado por antigüedad: **arriba el que lleva más esperando**.
-
-## 6 · 🔴 La cola se define por `Salida`, nunca por `Estado`
-
-**Éste es el bug que disparó la auditoría, y la lección que deja.**
-
-`Llamados` tiene dos campos que parecen decir lo mismo:
-
-| Campo | Quién lo escribe | Qué es |
-|---|---|---|
-| **`Salida`** | **Luis**, arrastrando la tarjeta del Kanban | la verdad operativa |
-| `Estado` | el código (`salida-llamado`) | un espejo, para las vistas y automatizaciones viejas |
-
-El briefing armaba su cola con `{Estado}='Llamada pendiente'`. Pero el espejo
-tenía **dos caminos por los que no se escribía**, porque se sincronizaba al final
-de la función y estos dos se iban antes:
-
-- `sin_lead` → tickets sin Lead enlazado (los que el staff crea con el «+»);
-- `ya_enviado` → tickets que ya mandaron un mensaje al cliente.
-
-Resultado medido en producción: `recCkAybRN6Udjb7c` (Rodrigo Riquelme) quedó con
-`Salida = Sin interés` y `Estado = Llamada pendiente`, y el briefing se lo
-repitió a Luis **trece mañanas seguidas**.
-
-La corrección tiene dos mitades y las dos son necesarias:
-
-1. `salida-llamado` sincroniza el espejo **antes de cualquier return temprano**.
-2. Briefing, barrido y dedup leen la cola por **`Salida`**. Aunque el espejo se
-   vuelva a romper, la cola no miente.
-
-Las dos colas con Kanban están declaradas **una sola vez**, en `lib/avisos.js`, y
-las importan el briefing, el barrido y el dedup:
-
-```js
-export const COLA_LLAMADOS =
-  `OR({Salida}='Llamada pendiente', {Salida}='No contestado', {Salida}=BLANK())`;
-
-export const COLA_AVISOS =
-  `AND({Resuelto}=0, OR({Salida}=BLANK(), {Salida}='Pendiente'))`;
-```
-
-`No contestado` sigue en la cola a propósito: no contestar no cierra nada, es la
-bandeja de reintentos. `BLANK()` cubre el ticket recién creado. `Resuelto` se
-conserva como escape manual: sólo puede **sacar** cosas de la cola, nunca
-meterlas, así que no puede producir fantasmas.
-
-> **La lección general: la cola la define el campo del OPERADOR, no el derivado.**
-> Guardas en `test/guardas-avisos.mjs` (§7 y §8) para que no vuelva.
-
----
-
-## 7 · Mapa de piezas
-
-| Archivo | Qué hace |
+| Columna | Qué implica |
 |---|---|
-| `lib/avisos.js` | **Único dueño** del horario, los destinatarios, el contexto y el envío |
-| `functions/api/aviso-llamada.js` | Entrada común «dejó su teléfono» (alias: `mc-llamado`) |
-| `functions/api/aviso-humano.js` | Entrada común «necesita a una persona» (alias: `mc-aviso`) |
+| Pendiente | sigue apareciendo en el briefing |
+| Respondido | le contestaron y ahí quedó |
+| Pasó a llamada | se enlaza el ticket que nació |
+| Sin interés | el motivo real va en `Notas` |
+| Spam / no aplica | no era un lead |
+
+### 7.1 · Si algo se ve raro
+
+| Síntoma | Qué mirar |
+|---|---|
+| «Me llegó un aviso de alguien que ya atendí» | ¿la tarjeta quedó en la columna correcta del Kanban? La cola se lee por ahí |
+| «No me está llegando nada» | tu fila en `Equipo`: ¿`Activo` marcado? ¿`SID ManyChat` cargado? ¿el tipo en `Recibe`? |
+| «Me llegan avisos a deshora» | tu `Horario` en `Equipo`. Ojo: la hora de cierre es exclusiva |
+| «El briefing dice que no hay nada y sí hay» | busca «NO SE PUDO LEER» en el mensaje: es un fallo de lectura, no una cola vacía |
+| «Un lead que dejó su teléfono no aparece» | ¿lo capturó una persona a mano en ManyChat? Ese camino todavía no escribe en el CRM (§9) |
+
+---
+
+# 8 · Sección técnica
+
+> Para Claude Code y para quien vaya a tocar el código. Todo lo de abajo está vivo en
+> `biketrust-sitio` (Cloudflare Pages). Los tests se corren con `npm test`.
+
+## 8.1 · Mapa de archivos
+
+| Archivo | Rol |
+|---|---|
+| **`lib/avisos.js`** | **El único dueño** del horario, los destinatarios, el contexto y el envío. Vive fuera de `functions/` para que Pages no lo rutee |
+| `functions/api/aviso-llamada.js` | Entrada común «dejó su teléfono». Alias: `mc-llamado.js` |
+| `functions/api/aviso-humano.js` | Entrada común «necesita una persona». Alias: `mc-aviso.js`. Exporta `avisarHumano()` para los avisos que nacen en el backend |
 | `functions/api/cron-avisos.js` | Barrido cada 15 min sobre las **cuatro** colas |
 | `functions/api/cron-briefing.js` | El briefing de las 9:00 |
-| `functions/api/salida-llamado.js` | Post-llamada: espejo del Estado, mensaje al cliente, encargo |
+| `functions/api/salida-llamado.js` | Post-llamada: espejo del `Estado`, mensaje al cliente, creación del encargo |
 | `functions/api/mc-rellamar.js` | El botón «Sí, llámenme» |
 | `mc-waitlist` · `mc-consigna` · `cron-sourcing` · `mc-agenda` | Emisores de sus propias colas, todos vía `avisar()` |
 
-### Las siete familias de aviso
+El disparador de los cron es `worker-cron/src/index.js`, un Worker aparte: Pages
+Functions no soporta cron nativo.
 
-| Tipo | Cola / disparo | Plantilla | `Recibe` |
+## 8.2 · Las siete familias de aviso
+
+| `tipo` | Cola | Plantilla | `Recibe` |
 |---|---|---|---|
 | `llamada` | `Llamados` sin sello | `nuevo_llamado` | Llamadas |
 | `humano` | `Avisos` sin resolver | `aviso_equipo` | Humano |
@@ -403,14 +256,163 @@ meterlas, así que no puede producir fantasmas.
 | `reagendo` | visita de hoy movida | `visita_reagendada` | Reagendo |
 | `briefing` | 9:00 | `briefing_diario_v2` | Briefing |
 
+## 8.3 · La API de `lib/avisos.js`
+
+```js
+// Envío único. Decide destinatarios por turno y manda.
+await avisar(env, { tipo, flowEnv, campo, texto, extra?, now?, ignorarHorario? })
+// → { enviados, enviadosA, puedeSellar, motivo, errores, destinatarios }
+```
+
+**Cómo leer el resultado — esto es el contrato, no un detalle:**
+
+| Resultado | Significa | Qué hacer |
+|---|---|---|
+| `puedeSellar: true` | se enteró alguien que va a actuar | **sellar** |
+| `enviados > 0` pero `puedeSellar: false` | sólo lo vieron observadores | **no sellar** · motivo `solo_observadores` |
+| `enviados: 0`, motivo `fuera_de_horario` | no hay nadie de turno | **no sellar**, no gastar intento |
+| `enviados: 0`, otro motivo | fallo o falta configuración | **no sellar**, gastar intento |
+
+`quedaPendiente(motivo)` agrupa los dos motivos que significan «sigue abierto, hay que
+reintentar» y no son fallos: `fuera_de_horario` y `solo_observadores`.
+
+Otras funciones: `destinatarios()` · `atiendenClientes()` · `hayQuienActue()` ·
+`contextoLead()` · `promesaAtencion()` · `trabajaHoy()` · `enHorarioPersona()` ·
+`horarioUnion()` · `cargarEquipo()` (caché de 60 s) · `unaLinea()`.
+
+## 8.4 · Las colas, definidas una sola vez
+
+```js
+export const COLA_LLAMADOS =
+  `OR({Salida}='Llamada pendiente', {Salida}='No contestado', {Salida}=BLANK())`;
+
+export const COLA_AVISOS =
+  `AND({Resuelto}=0, OR({Salida}=BLANK(), {Salida}='Pendiente'))`;
+```
+
+Las importan el briefing, el barrido y el dedup. **Ningún endpoint puede escribir la
+suya** — hay guarda en `test/guardas-avisos.mjs`.
+
+`No contestado` sigue en la cola a propósito: no contestar no cierra nada, es la
+bandeja de reintentos. `Resuelto` es un escape manual que sólo puede **sacar** cosas
+de la cola, nunca meterlas, así que no puede producir fantasmas.
+
+## 8.5 · Constantes que gobiernan el comportamiento
+
+| Constante | Valor | Dónde | Por qué |
+|---|---|---|---|
+| `AVISO_FRANJA` | `9-20` | env | Sólo se usa **sin** tabla `Equipo` |
+| `MADUREZ_MIN` | 10 min | `cron-avisos` | No avisar la fila en blanco que alguien acaba de crear con el «+» |
+| `MAX_POR_CORRIDA` | 10 | `cron-avisos` | Freno de ráfaga: 40 avisos/hora como techo |
+| `MAX_INTENTOS` | 3 | `cron-avisos` | Un destinatario roto no puede reenviar para siempre |
+| `REARME_MIN` | 120 min | `aviso-llamada`, `mc-rellamar` | Tres reels en una tarde = un aviso, no tres |
+| `MAX_REAPERTURAS` | 3 | `mc-rellamar` | Después de 3 vueltas, insistir molesta |
+| `MAX_VAR` | 880 | `cron-briefing` | Tope por variable de plantilla de WhatsApp |
+| `VENTANA_DIAS` | 7 | `cron-briefing` | Higiene de la sección «FALTA RESPONDER» |
+| `EQUIPO_TTL_MS` | 60 s | `lib/avisos.js` | Caché de la tabla `Equipo` |
+| `BRIEFING_HOUR` | 9 | env | La ventana es `hora === N && minuto < 15` |
+
+## 8.6 · 🔴 Las reglas que ya se rompieron una vez
+
+**No las cambies sin leer por qué existen.** Cada una tiene guarda en
+`test/guardas-avisos.mjs`.
+
+**1 · La cola la define el campo del OPERADOR, no el derivado.**
+`Llamados` tiene `Salida` (lo que arrastra Luis) y `Estado` (un espejo que mantiene el
+código). El briefing leía `Estado`, el espejo se desincronizó por dos returns
+tempranos, y un ticket cerrado se repitió a Luis **trece mañanas seguidas**. Todo
+consumidor pregunta por el campo que toca la persona, y los espejos se escriben
+**antes de cualquier return temprano**.
+
+**2 · `ARRAYJOIN` de un campo de enlace devuelve el valor VISIBLE, no el record id.**
+`FIND('recXXX', ARRAYJOIN({Lead}))` da **0 siempre**. Costó el botón «Sí, llámenme»
+entero: nadie encontraba su ticket. Usa el **enlace inverso** (`Leads.Llamados`, que
+sí trae ids) + `RECORD_ID()`. *Sí* vale `ARRAYJOIN` sobre un **lookup del RecID**.
+
+**3 · El horario vive en un solo archivo.**
+Llegó a haber **seis copias** de `horarioOk` en dos dialectos incompatibles, con
+defaults que ya no coincidían. Si la env se hubiera seteado con el formato
+documentado, tres de ellas habrían avisado 24/7 en silencio.
+
+**4 · El `try` va DENTRO del bucle de destinatarios.**
+Con el `try` afuera, un solo sid roto tumba el envío de todos los demás y —con el
+barrido reintentando— produce una tormenta cada 15 minutos.
+
+**5 · Recibir no es sellar.**
+Ver §5.3. El sello exige `puedeSellar`, no `enviados > 0`.
+
+**6 · Un mock permisivo esconde un bug de producción.**
+Los 16 tests de `mc-rellamar` estaban verdes con el endpoint **muerto**, porque el
+mock devolvía tickets a *cualquier* consulta. Cuando un test simula una API, que
+**valide la consulta**, no sólo la ruta.
+
+**7 · `NOW()` de Airtable viene cacheado.** Inútil para sellar horas. Usa
+`LAST_MODIFIED_TIME({Campo})`.
+
+**8 · Chile no es UTC-4 fijo.** Pasa a UTC-3 el primer sábado de septiembre. Todo
+cálculo de fecha va por `Intl` con `America/Santiago`. Quedan ~11 líneas de deuda con
+`Date.now() - 4*3600*1000` en el repo; el código nuevo no puede sumar más.
+
+## 8.7 · Modelo de datos
+
+**`Equipo`** (creada 2026-08-20) — `Nombre`, `SID ManyChat`, `Horario`, `Recibe`
+(multi), `Activo`, `Atiende clientes`, `Notas`.
+🔴 **Si la tabla está vacía, no existe, o nadie está `Activo`, el sistema vuelve al
+comportamiento anterior**: envs `AVISO_*_SIDS` + franja `9-20` pareja. El fallback es
+**por tipo**: si nadie está suscrito a `Briefing`, ese aviso cae a `BRIEFING_SIDS`
+aunque otros tipos sí tengan gente.
+
+**`Llamados`** — la cola central. `Salida` gobierna el Kanban;
+`Aviso equipo enviado` es el sello del aviso **al equipo**; `Aviso salida enviado` es
+el sello del mensaje **al cliente**. ⚠️ Son distintos y se confunden fácil.
+
+**`Avisos`** — `Resumen`, `@handle IG`, `Subscriber ID`, `Canal`, `Motivo`, `Mensaje`,
+`Salida` (Kanban), `Atendido por`, `Notas`, `Llamado` (link), `Respuesta (min)`,
+`Aviso equipo enviado`, `Intentos aviso`, `Resuelto`, `Terminó en venta` (rollup).
+
+`Respuesta (min)` mide la velocidad de atención humana **sin ninguna automatización**:
+cuelga de `LAST_MODIFIED_TIME({Salida})`.
+
+## 8.8 · Invariantes que los tests protegen
+
+`npm test` — 16 suites, **344 aserciones**, 16 guardas. Las que más importan:
+
+- El sello exige `puedeSellar`; un observador no descuenta la cola
+- La cola se lee por `Salida`; el espejo se escribe antes de los returns tempranos
+- Nadie busca por `ARRAYJOIN` de un campo de enlace
+- Ningún endpoint define su propio horario ni lee `AVISO_*_SIDS` directo
+- Ningún bucle de destinatarios queda envuelto por un `try` externo
+- Sin tabla `Equipo`, el comportamiento es idéntico al anterior
+- El briefing sella **exactamente** lo que entró al mensaje
+- Domingo 3 AM → «mañana lunes a partir de las 9:00»
+
 ---
 
-## 8 · Qué falta (y no es código)
+## 9 · Lo que falta
 
 | # | Qué | Dónde | Mientras falte |
 |---|---|---|---|
-| 1 | **Publicar el borrador** de la automatización «Sello de 1ª llamada · Llamados» | Airtable | 🔴 El arreglo del 2026-08-07 **nunca se publicó**: lo que corre en vivo sigue colgando de `Estado`, así que **`Espera (min)` sigue vacío para todo ticket «No contestado»** |
-| 2 | Llenar y **activar** las filas de la tabla `Equipo` | Airtable | El sistema usa la franja 9–20 pareja de siempre |
-| 3 | Plantilla `aviso_equipo` aprobada + `FLOW_NS_AVISO_EQUIPO` | Meta / Cloudflare | Los avisos de «humano requerido» se registran pero no salen por WhatsApp |
-| 4 | `briefing_diario_v2` + `BRIEFING_V2=1` | Meta / Cloudflare | El briefing va en una sola variable, apelmazado |
-| 5 | Apuntar los flujos nuevos a `/api/aviso-llamada` y `/api/aviso-humano` | ManyChat | Nada: los alias funcionan indefinidamente |
+| 1 | **La recaptura del teléfono capturado a mano** | pendiente de decisión | Si una persona atiende el DM y le dan el número ahí, **no se escribe en el CRM**: sin ticket, sin `Fecha teléfono`, sin aviso. Pasó de verdad con un lead el 19-ago |
+| 2 | `briefing_diario_v2` (2 variables) + `BRIEFING_V2=1` | Meta / Cloudflare | El briefing va apelmazado en un párrafo. ⚠️ Las dos cosas se hacen **en el mismo momento** |
+| 3 | Las secciones que no caben desaparecen sin «(+N más)» | `cron-briefing` | Pega con más de ~11 llamados en cola |
+| 4 | La caché de `Equipo` se envenena con un fallo transitorio | `lib/avisos.js` | Hasta 60 s sirviendo vacío tras un error de Airtable |
+| 5 | Apuntar montajes nuevos a `/api/aviso-llamada` y `/api/aviso-humano` | ManyChat | Nada: los alias funcionan indefinidamente |
+
+---
+
+## 10 · Cómo se llegó hasta acá
+
+El sistema se auditó dos veces con **agentes adversariales**: un grupo busca fallas
+con lentes independientes, y otro grupo intenta **refutar cada hallazgo** antes de que
+cuente como real.
+
+| | Hallazgos | Confirmados | Descartados |
+|---|---|---|---|
+| Auditoría (2026-08-19, 12 agentes) | 47 | 42 | 5 |
+| Revisión post-despliegue (2026-08-20, 8 agentes) | 25 | 4 | 21 |
+
+Los escépticos cazaron **dos regresiones introducidas durante el propio arreglo** —
+una consulta rota que yo mismo escribí, y la regla del sello que dejaba a los
+observadores consumiendo la cola. Vale la pena mantener ese patrón cuando el cambio
+es grande: la tasa de descarte alta (21 de 25 en la segunda pasada) es señal de que el
+filtro está funcionando, no de que sobró trabajo.
