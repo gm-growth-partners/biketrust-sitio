@@ -96,7 +96,7 @@ export async function onRequest({ request, env }) {
       tipo: 'sourcing', flowEnv: 'FLOW_NS_BUSCANDO', campo: 'cf_solicitud_datos', texto: resumen,
     });
 
-    if (res.enviados > 0) {
+    if (res.puedeSellar) {
       // Sellar SOLO si salió a alguien, para que un fallo se reintente solo.
       // ⚠️ Y se MIRA el resultado del PATCH: si el sello no se escribe, el próximo
       // tick vuelve a mandar el mismo aviso, cada 15 min, sin fin. Este cron no

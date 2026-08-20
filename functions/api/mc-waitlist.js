@@ -23,7 +23,8 @@
 // Lee con AIRTABLE_TOKEN, escribe con AIRTABLE_WRITE_TOKEN. Protegido por env
 // MC_KEY (?key=). Sin env → abierto (mismo criterio que los otros puentes ManyChat).
 
-import { avisar } from '../../lib/avisos.js';
+import { avisar, quedaPendiente,
+} from '../../lib/avisos.js';
 
 const JSONH = { 'Content-Type': 'application/json; charset=utf-8' };
 const reply = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: JSONH });
@@ -231,8 +232,8 @@ export async function onRequestPost({ request, env }) {
   const res = await avisar(env, {
     tipo: 'solicitud', flowEnv: 'FLOW_NS_SOLICITUD', campo: 'cf_solicitud_datos', texto: resumen,
   });
-  let aviso = res.motivo === 'fuera_de_horario' ? 'pendiente_de_briefing' : `sin_enviar:${res.motivo}`;
-  if (res.enviados > 0) {
+  let aviso = quedaPendiente(res.motivo) ? 'pendiente_de_briefing' : `sin_enviar:${res.motivo}`;
+  if (res.puedeSellar) {
     aviso = 'enviado';
     await afetch(`${C.api(env.AIRTABLE_SOLICITUDES_TABLE || 'Solicitudes')}/${solicitudId}`, {
       method: 'PATCH', headers: C.wH,

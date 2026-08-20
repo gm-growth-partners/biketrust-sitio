@@ -10,6 +10,47 @@
 
 ## V2 · El embudo que apunta a la llamada — EN CONSTRUCCIÓN (desde 2026-07-27)
 
+### 2026-08-20 (d) · Recibir no es sellar — la regresión que cazó la revisión post-despliegue
+
+Con el sistema ya en producción se corrió una **revisión adversarial de 8 agentes** sobre el
+despliegue del día (4 lentes: regresiones · el primer briefing · la configuración del equipo ·
+convivencia con lo que ya estaba vivo). 25 hallazgos, **21 descartados por los escépticos**,
+4 confirmados. El primero era una regresión mía y de las caras.
+
+🔴 **Gabriel y Roberto consumían la cola sin llamar a nadie.** El sello
+`Aviso equipo enviado` se escribía con `enviados > 0`: bastaba que CUALQUIERA recibiera el
+aviso. Pero ellos reciben los avisos de llamadas todos los días de 8 a 20 para mirar el negocio,
+y no llaman. Un lead que entraba un domingo a las 13:00 les llegaba, el ticket quedaba sellado,
+y el lunes le aparecía a Luis marcado «esperando 20h» y **ordenado después de los que nadie
+había visto** (`ordenar()` manda los sellados al final). Los leads más frescos quedaban
+sepultados bajo los más viejos. Medido: ~16 h por semana —domingo 9–20 y sábado 15–20—, que son
+las de más tráfico orgánico.
+
+*El escéptico corrigió al hallador en tres puntos y vale anotarlos: el lead **no se pierde**
+(sigue en `COLA_LLAMADOS` y el briefing lo lista igual), la franja 8:00–8:59 **no es pérdida**
+(antes tampoco avisaba a nadie), y el «peor caso» del sábado 20:30 estaba mal calculado —`*@8-20`
+tiene `hasta` exclusivo, así que a esa hora no hay nadie y el sello queda vacío. Lo que sí ocurre
+es la des-priorización y el rótulo falso.*
+
+**El arreglo.** `avisarStaff` pasa a devolver **a quién** le llegó (`enviadosA`), no sólo cuántos.
+`destinatarios` devuelve `atienden` (los que además pueden sellar) y `soloObservan`. `avisar`
+devuelve **`puedeSellar`**, y los siete emisores sellan con eso en vez de con `enviados > 0`.
+Motivo nuevo `solo_observadores`, que junto con `fuera_de_horario` forma `quedaPendiente()`: ni
+sella, ni gasta intentos, ni cuenta como fallo.
+
+⚠️ **La regla sólo aplica a `llamada` y `humano`.** En `solicitud`, `consigna` y `sourcing` el que
+actúa es justamente Roberto: exigirle `Atiende clientes` ahí dejaría esas colas sin sellar nunca
+y el barrido reenviaría para siempre. Y para que no sea una tormenta, **`cron-avisos` ya no corre
+una cola si no hay nadie que pueda sellarla** — si corriera, les mandaría a los observadores el
+mismo WhatsApp cada 15 minutos.
+
+Tests: `equipo-horarios` pasa de 41 a **52 aserciones**, con el domingo real como caso explícito
+y la contra-prueba de consignaciones. Total: 344.
+
+Los otros tres confirmados quedan anotados y sin tocar por ahora: las secciones del briefing que
+no caben desaparecen sin dejar «(+N más)» (pega con más de ~11 llamados en cola), y la caché de
+60 s de `cargarEquipo` se envenena con un fallo transitorio de Airtable.
+
 ### 2026-08-20 (c) · DESPLEGADO. Y el briefing pasa a mirar el día, no la hora
 
 **El sistema de avisos entró en producción** (`4b5e357`, con OK explícito de Gabriel). Verificado

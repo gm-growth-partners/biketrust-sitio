@@ -204,7 +204,7 @@ export async function onRequestPost({ request, env }) {
       now,
     });
     dentro = res.motivo !== 'fuera_de_horario';
-    if (res.enviados > 0) { aviso = 'enviado'; sello = nowIso; }
+    if (res.puedeSellar) { aviso = 'enviado'; sello = nowIso; }
     else if (!dentro) { aviso = 'pendiente_de_briefing'; sello = null; }
     else { aviso = `sin_enviar:${res.motivo}`; sello = null; }  // sin sello → el barrido reintenta
   }

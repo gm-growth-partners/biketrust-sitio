@@ -134,6 +134,38 @@ falte su SID, el martes el aviso le llega únicamente a Roberto — pero la prom
 al cliente **sí** cuenta el martes, porque Juan Alfonso trabaja aunque todavía no
 esté cableado en ManyChat.
 
+## 4-ter · 🔴 Recibir no es sellar
+
+El sello `Aviso equipo enviado` significa **«este caso está cubierto, no lo vuelvas
+a mandar»**. Se escribía en cuanto CUALQUIERA recibía el aviso — y con el equipo
+real eso resultó estar mal.
+
+Gabriel y Roberto reciben los avisos de llamadas todos los días de 8 a 20 para
+mirar el negocio, pero **no llaman**. Un lead que entraba un domingo a las 13:00
+les llegaba a ellos, el ticket quedaba sellado, y el lunes le aparecía a Luis
+marcado «esperando 20h» y **ordenado DESPUÉS de los que nadie había visto**: los
+leads más frescos quedaban sepultados bajo los más viejos. Son ~16 horas por
+semana, y son las de más tráfico orgánico — el fin de semana.
+
+**La regla:** para los avisos de cara al cliente (`llamada` y `humano`), el sello
+exige que se haya enterado alguien con **`Atiende clientes`**. Que lo reciba un
+observador está bien —es lo que se pidió— pero **no descuenta la cola**.
+
+```
+dom          gr        ← reciben Gabriel y Roberto · NO se sella · sigue 🆕
+lun–vie 9h  Lgr →1     ← Luis puede sellar
+mar     9h  Jgr →1     ← Juan Alfonso cubre el martes
+sáb    15h   gr        ← Luis ya cerró · NO se sella
+```
+
+⚠️ **Sólo aplica a `llamada` y `humano`.** En `solicitud`, `consigna` y `sourcing`
+el que actúa es justamente Roberto, que no atiende clientes: exigirle el flag ahí
+dejaría esas colas sin sellar nunca y el barrido reenviaría para siempre.
+
+Y para que eso no se convierta en una tormenta, **`cron-avisos` no corre una cola
+si no hay nadie que pueda sellarla** (`hayQuienActue`). Si corriera, le mandaría a
+los observadores el mismo WhatsApp cada 15 minutos hasta que entrara Luis.
+
 ## 4-bis · Quién atiende ≠ quién recibe el aviso
 
 Parecen lo mismo y no lo son, y confundirlos hace que el bot mienta.

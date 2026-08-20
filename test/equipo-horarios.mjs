@@ -10,7 +10,7 @@
 // que se prueba acá.
 import {
   parseHorarioPersona, enHorarioPersona, horarioUnion,
-  destinatarios, suscritosA, atiendenClientes, avisar, _resetEquipoCache,
+  destinatarios, suscritosA, atiendenClientes, avisar, quedaPendiente, _resetEquipoCache,
 } from '../lib/avisos.js';
 
 let fail = 0, total = 0;
@@ -174,6 +174,79 @@ console.log('\n── 6 · «Atiende clientes» es una lista distinta de los des
   mockEquipo([{ Nombre: 'X', 'SID ManyChat': '1', Horario: '*@0-24', Recibe: ['Llamadas'], Activo: true }]);
   const a = await atiendenClientes(ENV);
   check(a.length === 0 && horarioUnion(a) === '', 'sin nadie con «Atiende clientes», la unión va vacía y manda el default', a);
+}
+
+// ── 7 · Quién puede SELLAR (regresión cazada el 2026-08-20) ─────────────────
+// 🔴 El sello significa «este caso está cubierto, no lo vuelvas a mandar», y se
+// escribía en cuanto CUALQUIERA recibía el aviso. Con el equipo real eso resultó
+// estar mal: Gabriel y Roberto reciben los avisos de llamadas para mirar el
+// negocio pero NO llaman. Un lead del domingo les llegaba a ellos, el ticket
+// quedaba sellado, y el lunes le aparecía a Luis marcado «esperando 20h» y
+// ordenado DESPUÉS de los que nadie había visto: los leads más frescos quedaban
+// sepultados bajo los más viejos. ~16 horas por semana, las de más tráfico.
+console.log('\n── 7 · El sello exige que se entere alguien que ACTÚA');
+const EQUIPO_REAL = [
+  { Nombre: 'Luis', 'SID ManyChat': '111', Horario: '1,3-5@9-20|6@9-15', Recibe: ['Llamadas', 'Humano', 'Consignaciones'], Activo: true, 'Atiende clientes': true },
+  { Nombre: 'Roberto', 'SID ManyChat': '222', Horario: '*@8-20', Recibe: ['Llamadas', 'Humano', 'Consignaciones'], Activo: true, 'Atiende clientes': false },
+  { Nombre: 'Gabriel', 'SID ManyChat': '333', Horario: '*@8-20', Recibe: ['Llamadas', 'Humano', 'Consignaciones'], Activo: true, 'Atiende clientes': false },
+];
+const DOM13 = new Date("2026-07-19T17:00:00Z");   // domingo 13:00 · Luis no trabaja
+const LUN13 = new Date('2026-07-20T17:00:00Z');     // lunes 13:00 · Luis sí
+{
+  mockEquipo(EQUIPO_REAL);
+  const d = await destinatarios(ENV, 'llamada', DOM13);
+  check(d.sids.length === 2, 'domingo: el aviso SÍ le llega a Gabriel y Roberto (lo pidieron)', d.personas);
+  check((d.atienden || []).length === 0, '🔴 pero NINGUNO puede sellar: no llaman', d.atienden);
+  check(d.soloObservan.sort().join() === 'Gabriel,Roberto', 'y quedan declarados como observadores', d.soloObservan);
+}
+{
+  mockEquipo(EQUIPO_REAL);
+  const d = await destinatarios(ENV, 'llamada', LUN13);
+  check((d.atienden || []).join() === '111', 'el lunes sólo Luis puede sellar, aunque reciban los tres', d);
+}
+{
+  // 🔴 Y en las colas donde el que ACTÚA es justamente Roberto, exigirle
+  // «Atiende clientes» las dejaría sin sellar nunca → el barrido reenviaría
+  // para siempre. Por eso la regla sólo aplica a los avisos de cara al cliente.
+  mockEquipo(EQUIPO_REAL);
+  const d = await destinatarios(ENV, 'consigna', DOM13);
+  check((d.atienden || []).length === 2, 'en consignaciones cualquiera que reciba sella (Roberto es el que actúa)', d.atienden);
+}
+
+console.log('\n── 8 · `avisar` no sella cuando sólo miraron los observadores');
+{
+  mockEquipo(EQUIPO_REAL);
+  globalThis.fetch = (orig => async (url, opts) => {
+    if (String(url).includes('manychat')) return new Response('{}', { status: 200 });
+    return orig(url, opts);
+  })(globalThis.fetch);
+  const r = await avisar({ ...ENV, MANYCHAT_TOKEN: 'mc', FLOW_NS_LLAMADO: 'ns' },
+    { tipo: 'llamada', flowEnv: 'FLOW_NS_LLAMADO', campo: 'cf', texto: 'x', now: DOM13 });
+  check(r.enviados === 2, 'el WhatsApp SALE igual: es lo que pidió Gabriel', r);
+  check(r.puedeSellar === false, '🔴 pero puedeSellar = false → el ticket NO se sella', r);
+  check(r.motivo === 'solo_observadores', 'y lo declara con un motivo propio', r.motivo);
+  check(quedaPendiente(r.motivo), 'que cuenta como «sigue pendiente», no como fallo', r.motivo);
+}
+{
+  mockEquipo(EQUIPO_REAL);
+  globalThis.fetch = (orig => async (url, opts) => {
+    if (String(url).includes('manychat')) return new Response('{}', { status: 200 });
+    return orig(url, opts);
+  })(globalThis.fetch);
+  const r = await avisar({ ...ENV, MANYCHAT_TOKEN: 'mc', FLOW_NS_LLAMADO: 'ns' },
+    { tipo: 'llamada', flowEnv: 'FLOW_NS_LLAMADO', campo: 'cf', texto: 'x', now: LUN13 });
+  check(r.puedeSellar === true, 'el lunes, con Luis en turno, sí se sella', r);
+}
+{
+  // Sin tabla Equipo no hay forma de distinguir: cualquiera sella, como siempre.
+  mockEquipo(null);
+  globalThis.fetch = (orig => async (url, opts) => {
+    if (String(url).includes('manychat')) return new Response('{}', { status: 200 });
+    return orig(url, opts);
+  })(globalThis.fetch);
+  const r = await avisar({ ...ENV, MANYCHAT_TOKEN: 'mc', FLOW_NS_LLAMADO: 'ns' },
+    { tipo: 'llamada', flowEnv: 'FLOW_NS_LLAMADO', campo: 'cf', texto: 'x', now: LUN13 });
+  check(r.puedeSellar === true, 'sin tabla Equipo el sello se comporta como antes', r);
 }
 
 console.log('');

@@ -17,7 +17,8 @@
 // Body: { llamadoId: "recXXX" }   (la automatización manda el id del ticket)
 // Lee con AIRTABLE_TOKEN, escribe con AIRTABLE_WRITE_TOKEN. Protegido por MC_KEY.
 
-import { avisar } from '../../lib/avisos.js';
+import { avisar, quedaPendiente,
+} from '../../lib/avisos.js';
 
 const JSONH = { 'Content-Type': 'application/json; charset=utf-8' };
 const reply = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: JSONH });
@@ -338,8 +339,8 @@ export async function onRequestPost({ request, env }) {
       const res = await avisar(env, {
         tipo: 'solicitud', flowEnv: 'FLOW_NS_SOLICITUD', campo: 'cf_solicitud_datos', texto: resumen,
       });
-      avisoSolicitud = res.motivo === 'fuera_de_horario' ? 'pendiente_de_briefing' : `sin_enviar:${res.motivo}`;
-      if (res.enviados > 0) {
+      avisoSolicitud = quedaPendiente(res.motivo) ? 'pendiente_de_briefing' : `sin_enviar:${res.motivo}`;
+      if (res.puedeSellar) {
         avisoSolicitud = 'enviado';
         await afetch(`${api('Solicitudes')}/${solicitudId}`, {
           method: 'PATCH', headers: wH,

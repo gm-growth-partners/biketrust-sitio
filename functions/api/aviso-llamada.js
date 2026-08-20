@@ -59,7 +59,7 @@
 
 import {
   avisar, contextoLead, atiendenClientes, horarioUnion, unaLinea,
-  chileFecha, promesaAtencion, parseHorario, HORARIO_DEFAULT, COLA_LLAMADOS,
+  chileFecha, promesaAtencion, parseHorario, HORARIO_DEFAULT, COLA_LLAMADOS, quedaPendiente,
 } from '../../lib/avisos.js';
 
 // Re-exportado para el test, que prueba el parseo del horario contra el archivo real.
@@ -414,13 +414,13 @@ export async function onRequestPost({ request, env }) {
           texto: armarResumen('🔁 VOLVIÓ'), now: ahora,
         });
         destinos = res.destinatarios;
-        if (res.enviados > 0) {
+        if (res.puedeSellar) {
           avisoDedup = 'enviado';
           await afetch(`${C.api(C.LLAM)}/${abierto.id}`, {
             method: 'PATCH', headers: C.wH,
             body: JSON.stringify({ typecast: true, fields: { 'Aviso equipo enviado': now } }),
           });
-        } else if (res.motivo === 'fuera_de_horario') {
+        } else if (quedaPendiente(res.motivo)) {
           // Nadie en turno: se BORRA el sello para que vuelva a la cola de la red.
           // Es la única forma de que el briefing de mañana cuente que volvió.
           avisoDedup = 'pendiente_de_briefing';
@@ -483,8 +483,8 @@ export async function onRequestPost({ request, env }) {
     tipo: 'llamada', flowEnv: 'FLOW_NS_LLAMADO', campo: 'cf_llamado_datos',
     texto: armarResumen('📞 LLAMAR'), now: ahora,
   });
-  let aviso = res.motivo === 'fuera_de_horario' ? 'pendiente_de_briefing' : `sin_enviar:${res.motivo}`;
-  if (res.enviados > 0) {
+  let aviso = quedaPendiente(res.motivo) ? 'pendiente_de_briefing' : `sin_enviar:${res.motivo}`;
+  if (res.puedeSellar) {
     aviso = 'enviado';
     await afetch(`${C.api(C.LLAM)}/${llamadoId}`, {
       method: 'PATCH', headers: C.wH,

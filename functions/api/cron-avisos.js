@@ -43,7 +43,7 @@
 
 import {
   esTickBriefing, avisar, destinatarios, unaLinea, franja, chileHora,
-  COLA_LLAMADOS, COLA_AVISOS,
+  COLA_LLAMADOS, COLA_AVISOS, quedaPendiente,
 } from '../../lib/avisos.js';
 
 const JSONH = { 'Content-Type': 'application/json; charset=utf-8' };
@@ -208,7 +208,7 @@ async function barrerCola(env, C, cola, { dry, now }) {
 
     // LA REGLA DEL SELLO: se sella si AL MENOS UNO se enteró. Si nadie se enteró,
     // no se sella —para que el próximo tick reintente— y se cuenta el intento.
-    if (res.enviados > 0) {
+    if (res.puedeSellar) {
       const sr = await afetch(`${api(tabla)}/${rec.id}`, {
         method: 'PATCH', headers: C.wH,
         body: JSON.stringify({ typecast: true, fields: { 'Aviso equipo enviado': now.toISOString() } }),
@@ -235,7 +235,7 @@ async function barrerCola(env, C, cola, { dry, now }) {
     // (ManyChat caído, sid roto, env faltante); que no haya nadie en turno es el
     // funcionamiento normal del sistema. Contarlo como intento agotaría los 3 en
     // 45 minutos de madrugada y el registro llegaría a la mañana ya «rendido».
-    if (res.motivo === 'fuera_de_horario') {
+    if (quedaPendiente(res.motivo)) {
       detalle.push({ id: rec.id, texto, accion: 'nadie_en_turno', fuera: res.destinatarios?.fuera || [] });
       continue;
     }
@@ -296,13 +296,23 @@ async function run(env, url) {
   //
   // Sin tabla `Equipo`, `destinatarios` cae a las envs + la franja global, así
   // que el comportamiento es exactamente el de antes.
+  // 🔴 La cuenta que importa NO es «cuánta gente recibe» sino «cuánta gente va a
+  // ACTUAR» (`atienden`). Gabriel y Roberto reciben los avisos de llamadas para
+  // mirar el negocio, pero no llaman: si el barrido corriera por ellos, les
+  // mandaría el mismo WhatsApp cada 15 minutos —porque su recepción ya no sella—
+  // hasta que entrara Luis. El barrido espera a que haya alguien que cierre el caso.
   const turnos = {};
   for (const cola of COLAS) {
     const d = await destinatarios(env, cola.tipo, now);
-    turnos[cola.key] = { enTurno: d.sids.length, fuera: d.fuera.length, fuente: d.fuente };
+    turnos[cola.key] = {
+      puedenActuar: (d.atienden || []).length,
+      soloObservan: (d.soloObservan || []).length,
+      fuera: d.fuera.length,
+      fuente: d.fuente,
+    };
   }
-  if (!force && !Object.values(turnos).some(t => t.enTurno > 0)) {
-    return reply({ ok: true, saltado: 'nadie_en_turno', hora: chileHora(now), franja: `${desde}-${hasta}`, turnos });
+  if (!force && !Object.values(turnos).some(t => t.puedenActuar > 0)) {
+    return reply({ ok: true, saltado: 'nadie_que_actue', hora: chileHora(now), franja: `${desde}-${hasta}`, turnos });
   }
 
   const C = {
@@ -315,7 +325,7 @@ async function run(env, url) {
   for (const cola of COLAS) {
     // Si nadie recibe este tipo ahora, ni se lee la tabla: sus registros quedan
     // con el sello vacío y los recoge el briefing (o el próximo turno).
-    if (!force && !turnos[cola.key].enTurno) { colas.push({ cola: cola.key, saltado: 'nadie_en_turno' }); continue; }
+    if (!force && !turnos[cola.key].puedenActuar) { colas.push({ cola: cola.key, saltado: 'nadie_que_actue' }); continue; }
     colas.push(await barrerCola(env, C, cola, { dry, now }));
   }
 
