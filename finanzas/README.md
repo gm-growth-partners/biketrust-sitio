@@ -33,6 +33,18 @@ retiros hacia la cuenta personal y flujo de caja, en un solo archivo.
 
 Sólo se escribe en las cuatro marcadas con ✍️. El resto se calcula solo.
 
+## Datos cargados
+
+El libro trae las **3 facturas reales de agosto de 2026** (F-001 a F-003) con sus
+cobros en la hoja `Pagos`. `Gastos` y `Retiros` están **vacías a propósito**: tenían
+filas de ejemplo inventadas que, mezcladas con ingresos reales, producían un impuesto
+y un flujo falsos.
+
+⚠️ Dos cobros quedaron con **fecha anterior a la de emisión** (F-001 emitida 11-08 y
+cobrada 04-07; F-002 emitida 12-08 y cobrada 10-02). Son los datos tal como están en
+el archivo: si es correcto —trabajos cobrados antes y facturados en agosto— el IVA de
+esas ventas se declaró tarde y conviene revisarlo con el contador.
+
 ## Supuestos tributarios
 
 Régimen **Pro Pyme General (art. 14 letra D N°3)**, que tributa en **base caja**:
