@@ -191,12 +191,21 @@ tres condiciones, y las tres se cumplen:
 3. **El fallback es por tipo**: si nadie está suscrito a `Briefing` en la tabla,
    ese aviso cae a `BRIEFING_SIDS` aunque otros tipos sí tengan gente.
 
-### Dos excepciones que ignoran el horario, a propósito
+### Dos excepciones al filtro por hora
 
-| Tipo | Por qué |
-|---|---|
-| `Briefing` | tiene su propia hora (9:00). Filtrarlo por turno lo apagaría |
-| `Reagendo` | avisa que una visita de **hoy** se movió, y es el único aviso que **no deja sello**: sin red, silenciarlo es perderlo |
+| Tipo | Regla | Por qué |
+|---|---|---|
+| `Briefing` | mira el **día**, no la hora | Si mirara la hora, quien entra a las 10:00 nunca recibiría el de las 9:00. Si no mirara nada, quien cubre sólo los martes recibiría **seis resúmenes inútiles por semana**. La pregunta correcta es «¿trabajas hoy?» |
+| `Reagendo` | no mira **nada** | Avisa que una visita de **hoy** se movió, y es el único aviso que **no deja sello**: sin red, silenciarlo es perderlo |
+
+Con el equipo real, el briefing de las 9:00 sale así:
+
+```
+dom  Gabriel, Roberto
+lun  Gabriel, Roberto, Luis
+mar  Gabriel, Roberto, Juan Alfonso     ← Luis no trabaja el martes
+mié–sáb  Gabriel, Roberto, Luis
+```
 
 Y un escape: `AVISO_HUMANO_24H=1` devuelve los avisos de «humano requerido» al
 comportamiento anterior (sonar siempre, sin mirar el turno).

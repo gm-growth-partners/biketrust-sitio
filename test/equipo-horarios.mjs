@@ -91,10 +91,35 @@ console.log('\n── 4 · destinatarios · con tabla Equipo');
   check(br.fuente === 'env' && br.sids.includes('999'),
     'nadie suscrito a Briefing en la tabla → cae a BRIEFING_SIDS (fallback POR TIPO)', br);
 }
+// ── El briefing mira el DÍA, no la HORA (2026-08-20) ────────────────────────
+// Si mirara la hora, alguien cuyo turno empieza a las 10:00 nunca recibiría el
+// briefing de las 9:00. Si no mirara nada, quien cubre sólo los martes recibiría
+// seis resúmenes inútiles por semana. La pregunta correcta es «¿trabajas hoy?».
 {
   mockEquipo([{ Nombre: 'Gabriel', 'SID ManyChat': '333', Horario: '1-5@9-20', Recibe: ['Briefing'], Activo: true }]);
   const br = await destinatarios(ENV, 'briefing', MIERCOLES_23);
-  check(br.sids.includes('333'), 'el briefing IGNORA el horario: sale a su hora aunque nadie esté en turno', br);
+  check(br.sids.includes('333'), 'el briefing NO mira la hora: el miércoles a las 23:00 igual entra', br);
+}
+{
+  // El equipo real: Luis no trabaja martes ni domingo; Juan Alfonso sólo el martes.
+  const equipo = [
+    { Nombre: 'Luis', 'SID ManyChat': '111', Horario: '1,3-5@9-20|6@9-15', Recibe: ['Briefing'], Activo: true },
+    { Nombre: 'Juan Alfonso', 'SID ManyChat': '222', Horario: '2@9-20', Recibe: ['Briefing'], Activo: true },
+    { Nombre: 'Roberto', 'SID ManyChat': '333', Horario: '*@8-20', Recibe: ['Briefing'], Activo: true },
+  ];
+  const NUEVE = (dia) => { const b = new Date(Date.UTC(2026, 6, 26, 13, 0, 0)); b.setUTCDate(b.getUTCDate() + dia); return b; };
+  const quien = async (dia) => { mockEquipo(equipo); return (await destinatarios(ENV, 'briefing', NUEVE(dia))).personas.sort().join(','); };
+  check(await quien(2) === 'Juan Alfonso,Roberto', '🔴 el MARTES el briefing va a Juan Alfonso y Roberto, no a Luis', await quien(2));
+  check(await quien(3) === 'Luis,Roberto', 'el miércoles va a Luis y Roberto, no a Juan Alfonso', await quien(3));
+  check(await quien(6) === 'Luis,Roberto', 'el sábado va a Luis y Roberto', await quien(6));
+  check(await quien(0) === 'Roberto', 'el domingo sólo a quien trabaja todos los días', await quien(0));
+}
+{
+  // Y la hora sigue sin importar: un turno que empieza a las 10 igual recibe el de las 9.
+  mockEquipo([{ Nombre: 'Tarde', 'SID ManyChat': '444', Horario: '1-5@10-20', Recibe: ['Briefing'], Activo: true }]);
+  const NUEVE_LUNES = new Date(Date.UTC(2026, 6, 27, 13, 0, 0));
+  const br = await destinatarios(ENV, 'briefing', NUEVE_LUNES);
+  check(br.sids.includes('444'), 'quien entra a las 10:00 igual recibe el briefing de las 9:00', br);
 }
 {
   mockEquipo([{ Nombre: 'Sin id', Horario: '*@0-24', Recibe: ['Llamadas'], Activo: true }]);

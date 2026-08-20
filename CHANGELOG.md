@@ -10,6 +10,34 @@
 
 ## V2 · El embudo que apunta a la llamada — EN CONSTRUCCIÓN (desde 2026-07-27)
 
+### 2026-08-20 (c) · DESPLEGADO. Y el briefing pasa a mirar el día, no la hora
+
+**El sistema de avisos entró en producción** (`4b5e357`, con OK explícito de Gabriel). Verificado
+en vivo: los cuatro endpoints responden y leen la tabla `Equipo`. El sábado del showroom pasó de
+10–14 a **9–15** en `mc-agenda` y en los tres docs de copy operativo (⚠️ el texto vivo en ManyChat
+se dejó como está por decisión suya: dice «hasta las 14:00», que es la última llegada útil, y el
+validador acepta hasta esa hora por la regla de «1 h antes del cierre». Residual conocido:
+ManyChat dice que el sábado abre a las 10:00 y Luis entra a las 9:00).
+
+🔴 **Y cargar los SID reales destapó un bug de diseño mío.** Con los cuatro miembros del equipo
+activos, el briefing de las 9:00 le llegaba **a los cuatro, los siete días**. Juan Alfonso cubre
+sólo el martes: seis resúmenes inútiles por semana. Luis no trabaja martes ni domingo: dos más.
+Un resumen diario para quien trabaja un día a la semana no es información, es ruido — y el ruido
+es exactamente cómo muere un tablero.
+
+La causa era una simplificación mía: el briefing estaba en `IGNORAN_HORARIO` junto con `reagendo`.
+Ese conjunto existía por una razón buena —si mirara la hora, alguien cuyo turno empieza a las
+10:00 nunca recibiría el de las 9:00— pero la respuesta correcta no era «no mirar nada»:
+**la pregunta es «¿trabajas hoy?», no «¿estás en turno a las 9:00?»**. Ahora `briefing` filtra por
+DÍA (`trabajaHoy`) y `reagendo` sigue sin filtrar nada. Resultado con el equipo real:
+
+```
+dom  Gabriel, Roberto        lun  + Luis        mar  + Juan Alfonso (sin Luis)
+mié a sáb  + Luis
+```
+
+Tests: 41 aserciones en `equipo-horarios` (antes 36), con el martes real como caso explícito.
+
 ### 2026-08-20 (b) · El Kanban «6 · Falta responder»: la conversación que el bot no pudo resolver deja de perder el rastro
 
 Gabriel: *«una cola de todas las solicitudes que requieran la intervención de un humano, tipo
