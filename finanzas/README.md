@@ -16,13 +16,14 @@ retiros hacia la cuenta personal y flujo de caja, en un solo archivo.
   Sheets, y los menús desplegables y los dos gráficos se conservan.
 - **Excel / LibreOffice**: se abre directo.
 
-## Las 9 hojas
+## Las 10 hojas
 
 | Hoja | Qué es |
 |---|---|
 | `Instrucciones` | Cómo se usa, la rutina mensual y la anual. Partir por acá. |
 | `Resumen` | Seis números del año, tabla mes a mes y dos gráficos. |
-| `Ingresos` | ✍️ Una fila por documento emitido. |
+| `Ingresos` | ✍️ Una fila por documento emitido. El cobro se llena solo desde `Pagos`. |
+| `Pagos` | ✍️ Una fila por cobro recibido. Cliente en cuotas = una fila por cuota. |
 | `Gastos` | ✍️ Una fila por documento recibido. |
 | `Retiros` | ✍️ Giros a la cuenta personal + estimación del Global Complementario. |
 | `Mensual` | El F29 mes a mes: IVA, PPM y retenciones. |
@@ -30,13 +31,30 @@ retiros hacia la cuenta personal y flujo de caja, en un solo archivo.
 | `Flujo` | Caja mes a mes. |
 | `Parámetros` | Tasas, UTM, listas y saldos iniciales. |
 
-Sólo se escribe en las tres marcadas con ✍️. El resto se calcula solo.
+Sólo se escribe en las cuatro marcadas con ✍️. El resto se calcula solo.
 
 ## Supuestos tributarios
 
 Régimen **Pro Pyme General (art. 14 letra D N°3)**, que tributa en **base caja**:
-ingresos percibidos menos gastos pagados. Por eso cada movimiento lleva dos fechas
-—emisión y pago— y la planilla las usa para cosas distintas.
+ingresos percibidos menos gastos pagados. Por eso emisión y cobro viven separados
+—la factura en `Ingresos`, el dinero en `Pagos`— y la planilla los usa para cosas
+distintas: el **IVA** se declara con la emisión aunque el cliente aún no pague, y el
+**PPM, la renta y el flujo** sólo se mueven cuando la plata entra.
+
+### Cobros en cuotas
+
+Una factura puede tener uno o muchos cobros, así que los pagos viven en su propia
+hoja en vez de en columnas `Pago 1`, `Pago 2`… que siempre se acaban. Cada fila de
+`Pagos` lleva fecha, N° de la factura, N° de cuota y monto; `Ingresos` calcula solo
+el total cobrado, el saldo, cuántos pagos van y el estado (`Pendiente` → `Abonada` →
+`Pagada`).
+
+Como el monto que entra es bruto y los impuestos se calculan sobre el neto, cada
+cuota **imputa la misma proporción de neto que tiene su factura**. La suma del año
+calza con lo facturado salvo uno o dos pesos de redondeo.
+
+El **N° de documento es la llave** entre ambas hojas: si no coincide exacto, el pago
+queda huérfano y la columna `Cliente` de `Pagos` lo avisa con `⚠ n° no existe`.
 
 Tasas cargadas para el año comercial **2026**, verificadas en agosto de 2026:
 
