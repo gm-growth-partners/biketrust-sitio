@@ -1,9 +1,9 @@
 // Cloudflare Pages Function · GET/POST /api/cron-avisos
 //
-// EL BARRIDO DE AVISOS AL EQUIPO. Es la RED del sistema de avisos V2.
+// EL BARRIDO DE AVISOS AL EQUIPO. Es la RED del sistema de avisos.
 //
 // EL PROBLEMA QUE RESUELVE (autopsia 2026-08-06)
-// Hasta hoy «avisarle al equipo» era un EVENTO: ocurría —o no— dentro de
+// Hasta entonces «avisarle al equipo» era un EVENTO: ocurría —o no— dentro de
 // `mc-llamado`, en el instante en que el bot creaba el ticket. Si en ese momento
 // no era horario, si faltaba una env, si ManyChat devolvía error, o si el ticket
 // simplemente no venía del bot, el aviso se perdía PARA SIEMPRE y sin rastro.
@@ -11,28 +11,39 @@
 // disparó jamás un aviso. Hubo que rescatar 4 leads a mano tras 10 días varados.
 //
 // LA INVERSIÓN
-// «Avisado» deja de ser un evento y pasa a ser un ESTADO, escrito en Airtable:
+// «Avisado» dejó de ser un evento y pasó a ser un ESTADO, escrito en Airtable:
 // el campo `Aviso equipo enviado`. Vacío = nadie del equipo se ha enterado.
-// Este barrido corre cada 15 min y hace UNA pregunta: ¿hay tickets sin sello?
-//   · Dentro de la franja (9–20)  → avisa y sella.
-//   · Fuera de la franja           → no hace nada. Se acumulan solos.
-//   · En el tick del briefing      → se hace a un lado: el briefing los lista
-//                                    a todos juntos y los sella él.
+// Este barrido corre cada 15 min y hace UNA pregunta: ¿hay registros sin sello?
+//   · Con alguien en su turno   → avisa y sella.
+//   · Sin nadie en turno         → no hace nada. Se acumulan solos.
+//   · En el tick del briefing    → se hace a un lado: el briefing los lista a
+//                                  todos juntos y los sella él.
 //
-// LO QUE ESTO COMPRA
-//   · Los cuatro caminos de entrada quedan cubiertos por el MISMO mecanismo:
-//     bot de comentarios, bot de DM, carga manual en Airtable y botón de rescate.
-//   · Si el envío falla, no se sella → el próximo tick reintenta solo. Antes, un
-//     fallo de ManyChat era un lead perdido en silencio.
-//   · «¿Cuántos entraron fuera de horario?» pasa a ser una consulta, no una
-//     estimación.
+// ── QUÉ CAMBIÓ EL 2026-08-19 ────────────────────────────────────────────────
+//
+// 1. UNA CUARTA COLA: `Avisos`. Los «el bot no entendió, se necesita a una
+//    persona» se registraban en esa tabla y NO LOS BARRÍA NADIE. Si el envío
+//    fallaba, o si nadie miraba el teléfono a esa hora, la conversación quedaba
+//    varada sin que ningún mecanismo la recuperara. Ahora es una cola como las
+//    otras tres, con el mismo sello y el mismo reintento.
+//
+// 2. LA COLA DE LLAMADOS SE LEE POR `Salida`, NO POR `Estado`. `Salida` es el
+//    único campo que toca Luis (arrastra la tarjeta del Kanban); `Estado` es un
+//    espejo que mantiene el código. Se desincronizaron en producción y un ticket
+//    marcado «Sin interés» siguió contando como pendiente durante 13 días. La
+//    regla nueva: la cola la define el campo del OPERADOR, no el derivado.
+//
+// 3. HORARIO POR PERSONA. Antes había una franja 9–20 pareja para todos. Ahora
+//    cada persona declara su turno y sus tipos de aviso en la tabla `Equipo`
+//    (ver lib/avisos.js). Sin esa tabla, todo se comporta como antes.
 //
 // Envs: CRON_KEY (candado) · MANYCHAT_TOKEN · FLOW_NS_LLAMADO / FLOW_NS_SOLICITUD /
-// FLOW_NS_CONSIGNA · AVISO_*_SIDS · AVISO_FRANJA (opcional, default 9-20).
-// Pruebas: ?dry=1 (arma todo, no manda ni sella) · ?force=1 (ignora franja y briefing).
+// FLOW_NS_CONSIGNA / FLOW_NS_AVISO_EQUIPO · AVISO_*_SIDS · AVISO_FRANJA (default 9-20).
+// Pruebas: ?dry=1 (arma todo, no manda ni sella) · ?force=1 (ignora turnos y briefing).
 
 import {
-  enFranja, esTickBriefing, avisarStaff, unaLinea, franja, chileHora,
+  esTickBriefing, avisar, destinatarios, unaLinea, franja, chileHora,
+  COLA_LLAMADOS, COLA_AVISOS,
 } from '../../lib/avisos.js';
 
 const JSONH = { 'Content-Type': 'application/json; charset=utf-8' };
@@ -65,7 +76,11 @@ async function afetch(url, opts, tries = 3) {
 const keyOk = (env, url) => { const need = env.CRON_KEY; return need ? url.searchParams.get('key') === need : true; };
 const clp = (n) => (n == null ? '' : '$' + Number(n).toLocaleString('es-CL'));
 
-// ── Las tres colas ───────────────────────────────────────────────────────────
+// El pedazo de fórmula que comparten las cuatro colas: sin sello y sin haber
+// agotado los reintentos.
+const SIN_SELLO = `{Aviso equipo enviado}=BLANK(), OR({Intentos aviso}=BLANK(), {Intentos aviso}<${MAX_INTENTOS})`;
+
+// ── Las cuatro colas ─────────────────────────────────────────────────────────
 // Cada una: de dónde leer, qué cuenta como «pendiente», a quién avisar y con qué
 // plantilla. El resumen se arma con los campos que YA tiene el registro; el único
 // dato que exige una lectura extra es el modelo de la bici (link → nombre), y se
@@ -74,24 +89,43 @@ const COLAS = [
   {
     key: 'llamados',
     tabla: (env) => env.AIRTABLE_LLAMADOS_TABLE || 'Llamados',
-    estado: 'Llamada pendiente',
-    cual: 'llamado',
+    // 🔴 POR `Salida`, no por `Estado`. La definición vive en lib/avisos.js.
+    formula: `AND(${COLA_LLAMADOS}, ${SIN_SELLO})`,
+    tipo: 'llamada',
     flowEnv: 'FLOW_NS_LLAMADO',
     campo: 'cf_llamado_datos',
     necesitaBici: true,
     resumen: (f, modelo) => [
+      '📞 LLAMAR',
       f['Nombre'] || 'sin nombre',
+      f['Teléfono'] || 'SIN TELÉFONO',
+      f['Canal'] ? `por ${f['Canal']}` : '',
       f['Ciudad'] ? `de ${f['Ciudad']}` : '',
       modelo ? `interesado en ${modelo}` : '',
-      f['Teléfono'] || 'sin teléfono',
       f['Pidió rellamada'] ? '🔁 pidió que lo llamaran de vuelta' : '',
     ].filter(Boolean).join(' · '),
   },
   {
+    key: 'avisos',
+    tabla: (env) => env.AIRTABLE_AVISOS_TABLE || 'Avisos',
+    // La cola nueva: conversaciones que el bot no pudo resolver y que siguen sin
+    // respuesta humana. La cierra el arrastre en el Kanban «6 · Falta responder».
+    formula: `AND(${COLA_AVISOS}, ${SIN_SELLO})`,
+    tipo: 'humano',
+    flowEnv: 'FLOW_NS_AVISO_EQUIPO',
+    campo: 'cf_aviso_datos',
+    necesitaBici: false,
+    // `Resumen` ya viene armado por `aviso-humano` con canal, mensaje y contexto.
+    resumen: (f) => f['Resumen'] || `${f['@handle IG'] ? `IG @${f['@handle IG']}` : 'un contacto'} necesita respuesta`,
+    // ⚠️ Esta cola NO escala vía `avisarHumano` al agotar intentos: crearía otro
+    // registro en la misma tabla, que volvería a fallar, que volvería a escalar.
+    sinEscalamiento: true,
+  },
+  {
     key: 'solicitudes',
     tabla: (env) => env.AIRTABLE_SOLICITUDES_TABLE || 'Solicitudes',
-    estado: 'Llamada pendiente',
-    cual: 'solicitud',
+    formula: `AND({Estado}='Llamada pendiente', ${SIN_SELLO})`,
+    tipo: 'solicitud',
     flowEnv: 'FLOW_NS_SOLICITUD',
     campo: 'cf_solicitud_datos',
     necesitaBici: false,
@@ -111,8 +145,8 @@ const COLAS = [
   {
     key: 'consignaciones',
     tabla: (env) => env.AIRTABLE_CONSIGNACIONES_TABLE || 'Consignaciones',
-    estado: 'Nueva',
-    cual: 'consigna',
+    formula: `AND({Estado}='Nueva', ${SIN_SELLO})`,
+    tipo: 'consigna',
     flowEnv: 'FLOW_NS_CONSIGNA',
     campo: 'cf_consigna_datos',
     necesitaBici: false,
@@ -128,13 +162,10 @@ const COLAS = [
   },
 ];
 
-async function barrerCola(env, C, cola, { dry }) {
+async function barrerCola(env, C, cola, { dry, now }) {
   const tabla = cola.tabla(env);
   const api = (t) => `https://api.airtable.com/v0/${C.BASE}/${encodeURIComponent(t)}`;
-
-  // Sin sello + no agotado + en el estado que significa «alguien tiene que actuar».
-  const formula = `AND({Estado}='${cola.estado}', {Aviso equipo enviado}=BLANK(), OR({Intentos aviso}=BLANK(), {Intentos aviso}<${MAX_INTENTOS}))`;
-  const url = `${api(tabla)}?pageSize=50&filterByFormula=${encodeURIComponent(formula)}`;
+  const url = `${api(tabla)}?pageSize=50&filterByFormula=${encodeURIComponent(cola.formula)}`;
 
   const rr = await afetch(url, { headers: C.rH });
   if (!rr.ok) return { cola: cola.key, error: 'airtable_read', status: rr.status, detalle: (await rr.text()).slice(0, 200) };
@@ -142,7 +173,7 @@ async function barrerCola(env, C, cola, { dry }) {
   const todos = (await rr.json()).records || [];
 
   // Gracia de madurez, en JS y contra el createdTime real de la API.
-  const corte = Date.now() - MADUREZ_MIN * 60000;
+  const corte = now.getTime() - MADUREZ_MIN * 60000;
   const maduros = todos.filter(r => new Date(r.createdTime).getTime() <= corte);
   const verdes = todos.length - maduros.length;
 
@@ -171,36 +202,60 @@ async function barrerCola(env, C, cola, { dry }) {
 
     if (dry) { detalle.push({ id: rec.id, texto, accion: 'dry' }); continue; }
 
-    const res = await avisarStaff(env, {
-      cual: cola.cual, flowEnv: cola.flowEnv, campo: cola.campo, texto,
+    const res = await avisar(env, {
+      tipo: cola.tipo, flowEnv: cola.flowEnv, campo: cola.campo, texto, now,
     });
 
     // LA REGLA DEL SELLO: se sella si AL MENOS UNO se enteró. Si nadie se enteró,
     // no se sella —para que el próximo tick reintente— y se cuenta el intento.
     if (res.enviados > 0) {
-      await afetch(`${api(tabla)}/${rec.id}`, {
+      const sr = await afetch(`${api(tabla)}/${rec.id}`, {
         method: 'PATCH', headers: C.wH,
-        body: JSON.stringify({ typecast: true, fields: { 'Aviso equipo enviado': new Date().toISOString() } }),
+        body: JSON.stringify({ typecast: true, fields: { 'Aviso equipo enviado': now.toISOString() } }),
       });
-      detalle.push({ id: rec.id, texto, accion: 'avisado', enviados: res.enviados, errores: res.errores });
-    } else {
-      const intentos = Number(f['Intentos aviso'] || 0) + 1;
-      await afetch(`${api(tabla)}/${rec.id}`, {
-        method: 'PATCH', headers: C.wH,
-        body: JSON.stringify({ typecast: true, fields: { 'Intentos aviso': intentos } }),
-      });
-      detalle.push({ id: rec.id, texto, accion: 'falló', intentos, motivo: res.motivo, errores: res.errores, falta: res.falta });
-
-      // Al agotar los intentos, escala UNA vez por el canal de «humano requerido»,
-      // que tiene su propia cadena de destinatarios y no respeta horario. Si esto
-      // también falla, queda visible en Airtable: `Intentos aviso` = 3 con el
-      // sello vacío es exactamente «nadie se enteró y ya nos rendimos».
-      if (intentos >= MAX_INTENTOS) {
-        await avisarStaff(env, {
-          cual: 'equipo', flowEnv: 'FLOW_NS_AVISO_EQUIPO', campo: 'cf_aviso_datos',
-          texto: `⚠️ No se pudo avisar de un ticket en ${tabla} tras ${MAX_INTENTOS} intentos: ${texto}. Revísalo a mano en Airtable.`,
-        });
+      if (sr.ok) {
+        detalle.push({ id: rec.id, texto, accion: 'avisado', enviados: res.enviados, errores: res.errores });
+        continue;
       }
+      // 🔴 EL AVISO SALIÓ PERO EL SELLO NO SE ESCRIBIÓ. Antes este PATCH no se
+      // miraba: si Airtable rechazaba la escritura (permisos, campo renombrado,
+      // 422), el registro seguía sin sello y el barrido lo mandaba OTRA VEZ en 15
+      // minutos, y otra, para siempre. Se gasta un intento a propósito, para que
+      // el freno de 3 lo detenga y quede visible en la tabla.
+      const fallidos = Number(f['Intentos aviso'] || 0) + 1;
+      await afetch(`${api(tabla)}/${rec.id}`, {
+        method: 'PATCH', headers: C.wH,
+        body: JSON.stringify({ typecast: true, fields: { 'Intentos aviso': fallidos } }),
+      });
+      detalle.push({ id: rec.id, texto, accion: 'avisado_sin_sello', intentos: fallidos, status: sr.status });
+      continue;
+    }
+
+    // ⚠️ «Fuera de horario» NO gasta un intento. Los intentos son para FALLOS
+    // (ManyChat caído, sid roto, env faltante); que no haya nadie en turno es el
+    // funcionamiento normal del sistema. Contarlo como intento agotaría los 3 en
+    // 45 minutos de madrugada y el registro llegaría a la mañana ya «rendido».
+    if (res.motivo === 'fuera_de_horario') {
+      detalle.push({ id: rec.id, texto, accion: 'nadie_en_turno', fuera: res.destinatarios?.fuera || [] });
+      continue;
+    }
+
+    const intentos = Number(f['Intentos aviso'] || 0) + 1;
+    await afetch(`${api(tabla)}/${rec.id}`, {
+      method: 'PATCH', headers: C.wH,
+      body: JSON.stringify({ typecast: true, fields: { 'Intentos aviso': intentos } }),
+    });
+    detalle.push({ id: rec.id, texto, accion: 'falló', intentos, motivo: res.motivo, errores: res.errores, falta: res.falta });
+
+    // Al agotar los intentos, escala UNA vez por el canal de «humano requerido»,
+    // que tiene su propia cadena de destinatarios. Si esto también falla, queda
+    // visible en Airtable: `Intentos aviso` = 3 con el sello vacío es exactamente
+    // «nadie se enteró y ya nos rendimos», y el briefing lo lista igual.
+    if (intentos >= MAX_INTENTOS && !cola.sinEscalamiento) {
+      await avisar(env, {
+        tipo: 'humano', flowEnv: 'FLOW_NS_AVISO_EQUIPO', campo: 'cf_aviso_datos', now,
+        texto: `⚠️ No se pudo avisar de un registro en ${tabla} tras ${MAX_INTENTOS} intentos: ${texto}. Revísalo a mano en Airtable.`,
+      });
     }
   }
 
@@ -234,11 +289,20 @@ async function run(env, url) {
     return reply({ ok: true, saltado: 'tick_del_briefing', hora: chileHora(now) });
   }
 
-  // GUARDA 2 · La franja. Fuera de 9–20 no se molesta a nadie; los tickets se
-  // acumulan sin sello y el briefing de la mañana los recoge. Ésa es la red que
-  // hace que silenciar de noche no sea perder.
-  if (!force && !enFranja(env, now)) {
-    return reply({ ok: true, saltado: 'fuera_de_franja', hora: chileHora(now), franja: `${desde}-${hasta}` });
+  // GUARDA 2 · ¿Hay alguien en turno para ALGO? Reemplaza a la franja global
+  // 9–20: con horarios por persona, «es horario» ya no es una sola pregunta.
+  // Cuesta una lectura de la tabla `Equipo` (con caché de 60 s) y evita barrer
+  // cuatro tablas a las 4 de la mañana para no mandar nada.
+  //
+  // Sin tabla `Equipo`, `destinatarios` cae a las envs + la franja global, así
+  // que el comportamiento es exactamente el de antes.
+  const turnos = {};
+  for (const cola of COLAS) {
+    const d = await destinatarios(env, cola.tipo, now);
+    turnos[cola.key] = { enTurno: d.sids.length, fuera: d.fuera.length, fuente: d.fuente };
+  }
+  if (!force && !Object.values(turnos).some(t => t.enTurno > 0)) {
+    return reply({ ok: true, saltado: 'nadie_en_turno', hora: chileHora(now), franja: `${desde}-${hasta}`, turnos });
   }
 
   const C = {
@@ -248,12 +312,19 @@ async function run(env, url) {
   };
 
   const colas = [];
-  for (const cola of COLAS) colas.push(await barrerCola(env, C, cola, { dry }));
+  for (const cola of COLAS) {
+    // Si nadie recibe este tipo ahora, ni se lee la tabla: sus registros quedan
+    // con el sello vacío y los recoge el briefing (o el próximo turno).
+    if (!force && !turnos[cola.key].enTurno) { colas.push({ cola: cola.key, saltado: 'nadie_en_turno' }); continue; }
+    colas.push(await barrerCola(env, C, cola, { dry, now }));
+  }
 
-  const avisados = colas.reduce((n, c) => n + (c.detalle || []).filter(d => d.accion === 'avisado').length, 0);
-  const fallidos = colas.reduce((n, c) => n + (c.detalle || []).filter(d => d.accion === 'falló').length, 0);
+  const cuenta = (accion) => colas.reduce((n, c) => n + (c.detalle || []).filter(d => d.accion === accion).length, 0);
 
-  return reply({ ok: true, dry, force, hora: chileHora(now), franja: `${desde}-${hasta}`, avisados, fallidos, colas });
+  return reply({
+    ok: true, dry, force, hora: chileHora(now), franja: `${desde}-${hasta}`, turnos,
+    avisados: cuenta('avisado'), fallidos: cuenta('falló'), sinTurno: cuenta('nadie_en_turno'), colas,
+  });
 }
 
 export async function onRequestGet({ request, env }) {

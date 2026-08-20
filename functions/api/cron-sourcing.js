@@ -14,7 +14,7 @@
 //      AVISO_SOURCING_SIDS (ids ManyChat separados por coma; fallback BRIEFING_SIDS).
 // Protegido por CRON_KEY (?key=), igual que los otros cron-*.
 
-import { avisarStaff, sidsAviso } from '../../lib/avisos.js';
+import { avisar, sidsAviso } from '../../lib/avisos.js';
 
 const JSONH = { 'Content-Type': 'application/json; charset=utf-8' };
 const reply = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: JSONH });
@@ -92,17 +92,22 @@ export async function onRequest({ request, env }) {
     // se contaba como fallido, no se sellaba, y el próximo tick le mandaba de
     // nuevo. Con un destinatario roto de forma permanente eso es un reenvío cada
     // 15 minutos, para siempre.
-    const res = await avisarStaff(env, {
-      cual: 'sourcing', flowEnv: 'FLOW_NS_BUSCANDO', campo: 'cf_solicitud_datos', texto: resumen,
+    const res = await avisar(env, {
+      tipo: 'sourcing', flowEnv: 'FLOW_NS_BUSCANDO', campo: 'cf_solicitud_datos', texto: resumen,
     });
 
     if (res.enviados > 0) {
       // Sellar SOLO si salió a alguien, para que un fallo se reintente solo.
-      await afetch(`${api('Solicitudes')}/${rec.id}`, {
+      // ⚠️ Y se MIRA el resultado del PATCH: si el sello no se escribe, el próximo
+      // tick vuelve a mandar el mismo aviso, cada 15 min, sin fin. Este cron no
+      // tiene contador de intentos, así que lo mínimo es que el fallo salga en la
+      // respuesta y quede en el log del worker en vez de morir en silencio.
+      const sr = await afetch(`${api('Solicitudes')}/${rec.id}`, {
         method: 'PATCH', headers: wH,
         body: JSON.stringify({ fields: { 'Aviso buscando': now } }),
       });
-      enviados.push(rec.id);
+      if (sr.ok) enviados.push(rec.id);
+      else errores.push({ id: rec.id, motivo: 'sello_no_escrito', status: sr.status, detalle: (await sr.text()).slice(0, 160) });
     } else {
       errores.push({ id: rec.id, motivo: res.motivo, error: (res.errores || []).join(' | ').slice(0, 160), falta: res.falta });
     }

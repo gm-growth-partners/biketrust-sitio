@@ -24,7 +24,11 @@ function mockFetch({ ticket, lead }) {
     if (u.includes('/Leads/') && m === 'GET')    return new Response(JSON.stringify({ fields: lead }), { status: 200 });
     if (u.includes('/Inventario/') && m === 'GET') return new Response(JSON.stringify({ fields: { Modelo: 'Levo SL S-Works' } }), { status: 200 });
     if (u.includes('/Leads/') && m === 'PATCH')  { calls.patchLead = body.fields; return new Response('{}', { status: 200 }); }
-    if (u.includes('/Llamados/') && m === 'PATCH') { calls.patchTicket = body.fields; return new Response('{}', { status: 200 }); }
+    // Se ACUMULAN los PATCH del ticket. Desde 2026-08-19 son dos: el espejo del
+    // `Estado` (que va primero, antes de cualquier return temprano) y el del sello.
+    // Con la versión vieja —que pisaba el objeto— este test habría dejado de ver
+    // el Estado sin que nada estuviera roto.
+    if (u.includes('/Llamados/') && m === 'PATCH') { calls.patchTicket = { ...(calls.patchTicket || {}), ...body.fields }; return new Response('{}', { status: 200 }); }
     if (u.includes('setCustomFieldByName')) { calls.setField.push(body); return new Response('{}', { status: 200 }); }
     if (u.includes('sendFlow')) { calls.sendFlow.push(body); return new Response('{}', { status: 200 }); }
     return new Response('{}', { status: 200 });
@@ -128,6 +132,40 @@ const check = (ok, msg, extra) => { total++; console.log((ok ? 'OK   ' : 'FALLO'
   check(calls.patchTicket?.['Estado'] === 'Cerrada', 'sin interés: cierra el ticket', calls.patchTicket);
   check(!!calls.patchTicket?.['Aviso salida enviado'], 'sin interés: sella igual (no reintentar)', calls.patchTicket);
 }
+// ═══════════════════════════════════════════════════════════════════════════
+// 13-14 · EL BUG DE LOS 13 DÍAS (2026-08-19)
+// ═══════════════════════════════════════════════════════════════════════════
+// El `Estado` del ticket se sincronizaba al FINAL de la función, y DOS caminos se
+// iban antes de llegar ahí. Un ticket marcado «Sin interés» por cualquiera de los
+// dos quedaba con `Estado='Llamada pendiente'` para siempre — y el briefing, que
+// armaba su cola con ese campo, se lo repetía a Luis todas las mañanas.
+// Medido en producción: recCkAybRN6Udjb7c (Rodrigo Riquelme), 13 días seguidos.
+{
+  // 13 · Ticket SIN Lead enlazado: los que Luis crea a mano con el «+» del Kanban.
+  const { out, calls } = await run({ Salida: 'Sin interés', Estado: 'Llamada pendiente', Notas: 'llamada para ofrecer e-bikes' }, {});
+  check(out.accion === 'sin_lead', 'sin lead: sigue devolviendo sin_lead', out);
+  check(calls.patchTicket?.['Estado'] === 'Cerrada',
+    '🔴 sin lead: el ticket IGUAL se cierra (antes se quedaba en la cola para siempre)', calls.patchTicket);
+  check(out.estadoTicket === 'Cerrada', 'y lo reporta', out);
+}
+{
+  // 14 · Ticket que YA mandó un mensaje al cliente (p. ej. el rescate de «No
+  //      contestado») y que después se marca «Sin interés».
+  const { out, calls } = await run(
+    { Salida: 'Sin interés', Lead: ['recL'], Estado: 'Llamada pendiente', 'Aviso salida enviado': '2026-08-06T22:41:33.649Z' },
+    { ...LEAD_BASE });
+  check(out.accion === 'ya_enviado', 'ya enviado: no vuelve a mandar el mensaje', out);
+  check(calls.sendFlow.length === 0, 'ni un WhatsApp de más al cliente', calls.sendFlow);
+  check(calls.patchTicket?.['Estado'] === 'Cerrada',
+    '🔴 ya enviado: el ticket IGUAL se cierra (el otro camino del mismo bug)', calls.patchTicket);
+}
+{
+  // 15 · Y el espejo no se escribe cuando ya está bien: nada de PATCH inútiles
+  //      (cada escritura dispara los triggers de Airtable río abajo).
+  const { calls } = await run({ Salida: 'Sin interés', Estado: 'Cerrada' }, {});
+  check(calls.patchTicket === null, 'si el Estado ya calza, no se escribe nada', calls.patchTicket);
+}
+
 // 12 · El token de ManyChat se lee de MANYCHAT_TOKEN (la variable que usan las otras 8 funciones)
 {
   const calls = mockFetch({ ticket: { Salida: 'Coordinación región', 'Teléfono': '+56911111111', Lead: ['recL'] }, lead: { ...LEAD_BASE } });

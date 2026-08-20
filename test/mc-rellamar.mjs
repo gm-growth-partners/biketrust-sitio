@@ -29,7 +29,18 @@ function mock({ lead, tickets }) {
     const J = (o, s = 200) => new Response(JSON.stringify(o), { status: s });
 
     if (u.includes('/Leads') && m === 'GET') return J({ records: lead ? [lead] : [] });
-    if (/\/Llamados\?/.test(u) && m === 'GET') return J({ records: tickets });
+    // 🔴 MOCK ESTRICTO, A PROPÓSITO (2026-08-19). Antes esto respondía con los
+    // tickets a CUALQUIER consulta, y por eso los 16 casos de abajo pasaban en
+    // verde mientras el botón estaba MUERTO en producción: la consulta real era
+    // `FIND('<leadId>', ARRAYJOIN({Lead}))`, y en una fórmula de Airtable un campo
+    // de enlace se evalúa a su valor VISIBLE, no al record id → 0 filas SIEMPRE
+    // → todo el mundo caía en «sin_ticket». Verificado contra la base real.
+    // Ahora el mock sólo responde si la consulta usa RECORD_ID().
+    if (/\/Llamados\?/.test(u) && m === 'GET') {
+      const f = decodeURIComponent((u.split('filterByFormula=')[1] || '').split('&')[0]);
+      if (!/RECORD_ID\(\)/.test(f)) { calls.consultaMala = f; return J({ records: [] }); }
+      return J({ records: tickets });
+    }
     if (/\/Llamados$/.test(u) && m === 'POST') { calls.postLlamados++; return J({ id: 'recNUEVO' }); }
     if (/\/Llamados\//.test(u) && m === 'PATCH') { calls.patch.push(body.fields); return J({}); }
     if (u.includes('setCustomFieldByName')) { calls.setField.push(body); return J({}); }
@@ -39,7 +50,10 @@ function mock({ lead, tickets }) {
   return calls;
 }
 
-const LEAD = { id: 'recLEAD', fields: { Nombre: 'Nicolás Springmuller', 'MC subscriber id': '1979973583' } };
+// El enlace inverso `Leads.Llamados` es de donde salen los ids de sus tickets.
+// Es el único lugar del que se pueden sacar: una fórmula de Airtable no puede
+// comparar un campo de enlace contra un record id.
+const LEAD = { id: 'recLEAD', fields: { Nombre: 'Nicolás Springmuller', 'MC subscriber id': '1979973583', Llamados: ['recTICKET'] } };
 const ticket = (f, creado = '2026-08-05T19:40:03.000Z') => ({ id: 'recTICKET', createdTime: creado, fields: f });
 
 async function run({ lead = LEAD, tickets = [], ahora = DENTRO }) {

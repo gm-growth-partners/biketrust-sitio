@@ -19,33 +19,13 @@
 // Lee con AIRTABLE_TOKEN, escribe con AIRTABLE_WRITE_TOKEN. Protegido por env
 // MC_KEY (?key=). Sin env → abierto (mismo criterio que los otros puentes ManyChat).
 
+import { avisar } from '../../lib/avisos.js';
+
 const JSONH = { 'Content-Type': 'application/json; charset=utf-8' };
 const reply = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: JSONH });
 
 const BASE_DEFAULT = 'appQUgk8aeD752923';
-const MC_API = 'https://api.manychat.com';
 
-// ── ManyChat helpers (para el AVISO DE REAGENDO DEL MISMO DÍA al staff) ─────
-async function mcPost(token, path, body) {
-  return afetch(`${MC_API}${path}`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify(body),
-  });
-}
-const mcSid = (s) => (/^\d+$/.test(s) ? Number(s) : s);
-async function mcSetField(token, sid, name, value) {
-  const r = await mcPost(token, '/fb/subscriber/setCustomFieldByName', {
-    subscriber_id: mcSid(sid), field_name: name, field_value: value,
-  });
-  if (!r.ok) throw new Error(`setField ${name}: ${r.status} ${await r.text()}`);
-}
-async function mcSendFlow(token, sid, flowNs) {
-  const r = await mcPost(token, '/fb/sending/sendFlow', {
-    subscriber_id: mcSid(sid), flow_ns: flowNs,
-  });
-  if (!r.ok) throw new Error(`sendFlow: ${r.status} ${await r.text()}`);
-}
 // Fecha y hora de un instante en horario de Chile (DST-safe).
 const chileFecha = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
 const chileHora = (d) => new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', hour12: false }).format(d);
@@ -114,12 +94,18 @@ function parseFechaHora(v) {
 }
 
 // ── Horario de atención del showroom (hora Chile) ───────────────────────────
-// L-V 9:00–20:00 · Sáb 10:00–14:00 · Dom cerrado (definido por el negocio,
-// 2026-07-18). La última visita parte 1 h antes del cierre. Solo se valida la
-// fecha ELEGIDA por la persona (picker / texto); los slots A/B del servidor ya
-// nacen dentro del horario.
-const HORARIO = { 0: null, 1: [9, 20], 2: [9, 20], 3: [9, 20], 4: [9, 20], 5: [9, 20], 6: [10, 14] };
-const HORARIO_TXT = 'lunes a viernes de 9:00 a 20:00 y sábado de 10:00 a 14:00';
+// L-V 9:00–20:00 · Sáb 9:00–15:00 · Dom cerrado. La última visita parte 1 h antes
+// del cierre. Solo se valida la fecha ELEGIDA por la persona (picker / texto);
+// los slots A/B del servidor ya nacen dentro del horario.
+//
+// ⚠️ SÁBADO CORREGIDO A 9–15 (Gabriel, 2026-08-20). Decía 10–14, que era el
+// horario de la tienda; el que vale para el cliente es el de Luis, que es quien
+// atiende. Con dos números distintos en circulación el bot terminaba citando a
+// alguien a una hora en que no había nadie, o rechazando una hora que sí servía.
+// El mismo turno está declarado en la tabla `Equipo` (Luis, `6@9-15`), que es de
+// donde sale la promesa de llamada: los dos números tienen que seguir iguales.
+const HORARIO = { 0: null, 1: [9, 20], 2: [9, 20], 3: [9, 20], 4: [9, 20], 5: [9, 20], 6: [9, 15] };
+const HORARIO_TXT = 'lunes a viernes de 9:00 a 20:00 y sábado de 9:00 a 15:00';
 function validarVisita(naive) {
   const bad = (motivo, mensaje) => ({ ok: false, motivo, mensaje });
   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(String(naive || ''));
@@ -188,12 +174,6 @@ const cfg = (env) => {
     api: (t) => `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(t)}`,
     rH: { Authorization: `Bearer ${READ}` },
     wH: { Authorization: `Bearer ${WRITE}`, 'Content-Type': 'application/json' },
-    // Aviso de reagendo del MISMO DÍA al staff (por fases, como los demás).
-    // Destinatarios: ids de ManyChat separados por coma (fallback LUIS_SUBSCRIBER_ID).
-    MC_TOKEN: env.MANYCHAT_TOKEN || '',
-    FLOW_REAGENDO: env.FLOW_NS_REAGENDO || '',
-    STAFF_SIDS: String(env.AVISO_REAGENDO_SIDS || env.LUIS_SUBSCRIBER_ID || '')
-      .split(',').map(s => s.trim()).filter(Boolean),
   };
 };
 
@@ -382,28 +362,30 @@ export async function onRequestPost({ request, env }) {
     const eraHoy = chileFecha(prev) === chileFecha(new Date());
     const cambio = !Number.isFinite(nuevaMs) || Math.abs(nuevaMs - prev.getTime()) > 60000;
     if (eraHoy && cambio) {
-      avisoReagendo = 'no_configurado';
-      if (C.MC_TOKEN && C.FLOW_REAGENDO && C.STAFF_SIDS.length) {
-        try {
-          const nombre = leadFields.Nombre || (leadFields['@handle IG'] ? '@' + leadFields['@handle IG'] : (handle ? '@' + handle : 'Un lead'));
-          const resumen = [
-            `${nombre} tenía visita HOY a las ${chileHora(prev)}`,
-            `se reagendó para ${fechaVisitaLegible}`,
-            biciNombre && biciNombre !== 'bici que más te guste' ? biciNombre : '',
-            telefono || leadFields.WhatsApp || '',
-          ].filter(Boolean).join(' · ');
-          let enviados = 0, dormidos = 0;
-          for (const sid of C.STAFF_SIDS) {
-            // Sin guarda de horario, a propósito: es el reagendo de una visita de HOY.
-            await mcSetField(C.MC_TOKEN, sid, 'cf_reagendo_datos', resumen.slice(0, 900));
-            await mcSendFlow(C.MC_TOKEN, sid, C.FLOW_REAGENDO);
-            enviados++;
-          }
-          avisoReagendo = enviados ? 'enviado' + (dormidos ? ` (${dormidos} fuera de horario)` : '') : 'fuera_de_horario';
-        } catch (e) {
-          avisoReagendo = 'error: ' + String(e && e.message || e).slice(0, 200);
-        }
-      }
+      const nombre = leadFields.Nombre || (leadFields['@handle IG'] ? '@' + leadFields['@handle IG'] : (handle ? '@' + handle : 'Un lead'));
+      const resumen = [
+        `${nombre} tenía visita HOY a las ${chileHora(prev)}`,
+        `se reagendó para ${fechaVisitaLegible}`,
+        biciNombre && biciNombre !== 'bici que más te guste' ? biciNombre : '',
+        telefono || leadFields.WhatsApp || '',
+      ].filter(Boolean).join(' · ');
+
+      // 🔴 Esto mandaba el WhatsApp a mano, con el `try` envolviendo el BUCLE de
+      // destinatarios: si el segundo sid fallaba, el primero —que ya había
+      // recibido— se contaba como fallido y todo el bloque caía al catch. Es el
+      // mismo bug que se corrigió en los otros seis emisores el 2026-08-06; acá
+      // sobrevivió porque el test de guardas no lo alcanzaba a ver (su regex se
+      // cortaba en la primera llave del template literal de arriba).
+      // `avisar` captura el error POR DESTINATARIO.
+      //
+      // Sigue SIN guarda de horario, a propósito y ahora declarado en un solo
+      // lugar (`IGNORAN_HORARIO` en lib/avisos.js): es el reagendo de una visita
+      // de HOY y es el único aviso del sistema que no deja sello en ninguna
+      // parte, así que silenciarlo sería perderlo.
+      const res = await avisar(env, {
+        tipo: 'reagendo', flowEnv: 'FLOW_NS_REAGENDO', campo: 'cf_reagendo_datos', texto: resumen,
+      });
+      avisoReagendo = res.enviados > 0 ? 'enviado' : `no_enviado:${res.motivo}`;
     }
   }
 

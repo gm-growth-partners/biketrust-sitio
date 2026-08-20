@@ -132,7 +132,7 @@ Dime 🙂 ¿tu consulta es sobre esta bici o sobre la tienda?
 **B1-W · La tienda — paso de texto, sin botones.** ⚠️ PROVISORIO: cuando exista la puerta
 de DM, `Sobre la tienda` se re-apunta al enrutador de intención.
 ```
-Estamos en Av. Las Condes 12461, Las Condes 📍 Lunes a viernes de 9:00 a 20:00, sábado de 10:00 a 14:00.
+Estamos en Av. Las Condes 12461, Las Condes 📍 Lunes a viernes de 9:00 a 20:00, sábado de 9:00 a 15:00.
 
 Y acá puedes ver todo lo que tenemos: https://biketrust.cl
 ```

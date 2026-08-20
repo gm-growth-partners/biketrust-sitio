@@ -10,6 +10,181 @@
 
 ## V2 · El embudo que apunta a la llamada — EN CONSTRUCCIÓN (desde 2026-07-27)
 
+### 2026-08-20 (b) · El Kanban «6 · Falta responder»: la conversación que el bot no pudo resolver deja de perder el rastro
+
+Gabriel: *«una cola de todas las solicitudes que requieran la intervención de un humano, tipo
+kanban, y así podemos dejar registrado el hecho de que un humano haya respondido y marcar qué
+pasa con ese lead. En la conversación de ayer, la persona entró en la cola de llamados y quedó
+sin interés, pero esos datos nunca se registraron en Airtable.»*
+
+**El hueco.** `Avisos` registraba que el bot pidió ayuda, pero **nada de lo que pasaba después**:
+ni quién respondió, ni cuándo, ni en qué terminó. El rastro se cortaba justo donde empieza el
+valor.
+
+**Pantalla 6 de «Operación Llamadas (V2)»** (`pag4VY9lp3n8LpZzr`), Kanban sobre `Avisos`
+agrupado por el campo nuevo **`Salida`**: `Pendiente · Respondido · Pasó a llamada · Sin interés ·
+Spam / no aplica`. Mismo principio que el Kanban de Luis — **arrastrar la tarjeta ES registrar
+lo que pasó**, un solo gesto, sin formularios. Campos nuevos: `Salida`, `Atendido por`, `Notas`,
+`Llamado` (link a la tabla `Llamados`, que cierra el circuito aviso → ticket) y **`Respuesta
+(min)`**, que mide la velocidad de atención humana **sin ninguna automatización** porque cuelga
+de `LAST_MODIFIED_TIME({Salida})`.
+
+**Las definiciones de cola se centralizaron.** `COLA_LLAMADOS` y `COLA_AVISOS` viven ahora en
+`lib/avisos.js` y las importan el briefing, el barrido y el dedup. Tener la pregunta «¿esto
+todavía espera acción?» escrita en tres archivos era la forma exacta en que volvería el bug de
+los 13 días. Guarda nueva: **ningún endpoint puede escribir la fórmula a mano.** `Resuelto` se
+conserva como escape manual — sólo puede sacar cosas de la cola, nunca meterlas, así que no
+puede producir fantasmas.
+
+**Backfill: las 8 filas existentes quedaron en `Pendiente`**, que es la verdad — de ninguna hay
+registro de que un humano haya respondido. No adiviné desenlaces: se corrigen arrastrando, que
+es justamente de lo que se trata el tablero.
+
+Verificado contra Airtable: las dos fórmulas son válidas y devuelven 8 y 1 registros. Tests:
+16 suites, verde.
+
+### 2026-08-20 · Los horarios reales del equipo, y la distinción que evita que el bot mienta
+
+Gabriel entregó los turnos: **Luis** lunes + miércoles a viernes 9–20 y sábado 9–15;
+**Juan Alfonso** cubre el martes 9–20; **Gabriel y Roberto** reciben avisos **todos los días
+de 8 a 20**. Cargarlos destapó una distinción que el diseño del día anterior no tenía.
+
+🔴 **Quién ATIENDE ≠ quién RECIBE el aviso.** La promesa que el bot le hace al cliente salía de
+la unión de los turnos de quien recibe avisos de «Llamadas». Con Gabriel y Roberto recibiendo
+los siete días, esa unión cubre el domingo — y el bot habría prometido respuesta un domingo a
+las 10:00 porque Roberto estaba de turno. Campo nuevo **`Atiende clientes`** en `Equipo`: sólo
+esas filas entran en el cálculo. Y **no exige `SID ManyChat`** a propósito: Juan Alfonso atiende
+los martes aunque todavía no esté cableado en ManyChat, así que el martes cuenta para la
+promesa aunque el aviso de ese día sólo le llegue a Roberto.
+
+**La promesa ahora nombra el día.** Pedido textual: *«si alguien escribe un domingo a las 3 AM,
+se le dice: nuestro especialista te responderá mañana (lunes) apenas llegue»*. Antes decía sólo
+«mañana». `promesaAtencion()` se movió a `lib/avisos.js` y la comparten los dos usos —llamada y
+respuesta por chat—, que sólo difieren en el texto de «hay alguien ahora» («en los próximos
+minutos» vs «en un rato»). Dos copias del cálculo de horario era exactamente la enfermedad
+curada el 2026-08-06.
+
+**`aviso-humano` devuelve `promesa`.** Hasta ahora el bot NO prometía plazo a propósito, porque
+no sabía calcularlo. Ahora sí. ⏳ Falta mapear `$.promesa` en ManyChat y usarlo en el copy de
+AB-3 y T-2 — trabajo manual.
+
+**La sección del briefing se llama `🆘 FALTA RESPONDER`** (antes «SIN RESPONDER»): el título es
+la acción, en imperativo, con las palabras que usó Gabriel.
+
+**Verificado contra la tabla real de Airtable**, hora por hora de toda la semana: los domingos y
+de 20:00 a 08:00 no recibe nadie (queda para el briefing), el martes sólo Roberto hasta que
+llegue el SID de Juan Alfonso, y las diez promesas de borde salen correctas. Tests: 321
+aserciones, verde.
+
+⚠️ **Faltan dos SID de ManyChat: Juan Alfonso y Gabriel.** Sus filas están activas y con horario
+correcto, pero sin id no reciben el WhatsApp. `destinatarios()` los reporta en `sinSid` para que
+el silencio no sea invisible.
+
+### 2026-08-19 · Auditoría del sistema de avisos: dos entradas comunes, horario por persona, y seis bugs vivos
+
+**Lo que la disparó.** Gabriel: *«¿por qué le está llegando este mensaje a Luis, sabiendo que
+esas personas ya fueron contactadas y están marcadas como sin interés?»* — el briefing de la
+mañana listaba a Rodrigo Riquelme como «por llamar, esperando 13d» pese a estar cerrado.
+Y, de paso, el pedido de fondo: **una entrada común para todos los avisos**, con **horario por
+persona** y **red al briefing** para lo que entra fuera de turno.
+
+Se auditó con 6 lentes independientes + un escéptico por lente (42 hallazgos confirmados,
+5 descartados). Los seis que estaban vivos en producción:
+
+🔴 **1. El briefing leía la cola por el campo equivocado.** `{Estado}='Llamada pendiente'`.
+Pero `Estado` no es el campo que toca Luis: Luis arrastra la tarjeta y eso escribe `Salida`.
+`Estado` era un espejo que `salida-llamado` sincronizaba **al final** de la función, y **dos
+caminos se iban antes**: `sin_lead` (tickets sin Lead enlazado — los que el staff crea con el
+«+»; 4 de los 5 tickets vivos eran así) y `ya_enviado` (los que ya mandaron un mensaje al
+cliente, p. ej. tras «No contestado»). Verificado en `recCkAybRN6Udjb7c`: `Salida='Sin interés'`
++ `Estado='Llamada pendiente'` + cero PATCH. **Arreglo en dos mitades:** el espejo se escribe
+ahora en un PATCH propio **antes de cualquier return temprano**, y briefing, barrido y dedup
+leen la cola por **`Salida`** — el campo del operador. Aunque el espejo se rompa otra vez, la
+cola no miente.
+
+🔴 **2. `mc-llamado` reventaba con 500 en su rama más valiosa.** La constante `nombre` se
+declaraba 24 líneas DESPUÉS del bloque de dedup, que la usaba en el texto «🔁 VOLVIÓ»: zona
+muerta temporal → `ReferenceError`. Reproducido contra el código de HEAD. Se disparaba justo
+con el lead que **ya dejó su número y vuelve a preguntar por otra bici** — el más caliente del
+embudo —, y ManyChat recibía un error en vez de la confirmación.
+
+🔴 **3. El botón «Sí, llámenme» nunca encontraba el ticket.** La consulta era
+`FIND('<leadId>', ARRAYJOIN({Lead}))`. **En una fórmula de Airtable un campo de enlace se
+evalúa a su valor VISIBLE, no al record id**, así que daba 0 filas SIEMPRE: todo el que
+apretaba el botón caía en `sin_ticket` y se derivaba a un humano, con su ticket ahí al lado.
+Comprobado contra la base: `FIND('recd22Zyk…', ARRAYJOIN({Lead}))` → 0 · `FIND('nspringm2020',…)`
+→ 1. Ahora se usa el **enlace inverso `Leads.Llamados` + `RECORD_ID()`**.
+⚠️ Los 16 tests de `mc-rellamar` pasaban en verde: el mock respondía a *cualquier* consulta.
+Ahora el mock es **estricto** (sólo contesta si la fórmula usa `RECORD_ID()`), y hay guarda.
+*(Sí vale `ARRAYJOIN` sobre un **lookup** del RecID — lo que hace `mc-waitlist` con
+`{Lead RecID}` —, porque ahí lo que se junta ya son ids. Verificado.)*
+
+🔴 **4. Sellos escritos sin mirar si la escritura entró.** `cron-avisos` y `cron-sourcing`
+hacían el PATCH del sello y seguían. Si Airtable lo rechazaba, el registro quedaba sin sello y
+el barrido **reenviaba el mismo aviso cada 15 minutos, para siempre**. Ahora se verifica; en
+`cron-avisos` un sello fallido gasta un intento para que el freno de 3 lo detenga.
+
+🔴 **5. Un fallo de lectura se veía igual que «no hay nada».** `leerTodo` del briefing hacía
+`break` y devolvía la lista vacía: con el token vencido, el briefing habría dicho **«nada
+pendiente 🌱», en verde y con `ok:true`**, todas las mañanas. Ahora la falla viaja en el
+mensaje («⚠️ NO SE PUDO LEER Solicitudes») y en la respuesta.
+
+🔴 **6. `mc-agenda` tenía el `try` fuera del bucle de destinatarios** — el mismo bug de
+tormenta que se corrigió en los otros seis emisores el 2026-08-06. Sobrevivió porque el regex
+de la guarda se cortaba en la primera llave y un template literal lo cegaba. Guarda arreglada
+(ventana de 1200 caracteres) y el envío pasa por `avisar()`.
+
+**Las dos entradas comunes** (lo que pidió Gabriel). `functions/api/aviso-llamada.js` =
+«alguien dejó su teléfono» y `functions/api/aviso-humano.js` = «esto necesita a una persona».
+`mc-llamado` y `mc-aviso` quedan como **alias** que apuntan ahí, así que **ningún flujo de
+ManyChat hay que tocarlo** y las claves de respuesta que mapea el bot (`promesaLlamada`,
+`dentroDeHorario`, …) se conservan. Las dos aceptan **`handle` · `subscriber_id` · `telefono`**:
+antes exigían el @handle de Instagram, así que un lead de WhatsApp o de la web moría en 404 o
+nacía huérfano (sin Lead enlazado y fuera del rollup «Terminó en venta»). El **canal** viaja y
+queda escrito, y el aviso lleva **contexto del CRM**: qué bicis vio y con qué resultado,
+cuántas veces volvió, qué preguntó la última vez.
+
+**Horario por persona — tabla `Equipo`.** `Nombre · SID ManyChat · Horario · Recibe · Activo`.
+Formato `1-5@9-20|6@10-15`, hora de Chile, `hasta` exclusivo. Vive **sólo** en `lib/avisos.js`
+(la lógica por persona se había borrado el 2026-08-06 justo por estar copiada seis veces).
+**Sin la tabla, o con todos inactivos, el sistema se comporta exactamente como antes** — envs
+`AVISO_*_SIDS` + franja 9–20 —, y el fallback es **por tipo**. Se sembró con Luis y Roberto
+**desactivados**: activar es marcar una casilla, sin desplegar. `promesaLlamada` pasa a salir
+de la **unión de los turnos de quien recibe Llamadas**, para que «cuándo te llamamos» sea
+«cuándo hay alguien a quien le llega el aviso».
+
+**El briefing pasa de 2 secciones a 5**, y el título de cada una **es la acción pendiente**:
+📞 POR LLAMAR · 🆘 SIN RESPONDER · 🔎 POR BUSCAR · 🚲 POR EVALUAR · 📅 VISITAS DE HOY. Antes
+sólo miraba llamados y visitas: **encargos, consignaciones y las conversaciones que el bot
+derivó a un humano se acumulaban sin que ningún briefing las nombrara.** Si el bot no entendía
+un mensaje a las 23:00, a la mañana siguiente no se enteraba nadie. Sella **las cuatro colas**
+(antes sólo llamados; lo que no cupo se deja sin sellar a propósito para que el barrido lo
+mande individualmente), presupuesto compartido en orden de urgencia, ventana de 7 días para
+«SIN RESPONDER», y la espera se cuenta **desde el reencolado**, no desde la creación.
+
+**`Avisos` pasa a ser una cola de verdad** (`Canal`, `Subscriber ID`, `Aviso equipo enviado`,
+`Intentos aviso`, `Resuelto`) y entra al barrido como cuarta cola. **Backfill de las 8 filas
+existentes** — sin él, el primer barrido las habría re-avisado todas de golpe.
+
+**Limpieza:** se borraron los helpers de ManyChat duplicados en `mc-agenda`, `mc-waitlist` y
+`mc-consigna` (~4,5 KB) y **ninguna función lee ya `AVISO_*_SIDS` ni `LUIS_SUBSCRIBER_ID`
+directo**: los destinatarios salen sólo de `lib/avisos.js`. `mc-consigna` usa CRLF (el resto
+LF); se preservó.
+
+**Tests: 16 suites, todas verdes.** Nuevas: `equipo-horarios` (29) · `aviso-llamada` (34) ·
+`aviso-humano` (22) · `cron-briefing` (29). `guardas-avisos` pasa de 7 a **13 guardas** —
+incluidas «la cola se lee por `Salida`», «el espejo se escribe antes de los returns tempranos»,
+«`nombre` se declara antes de usarse» y «nadie busca por `ARRAYJOIN` de un campo de enlace».
+`promesa-llamada` deja el truco de `readFileSync` + `new Function` y se importa de verdad.
+
+⚠️ **Hallazgo que NO es código:** la automatización **«Sello de 1ª llamada · Llamados» tiene el
+arreglo del 2026-08-07 en BORRADOR, sin publicar**. Lo que corre en vivo sigue colgando de
+`Estado` y copiando `_ahora`, así que **`Espera (min)` sigue vacío para todo ticket que pasó
+por «No contestado»** — exactamente el bug que el CHANGELOG daba por resuelto. Se arregla
+publicando el borrador en Airtable (un clic; la API no publica automatizaciones).
+
+📕 As-built completo: [`docs/V2_AVISOS.md`](docs/V2_AVISOS.md).
+
 ### 2026-08-18 · El DM vacío del reel nuevo, y «Donde perdió puntos» en una bici 7/7
 
 **El síntoma.** Se duplicó la automatización de comentarios para un reel nuevo

@@ -1109,7 +1109,7 @@ Te dice derecho qué vale y si la recibimos o no: bajo 4 no la tomamos, y prefer
 ```
 Estamos en Av. Las Condes 12461, Las Condes 📍
 
-Horario: lunes a viernes de 9:00 a 20:00, y sábado de 10:00 a 14:00.
+Horario: lunes a viernes de 9:00 a 20:00, y sábado de 9:00 a 15:00.
 
 Antes de que vengas, ¿te tinca que te llame Luis? Así te dice qué hay hoy en tu talla y no llegas a mirar vitrina.
 ```

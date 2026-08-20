@@ -17,7 +17,7 @@
 // Body: { llamadoId: "recXXX" }   (la automatización manda el id del ticket)
 // Lee con AIRTABLE_TOKEN, escribe con AIRTABLE_WRITE_TOKEN. Protegido por MC_KEY.
 
-import { enFranja, avisarStaff } from '../../lib/avisos.js';
+import { avisar } from '../../lib/avisos.js';
 
 const JSONH = { 'Content-Type': 'application/json; charset=utf-8' };
 const reply = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: JSONH });
@@ -34,22 +34,24 @@ const BASE_DEFAULT = 'appQUgk8aeD752923';
 //
 // `flowEnv`      = variable de Cloudflare con el namespace del flujo de ManyChat.
 // `estadoLead`   = a qué estado avanza el LEAD (con guarda de no-regresión).
-// `estadoTicket` = a qué estado va el TICKET. Lo mantiene este endpoint porque
-//                  Luis ya no toca `Estado`: solo arrastra la tarjeta. De ese
-//                  cambio depende el sello de `Fecha primera llamada` (la métrica
-//                  de velocidad), la cola del briefing y el dedup de mc-llamado.
+// `copiaVisita`  = si esta salida copia la fecha de visita al Lead.
+//
+// ⚠️ El estado del TICKET ya NO se declara acá: vive en `ESTADO_POR_SALIDA`, más
+// abajo, y se escribe ANTES que cualquier otra cosa. Tenerlo en dos mapas era
+// pedir que se desincronizaran.
+//
 // El consentimiento NO se pide acá: lo captura el bot al pedir el número (ver
-// `mc-llamado`). Los cuatro mensajes son TRANSACCIONALES sobre algo que la
+// `aviso-llamada`). Los cuatro mensajes son TRANSACCIONALES sobre algo que la
 // persona pidió —su visita, su encargo, su llamada— así que ninguno depende de
 // que Luis marque una casilla. Marketing es otra cosa y tiene su propio permiso.
 const SALIDAS = {
-  'Visita agendada':     { flowEnv: 'FLOW_NS_CONFIRMACION', estadoLead: 'visita_agendada', estadoTicket: 'Llamado', copiaVisita: true },
-  'Coordinación región': { flowEnv: 'FLOW_NS_REGION',       estadoLead: null,              estadoTicket: 'Llamado', copiaVisita: false },
-  'Encargo de búsqueda': { flowEnv: 'FLOW_NS_ENCARGO',      estadoLead: null,              estadoTicket: 'Llamado', copiaVisita: false },
+  'Visita agendada':     { flowEnv: 'FLOW_NS_CONFIRMACION', estadoLead: 'visita_agendada', copiaVisita: true },
+  'Coordinación región': { flowEnv: 'FLOW_NS_REGION',       estadoLead: null,              copiaVisita: false },
+  'Encargo de búsqueda': { flowEnv: 'FLOW_NS_ENCARGO',      estadoLead: null,              copiaVisita: false },
   // El ticket VUELVE a la cola: no contestar no cierra nada, es la bandeja de reintentos.
-  'No contestado':       { flowEnv: 'FLOW_NS_NO_CONTESTA',  estadoLead: null,              estadoTicket: 'Llamada pendiente', copiaVisita: false },
+  'No contestado':       { flowEnv: 'FLOW_NS_NO_CONTESTA',  estadoLead: null,              copiaVisita: false },
   // Habló y no va a avanzar. Cierra el ticket sin mandar nada, a propósito.
-  'Sin interés':         { flowEnv: null,                   estadoLead: null,              estadoTicket: 'Cerrada', copiaVisita: false },
+  'Sin interés':         { flowEnv: null,                   estadoLead: null,              copiaVisita: false },
 };
 
 async function afetch(url, opts, tries = 3) {
@@ -63,12 +65,19 @@ async function afetch(url, opts, tries = 3) {
 const keyOk = (env, url) => { const need = env.MC_KEY; return need ? url.searchParams.get('key') === need : true; };
 const linkId = (v) => { const a = Array.isArray(v) ? v[0] : v; return (typeof a === 'string' ? a : a?.id) || ''; };
 
+// ⚠️ Este helper IGNORABA el resultado. Si ManyChat rechazaba la escritura del
+// campo, el flujo se disparaba igual —con la variable vieja o vacía— y el sello
+// de idempotencia se estampaba: el cliente recibía «te confirmamos tu visita
+// para {{cf_fecha_visita}}» con la fecha de otra visita, o en blanco, y no había
+// forma de reintentar. Ahora lanza, el catch de abajo lo reporta y, al no
+// sellarse, el próximo disparo lo vuelve a intentar.
 async function mcSetField(token, sid, name, value) {
-  await afetch('https://api.manychat.com/fb/subscriber/setCustomFieldByName', {
+  const r = await afetch('https://api.manychat.com/fb/subscriber/setCustomFieldByName', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ subscriber_id: sid, field_name: name, field_value: value }),
   });
+  if (!r.ok) throw new Error(`setField ${name} ${r.status}: ${(await r.text()).slice(0, 160)}`);
 }
 async function mcSendFlow(token, sid, flowNs) {
   const r = await afetch('https://api.manychat.com/fb/sending/sendFlow', {
@@ -87,8 +96,31 @@ async function mcSendFlow(token, sid, flowNs) {
 // silencio: al no tener `flowEnv`, entraría por la rama `sin_mensaje_por_diseño`
 // y RE-ESTAMPARÍA `Aviso salida enviado`, que es justo el sello que `mc-rellamar`
 // acaba de limpiar para que el rescate pueda volver a salir. Sin la entrada, el
-// endpoint devuelve `salida_sin_mensaje` y no toca nada, que es lo correcto:
+// endpoint devuelve `salida_sin_mensaje` y no toca el sello, que es lo correcto:
 // arrastrar una tarjeta de vuelta a la cola no es un mensaje al cliente.
+//
+// ── `Estado` ES UN ESPEJO DE `Salida`, Y SE SINCRONIZA PRIMERO (2026-08-19) ──
+// Bug real cazado en producción: el `Estado` del ticket se sincronizaba al FINAL,
+// después de varias salidas tempranas. Dos de ellas lo saltaban:
+//   · `sin_lead`   → un ticket manual sin Lead (Luis anotando una llamada suya)
+//                    marcado «Sin interés» se quedaba en `Llamada pendiente`;
+//   · `ya_enviado` → un ticket que ya había mandado un mensaje (p. ej. «No
+//                    contestado» → rescate) y después se marcaba «Sin interés»
+//                    tampoco cerraba: el sello del mensaje cortaba TODO.
+// Resultado: el briefing de la mañana le repetía a Luis, día tras día, gente que
+// él ya había marcado «Sin interés» (Rodrigo Riquelme, 13 días seguidos). Por eso
+// el espejo se escribe ANTES de cualquier `return`, y por eso la cola (briefing,
+// barrido, dedup) se lee por `Salida` —el campo que Luis toca— y no por `Estado`.
+// `Estado` se mantiene porque lo usan la automatización de 1ª llamada histórica y
+// las vistas viejas; pero ya no es de quien depende nada crítico.
+const ESTADO_POR_SALIDA = {
+  'Llamada pendiente':   'Llamada pendiente',   // vuelta a la cola (rescate, arrastre a mano)
+  'Visita agendada':     'Llamado',
+  'Coordinación región': 'Llamado',
+  'Encargo de búsqueda': 'Llamado',
+  'No contestado':       'Llamada pendiente',   // bandeja de reintentos, sigue abierto
+  'Sin interés':         'Cerrada',
+};
 
 export async function onRequestPost({ request, env }) {
   const url = new URL(request.url);
@@ -116,8 +148,24 @@ export async function onRequestPost({ request, env }) {
 
   const salida = typeof t['Salida'] === 'string' ? t['Salida'] : (t['Salida']?.name || '');
   if (!salida) return reply({ ok: true, accion: 'sin_salida' });
+
+  // 1b) EL ESPEJO, PRIMERO. Pase lo que pase más abajo (sin lead, ya enviado,
+  //     lead borrado, falla del mensaje), el `Estado` del ticket queda alineado
+  //     con lo que Luis arrastró. Es un PATCH propio y pequeño, a propósito.
+  const estadoEspejo = ESTADO_POR_SALIDA[salida] || null;
+  let estadoSincronizado = false;
+  const estadoActualTicket = typeof t['Estado'] === 'string' ? t['Estado'] : (t['Estado']?.name || '');
+  if (estadoEspejo && estadoActualTicket !== estadoEspejo) {
+    const er = await afetch(`${api('Llamados')}/${llamadoId}`, {
+      method: 'PATCH', headers: wH,
+      body: JSON.stringify({ typecast: true, fields: { 'Estado': estadoEspejo } }),
+    });
+    estadoSincronizado = er.ok;
+    if (er.ok) t['Estado'] = estadoEspejo;   // lo que sigue ve el valor ya alineado
+  }
+
   const cfg = SALIDAS[salida];
-  if (!cfg) return reply({ ok: true, accion: 'salida_sin_mensaje', salida });
+  if (!cfg) return reply({ ok: true, accion: 'salida_sin_mensaje', salida, estadoTicket: estadoSincronizado ? estadoEspejo : null });
 
   // 2) IDEMPOTENCIA — pero SOLO del mensaje (2026-08-05). El WhatsApp sale una
   //    única vez; los DATOS del lead se refrescan siempre. Sin esto, las bicis
@@ -138,19 +186,17 @@ export async function onRequestPost({ request, env }) {
   //     y visible en su columna mientras tanto.
   if (cfg.copiaVisita && !t['Fecha y hora de visita']) {
     // Con sello y sin fecha (fecha borrada tras enviar) no hay nada que hacer.
-    if (yaEnviado) return reply({ ok: true, accion: 'ya_enviado', salida });
-    if (cfg.estadoTicket && t['Estado'] !== cfg.estadoTicket) {
-      await afetch(`${api('Llamados')}/${llamadoId}`, {
-        method: 'PATCH', headers: wH,
-        body: JSON.stringify({ typecast: true, fields: { 'Estado': cfg.estadoTicket } }),
-      });
-    }
-    return reply({ ok: true, salida, accion: 'clasificado_sin_fecha',
+    // El espejo del Estado ya se escribió arriba, así que acá no hay nada más.
+    if (yaEnviado) return reply({ ok: true, accion: 'ya_enviado', salida, estadoTicket: estadoEspejo });
+    return reply({ ok: true, salida, accion: 'clasificado_sin_fecha', estadoTicket: estadoEspejo,
       nota: 'La visita quedó clasificada. La confirmación sale cuando se complete «Fecha y hora de visita».' });
   }
 
   const leadId = linkId(t['Lead']);
-  if (!leadId) return reply({ ok: true, accion: 'sin_lead', salida });
+  // Ticket sin Lead enlazado (los que el staff crea a mano con el «+» del Kanban):
+  // no hay a quién escribirle ni qué propagar, pero el ESPEJO ya se sincronizó
+  // arriba — que es justo lo que faltaba y dejó a Rodrigo 13 días en el briefing.
+  if (!leadId) return reply({ ok: true, accion: 'sin_lead', salida, estadoTicket: estadoEspejo, estadoSincronizado });
 
   const lr = await afetch(`${api('Leads')}/${leadId}`, { headers: rH });
   if (!lr.ok) return reply({ error: 'lead_not_found', status: lr.status }, 404);
@@ -289,21 +335,16 @@ export async function onRequestPost({ request, env }) {
       // Dentro de la franja sale al tiro; fuera, NO se manda y el sello de la
       // Solicitud queda vacío a propósito, para que `cron-avisos` o el briefing
       // de la mañana lo recojan. La Solicitud ya quedó creada de todos modos.
-      if (enFranja(env)) {
-        const res = await avisarStaff(env, {
-          cual: 'solicitud', flowEnv: 'FLOW_NS_SOLICITUD', campo: 'cf_solicitud_datos', texto: resumen,
+      const res = await avisar(env, {
+        tipo: 'solicitud', flowEnv: 'FLOW_NS_SOLICITUD', campo: 'cf_solicitud_datos', texto: resumen,
+      });
+      avisoSolicitud = res.motivo === 'fuera_de_horario' ? 'pendiente_de_briefing' : `sin_enviar:${res.motivo}`;
+      if (res.enviados > 0) {
+        avisoSolicitud = 'enviado';
+        await afetch(`${api('Solicitudes')}/${solicitudId}`, {
+          method: 'PATCH', headers: wH,
+          body: JSON.stringify({ typecast: true, fields: { 'Aviso equipo enviado': now } }),
         });
-        if (res.enviados > 0) {
-          avisoSolicitud = 'enviado';
-          await afetch(`${api('Solicitudes')}/${solicitudId}`, {
-            method: 'PATCH', headers: wH,
-            body: JSON.stringify({ typecast: true, fields: { 'Aviso equipo enviado': now } }),
-          });
-        } else {
-          avisoSolicitud = `sin_enviar:${res.motivo}`;
-        }
-      } else {
-        avisoSolicitud = 'pendiente_de_briefing';
       }
     }
     // Si falla, no se aborta: el mensaje al cliente igual debe salir. El campo
@@ -360,8 +401,9 @@ export async function onRequestPost({ request, env }) {
   // 5) Actualizar el TICKET: estado + sello de idempotencia.
   //    El `Estado` se sincroniza SIEMPRE (Luis ya no lo toca, solo arrastra la
   //    tarjeta). El sello solo si el mensaje salió — si falló, queda reintentable.
+  // (El `Estado` ya quedó sincronizado en el paso 1b, antes de todos los returns
+  // tempranos: acá sólo va el sello y el link a la Solicitud.)
   const updTicket = {};
-  if (cfg.estadoTicket && t['Estado'] !== cfg.estadoTicket) updTicket['Estado'] = cfg.estadoTicket;
   if (mensaje === 'enviado' || mensaje === 'sin_mensaje_por_diseño') updTicket['Aviso salida enviado'] = now;
   // El link cierra el circuito y a la vez es la guarda: mientras esté vacío, un
   // reintento vuelve a crear el ticket de búsqueda; una vez escrito, nunca más.
@@ -377,7 +419,7 @@ export async function onRequestPost({ request, env }) {
     permisoPropagado: upd['Opt-in WhatsApp'] === true,
     visitaCopiada: !!upd['Fecha visita'],
     estadoLead: upd['Estado'] || null,
-    estadoTicket: updTicket['Estado'] || null,
+    estadoTicket: estadoEspejo, estadoSincronizado,
     solicitudCreada: solicitudId, avisoSolicitud });
 }
 // Sólo POST.

@@ -19,13 +19,12 @@
 // Lee con AIRTABLE_TOKEN, escribe con AIRTABLE_WRITE_TOKEN. Protegido por env
 // MC_KEY (?key=). Sin env → abierto (mismo criterio que los otros puentes ManyChat).
 
-import { enFranja, avisarStaff } from '../../lib/avisos.js';
+import { avisar } from '../../lib/avisos.js';
 
 const JSONH = { 'Content-Type': 'application/json; charset=utf-8' };
 const reply = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: JSONH });
 
 const BASE_DEFAULT = 'appQUgk8aeD752923';
-const MC_API = 'https://api.manychat.com';
 
 async function afetch(url, opts, tries = 3) {
   for (let i = 0; ; i++) {
@@ -44,29 +43,6 @@ function keyOk(env, url) {
 // dialecto viejo de `horarioOk` — ver la nota en `mc-waitlist.js`: con el formato
 // nuevo en la env, ese regex no calzaba y el endpoint avisaba 24/7 en silencio.
 
-// ── ManyChat helpers (mismo patrón que cron-recordatorios) ──────────────────
-// Para el AVISO A LUIS: setCustomFieldByName(cf_consigna_datos) + sendFlow del
-// flow de 1 nodo que envuelve la plantilla `nueva_consignacion` (Utility).
-async function mcPost(token, path, body) {
-  return afetch(`${MC_API}${path}`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify(body),
-  });
-}
-const mcSid = (s) => (/^\d+$/.test(s) ? Number(s) : s); // ManyChat usa id numérico.
-async function mcSetField(token, sid, name, value) {
-  const r = await mcPost(token, '/fb/subscriber/setCustomFieldByName', {
-    subscriber_id: mcSid(sid), field_name: name, field_value: value,
-  });
-  if (!r.ok) throw new Error(`setField ${name}: ${r.status} ${await r.text()}`);
-}
-async function mcSendFlow(token, sid, flowNs) {
-  const r = await mcPost(token, '/fb/sending/sendFlow', {
-    subscriber_id: mcSid(sid), flow_ns: flowNs,
-  });
-  if (!r.ok) throw new Error(`sendFlow: ${r.status} ${await r.text()}`);
-}
 
 const num = (v) => {
   if (v == null || v === '') return null;
@@ -91,13 +67,6 @@ const cfg = (env) => {
     api: (t) => `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(t)}`,
     rH: { Authorization: `Bearer ${READ}` },
     wH: { Authorization: `Bearer ${WRITE}`, 'Content-Type': 'application/json' },
-    // Aviso al staff — se activa solo cuando token + flow + destinatarios existen.
-    // Las ofertas van a ROBERTO (decisión reunión 2026-07-08); admite varios ids
-    // separados por coma en AVISO_CONSIGNA_SIDS (fallback LUIS_SUBSCRIBER_ID).
-    MC_TOKEN: env.MANYCHAT_TOKEN || '',
-    FLOW_CONSIGNA: env.FLOW_NS_CONSIGNA || '',
-    STAFF_SIDS: String(env.AVISO_CONSIGNA_SIDS || env.LUIS_SUBSCRIBER_ID || '')
-      .split(',').map(s => s.trim()).filter(Boolean),
   };
 };
 
@@ -227,20 +196,18 @@ export async function onRequestPost({ request, env }) {
 
   // Dentro de la franja se avisa al tiro; fuera, el sello queda vacío y lo recoge
   // `cron-avisos` o el briefing. La consignación ya quedó creada de todos modos.
-  let aviso = 'pendiente_de_briefing';
-  if (enFranja(env)) {
-    const res = await avisarStaff(env, {
-      cual: 'consigna', flowEnv: 'FLOW_NS_CONSIGNA', campo: 'cf_consigna_datos', texto: resumen,
+  // `avisar` decide a quién le toca según SU horario (tabla `Equipo`). Sin nadie
+  // en turno el sello queda vacío y lo recogen `cron-avisos` o el briefing.
+  const res = await avisar(env, {
+    tipo: 'consigna', flowEnv: 'FLOW_NS_CONSIGNA', campo: 'cf_consigna_datos', texto: resumen,
+  });
+  let aviso = res.motivo === 'fuera_de_horario' ? 'pendiente_de_briefing' : `sin_enviar:${res.motivo}`;
+  if (res.enviados > 0) {
+    aviso = 'enviado';
+    await afetch(`${C.api(C.CONS)}/${consignaId}`, {
+      method: 'PATCH', headers: C.wH,
+      body: JSON.stringify({ typecast: true, fields: { 'Aviso equipo enviado': new Date().toISOString() } }),
     });
-    if (res.enviados > 0) {
-      aviso = 'enviado';
-      await afetch(`${C.api(C.CONS)}/${consignaId}`, {
-        method: 'PATCH', headers: C.wH,
-        body: JSON.stringify({ typecast: true, fields: { 'Aviso equipo enviado': new Date().toISOString() } }),
-      });
-    } else {
-      aviso = `sin_enviar:${res.motivo}`;
-    }
   }
 
   return reply({ ok: true, consignaId, leadId, leadCreado, aviso });
