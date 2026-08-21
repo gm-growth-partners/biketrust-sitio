@@ -1,0 +1,1052 @@
+<title>Los ocho sistemas de Bike Trust</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --paper:#F5F5F3; --card:#FFFFFF; --ink:#1F1F1D; --ink2:#5F5E5A; --ink3:#8A8981;
+  --line:#DEDDD8; --line2:#EAE9E4; --plinth:#EDECE7;
+
+  --s1-bg:#E6F1FB; --s1-fg:#0C447C; --s1-edge:#B6D4EE;
+  --s2-bg:#EAF3DE; --s2-fg:#27500A; --s2-edge:#C3DCA5;
+  --s3-bg:#EEEDFE; --s3-fg:#3C3489; --s3-edge:#C9C5F0;
+  --s4-bg:#FAEEDA; --s4-fg:#633806; --s4-edge:#EBD3A4;
+  --s5-bg:#FAECE7; --s5-fg:#712B13; --s5-edge:#EFC9B9;
+  --s6-bg:#E1F5EE; --s6-fg:#085041; --s6-edge:#A8DCCC;
+  --s7-bg:#FBEAF0; --s7-fg:#72243E; --s7-edge:#EFC2D3;
+  --s8-bg:#F1EFE8; --s8-fg:#54514A; --s8-edge:#D8D5C9;
+
+  --vivo:#166B4C; --medias:#8A5006; --duerme:#7C7B75; --alarma:#A32020;
+  --vivo-bg:#E4F2EB; --medias-bg:#FBEEDC; --duerme-bg:#EDECE8; --alarma-bg:#FAE7E4;
+
+  --sans:'Archivo',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --serif:'Source Serif 4',Georgia,'Times New Roman',serif;
+  --mono:'JetBrains Mono',ui-monospace,'Cascadia Code',Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#161614; --card:#1E1E1B; --ink:#EDECE6; --ink2:#A8A69E; --ink3:#7C7A72;
+    --line:#33322D; --line2:#282723; --plinth:#211F1C;
+    --s1-bg:#132534; --s1-fg:#9CC8EC; --s1-edge:#26445F;
+    --s2-bg:#1A2614; --s2-fg:#AFCE8C; --s2-edge:#334A26;
+    --s3-bg:#1F1D33; --s3-fg:#B5AFEE; --s3-edge:#3A3560;
+    --s4-bg:#2A2113; --s4-fg:#E0BC79; --s4-edge:#4C3C1F;
+    --s5-bg:#2B1B14; --s5-fg:#E5AC91; --s5-edge:#4E3125;
+    --s6-bg:#122722; --s6-fg:#8FD2BE; --s6-edge:#21473C;
+    --s7-bg:#2A1620; --s7-fg:#EAA6BF; --s7-edge:#4C2A38;
+    --s8-bg:#242320; --s8-fg:#B7B4AA; --s8-edge:#3D3B35;
+    --vivo:#5FC79A; --medias:#E0A44E; --duerme:#8E8C85; --alarma:#E4756B;
+    --vivo-bg:#14291F; --medias-bg:#2C2113; --duerme-bg:#26251F; --alarma-bg:#2E1917;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#161614; --card:#1E1E1B; --ink:#EDECE6; --ink2:#A8A69E; --ink3:#7C7A72;
+  --line:#33322D; --line2:#282723; --plinth:#211F1C;
+  --s1-bg:#132534; --s1-fg:#9CC8EC; --s1-edge:#26445F;
+  --s2-bg:#1A2614; --s2-fg:#AFCE8C; --s2-edge:#334A26;
+  --s3-bg:#1F1D33; --s3-fg:#B5AFEE; --s3-edge:#3A3560;
+  --s4-bg:#2A2113; --s4-fg:#E0BC79; --s4-edge:#4C3C1F;
+  --s5-bg:#2B1B14; --s5-fg:#E5AC91; --s5-edge:#4E3125;
+  --s6-bg:#122722; --s6-fg:#8FD2BE; --s6-edge:#21473C;
+  --s7-bg:#2A1620; --s7-fg:#EAA6BF; --s7-edge:#4C2A38;
+  --s8-bg:#242320; --s8-fg:#B7B4AA; --s8-edge:#3D3B35;
+  --vivo:#5FC79A; --medias:#E0A44E; --duerme:#8E8C85; --alarma:#E4756B;
+  --vivo-bg:#14291F; --medias-bg:#2C2113; --duerme-bg:#26251F; --alarma-bg:#2E1917;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--serif); font-size:17px; line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px; margin:0 auto; padding:0 24px 120px}
+
+/* ── encabezado ─────────────────────────────── */
+header.top{padding:64px 0 40px; border-bottom:2px solid var(--ink); margin-bottom:44px}
+.eyebrow{
+  font-family:var(--sans); font-size:11.5px; font-weight:600; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--ink3); margin:0 0 18px
+}
+h1{
+  font-family:var(--sans); font-weight:700; font-size:clamp(34px,5.4vw,58px);
+  line-height:1.02; letter-spacing:-.028em; margin:0 0 22px; text-wrap:balance
+}
+.lede{font-size:20px; line-height:1.55; max-width:62ch; color:var(--ink); margin:0 0 8px}
+.lede em{font-style:italic; color:var(--ink2)}
+.stamp{
+  font-family:var(--mono); font-size:12px; color:var(--ink3); margin-top:26px;
+  display:flex; flex-wrap:wrap; gap:8px 20px
+}
+
+/* ── secciones ──────────────────────────────── */
+section{margin:0 0 76px}
+h2{
+  font-family:var(--sans); font-weight:700; font-size:clamp(22px,2.6vw,30px);
+  letter-spacing:-.02em; margin:0 0 6px; text-wrap:balance
+}
+h2 .num{
+  font-family:var(--mono); font-size:.55em; font-weight:500; color:var(--ink3);
+  vertical-align:.35em; margin-right:12px; letter-spacing:0
+}
+.sub{color:var(--ink2); font-size:17px; max-width:66ch; margin:0 0 26px}
+h3{
+  font-family:var(--sans); font-weight:600; font-size:12px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink3); margin:0 0 12px
+}
+
+/* ── franja de realidad ─────────────────────── */
+.realidad{
+  background:var(--card); border:1px solid var(--line); border-radius:3px;
+  padding:30px 32px; margin:0 0 20px
+}
+.tira{
+  display:flex; flex-wrap:wrap; align-items:flex-end; gap:4px 0; margin:20px 0 6px;
+  overflow-x:auto
+}
+.paso{flex:1 1 118px; min-width:104px; padding-right:14px}
+.paso .n{
+  font-family:var(--sans); font-weight:700; font-size:34px; letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums; line-height:1; display:block
+}
+.paso .l{
+  font-family:var(--sans); font-size:11px; font-weight:600; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--ink2); margin-top:8px; display:block; line-height:1.4
+}
+.paso .p{font-family:var(--mono); font-size:11.5px; color:var(--ink3); margin-top:3px; display:block}
+.paso.cero .n{color:var(--alarma)}
+.nota{
+  font-size:15.5px; color:var(--ink2); border-top:1px solid var(--line2);
+  padding-top:18px; margin:22px 0 0; max-width:74ch
+}
+.nota strong{color:var(--ink); font-weight:600}
+
+.canales{display:flex; flex-wrap:wrap; gap:10px; margin-top:22px}
+.canal{
+  font-family:var(--mono); font-size:12px; padding:6px 12px; border-radius:2px;
+  background:var(--plinth); color:var(--ink2); border:1px solid var(--line2)
+}
+.canal b{color:var(--ink); font-weight:500}
+.canal.nulo{color:var(--ink3); opacity:.8}
+
+/* ── mapa ───────────────────────────────────── */
+.mapa{
+  background:var(--card); border:1px solid var(--line); border-radius:3px;
+  padding:14px; overflow-x:auto
+}
+.mapa svg{display:block; min-width:820px; width:100%; height:auto}
+.leyenda{
+  display:flex; flex-wrap:wrap; gap:8px 22px; margin-top:18px;
+  font-family:var(--sans); font-size:12.5px; color:var(--ink2)
+}
+.leyenda span{display:inline-flex; align-items:center; gap:7px}
+.dot{width:9px; height:9px; border-radius:50%; flex:none}
+.dot.v{background:var(--vivo)} .dot.m{background:var(--medias)} .dot.d{background:var(--duerme)}
+
+/* ── tabla de estado ────────────────────────── */
+.tablaenv{overflow-x:auto; border:1px solid var(--line); border-radius:3px; background:var(--card)}
+table{border-collapse:collapse; width:100%; min-width:660px; font-size:15px}
+th{
+  font-family:var(--sans); font-size:11px; font-weight:600; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--ink3); text-align:left;
+  padding:14px 18px; border-bottom:1px solid var(--line); white-space:nowrap
+}
+td{padding:14px 18px; border-bottom:1px solid var(--line2); vertical-align:top}
+tr:last-child td{border-bottom:none}
+td.sis{font-family:var(--sans); font-weight:600; white-space:nowrap}
+td.sis .k{
+  font-family:var(--mono); font-size:11px; color:var(--ink3); font-weight:400;
+  display:block; margin-top:2px
+}
+td.dato{font-family:var(--mono); font-size:13px; font-variant-numeric:tabular-nums}
+
+.chip{
+  font-family:var(--sans); font-size:10.5px; font-weight:600; letter-spacing:.07em;
+  text-transform:uppercase; padding:4px 9px; border-radius:2px; white-space:nowrap;
+  display:inline-block
+}
+.chip.v{background:var(--vivo-bg); color:var(--vivo)}
+.chip.m{background:var(--medias-bg); color:var(--medias)}
+.chip.d{background:var(--duerme-bg); color:var(--duerme)}
+
+/* ── tarjetas de subsistema ─────────────────── */
+.tarjeta{
+  background:var(--card); border:1px solid var(--line); border-radius:3px;
+  margin:0 0 26px; overflow:hidden
+}
+.cabeza{padding:28px 32px 24px; border-bottom:1px solid var(--line2)}
+.cabeza-fila{display:flex; align-items:flex-start; gap:18px; flex-wrap:wrap}
+.insignia{
+  font-family:var(--sans); font-weight:700; font-size:19px; width:44px; height:44px;
+  border-radius:3px; display:flex; align-items:center; justify-content:center; flex:none;
+  font-variant-numeric:tabular-nums
+}
+.cabeza h3.nom{
+  font-family:var(--sans); font-size:clamp(20px,2.3vw,26px); font-weight:700;
+  letter-spacing:-.02em; text-transform:none; color:var(--ink);
+  margin:0 0 4px; line-height:1.15
+}
+.cabeza .que{
+  font-family:var(--mono); font-size:11.5px; letter-spacing:.02em; color:var(--ink3);
+  text-transform:none; margin:0
+}
+.cabeza .frase{
+  font-size:18.5px; line-height:1.55; margin:20px 0 0; max-width:78ch; color:var(--ink)
+}
+.porque{
+  padding:20px 32px; font-size:15.5px; color:var(--ink2); background:var(--plinth);
+  border-bottom:1px solid var(--line2); max-width:none
+}
+.porque b{
+  font-family:var(--sans); font-size:11px; font-weight:600; letter-spacing:.13em;
+  text-transform:uppercase; color:var(--ink3); display:block; margin-bottom:7px
+}
+.cuerpo{padding:28px 32px 30px; display:grid; gap:30px}
+@media(min-width:940px){
+  .cuerpo{grid-template-columns:1.35fr 1fr; gap:30px 44px}
+  .cuerpo .ancho{grid-column:1/-1}
+}
+
+ul.piezas{list-style:none; margin:0; padding:0; display:grid; gap:11px}
+ul.piezas li{display:flex; gap:11px; align-items:flex-start; font-size:15.5px; line-height:1.5}
+ul.piezas .dot{margin-top:8px}
+ul.piezas b{font-family:var(--sans); font-weight:600; font-size:14.5px}
+
+ul.lista{list-style:none; margin:0; padding:0; display:grid; gap:10px}
+ul.lista li{
+  font-size:15.5px; line-height:1.5; padding-left:18px; position:relative
+}
+ul.lista li::before{
+  content:''; position:absolute; left:0; top:10px; width:7px; height:1.5px; background:var(--ink3)
+}
+ul.lista.trampas li{padding-left:0}
+ul.lista.trampas li{
+  border-left:2px solid var(--medias); padding:2px 0 2px 14px; background:none
+}
+ul.lista.trampas li::before{display:none}
+ul.lista.trampas li.roja{border-left-color:var(--alarma)}
+
+.ignorar{
+  font-size:15.5px; color:var(--ink2); border-left:2px solid var(--line);
+  padding:2px 0 2px 14px
+}
+code, .m{
+  font-family:var(--mono); font-size:.88em; background:var(--plinth);
+  padding:1.5px 5px; border-radius:2px; color:var(--ink)
+}
+.verificado{
+  font-family:var(--mono); font-size:12px; color:var(--vivo);
+  background:var(--vivo-bg); padding:9px 13px; border-radius:2px; margin-top:14px;
+  line-height:1.5
+}
+
+/* colores por subsistema */
+.t1 .insignia{background:var(--s1-bg); color:var(--s1-fg)} .t1{border-top:3px solid var(--s1-edge)}
+.t2 .insignia{background:var(--s2-bg); color:var(--s2-fg)} .t2{border-top:3px solid var(--s2-edge)}
+.t3 .insignia{background:var(--s3-bg); color:var(--s3-fg)} .t3{border-top:3px solid var(--s3-edge)}
+.t4 .insignia{background:var(--s4-bg); color:var(--s4-fg)} .t4{border-top:3px solid var(--s4-edge)}
+.t5 .insignia{background:var(--s5-bg); color:var(--s5-fg)} .t5{border-top:3px solid var(--s5-edge)}
+.t6 .insignia{background:var(--s6-bg); color:var(--s6-fg)} .t6{border-top:3px solid var(--s6-edge)}
+.t7 .insignia{background:var(--s7-bg); color:var(--s7-fg)} .t7{border-top:3px solid var(--s7-edge)}
+.t8 .insignia{background:var(--s8-bg); color:var(--s8-fg)} .t8{border-top:3px solid var(--s8-edge)}
+
+/* ── cierre ─────────────────────────────────── */
+.cierre{
+  border-top:2px solid var(--ink); padding-top:34px; margin-top:20px
+}
+.doscol{display:grid; gap:30px}
+@media(min-width:840px){.doscol{grid-template-columns:1fr 1fr; gap:44px}}
+.pie{
+  font-family:var(--mono); font-size:12px; color:var(--ink3); line-height:1.7;
+  margin-top:50px; padding-top:22px; border-top:1px solid var(--line)
+}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--s3-fg); outline-offset:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <p class="eyebrow">Bike Trust · mapa de operación · 20 de agosto de 2026</p>
+  <h1>Los ocho sistemas de Bike Trust</h1>
+  <p class="lede">
+    No son «demasiadas cosas funcionando en paralelo». Son <em>ocho</em>, apiladas en
+    cuatro capas, y hoy el negocio entero corre por <em>una sola</em> de las cuatro puertas
+    de entrada. Esta pizarra existe para que puedas mirar una capa a la vez y saber, de cada
+    pieza, tres cosas: si está viva, qué tocas tú, y qué puedes ignorar sin culpa.
+  </p>
+  <div class="stamp">
+    <span>Verificado contra Airtable, Cloudflare y el sitio en vivo</span>
+    <span>·</span>
+    <span>Lo no comprobable va marcado como tal</span>
+  </div>
+</header>
+
+<!-- ══════════════ LA REALIDAD ══════════════ -->
+<section>
+  <h2><span class="num">00</span>Antes del mapa: lo que de verdad pasa</h2>
+  <p class="sub">
+    La sensación de caos viene de que el sistema tiene ocho subsistemas construidos.
+    El alivio viene de mirar cuántos se han usado de verdad. Estos son los números reales
+    de hoy, sin datos de prueba.
+  </p>
+
+  <div class="realidad">
+    <h3>El embudo completo, personas reales</h3>
+    <div class="tira">
+      <div class="paso"><span class="n">57</span><span class="l">Entraron</span><span class="p">100 %</span></div>
+      <div class="paso"><span class="n">32</span><span class="l">Recibieron ficha</span><span class="p">56 %</span></div>
+      <div class="paso cero"><span class="n">0</span><span class="l">Aceptaron la llamada</span><span class="p">el sello nunca disparó</span></div>
+      <div class="paso"><span class="n">3</span><span class="l">Dejaron teléfono</span><span class="p">5 %</span></div>
+      <div class="paso cero"><span class="n">0</span><span class="l">Visita agendada</span><span class="p">—</span></div>
+      <div class="paso cero"><span class="n">0</span><span class="l">Venta atribuida</span><span class="p">—</span></div>
+    </div>
+
+    <div class="canales">
+      <span class="canal"><b>47</b> · Comentario IG</span>
+      <span class="canal"><b>10</b> · DM IG</span>
+      <span class="canal nulo"><b>0</b> · WhatsApp</span>
+      <span class="canal nulo"><b>0</b> · Web</span>
+      <span class="canal nulo"><b>0</b> · Tienda</span>
+    </div>
+
+    <p class="nota">
+      <strong>El 82 % del negocio entra por una sola puerta: comentarios de Instagram.</strong>
+      Las otras tres están construidas y nunca han traído a nadie. Eso significa dos cosas
+      buenas: que <strong>la mitad del sistema que te marea todavía no está en juego</strong>,
+      y que el rediseño de la puerta de comentarios ataca exactamente el escalón donde el
+      embudo se muere — entre recibir la ficha y entregar el teléfono se pierden 29 de 32 personas.
+    </p>
+  </div>
+
+  <div class="realidad">
+    <h3>Lo que hay guardado hoy</h3>
+    <div class="tira">
+      <div class="paso"><span class="n">27</span><span class="l">Bicis</span><span class="p">19 disponibles · 8 vendidas</span></div>
+      <div class="paso"><span class="n">5</span><span class="l">Llamados</span><span class="p">1 pendiente</span></div>
+      <div class="paso"><span class="n">8</span><span class="l">Avisos abiertos</span><span class="p">5 hace +10 días</span></div>
+      <div class="paso"><span class="n">1</span><span class="l">Encargo</span><span class="p">—</span></div>
+      <div class="paso cero"><span class="n">0</span><span class="l">Consignaciones</span><span class="p">—</span></div>
+      <div class="paso cero"><span class="n">0</span><span class="l">Reservas web</span><span class="p">—</span></div>
+    </div>
+    <p class="nota">
+      <strong>Cinco personas llevan entre 10 y 15 días esperando respuesta</strong> y ya se
+      cayeron de la ventana de 7 días del briefing: <span class="m">@carlosbriceno._</span>,
+      <span class="m">@nspringm2020</span>, <span class="m">@felipe.cs95</span>,
+      <span class="m">@_nachoayalar</span> y <span class="m">@lgnacius</span>.
+      Nadie te las va a volver a nombrar solo. Están en la pantalla
+      <span class="m">6 · Falta responder</span>.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════════ EL MAPA ══════════════ -->
+<section>
+  <h2><span class="num">01</span>El mapa: cuatro capas, ocho sistemas</h2>
+  <p class="sub">
+    Léelo de arriba hacia abajo. Cada banda responde una pregunta distinta, y solo cuando
+    entiendes una tiene sentido la siguiente. Los ocho recuadros son los ocho capítulos que
+    vienen después.
+  </p>
+
+  <div class="mapa">
+    <svg viewBox="0 0 960 700" role="img" aria-label="Mapa de los ocho subsistemas de Bike Trust, agrupados en cuatro capas, más los proveedores externos">
+      <defs>
+        <marker id="fl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+        </marker>
+      </defs>
+
+      <!-- banda A -->
+      <text x="14" y="46" font-family="Archivo,sans-serif" font-size="11" font-weight="600" letter-spacing="1.6" fill="var(--ink3)">A · ¿QUÉ VE Y TOCA LA PERSONA?</text>
+      <rect x="10" y="56" width="700" height="124" rx="3" fill="var(--plinth)" stroke="var(--line2)"/>
+
+      <rect x="34" y="80" width="300" height="76" rx="3" fill="var(--s1-bg)" stroke="var(--s1-edge)"/>
+      <circle cx="58" cy="104" r="11" fill="var(--s1-fg)"/>
+      <text x="58" y="108" text-anchor="middle" font-family="Archivo,sans-serif" font-size="12" font-weight="700" fill="var(--s1-bg)">1</text>
+      <text x="78" y="108" font-family="Archivo,sans-serif" font-size="15" font-weight="700" fill="var(--s1-fg)">La Vitrina</text>
+      <text x="78" y="129" font-family="Archivo,sans-serif" font-size="11.5" fill="var(--s1-fg)" opacity=".85">el sitio · 61 páginas horneadas</text>
+      <circle cx="316" cy="96" r="4.5" fill="var(--vivo)"/>
+
+      <rect x="386" y="80" width="300" height="76" rx="3" fill="var(--s2-bg)" stroke="var(--s2-edge)"/>
+      <circle cx="410" cy="104" r="11" fill="var(--s2-fg)"/>
+      <text x="410" y="108" text-anchor="middle" font-family="Archivo,sans-serif" font-size="12" font-weight="700" fill="var(--s2-bg)">2</text>
+      <text x="430" y="108" font-family="Archivo,sans-serif" font-size="15" font-weight="700" fill="var(--s2-fg)">Las Puertas</text>
+      <text x="430" y="129" font-family="Archivo,sans-serif" font-size="11.5" fill="var(--s2-fg)" opacity=".85">4 entradas · solo 1 trae gente</text>
+      <circle cx="668" cy="96" r="4.5" fill="var(--medias)"/>
+
+      <g color="var(--ink3)"><path d="M334 118 L380 118" stroke="currentColor" stroke-width="1.5" marker-end="url(#fl)" fill="none"/></g>
+      <text x="356" y="110" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9" fill="var(--ink3)">botón</text>
+
+      <!-- banda B -->
+      <text x="14" y="214" font-family="Archivo,sans-serif" font-size="11" font-weight="600" letter-spacing="1.6" fill="var(--ink3)">B · ¿QUÉ DECIDE Y QUÉ RECUERDA EL SISTEMA?</text>
+      <rect x="10" y="224" width="700" height="124" rx="3" fill="var(--plinth)" stroke="var(--line2)"/>
+
+      <rect x="34" y="248" width="300" height="76" rx="3" fill="var(--s3-bg)" stroke="var(--s3-edge)"/>
+      <circle cx="58" cy="272" r="11" fill="var(--s3-fg)"/>
+      <text x="58" y="276" text-anchor="middle" font-family="Archivo,sans-serif" font-size="12" font-weight="700" fill="var(--s3-bg)">3</text>
+      <text x="78" y="276" font-family="Archivo,sans-serif" font-size="15" font-weight="700" fill="var(--s3-fg)">El Cerebro</text>
+      <text x="78" y="297" font-family="Archivo,sans-serif" font-size="11.5" fill="var(--s3-fg)" opacity=".85">25 endpoints que deciden</text>
+      <circle cx="316" cy="264" r="4.5" fill="var(--vivo)"/>
+
+      <rect x="386" y="248" width="300" height="76" rx="3" fill="var(--s4-bg)" stroke="var(--s4-edge)"/>
+      <circle cx="410" cy="272" r="11" fill="var(--s4-fg)"/>
+      <text x="410" y="276" text-anchor="middle" font-family="Archivo,sans-serif" font-size="12" font-weight="700" fill="var(--s4-bg)">4</text>
+      <text x="430" y="276" font-family="Archivo,sans-serif" font-size="15" font-weight="700" fill="var(--s4-fg)">La Memoria</text>
+      <text x="430" y="297" font-family="Archivo,sans-serif" font-size="11.5" fill="var(--s4-fg)" opacity=".85">Airtable · 19 tablas · la verdad</text>
+      <circle cx="668" cy="264" r="4.5" fill="var(--vivo)"/>
+
+      <g color="var(--ink3)"><path d="M334 286 L380 286" stroke="currentColor" stroke-width="1.5" marker-end="url(#fl)" fill="none"/></g>
+      <g color="var(--ink3)"><path d="M184 180 L184 244" stroke="currentColor" stroke-width="1.5" marker-end="url(#fl)" fill="none"/></g>
+      <g color="var(--ink3)"><path d="M536 180 L536 244" stroke="currentColor" stroke-width="1.5" marker-end="url(#fl)" fill="none"/></g>
+
+      <!-- banda C -->
+      <text x="14" y="382" font-family="Archivo,sans-serif" font-size="11" font-weight="600" letter-spacing="1.6" fill="var(--ink3)">C · ¿QUÉ HACE QUE UN HUMANO ACTÚE?</text>
+      <rect x="10" y="392" width="700" height="124" rx="3" fill="var(--plinth)" stroke="var(--line2)"/>
+
+      <rect x="34" y="416" width="300" height="76" rx="3" fill="var(--s5-bg)" stroke="var(--s5-edge)"/>
+      <circle cx="58" cy="440" r="11" fill="var(--s5-fg)"/>
+      <text x="58" y="444" text-anchor="middle" font-family="Archivo,sans-serif" font-size="12" font-weight="700" fill="var(--s5-bg)">5</text>
+      <text x="78" y="444" font-family="Archivo,sans-serif" font-size="15" font-weight="700" fill="var(--s5-fg)">La Cola</text>
+      <text x="78" y="465" font-family="Archivo,sans-serif" font-size="11.5" fill="var(--s5-fg)" opacity=".85">avisos · turnos · briefing 9:00</text>
+      <circle cx="316" cy="432" r="4.5" fill="var(--vivo)"/>
+
+      <rect x="386" y="416" width="300" height="76" rx="3" fill="var(--s6-bg)" stroke="var(--s6-edge)"/>
+      <circle cx="410" cy="440" r="11" fill="var(--s6-fg)"/>
+      <text x="410" y="444" text-anchor="middle" font-family="Archivo,sans-serif" font-size="12" font-weight="700" fill="var(--s6-bg)">6</text>
+      <text x="430" y="444" font-family="Archivo,sans-serif" font-size="15" font-weight="700" fill="var(--s6-fg)">Los Motores</text>
+      <text x="430" y="465" font-family="Archivo,sans-serif" font-size="11.5" fill="var(--s6-fg)" opacity=".85">el reloj · cada 15 minutos</text>
+      <circle cx="668" cy="432" r="4.5" fill="var(--medias)"/>
+
+      <g color="var(--ink3)"><path d="M380 454 L340 454" stroke="currentColor" stroke-width="1.5" marker-end="url(#fl)" fill="none"/></g>
+      <g color="var(--ink3)"><path d="M184 348 L184 412" stroke="currentColor" stroke-width="1.5" marker-end="url(#fl)" fill="none"/></g>
+      <g color="var(--ink3)"><path d="M560 412 L560 352" stroke="currentColor" stroke-width="1.5" marker-end="url(#fl)" fill="none" stroke-dasharray="4 3"/></g>
+      <text x="574" y="386" font-family="JetBrains Mono,monospace" font-size="9" fill="var(--ink3)">¿hay alguien esperando?</text>
+
+      <!-- luis -->
+      <rect x="34" y="530" width="300" height="46" rx="23" fill="none" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <text x="184" y="558" text-anchor="middle" font-family="Archivo,sans-serif" font-size="13" font-weight="600" fill="var(--ink)">Luis llama por teléfono</text>
+      <g color="var(--ink)"><path d="M184 492 L184 526" stroke="currentColor" stroke-width="1.5" marker-end="url(#fl)" fill="none"/></g>
+
+      <!-- banda D -->
+      <text x="386" y="550" font-family="Archivo,sans-serif" font-size="11" font-weight="600" letter-spacing="1.6" fill="var(--ink3)">D · ¿ESTÁ SIRVIENDO?</text>
+      <rect x="386" y="560" width="300" height="76" rx="3" fill="var(--s7-bg)" stroke="var(--s7-edge)"/>
+      <circle cx="410" cy="584" r="11" fill="var(--s7-fg)"/>
+      <text x="410" y="588" text-anchor="middle" font-family="Archivo,sans-serif" font-size="12" font-weight="700" fill="var(--s7-bg)">7</text>
+      <text x="430" y="588" font-family="Archivo,sans-serif" font-size="15" font-weight="700" fill="var(--s7-fg)">El Espejo</text>
+      <text x="430" y="609" font-family="Archivo,sans-serif" font-size="11.5" fill="var(--s7-fg)" opacity=".85">el tablero · lee, nunca escribe</text>
+      <circle cx="668" cy="576" r="4.5" fill="var(--vivo)"/>
+      <g color="var(--ink3)"><path d="M700 300 C 760 300, 760 560, 700 588" stroke="currentColor" stroke-width="1.5" marker-end="url(#fl)" fill="none" stroke-dasharray="4 3"/></g>
+
+      <!-- afuera -->
+      <text x="742" y="46" font-family="Archivo,sans-serif" font-size="11" font-weight="600" letter-spacing="1.6" fill="var(--ink3)">EL PISO</text>
+      <rect x="738" y="56" width="212" height="580" rx="3" fill="var(--s8-bg)" stroke="var(--s8-edge)"/>
+      <circle cx="762" cy="86" r="11" fill="var(--s8-fg)"/>
+      <text x="762" y="90" text-anchor="middle" font-family="Archivo,sans-serif" font-size="12" font-weight="700" fill="var(--s8-bg)">8</text>
+      <text x="782" y="90" font-family="Archivo,sans-serif" font-size="15" font-weight="700" fill="var(--s8-fg)">Afuera</text>
+      <text x="758" y="124" font-family="Archivo,sans-serif" font-size="11.5" fill="var(--s8-fg)" opacity=".9">Nada de esto es tuyo:</text>
+      <text x="758" y="152" font-family="JetBrains Mono,monospace" font-size="11.5" fill="var(--s8-fg)">ManyChat</text>
+      <text x="758" y="176" font-family="JetBrains Mono,monospace" font-size="11.5" fill="var(--s8-fg)">Meta / WhatsApp</text>
+      <text x="758" y="200" font-family="JetBrains Mono,monospace" font-size="11.5" fill="var(--s8-fg)">Airtable</text>
+      <text x="758" y="224" font-family="JetBrains Mono,monospace" font-size="11.5" fill="var(--s8-fg)">Cloudflare</text>
+      <text x="758" y="248" font-family="JetBrains Mono,monospace" font-size="11.5" fill="var(--s8-fg)">Ailoo</text>
+      <text x="758" y="288" font-family="Archivo,sans-serif" font-size="11.5" fill="var(--s8-fg)" opacity=".9">Cualquiera de las cinco</text>
+      <text x="758" y="306" font-family="Archivo,sans-serif" font-size="11.5" fill="var(--s8-fg)" opacity=".9">puede apagar un pedazo</text>
+      <text x="758" y="324" font-family="Archivo,sans-serif" font-size="11.5" fill="var(--s8-fg)" opacity=".9">del negocio sin avisar.</text>
+      <circle cx="928" cy="76" r="4.5" fill="var(--vivo)"/>
+    </svg>
+  </div>
+
+  <div class="leyenda">
+    <span><i class="dot v"></i> Vivo — corre y está haciendo su trabajo</span>
+    <span><i class="dot m"></i> A medias — construido, con una parte apagada</span>
+    <span><i class="dot d"></i> Duerme — escrito pero nunca encendido</span>
+  </div>
+</section>
+
+<!-- ══════════════ TABLA ══════════════ -->
+<section>
+  <h2><span class="num">02</span>Qué corre, qué está a medias, qué duerme</h2>
+  <p class="sub">
+    La misma pregunta que te haces cuando algo no pasa: «¿está roto o nunca estuvo
+    encendido?». Esta tabla la contesta de una mirada.
+  </p>
+
+  <div class="tablaenv">
+    <table>
+      <thead>
+        <tr>
+          <th>Sistema</th><th>Estado</th><th>La prueba</th><th>Lo que le falta</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="sis">1 · La Vitrina<span class="k">biketrust-sitio</span></td>
+          <td><span class="chip v">Vivo</span></td>
+          <td class="dato">61 páginas · 27 bicis<br>30 sesiones · 21 vistas de ficha</td>
+          <td>La medición está coja: el botón dorado del riel no está etiquetado</td>
+        </tr>
+        <tr>
+          <td class="sis">2 · Las Puertas<span class="k">ManyChat</span></td>
+          <td><span class="chip m">A medias</span></td>
+          <td class="dato">47 por comentario · 10 por DM<br>0 WhatsApp · 0 Web</td>
+          <td>WhatsApp entrante sin montar; V3.3 a medio armar sin publicar</td>
+        </tr>
+        <tr>
+          <td class="sis">3 · El Cerebro<span class="k">functions/api/</span></td>
+          <td><span class="chip v">Vivo</span></td>
+          <td class="dato">25 endpoints desplegados<br>344 pruebas en 16 archivos</td>
+          <td>4 bicis disponibles no están en la lista del enrutador</td>
+        </tr>
+        <tr>
+          <td class="sis">4 · La Memoria<span class="k">Airtable</span></td>
+          <td><span class="chip v">Vivo</span></td>
+          <td class="dato">19 tablas · 16 automatizaciones<br>57 personas · 27 bicis</td>
+          <td>8 bicis «Vendida» sin fecha, sin comprador y sin interés cerrado</td>
+        </tr>
+        <tr>
+          <td class="sis">5 · La Cola<span class="k">lib/avisos.js</span></td>
+          <td><span class="chip v">Vivo</span></td>
+          <td class="dato">4 personas activas · 4 SID cargados<br>turnos resueltos en vivo hoy 16:45</td>
+          <td>El briefing viaja apelmazado en un párrafo: falta la plantilla de 2 variables</td>
+        </tr>
+        <tr>
+          <td class="sis">6 · Los Motores<span class="k">worker-cron</span></td>
+          <td><span class="chip m">A medias</span></td>
+          <td class="dato">Disparo capturado en vivo<br>20-ago 16:45:12 · Ok</td>
+          <td>3 flujos sin configurar: el rescate no sale y hay 2 leads esperándolo</td>
+        </tr>
+        <tr>
+          <td class="sis">7 · El Espejo<span class="k">biketrust-tablero</span></td>
+          <td><span class="chip v">Vivo</span></td>
+          <td class="dato">5 pantallas + panel<br>lee 11 tablas al hornear</td>
+          <td>El Panel de Contenido está vacío: 0 ciclos, 0 briefs, 0 piezas</td>
+        </tr>
+        <tr>
+          <td class="sis">8 · Afuera<span class="k">5 proveedores</span></td>
+          <td><span class="chip v">Vivo</span></td>
+          <td class="dato">3 proyectos Cloudflare<br>2 bases D1 · 16 flujos</td>
+          <td>biketrust.cl lo ocupa la tienda de Ailoo, no tu sitio</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════ TARJETAS ══════════════ -->
+<section>
+  <h2><span class="num">03</span>Uno por uno</h2>
+  <p class="sub">
+    Ocho capítulos independientes. No hace falta leerlos seguidos ni en un día: cada uno
+    se entiende solo.
+  </p>
+
+  <!-- 1 -->
+  <article class="tarjeta t1">
+    <div class="cabeza">
+      <div class="cabeza-fila">
+        <div class="insignia">1</div>
+        <div>
+          <h3 class="nom">La Vitrina</h3>
+          <p class="que">el sitio público · biketrust-sitio.pages.dev · <span style="color:var(--vivo)">vivo</span></p>
+        </div>
+      </div>
+      <p class="frase">
+        Una bici es una fila en Airtable. Un programa lee esa tabla y escribe, una por una,
+        las 61 páginas del sitio ya terminadas. Por eso el sitio no le pregunta nada a
+        Airtable cuando alguien lo visita: ya viene escrito. Y por eso <b>cambiar un precio
+        en Airtable no cambia nada hasta que alguien republica</b>.
+      </p>
+    </div>
+    <div class="porque">
+      <b>Por qué existe</b>
+      Vender una Specialized usada de 3 a 10 millones por Instagram exige una prueba que el
+      reel no puede dar. Acá la bici deja de ser una foto y pasa a ser una unidad concreta:
+      puntaje de 1 a 7, diagnóstico de motor y batería, estado honesto y número de certificado.
+    </div>
+    <div class="cuerpo">
+      <div>
+        <h3>Las piezas</h3>
+        <ul class="piezas">
+          <li><i class="dot v"></i><span><b>El generador</b> — un solo programa que se baja las bicis de Airtable y escribe las 61 páginas como archivos terminados.</span></li>
+          <li><i class="dot v"></i><span><b>Portada, catálogo y ficha</b> — el hero lo gobierna el casillero <span class="m">Destacada</span>, máximo 4.</span></li>
+          <li><i class="dot v"></i><span><b>La ficha imprimible</b> — documento aparte, tamaño carta. <b>Es la que manda el bot</b> por WhatsApp.</span></li>
+          <li><i class="dot v"></i><span><b>La carpeta de fotos retocadas</b> — vive en el repo, no en Airtable, y <b>manda por sobre Airtable</b>.</span></li>
+          <li><i class="dot v"></i><span><b><span class="m">/bicis.json</span></b> — el manifiesto que consume el tablero. El slug y la foto no se pueden reconstruir fuera de este build.</span></li>
+          <li><i class="dot m"></i><span><b>La medición de clics</b> — sí está guardando. Pero solo entra en 34 de las 61 páginas.</span></li>
+          <li><i class="dot m"></i><span><b>El modal de agendar visita</b> — el único botón que no manda a WhatsApp. Lleva 0 reservas desde que existe.</span></li>
+        </ul>
+        <div class="verificado">✓ Comprobado hoy en la base de medición: 30 sesiones · 69 vistas de página · 21 de ficha de bici, hechas por 11 sesiones distintas.</div>
+      </div>
+      <div>
+        <h3>Qué tocas tú</h3>
+        <ul class="lista">
+          <li>Marcar <span class="m">Destacada</span> en Airtable. Es tu único control editorial del sitio.</li>
+          <li>Cargar las fotos. Bici nueva = hay que correr el recorte de fondo blanco en el escritorio, o esa ficha sale con el fondo del taller.</li>
+          <li><b>Republicar.</b> El sitio no se actualiza solo.</li>
+          <li>Nunca agregar un <span class="m">wrangler.toml</span>: apagaría las 32 variables del panel.</li>
+          <li>Pendiente tuyo: crear el Deploy Hook y conectar el dominio.</li>
+        </ul>
+        <h3 style="margin-top:26px">Qué puedes ignorar</h3>
+        <p class="ignorar">Las 2.464 líneas del generador. No necesitas abrirlo nunca: tu día a día de este sistema es Airtable, y cargar bien la bici es el 100 % de lo que hace que el sitio se vea bien.</p>
+      </div>
+      <div class="ancho">
+        <h3>Trampas</h3>
+        <ul class="lista trampas">
+          <li class="roja"><b>Son dos páginas distintas por cada bici y confundirlas es facilísimo — ya pasó una vez.</b> <span class="m">/bici/&lt;slug&gt;</span> es la vitrina con galería y botones. <span class="m">/ficha/&lt;slug&gt;</span> es el documento imprimible que manda el bot.</li>
+          <li class="roja"><b>El botón más importante del sitio no está etiquetado.</b> El botón dorado del riel — el que persigue al visitante — no lleva marca, así que la medición está ciega justo donde importa.</li>
+          <li>Las ruedas sin radios en las fotos retocadas es irreversible: a ese tamaño un radio mide 0,8 píxeles. La salida de verdad es refotografiar sobre blanco.</li>
+        </ul>
+      </div>
+    </div>
+  </article>
+
+  <!-- 2 -->
+  <article class="tarjeta t2">
+    <div class="cabeza">
+      <div class="cabeza-fila">
+        <div class="insignia">2</div>
+        <div>
+          <h3 class="nom">Las Puertas</h3>
+          <p class="que">por dónde llega una persona · ManyChat · <span style="color:var(--medias)">a medias</span></p>
+        </div>
+      </div>
+      <p class="frase">
+        Las cuatro maneras en que un desconocido empieza a hablar con Bike Trust —comentar un
+        reel, escribir por DM, apretar un botón del sitio, o pedir hora de visita— y lo que el
+        bot hace con cada una hasta conseguir el teléfono. <b>De las cuatro, hoy solo dos han
+        traído a alguien.</b>
+      </p>
+    </div>
+    <div class="porque">
+      <b>Por qué existe</b>
+      El tráfico llega de Instagram a cualquier hora, incluido el domingo a las once de la
+      noche. Sin las puertas, alguien tendría que estar mirando los comentarios y la bandeja
+      todo el día — y aun así casi todo se perdía.
+    </div>
+    <div class="cuerpo">
+      <div>
+        <h3>Las piezas</h3>
+        <ul class="piezas">
+          <li><i class="dot v"></i><span><b>Puerta de comentarios</b> — una automatización por reel. <b>Trae el 82 % de todo el negocio.</b></span></li>
+          <li><i class="dot v"></i><span><b>Puerta del quiz</b> — en los videos sin una bici protagonista, cualquier comentario abre 3 preguntas.</span></li>
+          <li><i class="dot v"></i><span><b>Puerta de DM</b> — cualquier mensaje pasa por un clasificador propio que decide de qué se trata.</span></li>
+          <li><i class="dot v"></i><span><b>El anti-bucle</b> — tras dos intentos fallidos el bot se calla 24 horas, avisa al equipo y deja el caso en la cola.</span></li>
+          <li><i class="dot m"></i><span><b>Los botones de WhatsApp del sitio</b> — construidos y etiquetados, pero <b>0 personas han entrado por ahí</b>.</span></li>
+          <li><i class="dot d"></i><span><b>WhatsApp entrante</b> — el plan está escrito y el backend desplegado. Falta el trabajo en ManyChat.</span></li>
+          <li><i class="dot d"></i><span><b>El rediseño V3.3</b> — a medio montar en la carpeta V3, sin publicar, y le falta la mitad del backend.</span></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Qué tocas tú</h3>
+        <ul class="lista">
+          <li>Cada reel nuevo pide <b>dos</b> cosas, no una: duplicar la automatización en ManyChat <b>y</b> crear la fila en la tabla <span class="m">Reels</span>.</li>
+          <li>Elegir las 10 palabras clave de cada reel. Solo hay 10 cupos.</li>
+          <li>Publicar y activar cualquier automatización. No hay forma de que yo lo haga.</li>
+          <li>Revisar la bandeja todos los días: hoy es la red que atrapa lo que el bot no puede.</li>
+          <li>Decidir si el V3.3 sigue.</li>
+        </ul>
+        <h3 style="margin-top:26px">Qué puedes ignorar</h3>
+        <p class="ignorar">Los nombres de los bloques (B1, C1a, R-1 a R-12, RXC1 a RXC10) y la cascada interna de 12 rutas del DM. Es plomería: está escrita y probada, y solo importa cuando hay que modificarla.</p>
+      </div>
+      <div class="ancho">
+        <h3>Trampas</h3>
+        <ul class="lista trampas">
+          <li class="roja"><b>Falta la fila en <span class="m">Reels</span> = DM vacío, y no da error.</b> El sistema no sabe de qué bici hablar y manda un mensaje sin ficha. Nadie se entera.</li>
+          <li><b>El reel de la Tarmac está apagado desde el 6 de agosto</b> porque no había Tarmac en inventario. Ya hay una disponible.</li>
+          <li>Instagram no deja mandar el mismo DM dos veces al mismo contacto sobre el mismo post en 24 horas. Si pruebas con tu cuenta de siempre, parece que el flujo no funciona.</li>
+        </ul>
+      </div>
+    </div>
+  </article>
+
+  <!-- 3 -->
+  <article class="tarjeta t3">
+    <div class="cabeza">
+      <div class="cabeza-fila">
+        <div class="insignia">3</div>
+        <div>
+          <h3 class="nom">El Cerebro</h3>
+          <p class="que">los endpoints que deciden · functions/api/ · <span style="color:var(--vivo)">vivo</span></p>
+        </div>
+      </div>
+      <p class="frase">
+        El bot sabe conversar, pero no sabe decidir: no puede leer el inventario, ni recortar
+        un número de un mensaje, ni acordarse de quién escribe. Todo lo que requiere pensar
+        se resuelve acá, y el bot solo pregunta y repite la respuesta.
+      </p>
+    </div>
+    <div class="porque">
+      <b>Por qué existe</b>
+      Porque separar «conversar» de «decidir» es lo que permite arreglar una decisión sin
+      volver a montar un flujo entero en ManyChat — y lo que permite probarla sin internet:
+      hay 344 pruebas automáticas que corren en segundos, sin internet.
+    </div>
+    <div class="cuerpo">
+      <div>
+        <h3>Las piezas</h3>
+        <ul class="piezas">
+          <li><i class="dot v"></i><span><b>El portero</b> — da de alta a la persona: si existe la actualiza, si no la crea.</span></li>
+          <li><i class="dot v"></i><span><b>El enrutador</b> — lee el mensaje y devuelve una de doce intenciones.</span></li>
+          <li><i class="dot v"></i><span><b>El recomendador</b> — busca el modelo aguantando errores de tipeo, o recomienda por estatura.</span></li>
+          <li><i class="dot v"></i><span><b>El anotador</b> — sube al lead al siguiente escalón sin dejarlo retroceder.</span></li>
+          <li><i class="dot v"></i><span><b>Los tres puentes de sourcing</b> — agendar visita, encargar una bici, ofrecer la tuya.</span></li>
+          <li><i class="dot m"></i><span><b>El traductor de referencias</b> y <b>el sello de «sí, que me llamen»</b> — desplegados, esperando que se monte la puerta del sitio.</span></li>
+          <li><i class="dot d"></i><span><b>La segunda opinión con IA</b> — escrita pero apagada. Se enciende marcando una casilla en Cloudflare.</span></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Qué tocas tú</h3>
+        <ul class="lista">
+          <li>Agregar los modelos nuevos a la lista del enrutador. <b>Hoy 4 bicis disponibles no están en ella</b>: Aethos Comp, Diverge E5 Elite, Tero 4.0 y Crux.</li>
+          <li>Llenar <span class="m">Rango altura</span> en cada bici nueva. Sin eso el quiz no la puede recomendar.</li>
+          <li>Rotar la clave <span class="m">MC_KEY</span>: es la única puerta que protege todo esto.</li>
+          <li>No renombrar en Airtable los campos ni las opciones que estos endpoints escriben.</li>
+        </ul>
+        <h3 style="margin-top:26px">Qué puedes ignorar</h3>
+        <p class="ignorar">Toda la cocina de cada decisión: cómo se aguantan los errores de tipeo, la fórmula de puntos del quiz, la regla que impide que un lead retroceda, el truco que evita crear dos veces a la misma persona.</p>
+      </div>
+      <div class="ancho">
+        <h3>Trampas</h3>
+        <ul class="lista trampas">
+          <li><b>El enrutador solo conoce los modelos escritos a mano en su lista.</b> Una bici que no esté ahí no se reconoce aunque esté disponible en el inventario.</li>
+          <li>El sí/no viaja como <b>palabra</b> (<span class="m">"true"</span> / <span class="m">"false"</span>), no como sí/no de verdad: ManyChat no sabe guardar un valor booleano en un campo de texto.</li>
+          <li>En WhatsApp no existe el @usuario de Instagram. Ese es el motivo real de que un lead de WhatsApp muriera en 404 antes del arreglo de ayer.</li>
+        </ul>
+      </div>
+    </div>
+  </article>
+
+  <!-- 4 -->
+  <article class="tarjeta t4">
+    <div class="cabeza">
+      <div class="cabeza-fila">
+        <div class="insignia">4</div>
+        <div>
+          <h3 class="nom">La Memoria</h3>
+          <p class="que">Airtable · 19 tablas · <span style="color:var(--vivo)">vivo</span></p>
+        </div>
+      </div>
+      <p class="frase">
+        Es el cuaderno único del negocio: una ficha por bicicleta, una por persona, y una
+        anotación cada vez que una persona mira una bicicleta. <b>Todo lo demás es de paso</b>
+        — el reel se pierde, la conversación de ManyChat caduca, el sitio se reconstruye de
+        cero cada vez. Airtable es lo único que se acuerda.
+      </p>
+    </div>
+    <div class="porque">
+      <b>Por qué existe</b>
+      Para tres cosas concretas: que el sitio pueda publicarse solo, que Luis tenga una
+      pantalla donde trabajar sin pedirle nada a nadie, y que el tablero pueda contar el
+      embudo sin que nadie arme un Excel a mano.
+    </div>
+    <div class="cuerpo">
+      <div>
+        <h3>Las piezas que importan</h3>
+        <ul class="piezas">
+          <li><i class="dot v"></i><span><b>Inventario</b> — una fila = una bicicleta física concreta, no un modelo.</span></li>
+          <li><i class="dot v"></i><span><b>Leads</b> — una fila = una persona. Se reconoce por su usuario de Instagram.</span></li>
+          <li><i class="dot v"></i><span><b>Intereses</b> — el cruce persona ↔ bicicleta. Es lo que permite decir «este señor vio estas tres».</span></li>
+          <li><i class="dot v"></i><span><b>Llamados</b> — la cola de trabajo de Luis. <b>La pantalla del día.</b></span></li>
+          <li><i class="dot v"></i><span><b>Equipo</b> — quién recibe qué aviso y a qué hora. <b>Editarla cambia el comportamiento sin desplegar código.</b></span></li>
+          <li><i class="dot v"></i><span><b>Las 16 automatizaciones</b> — mueven tarjetas, estampan horas, despachan los WhatsApp y hacen nacer la bici cuando se acepta una consignación.</span></li>
+          <li><i class="dot d"></i><span><b>Las 8 tablas del Panel de Contenido</b> — el armazón está creado y <b>completamente vacío</b>.</span></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Qué tocas tú</h3>
+        <ul class="lista">
+          <li><b>Decidir qué pasa con la venta.</b> Hay 8 bicicletas marcadas «Vendida» y las 8 están sin fecha, sin comprador enlazado y sin interés cerrado — por eso el embudo termina en 0.</li>
+          <li>Arrastrar las 8 tarjetas de <span class="m">6 · Falta responder</span>. Mientras estén ahí siguen contando como pendientes.</li>
+          <li>Limpiar basura del menú: la lista de estados de Leads tiene 2 opciones sin nombre.</li>
+          <li>Borrar los datos de prueba que quedan: 2 personas y 9 intereses marcados DEMO.</li>
+        </ul>
+        <h3 style="margin-top:26px">Qué puedes ignorar</h3>
+        <p class="ignorar">Todo lo que empieza con guion bajo (<span class="m">_ahora</span>, <span class="m">_salida_desde</span>), los campos de sello y de intentos, los RecID y las fórmulas que devuelven 1 o 0. Es andamiaje que el sistema se escribe solo.</p>
+      </div>
+      <div class="ancho">
+        <h3>Trampas</h3>
+        <ul class="lista trampas">
+          <li class="roja"><b>Los dos sellos se llaman casi igual y hacen cosas opuestas.</b> <span class="m">Aviso salida enviado</span> es el mensaje <b>al cliente</b>. <span class="m">Aviso equipo enviado</span> es el aviso <b>al equipo</b>, y su casilla vacía <b>es la cola</b>. Borrarlo a mano hace que se vuelva a avisar.</li>
+          <li class="roja"><b><span class="m">Salida</span> es la verdad; <span class="m">Estado</span> es un espejo.</b> Salida es la columna que arrastra Luis. Estado lo escribe el programa. Ya se desincronizaron una vez y un ticket cerrado se repitió <b>13 mañanas seguidas</b> en el briefing.</li>
+          <li>Renombrar una opción de un menú desplegable rompe cosas en silencio: los programas escriben el texto literal.</li>
+        </ul>
+      </div>
+    </div>
+  </article>
+
+  <!-- 5 -->
+  <article class="tarjeta t5">
+    <div class="cabeza">
+      <div class="cabeza-fila">
+        <div class="insignia">5</div>
+        <div>
+          <h3 class="nom">La Cola</h3>
+          <p class="que">el sistema de avisos · desplegado ayer · <span style="color:var(--vivo)">vivo</span></p>
+        </div>
+      </div>
+      <p class="frase">
+        Es el vigilante: revisa todo el rato si hay alguien esperando que nadie del equipo
+        haya visto todavía, y le manda un WhatsApp a quien está de turno, con el teléfono y
+        el contexto ya adentro del mensaje.
+      </p>
+    </div>
+    <div class="porque">
+      <b>La idea de fondo, que vale por todo lo demás</b>
+      «Avisado» es un <b>estado</b>, no un evento. Antes, avisar pasaba —o no— en el instante
+      exacto en que entraba el lead: si era de noche, si fallaba una conexión, o si el ticket
+      lo había escrito Luis a mano, se perdía para siempre y sin dejar rastro. Ahora cada
+      cosa que necesita a una persona nace con una casilla vacía, y <b>ese vacío es la cola</b>.
+    </div>
+    <div class="cuerpo">
+      <div>
+        <h3>Las piezas</h3>
+        <ul class="piezas">
+          <li><i class="dot v"></i><span><b>El cerebro de los avisos</b> — un solo archivo decide todo: quién está de turno, a quién se le manda, qué contexto lleva y cómo se envía.</span></li>
+          <li><i class="dot v"></i><span><b>Puerta 1 · «alguien dejó su teléfono»</b> — la única entrada para cualquier teléfono, venga de donde venga.</span></li>
+          <li><i class="dot v"></i><span><b>Puerta 2 · «esto necesita a una persona»</b> — cuando el bot no entendió o alguien pidió que le respondan.</span></li>
+          <li><i class="dot v"></i><span><b>El barrido de cada 15 minutos</b> — la red de seguridad: revisa las cuatro colas y manda lo que quedó sin avisar.</span></li>
+          <li><i class="dot v"></i><span><b>El briefing de las 9:00</b> — a quien <b>trabaja hoy</b>, con cinco secciones tituladas por lo que hay que hacer.</span></li>
+          <li><i class="dot v"></i><span><b>Los dos Kanban</b> — arrastrar la tarjeta <b>es</b> registrar qué pasó con ese lead.</span></li>
+          <li><i class="dot d"></i><span><b>La recaptura del teléfono a mano</b> — si alguien del equipo atiende un DM y el cliente le da el número ahí, ese teléfono <b>no entra al sistema</b>.</span></li>
+        </ul>
+        <div class="verificado">✓ Capturado en vivo hoy a las 16:45: el sistema leyó la tabla Equipo y resolvió los turnos de un jueves — Luis puede actuar, tú y Roberto solo observan, Juan Alfonso queda fuera (él cubre los martes). Exactamente lo que corresponde.</div>
+      </div>
+      <div>
+        <h3>Qué tocas tú</h3>
+        <ul class="lista">
+          <li><b>La tabla <span class="m">Equipo</span> es el único mando que necesitas.</b> Cambiar un horario, apagar a alguien o cambiar qué avisos recibe es editar una celda — sin desplegar nada.</li>
+          <li>Tú eres una fila de esa tabla: recibes todos los días de 8 a 20, con <span class="m">Atiende clientes</span> apagado a propósito. Miras el negocio, no atiendes al cliente.</li>
+          <li>La plantilla del briefing con formato + la variable, <b>las dos en el mismo momento</b>.</li>
+        </ul>
+        <h3 style="margin-top:26px">Qué puedes ignorar</h3>
+        <p class="ignorar">Los reintentos, la memoria de 60 segundos, la gracia de 10 minutos, el tope por corrida y el presupuesto de caracteres del mensaje. Nada de eso cambia lo que ves.</p>
+      </div>
+      <div class="ancho">
+        <h3>Trampas</h3>
+        <ul class="lista trampas">
+          <li class="roja"><b><span class="m">Atiende clientes</span> no es lo mismo que <span class="m">Recibe</span>.</b> De los que atienden sale la promesa que el bot le hace al cliente. De los que reciben, sale a quién le suena el teléfono. Tú recibes pero no atiendes — y por eso tu WhatsApp no consume la cola.</li>
+          <li><b>Cinco personas llevan más de 10 días esperando</b> y ya salieron de la ventana de 7 días del briefing: nadie te las va a volver a nombrar.</li>
+          <li>Si la tabla <span class="m">Equipo</span> queda vacía o nadie está activo, todo vuelve al comportamiento anterior — franja 9 a 20 pareja. Es a propósito: nunca franja sin red.</li>
+        </ul>
+      </div>
+    </div>
+  </article>
+
+  <!-- 6 -->
+  <article class="tarjeta t6">
+    <div class="cabeza">
+      <div class="cabeza-fila">
+        <div class="insignia">6</div>
+        <div>
+          <h3 class="nom">Los Motores</h3>
+          <p class="que">lo que corre solo · worker-cron · <span style="color:var(--medias)">a medias</span></p>
+        </div>
+      </div>
+      <p class="frase">
+        Un reloj despierta al sistema cada 15 minutos y le pregunta a Airtable «¿hay alguien
+        esperando que nadie del equipo haya visto todavía?». Si la respuesta es sí, manda un
+        WhatsApp —al cliente o al equipo— y deja constancia de que ya avisó.
+      </p>
+    </div>
+    <div class="porque">
+      <b>Por qué existe</b>
+      Porque es la diferencia entre un sistema que <b>reacciona</b> y uno que <b>vigila</b>.
+      Sin el reloj, todo depende de que el momento exacto sea el correcto; con él, algo que
+      se cayó a las tres de la mañana se recupera a las nueve.
+    </div>
+    <div class="cuerpo">
+      <div>
+        <h3>Las piezas</h3>
+        <ul class="piezas">
+          <li><i class="dot v"></i><span><b>El reloj</b> — cada 15 minutos despierta a los cinco motores, uno detrás de otro.</span></li>
+          <li><i class="dot v"></i><span><b>El resumen de la mañana</b> — a las 9:00, a quien trabaja hoy.</span></li>
+          <li><i class="dot v"></i><span><b>El barrido de avisos</b> — las cuatro colas, cada cuarto de hora.</span></li>
+          <li><i class="dot v"></i><span><b>Cuando Luis arrastra una tarjeta</b> — no es un reloj: se dispara al instante desde Airtable.</span></li>
+          <li><i class="dot m"></i><span><b>Los recordatorios de visita</b> — faltan los de 2 horas antes.</span></li>
+          <li><i class="dot m"></i><span><b>El rescate del lead frío</b> — <b>encuentra a la gente y no le manda nada.</b></span></li>
+          <li><i class="dot m"></i><span><b>El aviso de sourcing</b> — sale, pero con el mensaje equivocado: dos variables apuntan al mismo flujo.</span></li>
+        </ul>
+        <div class="verificado">✓ Escuché el reloj en vivo. Disparó a las 16:45:12 de hoy y llamó a los cinco motores: el briefing se hizo a un lado por no ser su hora, el barrido calculó los turnos, y el rescate encontró a 2 personas.</div>
+      </div>
+      <div>
+        <h3>Qué tocas tú</h3>
+        <ul class="lista">
+          <li><b>Tres variables en Cloudflare</b> que hoy dejan motores mudos: el recordatorio de 2 horas, el rescate del que no llegó, y el reenganche del lead frío.</li>
+          <li>Crear un flujo propio para el aviso de «pasó a búsqueda»: hoy comparte flujo con «nueva solicitud» y llega el mensaje equivocado.</li>
+          <li>Si algún día se toca el archivo del reloj: <b>hay que desplegarlo a mano</b>. El sitio se despliega solo; el reloj no.</li>
+        </ul>
+        <h3 style="margin-top:26px">Qué puedes ignorar</h3>
+        <p class="ignorar">El orden en que corren, los reintentos y los topes por corrida. Lo único que necesitas saber es que si algo tenía que avisarse y no se avisó, el barrido lo recoge dentro de 15 minutos.</p>
+      </div>
+      <div class="ancho">
+        <h3>Trampas</h3>
+        <ul class="lista trampas">
+          <li class="roja"><b>Hay dos personas que deberían estar recibiendo un rescate y no lo reciben. Lo vi pasar hoy en vivo.</b> El motor las encuentra cada 15 minutos, comprueba que tienen teléfono y permiso, y se detiene con el motivo <span class="m">flow_not_configured</span>. Son los leads de la Kenevo Expert y de la Levo SL S-Works.</li>
+          <li><b>El día que prendas el reenganche, se vacía la represa de golpe.</b> En cuanto exista la variable, la siguiente corrida —dentro de 15 minutos— le escribe a todos los que se acumularon.</li>
+          <li>El recordatorio de visita es el único motor sin filtro de horario: puede sonar de noche.</li>
+        </ul>
+      </div>
+    </div>
+  </article>
+
+  <!-- 7 -->
+  <article class="tarjeta t7">
+    <div class="cabeza">
+      <div class="cabeza-fila">
+        <div class="insignia">7</div>
+        <div>
+          <h3 class="nom">El Espejo</h3>
+          <p class="que">el tablero de métricas · repo aparte · <span style="color:var(--vivo)">vivo</span></p>
+        </div>
+      </div>
+      <p class="frase">
+        Una página web privada, con clave, donde ves en números y en dibujos cómo va el
+        negocio: cuánta gente entró por cada puerta, cuántos dejaron el teléfono, qué pasó en
+        cada llamada y qué reel trajo gente. <b>Solo lee. Nunca escribe.</b>
+      </p>
+    </div>
+    <div class="porque">
+      <b>Por qué existe</b>
+      Tres problemas a la vez. El contrato promete un reporte de gestión y el cliente tiene que
+      poder ver lo que paga. Tú necesitas saber <b>cuál</b> escalón del embudo está roto, no que
+      «va mal». Y nadie debería armar un Excel a mano cada semana.
+    </div>
+    <div class="cuerpo">
+      <div>
+        <h3>Las piezas</h3>
+        <ul class="piezas">
+          <li><i class="dot v"></i><span><b>Pantalla «Puertas»</b> — el dibujo del embudo con los números adentro. Es la principal.</span></li>
+          <li><i class="dot v"></i><span><b>Pantalla «La llamada»</b> — las 5 salidas cruzadas con lo que pasó después.</span></li>
+          <li><i class="dot v"></i><span><b>Pantalla «Videos»</b> — una fila por reel: comentarios, personas distintas, fichas mandadas.</span></li>
+          <li><i class="dot v"></i><span><b>La pantalla de Luis</b> — aparte, pensada para el celular: la cola con el más viejo arriba.</span></li>
+          <li><i class="dot v"></i><span><b>Dos claves, dos roles</b> — la completa para ti y Roberto; la de llamadas para Luis.</span></li>
+          <li><i class="dot m"></i><span><b>El Panel de Contenido</b> — 6 pantallas construidas y <b>vacías</b>: 0 ciclos, 0 briefs, 0 piezas.</span></li>
+          <li><i class="dot m"></i><span><b>La foto diaria de Instagram</b> — el permiso está conectado, pero no hay ninguna pieza que fotografiar.</span></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Qué tocas tú</h3>
+        <ul class="lista">
+          <li>Apretar «Actualizar» cuando quieras datos frescos. <b>El tablero no se actualiza solo</b>: lo que ves es la foto del último horneado.</li>
+          <li><b>Crear el ciclo de agosto y el primer brief.</b> Es lo único que falta para que el Panel de Contenido empiece a servir.</li>
+          <li>Exigir que cada automatización nueva de ManyChat mande su Post ID. Si no, la pantalla Videos subrepresenta al reel.</li>
+        </ul>
+        <h3 style="margin-top:26px">Qué puedes ignorar</h3>
+        <p class="ignorar">Todo el interior: cómo se calcula cada métrica, el modo de maqueta, cómo se firma la sesión. Lo que sí conviene tener presente son las dos reglas de lectura de la derecha.</p>
+      </div>
+      <div class="ancho">
+        <h3>Trampas — y las dos reglas de lectura</h3>
+        <ul class="lista trampas">
+          <li class="roja"><b>El embudo se mide con fechas, no con el estado.</b> Las banderas «llegó a ficha / agendó / cerró» derivan de un campo que puede retroceder, así que mienten en cuanto alguien se sale del camino. Por eso cada escalón cuelga de una fecha propia que solo se estampa una vez.</li>
+          <li class="roja"><b>El embudo no es una escalera.</b> Hay gente que comenta y entrega el teléfono sin pasar nunca por la ficha. Es un camino real, no un error, y el tablero está hecho para no castigarlo.</li>
+          <li><b>Cómo leer un número: <span class="m">0</span> = lo medimos y no hubo. <span class="m">—</span> = todavía no se mide.</b> Y bajo 20 casos no se muestra porcentaje, a propósito.</li>
+        </ul>
+      </div>
+    </div>
+  </article>
+
+  <!-- 8 -->
+  <article class="tarjeta t8">
+    <div class="cabeza">
+      <div class="cabeza-fila">
+        <div class="insignia">8</div>
+        <div>
+          <h3 class="nom">Afuera</h3>
+          <p class="que">ManyChat · Meta · Airtable · Cloudflare · Ailoo · <span style="color:var(--vivo)">vivo</span></p>
+        </div>
+      </div>
+      <p class="frase">
+        Bike Trust no es dueño de casi nada de la cañería: conversa con ManyChat, manda
+        WhatsApp con permiso de Meta, factura en Ailoo, publica en Cloudflare y guarda todo en
+        Airtable. <b>Cinco empresas de afuera que pueden apagarte un pedazo del negocio sin
+        avisarte.</b>
+      </p>
+    </div>
+    <div class="porque">
+      <b>Por qué existe</b>
+      Porque construir todo eso desde cero —un servidor de chat, un canal de WhatsApp
+      autorizado, un ERP, un hosting, una base de datos— habría costado meses y plata que un
+      negocio de 27 bicicletas premium no tiene. La decisión fue alquilar todo. Esta tarjeta
+      es el precio de esa decisión, escrito.
+    </div>
+    <div class="cuerpo">
+      <div>
+        <h3>De quién dependes, exactamente</h3>
+        <ul class="piezas">
+          <li><i class="dot v"></i><span><b>ManyChat</b> — el bot. Escucha comentarios, DM y WhatsApp, y manda las respuestas. Más 16 flujos envoltorio.</span></li>
+          <li><i class="dot m"></i><span><b>Meta</b> — aprueba una por una las plantillas de WhatsApp, y controla la ventana de 24 horas de Instagram.</span></li>
+          <li><i class="dot v"></i><span><b>Airtable</b> — la base entera. 19 tablas.</span></li>
+          <li><i class="dot v"></i><span><b>Cloudflare</b> — tres proyectos distintos (sitio, tablero, reloj) y dos bases chicas aparte.</span></li>
+          <li><i class="dot m"></i><span><b>Ailoo</b> — donde de verdad se factura. El puente está construido y esperando que ellos hagan su lado.</span></li>
+          <li><i class="dot d"></i><span><b>El dominio biketrust.cl</b> — hoy no apunta a tu sitio: lo sirve la tienda de Ailoo.</span></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Qué tocas tú</h3>
+        <ul class="lista">
+          <li>Vigilar el permiso de Instagram: dura 60 días y se renueva solo los lunes, pero si alguna vez se vence del todo no hay recuperación automática.</li>
+          <li>Rotar dos tokens de Airtable y la clave del bot: se pegaron alguna vez en un chat y quedaron escritos en disco.</li>
+          <li>Retomar la conversación con Ailoo. Nuestro lado ya está desplegado y esperando.</li>
+          <li>Decidir qué pasa con el dominio.</li>
+        </ul>
+        <h3 style="margin-top:26px">Qué puedes ignorar</h3>
+        <p class="ignorar">Prácticamente todo, casi todos los días. El sistema está construido para que un proveedor que falla no arruine el día: si ManyChat no responde, el ticket igual se crea y el aviso queda pendiente para el próximo barrido.</p>
+      </div>
+      <div class="ancho">
+        <h3>Trampas — las cuatro que cuestan días</h3>
+        <ul class="lista trampas">
+          <li class="roja"><b>Editar una plantilla de WhatsApp ya aprobada la manda de vuelta a la cola de revisión de Meta</b> y queda inservible por días. Nunca tocar el texto de una que funciona: se crea una nueva.</li>
+          <li class="roja"><b>Borrar y volver a crear un flujo de ManyChat le cambia su código interno</b>, y ese aviso deja de salir hasta que alguien copie el código nuevo a Cloudflare.</li>
+          <li class="roja"><b>Un salto de línea dentro de una variable de plantilla hace que Meta rechace el envío</b> — y el error que devuelve no dice eso.</li>
+          <li class="roja"><b>Nunca agregar un <span class="m">wrangler.toml</span> al repositorio</b> del sitio ni al del tablero: apagaría de golpe las ~32 variables configuradas en el panel.</li>
+        </ul>
+      </div>
+    </div>
+  </article>
+</section>
+
+<!-- ══════════════ CIERRE ══════════════ -->
+<section class="cierre">
+  <h2><span class="num">04</span>Si mañana solo pudieras hacer tres cosas</h2>
+  <p class="sub">
+    Todo lo anterior es el mapa. Esto es la brújula: lo que más mueve la aguja, en orden.
+  </p>
+
+  <div class="doscol">
+    <div>
+      <h3>El orden que yo seguiría</h3>
+      <ul class="lista">
+        <li><b>1 · Responderle a las cinco personas que llevan 10 a 15 días esperando.</b> Son leads reales, ya calificados, que el sistema capturó bien y nadie contestó. Es lo único de esta lista que puede convertirse en una venta esta semana.</li>
+        <li><b>2 · Cerrar las 8 bicis vendidas en Airtable</b> — fecha, comprador, interés cerrado. Mientras no estén cerradas, el embudo entero termina en 0 y no puedes saber qué funciona.</li>
+        <li><b>3 · Poner las tres variables de rescate en Cloudflare.</b> Hay dos personas esperándolo hoy, y el motor ya las encontró: solo le falta con qué escribirles.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>La conclusión que importa</h3>
+      <p style="margin:0 0 14px">
+        No tienes ocho sistemas rotos. Tienes <b>uno funcionando</b> —comentarios de Instagram,
+        con 47 personas y una tasa de ficha del 56 %— y siete construidos alrededor esperando
+        su turno.
+      </p>
+      <p style="margin:0">
+        El caos que sientes no es de operación, es de <b>inventario mental</b>: hay demasiado
+        construido para lo poco que se está usando. Y eso no es un problema, es una ventaja
+        — significa que cuando el volumen llegue, la cañería ya está puesta.
+      </p>
+    </div>
+  </div>
+
+  <p class="pie">
+    Levantado el 20 de agosto de 2026 contra los sistemas reales, no contra la documentación.<br>
+    Comprobado en vivo: los turnos y el disparo del reloj (escucha directa al Worker, 16:45:12) ·
+    el embudo y las colas (lectura completa de Airtable, sin datos de prueba) ·
+    la medición del sitio (resumen en vivo de la base de clics) ·
+    el catálogo publicado (61 páginas, 27 bicis).<br>
+    Marcado como no comprobado: nada — todo lo que dice «vivo» acá se verificó contra el sistema, no contra un documento.
+  </p>
+</section>
+
+</div>

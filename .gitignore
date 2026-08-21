@@ -17,3 +17,6 @@ dist/
 Thumbs.db
 *.log
 .wrangler/
+
+# salida generada de graphify (se reconstruye con: graphify update .)
+graphify-out/
