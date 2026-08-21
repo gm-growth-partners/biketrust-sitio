@@ -35,15 +35,33 @@ Sólo se escribe en las cuatro marcadas con ✍️. El resto se calcula solo.
 
 ## Datos cargados
 
-El libro trae las **3 facturas reales de agosto de 2026** (F-001 a F-003) con sus
-cobros en la hoja `Pagos`. `Gastos` y `Retiros` están **vacías a propósito**: tenían
-filas de ejemplo inventadas que, mezcladas con ingresos reales, producían un impuesto
-y un flujo falsos.
+Al **20 de agosto de 2026**, con todos los movimientos de la cuenta Mercado Pago
+de la empresa y las 3 facturas electrónicas emitidas.
 
-⚠️ Dos cobros quedaron con **fecha anterior a la de emisión** (F-001 emitida 11-08 y
-cobrada 04-07; F-002 emitida 12-08 y cobrada 10-02). Son los datos tal como están en
-el archivo: si es correcto —trabajos cobrados antes y facturados en agosto— el IVA de
-esas ventas se declaró tarde y conviene revisarlo con el contador.
+| Hoja | Qué trae |
+|---|---|
+| `Ingresos` | Facturas N°1 (Turismo Palmenia, $238.000), N°2 (Centro Educativo Ingenia, $141.000) y N°3 (BA Certificadas, $750.000). |
+| `Pagos` | 5 cobros. La N°2 entró en **3 cuotas de $47.000** por suscripción de Mercado Pago (jun/jul/ago). |
+| `Gastos` | ManyChat ×3, Airtable y una compra de equipamiento en Mercado Libre. |
+| `Retiros` | 4 giros a la cuenta personal por $160.214 en total. |
+
+**Los pagos al SII no se registran en `Gastos`** — son el impuesto mismo, no un gasto,
+y la planilla ya lo calcula en `Mensual`. Registrarlos ahí los contaría dos veces y
+rebajaría indebidamente la base imponible.
+
+### Conciliación
+
+`Flujo` trae abajo un bloque para cuadrar la planilla contra el saldo real del banco.
+Con los datos al 20-ago la diferencia es **$548**, que se explica así: +$3.000 de una
+recarga de la cuenta que no es venta, −$2.800 de pagos al SII ya hechos, y +$348 del
+PPM que la planilla estima para el mismo período.
+
+⚠️ Ese cruce deja a la vista algo que conviene revisar: se pagaron **$2.800 al SII**
+($470 en julio y $2.330 en agosto) cuando el PPM del período, según lo efectivamente
+percibido, era de **$348**. Vale la pena verlo con el contador.
+
+⚠️ La factura N°1 se **cobró el 4 de julio y se emitió el 11 de agosto**. Si es así,
+el IVA de esa venta se declaró un mes tarde.
 
 ## Supuestos tributarios
 
